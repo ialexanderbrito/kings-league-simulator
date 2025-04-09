@@ -18,7 +18,7 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
       .filter((match) => match.participants.homeTeamId === team.id || match.participants.awayTeamId === team.id)
       .map((match) => ({
         ...match,
-        round: round.name,
+        round: round.name.replace('Jornada', 'Rodada'),
         roundId: round.id,
         ended: round.ended,
       })),
@@ -90,59 +90,6 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
                 const homeScore = match.scores.homeScore
                 const awayScore = match.scores.awayScore
 
-                let result = "Pendente"
-                let resultBadge = <Badge variant="outline">Pendente</Badge>
-
-                if (homeScore !== null && awayScore !== null) {
-                  if (isHome) {
-                    if (homeScore > awayScore) {
-                      result = `Vitória ${homeScore}-${awayScore}`
-                      resultBadge = (
-                        <Badge className="bg-green-600">
-                          V {homeScore}-{awayScore}
-                        </Badge>
-                      )
-                    } else if (homeScore < awayScore) {
-                      result = `Derrota ${homeScore}-${awayScore}`
-                      resultBadge = (
-                        <Badge className="bg-red-600">
-                          D {homeScore}-{awayScore}
-                        </Badge>
-                      )
-                    } else {
-                      result = `Empate ${homeScore}-${awayScore}`
-                      resultBadge = (
-                        <Badge className="bg-gray-600">
-                          E {homeScore}-{awayScore}
-                        </Badge>
-                      )
-                    }
-                  } else {
-                    if (awayScore > homeScore) {
-                      result = `Vitória ${awayScore}-${homeScore}`
-                      resultBadge = (
-                        <Badge className="bg-green-600">
-                          V {awayScore}-{homeScore}
-                        </Badge>
-                      )
-                    } else if (awayScore < homeScore) {
-                      result = `Derrota ${awayScore}-${homeScore}`
-                      resultBadge = (
-                        <Badge className="bg-red-600">
-                          D {awayScore}-{homeScore}
-                        </Badge>
-                      )
-                    } else {
-                      result = `Empate ${awayScore}-${homeScore}`
-                      resultBadge = (
-                        <Badge className="bg-gray-600">
-                          E {awayScore}-{homeScore}
-                        </Badge>
-                      )
-                    }
-                  }
-                }
-
                 return (
                   <TableRow key={match.id} className="border-b border-[#333]">
                     <TableCell>{match.round}</TableCell>
@@ -163,7 +110,51 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
                         <span>{isHome ? `vs ${opponent?.shortName} (Casa)` : `vs ${opponent?.shortName} (Fora)`}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">{resultBadge}</TableCell>
+                    <TableCell className="text-center">
+                      {homeScore === null || awayScore === null ? (
+                        <Badge variant="outline">Pendente</Badge>
+                      ) : (
+                        <>
+                          {isHome ? (
+                            <>
+                              {homeScore > awayScore && <Badge className="bg-green-600">V {homeScore}-{awayScore}</Badge>}
+                              {homeScore < awayScore && <Badge className="bg-red-600">D {homeScore}-{awayScore}</Badge>}
+                              {homeScore === awayScore && (
+                                <>
+                                  {match.scores.homeScoreP !== null && match.scores.awayScoreP !== null ? (
+                                    match.scores.homeScoreP > match.scores.awayScoreP ? (
+                                      <Badge className="bg-green-600">V (Pênaltis)</Badge>
+                                    ) : (
+                                      <Badge className="bg-red-600">D (Pênaltis)</Badge>
+                                    )
+                                  ) : (
+                                    <Badge className="bg-gray-600">E {homeScore}-{awayScore}</Badge>
+                                  )}
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {awayScore > homeScore && <Badge className="bg-green-600">V {awayScore}-{homeScore}</Badge>}
+                              {awayScore < homeScore && <Badge className="bg-red-600">D {awayScore}-{homeScore}</Badge>}
+                              {awayScore === homeScore && (
+                                <>
+                                  {match.scores.homeScoreP !== null && match.scores.awayScoreP !== null ? (
+                                    match.scores.awayScoreP > match.scores.homeScoreP ? (
+                                      <Badge className="bg-green-600">V (Pênaltis)</Badge>
+                                    ) : (
+                                      <Badge className="bg-red-600">D (Pênaltis)</Badge>
+                                    )
+                                  ) : (
+                                    <Badge className="bg-gray-600">E {awayScore}-{homeScore}</Badge>
+                                  )}
+                                </>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center">
                       {match.metaInformation?.youtube_url && (
                         <a

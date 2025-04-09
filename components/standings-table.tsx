@@ -44,20 +44,15 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
 
   return (
     <div className="overflow-x-auto">
-      <Table className="border-collapse">
+      <Table className="border-collapse w-full text-sm">
         <TableHeader>
-          <TableRow className="bg-[#252525] border-b border-[#333]">
-            <TableHead className="w-12 text-center text-[#F4AF23]">Pos</TableHead>
-            <TableHead className="w-8"></TableHead>
-            <TableHead className="text-[#F4AF23]">Time</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">P</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">J</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">V</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">E</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">D</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">GP</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">GC</TableHead>
-            <TableHead className="text-center text-[#F4AF23]">SG</TableHead>
+          <TableRow className="border-b border-[#333] bg-transparent">
+            <TableHead className="w-[50px] text-center text-xs text-gray-400 font-normal py-2">P</TableHead>
+            <TableHead className="w-6"></TableHead>
+            <TableHead className="text-xs text-gray-400 font-normal py-2">TIME</TableHead>
+            <TableHead className="text-center text-xs text-gray-400 font-normal w-10 py-2">PTS</TableHead>
+            <TableHead className="text-center text-xs text-gray-400 font-normal w-10 py-2 hidden sm:table-cell">J</TableHead>
+            <TableHead className="text-center text-xs text-gray-400 font-normal w-10 py-2 hidden sm:table-cell">SG</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -68,63 +63,63 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
             return (
               <TableRow
                 key={team.id}
-                className="cursor-pointer hover:bg-[#252525] border-b border-[#333]"
+                className="cursor-pointer transition-colors hover:bg-[#1f1f1f] border-b border-[#333]"
                 onClick={() => onTeamSelect(team.id)}
               >
-                <TableCell className="text-center font-medium">
-                  <Badge style={positionStyle} className="w-6 h-6 flex items-center justify-center p-0">
-                    {index + 1}
-                  </Badge>
+                <TableCell className="text-center font-medium py-2">
+                  <div className="flex items-center justify-center">
+                    <Badge
+                      style={positionStyle}
+                      className="w-6 h-6 flex items-center justify-center p-0 text-xs font-medium rounded-full"
+                    >
+                      {index + 1}
+                    </Badge>
+                  </div>
                 </TableCell>
-                <TableCell className="w-8 px-1">
+                <TableCell className="w-6 px-1">
                   {positionChange && (
                     <div className="flex items-center justify-center">
                       {positionChange.direction === "up" ? (
-                        <ChevronsUp className="w-4 h-4 text-green-500" color="green" />
+                        <ChevronsUp className="w-3 h-3 text-green-400" />
                       ) : (
-                        <ChevronsDown className="w-4 h-4 text-red-500" />
+                        <ChevronsDown className="w-3 h-3 text-red-400" />
                       )}
                     </div>
                   )}
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
+                <TableCell className="py-2">
+                  <div className="flex items-center gap-2">
                     {team.logo && (
-                      <div className="w-10 h-10 relative">
+                      <div className="w-6 h-6 relative">
                         <Image
                           src={team.logo.url || "/placeholder.svg"}
                           alt={team.name}
-                          width={40}
-                          height={40}
+                          width={24}
+                          height={24}
                           className="object-contain"
                         />
                       </div>
                     )}
-                    <span className="font-medium">{team.name}</span>
+                    <span className="font-medium text-xs truncate">{team.name}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-center font-bold text-[#F4AF23]">{team.points}</TableCell>
-                <TableCell className="text-center">{team.played}</TableCell>
-                <TableCell className="text-center">{team.won}</TableCell>
-                <TableCell className="text-center">{team.drawn}</TableCell>
-                <TableCell className="text-center">{team.lost}</TableCell>
-                <TableCell className="text-center">{team.goalsFor}</TableCell>
-                <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                <TableCell className="text-center">{team.goalDifference}</TableCell>
+                <TableCell className="text-center font-bold text-[#F4AF23] text-sm py-2">{team.points}</TableCell>
+                <TableCell className="text-center text-xs text-gray-300 py-2 hidden sm:table-cell">{team.played}</TableCell>
+                <TableCell className="text-center text-xs text-gray-300 py-2 hidden sm:table-cell">{team.goalDifference}</TableCell>
               </TableRow>
             )
           })}
         </TableBody>
       </Table>
 
-      <div className="mt-4 text-sm text-gray-300">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge style={{ backgroundColor: "#4ade80" }} className="w-4 h-4 p-0"></Badge>
-          <span>Semifinal</span>
+      <div className="mt-4 px-2 pb-2 text-xs text-gray-400 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-1.5">
+          <Badge style={{ backgroundColor: "#4ade80" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
+          <span>SF</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge style={{ backgroundColor: "#F4AF23" }} className="w-4 h-4 p-0"></Badge>
-          <span>Playoff: Quartas de final</span>
+        <div className="flex items-center gap-1.5">
+          <Badge style={{ backgroundColor: "#F4AF23" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
+          <span>QF</span>
         </div>
       </div>
     </div>
