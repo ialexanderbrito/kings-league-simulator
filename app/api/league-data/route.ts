@@ -46,7 +46,7 @@ export async function GET() {
       // Se os dados já estão no formato esperado, usá-los diretamente
       rounds = matchesData.map((round: any) => ({
         id: round.id,
-        name: round.turnName,
+        name: round.turnName.replace('Jornada', 'Rodada'),
         ended: !!round.ended,
         startDate: round.startDate,
         finishDate: round.finishDate,
