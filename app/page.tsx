@@ -71,7 +71,14 @@ export default function KingsLeagueSimulator() {
     loadData()
   }, [])
 
-  const handleScoreUpdate = (roundId: number, matchId: number, homeScore: number | null, awayScore: number | null) => {
+  const handleScoreUpdate = (
+    roundId: number,
+    matchId: number,
+    homeScore: number | null,
+    awayScore: number | null,
+    homeShootoutScore?: number,
+    awayShootoutScore?: number
+  ) => {
     // Salvar standings atuais antes da atualização
     setPreviousStandings(standings)
 
@@ -94,6 +101,15 @@ export default function KingsLeagueSimulator() {
 
             if (awayScore !== null) {
               updatedScores.awayScore = awayScore
+            }
+
+            // Atualizar shootouts se fornecidos
+            if (homeShootoutScore !== undefined) {
+              updatedScores.homeScoreP = homeShootoutScore
+            }
+
+            if (awayShootoutScore !== undefined) {
+              updatedScores.awayScoreP = awayShootoutScore
             }
 
             return {
@@ -182,14 +198,7 @@ export default function KingsLeagueSimulator() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-[#1a1a1a]">
-            <TabsTrigger
-              value="standings"
-              className="flex items-center gap-2 data-[state=active]:bg-[#F4AF23] data-[state=active]:text-black"
-            >
-              <Trophy className="w-4 h-4" />
-              <span>Classificação</span>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-8 bg-[#1a1a1a]">
             <TabsTrigger
               value="matches"
               className="flex items-center gap-2 data-[state=active]:bg-[#F4AF23] data-[state=active]:text-black"
@@ -207,26 +216,28 @@ export default function KingsLeagueSimulator() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="standings" className="mt-0">
-            <Card className="bg-[#1a1a1a] border-[#333] text-white">
-              <CardHeader className="pb-2 border-b border-[#333]">
-                <CardTitle className="text-xl flex items-center gap-2 text-[#F4AF23]">
-                  <TableIcon className="w-5 h-5" />
-                  Tabela de Classificação
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StandingsTable
-                  standings={standings}
-                  onTeamSelect={handleTeamSelect}
-                  previousStandings={previousStandings}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="matches" className="mt-0">
-            <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={handleScoreUpdate} />
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
+              <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={handleScoreUpdate} />
+
+              <div className="space-y-6">
+                <Card className="bg-[#1a1a1a] border-[#333] text-white overflow-hidden lg:sticky lg:top-6">
+                  <CardHeader className="py-3 px-4 border-b border-[#333] bg-[#1f1f1f]">
+                    <CardTitle className="text-lg flex items-center gap-2 text-gray-200">
+                      <TableIcon className="w-4 h-4 text-[#F4AF23]" />
+                      Classificação
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <StandingsTable
+                      standings={standings}
+                      onTeamSelect={handleTeamSelect}
+                      previousStandings={previousStandings}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="team" className="mt-0">
