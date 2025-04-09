@@ -2,11 +2,8 @@ import type { LeagueData } from "@/types/kings-league"
 
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
-    console.log("Iniciando busca de dados da liga...")
-
     // Tentar buscar dados diretamente primeiro para diagnóstico
     try {
-      console.log("Tentando buscar dados diretamente para diagnóstico...")
       const directResponse = await fetch("/api/direct-matches")
 
       if (directResponse.ok) {
@@ -29,11 +26,8 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     })
 
     if (!response.ok) {
-      console.error(`API retornou status ${response.status}: ${response.statusText}`)
-
       try {
         const errorData = await response.json()
-        console.error("Detalhes do erro:", errorData)
         throw new Error(
           `Falha ao carregar dados (status: ${response.status}): ${errorData.message || "Erro desconhecido"}`,
         )
@@ -43,27 +37,18 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     }
 
     const data = await response.json()
-    console.log("Dados recebidos com sucesso:", {
-      teams: data.teams?.length || 0,
-      standings: data.standings?.length || 0,
-      rounds: data.rounds?.length || 0,
-    })
-
     // Verificar se a resposta contém um erro
     if (data.error) {
-      console.error("API retornou um erro:", data.error)
       throw new Error(data.error)
     }
 
     // Verificar se os dados têm a estrutura esperada
     if (!data.teams || !data.standings || !data.rounds) {
-      console.error("Dados incompletos recebidos da API:", data)
       throw new Error("Dados incompletos recebidos da API")
     }
 
     return data
   } catch (error) {
-    console.error("Erro ao buscar dados:", error)
     throw new Error(`Falha ao carregar dados da Kings League Brasil: ${error.message}`)
   }
 }
