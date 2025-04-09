@@ -129,9 +129,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                 const isMatchEnded = match.status === "ended"
 
                 if (!homeTeam || !awayTeam) {
-                  console.warn(
-                    `Time não encontrado: homeTeamId=${match.participants.homeTeamId}, awayTeamId=${match.participants.awayTeamId}`,
-                  )
+
                   return null
                 }
 
