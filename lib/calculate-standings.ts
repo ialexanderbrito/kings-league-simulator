@@ -28,7 +28,7 @@ export function calculateStandings(
   rounds.forEach((round) => {
     round.matches.forEach((match) => {
       const { homeTeamId, awayTeamId } = match.participants
-      const { homeScore, awayScore } = match.scores
+      const { homeScore, awayScore, homeScoreP, awayScoreP } = match.scores
 
       // Pular partidas que não foram jogadas ou simuladas
       if (homeScore === null || awayScore === null) {
@@ -86,21 +86,44 @@ export function calculateStandings(
 
       // Determinar o resultado da partida e atualizar pontos
       if (homeScore > awayScore) {
-        // Time da casa venceu
+        // Time da casa venceu no tempo normal
         standings[homeTeamId].won += 1
         standings[homeTeamId].points += 3
         standings[awayTeamId].lost += 1
       } else if (homeScore < awayScore) {
-        // Time visitante venceu
+        // Time visitante venceu no tempo normal
         standings[awayTeamId].won += 1
         standings[awayTeamId].points += 3
         standings[homeTeamId].lost += 1
       } else {
-        // Empate
-        standings[homeTeamId].drawn += 1
-        standings[homeTeamId].points += 1
-        standings[awayTeamId].drawn += 1
-        standings[awayTeamId].points += 1
+        // Empate - verificar shootouts
+        if (homeScoreP !== null && awayScoreP !== null) {
+          if (homeScoreP > awayScoreP) {
+            // Time da casa venceu nos pênaltis
+            standings[homeTeamId].won += 1
+            standings[homeTeamId].points += 2 // 2 pontos para vitória nos pênaltis
+            standings[awayTeamId].lost += 1
+            standings[awayTeamId].points += 1 // 1 ponto por perder nos pênaltis
+          } else if (awayScoreP > homeScoreP) {
+            // Time visitante venceu nos pênaltis
+            standings[awayTeamId].won += 1
+            standings[awayTeamId].points += 2 // 2 pontos para vitória nos pênaltis
+            standings[homeTeamId].lost += 1
+            standings[homeTeamId].points += 1 // 1 ponto por perder nos pênaltis
+          } else {
+            // Empate nos pênaltis (não deve acontecer, mas por segurança)
+            standings[homeTeamId].drawn += 1
+            standings[homeTeamId].points += 1
+            standings[awayTeamId].drawn += 1
+            standings[awayTeamId].points += 1
+          }
+        } else {
+          // Empate sem shootouts definidos
+          standings[homeTeamId].drawn += 1
+          standings[homeTeamId].points += 1
+          standings[awayTeamId].drawn += 1
+          standings[awayTeamId].points += 1
+        }
       }
     })
   })
@@ -133,10 +156,6 @@ export function calculateStandings(
 
   // Atualizar legendas de posição com base na classificação
   return sortedStandings.map((team, index) => {
-    // Encontrar a classificação original para obter a legenda de posição
-    const originalStanding = initialStandings.find((s) => s.id === team.id)
-
-    // Determinar a legenda de posição com base na classificação atual
     let positionLegend = null
     if (index === 0) {
       // Primeiro colocado - semifinal
