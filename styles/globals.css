@@ -26,30 +26,29 @@ body {
 
   .rotate-y-180 {
     transform: rotateY(180deg);
-    backface-visibility: hidden;
   }
-  
+
   .group:hover .group-hover\:rotate-y-180 {
     transform: rotateY(180deg);
   }
 
   .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   .shadow-glow-gold {
-    box-shadow: 0 0 8px 2px rgba(244, 175, 35, 0.6);
+    box-shadow: 0 0 10px rgba(244, 175, 35, 0.5);
   }
-  
+
   /* Animações para o componente Marquee */
   .animate-marquee {
     animation: marquee var(--duration) linear infinite;
   }
-  
+
   .animate-marquee-vertical {
     animation: marquee-vertical var(--duration) linear infinite;
   }
-  
+
   @keyframes marquee {
     from {
       transform: translateX(0);
@@ -58,7 +57,7 @@ body {
       transform: translateX(calc(-100% - var(--gap)));
     }
   }
-  
+
   @keyframes marquee-vertical {
     from {
       transform: translateY(0);
@@ -69,12 +68,25 @@ body {
   }
 
   @keyframes pulse {
-    0%, 100% {
-      opacity: 0.8;
-    }
-    50% {
-      opacity: 0.5;
-    }
+     0% {
+       opacity: 0.2;
+     }
+     50% {
+       opacity: 0.5;
+     }
+     100% {
+       opacity: 0.2;
+     }
+  }
+
+  /* Efeito de flip card para os jogadores */
+  .card-container {
+    transform-style: preserve-3d;
+    transition: all 0.8s ease;
+  }
+
+  .group:hover .card-container {
+    transform: rotateY(180deg);
   }
 }
 
@@ -146,6 +158,7 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --tab-accent: 45 100% 54%;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -190,4 +203,26 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Estilizações para o Tema e Cores do Time de Coração */
+.data\[state\=active\]\:bg-\[\#F4AF23\][data-state="active"] {
+  background-color: var(--tab-accent);
+  color: var(--tab-text, black);
+}
+
+/* Adicionar animação de pulso para o time favorito */
+.has-favorite-team .data\[state\=active\]\:bg-\[\#F4AF23\][data-state="active"] {
+  background-color: var(--tab-accent);
+  color: var(--tab-text, black);
+}
+
+/* Estilos adicionais para o tema do time favorito */
+.has-favorite-team .heart-favorite {
+  color: var(--tab-accent);
+  filter: drop-shadow(0 0 2px var(--tab-accent));
+}
+
+.has-favorite-team .team-favorite-highlight {
+  background: linear-gradient(to right, var(--tab-accent)15, transparent);
 }
