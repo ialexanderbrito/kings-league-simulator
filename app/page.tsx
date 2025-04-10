@@ -25,7 +25,6 @@ export default function KingsLeagueSimulator() {
   const [error, setError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const [usingFallback, setUsingFallback] = useState(false)
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
 
   const loadData = async () => {
     try {
@@ -156,7 +155,7 @@ export default function KingsLeagueSimulator() {
           />
         </div>
 
-        <DisclaimerNotice forceShow={showDisclaimer} />
+        <DisclaimerNotice forceShow={false} />
 
         {usingFallback && (
           <Alert className="mb-6 bg-[#332700] border-[#F4AF23] text-white">
