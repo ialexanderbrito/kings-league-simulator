@@ -204,25 +204,3 @@ body {
     @apply bg-background text-foreground;
   }
 }
-
-/* Estilizações para o Tema e Cores do Time de Coração */
-.data\[state\=active\]\:bg-\[\#F4AF23\][data-state="active"] {
-  background-color: var(--tab-accent);
-  color: var(--tab-text, black);
-}
-
-/* Adicionar animação de pulso para o time favorito */
-.has-favorite-team .data\[state\=active\]\:bg-\[\#F4AF23\][data-state="active"] {
-  background-color: var(--tab-accent);
-  color: var(--tab-text, black);
-}
-
-/* Estilos adicionais para o tema do time favorito */
-.has-favorite-team .heart-favorite {
-  color: var(--tab-accent);
-  filter: drop-shadow(0 0 2px var(--tab-accent));
-}
-
-.has-favorite-team .team-favorite-highlight {
-  background: linear-gradient(to right, var(--tab-accent)15, transparent);
-}
