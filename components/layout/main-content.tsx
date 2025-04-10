@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, Info, TableIcon } from "lucide-react"
@@ -27,6 +27,12 @@ export function MainContent({
   onScoreUpdate
 }: MainContentProps) {
   const [activeTab, setActiveTab] = useState<string>(selectedTeam ? "team" : "matches")
+
+  useEffect(() => {
+    if (selectedTeam) {
+      setActiveTab("team")
+    }
+  }, [selectedTeam])
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
