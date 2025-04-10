@@ -1,4 +1,4 @@
-import type { LeagueData } from "@/types/kings-league"
+import type { LeagueData, TeamDetails } from "@/types/kings-league"
 
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
@@ -50,5 +50,20 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     return data
   } catch (error) {
     throw new Error(`Falha ao carregar dados da Kings League Brasil: ${error.message}`)
+  }
+}
+
+export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
+  try {
+    const response = await fetch(`/api/team-details/${teamId}`)
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar detalhes do time: ${response.status} ${response.statusText}`)
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error(`Erro ao buscar detalhes do time ${teamId}:`, error)
+    throw error
   }
 }
