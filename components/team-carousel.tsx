@@ -3,16 +3,10 @@
 import * as React from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
+import { Marquee } from "@/components/ui/marquee"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/types/kings-league"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -23,7 +17,6 @@ interface TeamCarouselProps {
   loading?: boolean
 }
 
-// Componente de skeleton para o carrossel
 function TeamCarouselSkeleton() {
   const isMobile = useIsMobile()
 
@@ -43,7 +36,6 @@ function TeamCarouselSkeleton() {
           ))}
         </div>
 
-        {/* Botões de navegação apenas para desktop */}
         {!isMobile && (
           <div className="hidden sm:block">
             <div className="left-0 h-8 w-8 absolute top-1/2 -translate-y-1/2">
@@ -60,111 +52,64 @@ function TeamCarouselSkeleton() {
 }
 
 export default function TeamCarousel({ teams, onTeamSelect, className, loading = false }: TeamCarouselProps) {
-  const autoplayRef = useRef<NodeJS.Timeout | null>(null)
-  const isMobile = useIsMobile()
   const [isLoading, setIsLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
-  // Verificar se o componente foi montado no cliente
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Gerenciar o estado de loading com base nas props e no estado dos dados
   useEffect(() => {
     if (!mounted) return;
 
     if (loading || !teams?.length) {
       setIsLoading(true)
     } else {
-      // Pequeno delay para evitar flash de loading
       const timer = setTimeout(() => {
         setIsLoading(false)
-      }, 500) // Aumentei para 500ms para dar tempo de carregar as imagens
+      }, 500)
       return () => clearTimeout(timer)
     }
   }, [teams, loading, mounted])
 
-  // Configurar rolagem automática
-  useEffect(() => {
-    if (!mounted || isLoading) return;
-
-    // Limpar intervalo anterior se existir
-    if (autoplayRef.current) {
-      clearInterval(autoplayRef.current)
-    }
-
-    // Iniciar novo intervalo para rolagem automática
-    autoplayRef.current = setInterval(() => {
-      const nextButton = document.querySelector('[data-carousel-next]')
-      if (nextButton) {
-        nextButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-      }
-    }, 3000) // Avança a cada 3 segundos
-
-    return () => {
-      if (autoplayRef.current) {
-        clearInterval(autoplayRef.current)
-      }
-    }
-  }, [isLoading, mounted])
-
-  // Se não estiver no cliente, exibir skeleton para evitar hidratação incompatível
   if (!mounted || isLoading) {
     return <TeamCarouselSkeleton />
   }
 
   return (
     <div className={cn("w-full mx-auto", className)}>
-      <Carousel
-        opts={{
-          align: "center",
-          loop: true,
-        }}
-        className="w-full mx-auto relative px-6"
+      <Marquee
+        pauseOnHover
+        repeat={2}
+        className="w-full mx-auto relative px-2 [--duration:60s]"
       >
-        <CarouselContent className="-ml-2 md:-ml-4 mt-4">
-          {teams.map((team) => (
-            <CarouselItem key={team.id} className="pl-2 md:pl-4 basis-1/4 xs:basis-1/5 sm:basis-1/6 md:basis-1/7 lg:basis-1/8">
-              <div className="flex flex-col items-center gap-1">
-                <Button
-                  variant="ghost"
-                  className="rounded-lg w-full h-16 xs:h-20 sm:h-24 flex items-center justify-center p-1 sm:p-2 transition-all hover:bg-white/10 hover:scale-105 border-0"
-                  onClick={() => onTeamSelect(team.id)}
-                  style={{
-                    background: `linear-gradient(120deg, ${team.firstColorHEX}10, ${team.secondColorHEX}15)`
-                  }}
-                >
-                  {team.logo && (
-                    <Image
-                      src={team.logo.url}
-                      alt={team.name}
-                      width={70}
-                      height={70}
-                      className="object-contain w-auto h-auto max-w-[85%] max-h-[85%]"
-                      priority
-                    />
-                  )}
-                </Button>
-                <span
-                  className="text-[10px] sm:text-xs font-medium text-center text-white/80 max-w-full px-1 truncate"
-                  title={team.name} // Tooltip nativo para mostrar nome completo
-                >
-                  {team.name}
-                </span>
+        {teams.map((team) => (
+          <div key={team.id} className="px-3 md:px-4">
+            <Button
+              variant="ghost"
+              className="rounded-lg w-[100px] h-[100px] xs:w-[100px] xs:h-[100px] sm:w-[100px] sm:h-[100px] md:w-[100px] md:h-[100px] flex flex-col items-center justify-center p-3 transition-all hover:bg-white/10 hover:scale-105 border-0"
+              onClick={() => onTeamSelect(team.id)}
+              style={{
+                background: `linear-gradient(120deg, ${team.firstColorHEX}15, ${team.secondColorHEX}25)`
+              }}
+              title={team.name}
+            >
+              <div className="flex items-center justify-center w-full h-full">
+                {team.logo && (
+                  <Image
+                    src={team.logo.url}
+                    alt={team.name}
+                    width={70}
+                    height={70}
+                    className="object-contain w-auto h-auto max-w-[85%] max-h-[85%]"
+                    priority
+                  />
+                )}
               </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-
-        {/* Botões de navegação apenas para desktop */}
-        {!isMobile && (
-          <div className="hidden sm:block">
-            <CarouselPrevious className="left-0 h-8 w-8 border shadow-sm opacity-70 hover:opacity-100" />
-            <CarouselNext className="right-0 h-8 w-8 border shadow-sm opacity-70 hover:opacity-100" />
+            </Button>
           </div>
-        )}
-      </Carousel>
+        ))}
+      </Marquee>
     </div>
   )
 }
