@@ -254,7 +254,7 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                           )}
                         </TableCell>
                         <TableCell className="py-2">
-                          <div className="team-container flex items-center gap-2 min-w-0">
+                          <div className="team-container flex items-center gap-2 min-w-0 max-w-[180px] sm:max-w-full">
                             {team.logo && (
                               <div className="team-logo w-6 h-6 flex-shrink-0 flex items-center justify-center">
                                 <Image
@@ -266,7 +266,12 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                                 />
                               </div>
                             )}
-                            <span className="font-medium text-xs truncate flex-1">{team.name}</span>
+                            <span
+                              className="font-medium text-xs truncate flex-1"
+                              title={team.name} // Tooltip nativo para mostrar nome completo
+                            >
+                              {team.name}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-center font-bold text-[#F4AF23] text-sm py-2 w-16">{team.points}</TableCell>
