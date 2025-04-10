@@ -5,11 +5,11 @@ import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata: Metadata = {
   title: 'Kings League Simulator',
-  description: 'Simulador oficial da Kings League, onde você pode acompanhar partidas, classificação e estatísticas dos times.',
-  keywords: 'kings league, futebol, simulador, esportes, campeonato',
+  description: 'Simulador da Kings League, onde você pode explorar partidas, classificação e estatísticas dos times. Este site não possui nenhuma relação oficial com a Kings League.',
+  keywords: 'kings league, futebol, simulador, esportes, campeonato, estatísticas futebol, simulador de torneio',
   authors: [{ name: 'ialexanderbrito', url: 'https://ialexanderbrito.dev' }],
   creator: 'ialexanderbrito',
-  publisher: 'Kings League',
+  publisher: 'Kings League Simulator',
   robots: {
     index: true,
     follow: true,
@@ -19,22 +19,25 @@ export const metadata: Metadata = {
     locale: 'pt_BR',
     url: 'https://kings-league-simulator.vercel.app',
     title: 'Kings League Simulator',
-    description: 'Simulador oficial da Kings League, acompanhe partidas e estatísticas',
+    description: 'Simulador da Kings League, explore partidas, classificação e estatísticas. Este site não possui vínculo com a Kings League oficial.',
     siteName: 'Kings League Simulator',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Kings League Simulator Preview',
+        alt: 'Kings League Simulator - Simulador Não Oficial',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Kings League Simulator',
-    description: 'Simulador oficial da Kings League, acompanhe partidas e estatísticas',
-    images: ['/og-image.png'],
+    description: 'Simulador da Kings League, explore partidas, classificação e estatísticas. Sem vínculo com a Kings League oficial.',
+    images: ['/og-image-x.png'],
+  },
+  alternates: {
+    canonical: 'https://kings-league-simulator.vercel.app',
   },
 }
 
