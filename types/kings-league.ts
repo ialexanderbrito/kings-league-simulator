@@ -1,21 +1,69 @@
+// Tipos para a API da Kings League
+
+export interface LeagueData {
+  id: number
+  name: string
+  displayName: string
+  teams: Team[]
+  standings: TeamStanding[]
+  rounds: Round[]
+}
+
 export interface Team {
   id: string
   name: string
   shortName: string
   completeName?: string
-  countryId?: number
+  countryId: number
   firstColorHEX: string
   secondColorHEX: string
   logo: {
     url: string
-  } | null
-  gender?: string
+  }
+  gender: string
+  metaInformation?: {
+    tiktok_url?: string
+    twitch_url?: string
+    youtube_url?: string
+    flag_team_url?: string
+    instagram_url?: string
+    wildcard_kwcc?: string
+    loop_video_poster?: string
+  }
+}
+
+export interface TeamStanding {
+  id: string
+  name: string
+  shortName: string
+  logo: {
+    url: string
+  }
+  points: number
+  played: number
+  won: number
+  drawn: number
+  lost: number
+  goalsFor: number
+  goalsAgainst: number
+  goalDifference: number
+  positionLegend: string
+  rank: number
+}
+
+export interface Round {
+  id: number
+  name: string
+  ended: boolean
+  startDate: string
+  finishDate: string
+  matches: Match[]
 }
 
 export interface Match {
   id: number
   date: string
-  status: string | null
+  status: string
   participants: {
     homeTeamId: string
     awayTeamId: string
@@ -28,52 +76,82 @@ export interface Match {
     homeScore2T: number | null
     awayScore2T: number | null
     homeScore3T: number | null
-    awayScore3T: null
+    awayScore3T: number | null
     homeScoreP: number | null
     awayScoreP: number | null
   }
   metaInformation?: {
     youtube_url?: string
-    [key: string]: any
   }
 }
 
-export interface Round {
-  id: number
-  name: string
-  ended: boolean
-  startDate?: string
-  finishDate?: string
-  matches: Match[]
+// Novos tipos para detalhes de times
+
+export interface TeamDetails extends Team {
+  staff: StaffMember[]
+  players: Player[]
+  currentSeasons?: {
+    id: number
+    competitionId: number
+    name: string
+    displayName: string
+    start: string
+    finish: string
+    finished: boolean
+    image: {
+      url: string
+    }
+    isCurrent: boolean
+    metaInformation?: Record<string, string>
+    winnerTeamId?: number | null
+  }[]
 }
 
-export interface TeamStanding {
-  id: string
-  name: string
+export interface StaffMember {
+  id: number
   shortName: string
-  logo: {
+  firstName: string
+  lastName: string
+  middleName?: string | null
+  role: string
+  countryId: number
+  image?: {
     url: string
-  } | null
-  points: number
-  played: number
-  won: number
-  drawn: number
-  lost: number
-  goalsFor: number
-  goalsAgainst: number
-  goalDifference: number
-  positionLegend: {
-    color: string
-    placement: string
-  } | null
-  rank?: number
+  }
+  gender: string | null
+  birthDate?: string | null
+  metaInformation?: Record<string, string> | null
 }
 
-export interface LeagueData {
+export interface Player {
   id: number
-  name: string
-  displayName: string
-  teams: Team[]
-  standings: TeamStanding[]
-  rounds: Round[]
+  shortName: string
+  role: "goalkeeper" | "defender" | "midfielder" | "forward"
+  gender: string
+  countryId: number
+  jersey: string
+  birthDate: string
+  height: number
+  image?: {
+    url: string
+  }
+  metaInformation?: {
+    duels?: string
+    skills?: string
+    average?: string
+    defence?: string
+    passing?: string
+    physical?: string
+    shooting?: string
+    matchLink?: string
+    videoLink?: string
+    diving?: string
+    handling?: string
+    reflexes?: string
+    anticipation?: string
+    goalkeeperPassing?: string
+    status?: string
+    jerseyNumber?: string
+  } | null
+  category?: "wildcard" | "draft" | null
 }
