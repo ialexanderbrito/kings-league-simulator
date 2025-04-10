@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Trophy, Calendar, TableIcon, Info, AlertTriangle } from "lucide-react"
+import { Trophy, Calendar, TableIcon, Info, AlertTriangle, Share2, Facebook, Twitter, Phone, Link } from "lucide-react"
 import MatchesTable from "@/components/matches-table"
 import StandingsTable from "@/components/standings-table"
 import TeamInfo from "@/components/team-info"
@@ -19,6 +19,7 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import TeamCarousel from "@/components/team-carousel"
 import DisclaimerNotice from "@/components/disclaimer-notice"
+import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react/dist/ssr'
 
 // Componente de esqueleto para a tabela de classificação
 function StandingsTableSkeleton() {
@@ -352,6 +353,51 @@ export default function KingsLeagueSimulator() {
 
             {/* Menu de seleção de equipes - desktop */}
             <div className="flex items-center gap-2">
+              {/* Botão de compartilhamento */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="bg-black/50 border border-[#333]/60 hover:bg-[#252525] transition-colors rounded-full w-9 h-9 flex items-center justify-center"
+                    aria-label="Compartilhar site"
+                  >
+                    <Share2 className="h-4 w-4 text-[#F4AF23]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-[#1a1a1a] border-[#333] text-white" align="end">
+                  <DropdownMenuLabel className="text-xs font-normal text-gray-400 uppercase tracking-wider">Compartilhar</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#333]" />
+                  {[
+                    { name: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`, icon: "facebook" },
+                    { name: "Twitter", href: `https://twitter.com/intent/tweet?text=🔥 Simule os resultados da Kings League Brasil! Teste suas previsões e veja como fica a tabela de classificação 🏆⚽ &url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`, icon: "twitter" },
+                    { name: "WhatsApp", href: `https://wa.me/?text=🏆 *Simulador Kings League Brasil!* Acabei de testar este simulador de resultados da liga! Confira: ${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`, icon: "whatsapp" },
+                    { name: "Copiar link", action: "copy", icon: "link" }
+                  ].map((item) => (
+                    <DropdownMenuItem
+                      key={item.name}
+                      className="cursor-pointer flex items-center gap-2 hover:bg-[#252525] focus:bg-[#252525]"
+                      onClick={() => {
+                        if (item.action === "copy") {
+                          navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app');
+                          // Poderia adicionar um toast aqui para feedback
+                        } else if (item.href) {
+                          window.open(item.href, "_blank", "noopener,noreferrer");
+                        }
+                      }}
+                    >
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center bg-[#252525]">
+                        {item.icon === "facebook" && <FacebookLogo className="h-3.5 w-3.5 text-blue-400" />}
+                        {item.icon === "twitter" && <XLogo className="h-3.5 w-3.5 text-white" />}
+                        {item.icon === "whatsapp" && <WhatsappLogo className="h-3.5 w-3.5 text-green-400" />}
+                        {item.icon === "link" && <Link className="h-3.5 w-3.5 text-gray-400" />}
+                      </div>
+                      <span className="truncate">{item.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="hidden sm:flex items-center gap-2 bg-black/50 border-[#333] hover:bg-[#252525] hover:border-[#444] transition-all duration-200">
