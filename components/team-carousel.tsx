@@ -29,10 +29,10 @@ function TeamCarouselSkeleton() {
 
   return (
     <div className="w-full mx-auto">
-      <div className="max-w-lg sm:max-w-3xl lg:max-w-5xl mx-auto relative">
+      <div className="w-full mx-auto relative px-6">
         <div className="-ml-2 md:-ml-4 mt-4 flex overflow-hidden">
           {Array(10).fill(0).map((_, i) => (
-            <div key={i} className="pl-2 md:pl-4 basis-1/4 sm:basis-1/5 md:basis-1/6 animate-pulse">
+            <div key={i} className="pl-2 md:pl-4 basis-1/4 xs:basis-1/5 sm:basis-1/6 md:basis-1/7 lg:basis-1/8 animate-pulse">
               <div className="flex flex-col items-center gap-1">
                 <div className="rounded-lg w-full h-20 sm:h-24 flex items-center justify-center p-2 bg-[#1a1a1a]/40">
                   <Skeleton className="w-[70px] h-[70px] rounded-md" />
@@ -46,10 +46,10 @@ function TeamCarouselSkeleton() {
         {/* Botões de navegação apenas para desktop */}
         {!isMobile && (
           <div className="hidden sm:block">
-            <div className="-left-6 h-8 w-8 absolute top-1/2 -translate-y-1/2">
+            <div className="left-0 h-8 w-8 absolute top-1/2 -translate-y-1/2">
               <Skeleton className="h-8 w-8 rounded-full" />
             </div>
-            <div className="-right-6 h-8 w-8 absolute top-1/2 -translate-y-1/2">
+            <div className="right-0 h-8 w-8 absolute top-1/2 -translate-y-1/2">
               <Skeleton className="h-8 w-8 rounded-full" />
             </div>
           </div>
@@ -121,15 +121,15 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
           align: "center",
           loop: true,
         }}
-        className="max-w-lg sm:max-w-3xl lg:max-w-5xl mx-auto relative"
+        className="w-full mx-auto relative px-6"
       >
         <CarouselContent className="-ml-2 md:-ml-4 mt-4">
           {teams.map((team) => (
-            <CarouselItem key={team.id} className="pl-2 md:pl-4 basis-1/4 sm:basis-1/5 md:basis-1/6">
+            <CarouselItem key={team.id} className="pl-2 md:pl-4 basis-1/4 xs:basis-1/5 sm:basis-1/6 md:basis-1/7 lg:basis-1/8">
               <div className="flex flex-col items-center gap-1">
                 <Button
                   variant="ghost"
-                  className="rounded-lg w-full h-20 sm:h-24 flex items-center justify-center p-2 transition-all hover:bg-white/10 hover:scale-105 border-0"
+                  className="rounded-lg w-full h-16 xs:h-20 sm:h-24 flex items-center justify-center p-1 sm:p-2 transition-all hover:bg-white/10 hover:scale-105 border-0"
                   onClick={() => onTeamSelect(team.id)}
                   style={{
                     background: `linear-gradient(120deg, ${team.firstColorHEX}10, ${team.secondColorHEX}15)`
@@ -141,12 +141,15 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
                       alt={team.name}
                       width={70}
                       height={70}
-                      className="object-contain w-auto h-auto max-w-[80%] max-h-[80%]"
+                      className="object-contain w-auto h-auto max-w-[85%] max-h-[85%]"
                       priority
                     />
                   )}
                 </Button>
-                <span className="text-xs font-medium text-center text-white/80 max-w-full px-1 truncate">
+                <span
+                  className="text-[10px] sm:text-xs font-medium text-center text-white/80 max-w-full px-1 truncate"
+                  title={team.name} // Tooltip nativo para mostrar nome completo
+                >
                   {team.name}
                 </span>
               </div>
@@ -157,8 +160,8 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
         {/* Botões de navegação apenas para desktop */}
         {!isMobile && (
           <div className="hidden sm:block">
-            <CarouselPrevious className="-left-6 h-8 w-8 border shadow-sm opacity-70 hover:opacity-100" />
-            <CarouselNext className="-right-6 h-8 w-8 border shadow-sm opacity-70 hover:opacity-100" />
+            <CarouselPrevious className="left-0 h-8 w-8 border shadow-sm opacity-70 hover:opacity-100" />
+            <CarouselNext className="right-0 h-8 w-8 border shadow-sm opacity-70 hover:opacity-100" />
           </div>
         )}
       </Carousel>
