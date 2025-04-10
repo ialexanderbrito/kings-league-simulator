@@ -106,24 +106,48 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
     roundId: number,
     matchId: number,
     team: "home" | "away",
-    value: string
+    value: string,
+    isBackspace?: boolean
   ) => {
     const matchKey = `${roundId}-${matchId}`
 
+    // Se for backspace e o valor tiver apenas um dígito, limpar o campo
+    if (isBackspace) {
+      setScores((prev) => {
+        const currentMatch = prev[matchKey] || { home: "", away: "", shootoutWinner: null }
+        return {
+          ...prev,
+          [matchKey]: {
+            ...currentMatch,
+            [team]: ""
+          }
+        }
+      })
+
+      onScoreUpdate(
+        roundId,
+        matchId,
+        team === "home" ? null : null,
+        team === "away" ? null : null,
+        undefined,
+        undefined
+      )
+      return
+    }
+
+    // Tratar entrada normal de números
     setScores((prev) => {
       const currentMatch = prev[matchKey] || { home: "", away: "", shootoutWinner: null }
-      const updatedMatch = {
-        ...currentMatch,
-        [team]: value,
-      }
-
       return {
         ...prev,
-        [matchKey]: updatedMatch,
+        [matchKey]: {
+          ...currentMatch,
+          [team]: value
+        }
       }
     })
 
-    const score = value === "" ? null : Number.parseInt(value, 10)
+    const score = value === "" ? null : Number(value)
 
     onScoreUpdate(
       roundId,
@@ -151,6 +175,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
 
     const currentScores = scores[matchKey]
     // Atribuindo valores corretos para pênaltis: o vencedor recebe valor maior
+    // ou null quando não há vencedor definido
     onScoreUpdate(
       roundId,
       matchId,
@@ -159,6 +184,14 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
       winner === "home" ? 5 : winner === "away" ? 3 : null,
       winner === "home" ? 3 : winner === "away" ? 5 : null
     )
+
+    // Se não houver vencedor definido, ocultar a seção de pênaltis
+    if (winner === null) {
+      setShowShootout(prev => ({
+        ...prev,
+        [matchKey]: false
+      }))
+    }
   }
 
   useEffect(() => {
@@ -302,21 +335,23 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                             key={match.id}
                             className="bg-[#252525] rounded-md p-3 border border-[#333] hover:border-[#444] transition-colors"
                           >
-                            <div className="grid grid-cols-[1fr,auto,1fr] sm:grid-cols-[2fr,1fr,2fr] items-center gap-2 md:gap-4 w-full">
+                            <div className="grid grid-cols-[minmax(0,1.2fr),auto,minmax(0,1.2fr)] sm:grid-cols-[minmax(0,1.5fr),auto,minmax(0,1.5fr)] items-center gap-2 md:gap-4 w-full">
                               {/* Time da casa */}
-                              <div className="flex items-center justify-end gap-2">
+                              <div className={cn("flex items-center justify-end gap-1 sm:gap-2 min-w-0", showShootoutInputs ? 'mt-0' : 'mt-4')}>
                                 <div className="flex-1 text-right overflow-hidden">
                                   <p className={cn(
-                                    "font-medium text-sm md:text-base truncate",
+                                    "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
                                     winner === 'home' ? "text-green-400" : "text-white"
-                                  )}>
+                                  )}
+                                    title={homeTeam.name} // Tooltip nativo para mostrar nome completo
+                                  >
                                     {homeTeam.name}
                                   </p>
-                                  <p className="text-xs text-gray-400 hidden md:block">
+                                  <p className="text-xs text-gray-400 hidden md:block truncate">
                                     {homeTeam.shortName}
                                   </p>
                                 </div>
-                                <div className="w-10 h-10 relative flex-shrink-0">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0">
                                   <Image
                                     src={homeTeam.logo?.url || "/placeholder.svg"}
                                     alt={homeTeam.name}
@@ -328,8 +363,8 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                               </div>
 
                               {/* Placar */}
-                              <div className="flex flex-col items-center">
-                                <div className="text-xs text-gray-400 mb-1">
+                              <div className="flex flex-col items-center px-1 sm:px-2">
+                                <div className="text-[10px] sm:text-xs text-gray-400 mb-1 text-center">
                                   {formatDate(match.date)}
                                 </div>
 
@@ -337,14 +372,14 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                   <div className="flex flex-col items-center">
                                     <div className="flex items-center justify-center">
                                       <div className={cn(
-                                        "w-8 h-8 flex items-center justify-center rounded bg-[#333] font-semibold",
+                                        "w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded bg-[#333] font-semibold text-sm sm:text-base",
                                         winner === 'home' && "bg-green-900/50"
                                       )}>
                                         {match.scores.homeScore}
                                       </div>
                                       <span className="text-gray-400 mx-1">:</span>
                                       <div className={cn(
-                                        "w-8 h-8 flex items-center justify-center rounded bg-[#333] font-semibold",
+                                        "w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded bg-[#333] font-semibold text-sm sm:text-base",
                                         winner === 'away' && "bg-green-900/50"
                                       )}>
                                         {match.scores.awayScore}
@@ -354,9 +389,9 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                     {/* Mostrar pênaltis abaixo do placar principal */}
                                     {match.scores.homeScoreP !== null && match.scores.awayScoreP !== null && (
                                       <div className="flex items-center mt-1.5">
-                                        <span className="text-xs text-gray-400 mr-1">(pen</span>
+                                        <span className="text-[10px] sm:text-xs text-gray-400 mr-1">(pen</span>
                                         <span className={cn(
-                                          "text-xs font-medium",
+                                          "text-[10px] sm:text-xs font-medium",
                                           match.scores.homeScoreP > match.scores.awayScoreP
                                             ? "text-green-400"
                                             : "text-gray-400"
@@ -365,14 +400,14 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                         </span>
                                         <span className="text-gray-400 mx-0.5">:</span>
                                         <span className={cn(
-                                          "text-xs font-medium",
+                                          "text-[10px] sm:text-xs font-medium",
                                           match.scores.awayScoreP > match.scores.homeScoreP
                                             ? "text-green-400"
                                             : "text-gray-400"
                                         )}>
                                           {match.scores.awayScoreP}
                                         </span>
-                                        <span className="text-xs text-gray-400 ml-1">)</span>
+                                        <span className="text-[10px] sm:text-xs text-gray-400 ml-1">)</span>
                                       </div>
                                     )}
                                   </div>
@@ -386,15 +421,22 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                         maxLength={2}
                                         className="w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[#F4AF23] text-white text-sm"
                                         value={currentScores.home}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Backspace" && currentScores.home.length === 1) {
+                                            handleScoreChange(round.id, match.id, "home", "", true);
+                                          }
+                                        }}
                                         onChange={(e) => {
                                           const value = e.target.value.replace(/[^0-9]/g, "");
-                                          handleScoreChange(round.id, match.id, "home", value);
+                                          if (value.length <= 2) {
+                                            handleScoreChange(round.id, match.id, "home", value);
 
-                                          if (value && value === currentScores.away) {
-                                            setShowShootout(prev => ({
-                                              ...prev,
-                                              [matchKey]: true
-                                            }))
+                                            if (value && value === currentScores.away) {
+                                              setShowShootout(prev => ({
+                                                ...prev,
+                                                [matchKey]: true
+                                              }))
+                                            }
                                           }
                                         }}
                                         aria-label={`Placar ${homeTeam.name}`}
@@ -407,15 +449,22 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                         maxLength={2}
                                         className="w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[#F4AF23] text-white text-sm"
                                         value={currentScores.away}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Backspace" && currentScores.away.length === 1) {
+                                            handleScoreChange(round.id, match.id, "away", "", true);
+                                          }
+                                        }}
                                         onChange={(e) => {
                                           const value = e.target.value.replace(/[^0-9]/g, "");
-                                          handleScoreChange(round.id, match.id, "away", value);
+                                          if (value.length <= 2) {
+                                            handleScoreChange(round.id, match.id, "away", value);
 
-                                          if (value && value === currentScores.home) {
-                                            setShowShootout(prev => ({
-                                              ...prev,
-                                              [matchKey]: true
-                                            }))
+                                            if (value && value === currentScores.home) {
+                                              setShowShootout(prev => ({
+                                                ...prev,
+                                                [matchKey]: true
+                                              }))
+                                            }
                                           }
                                         }}
                                         aria-label={`Placar ${awayTeam.name}`}
@@ -474,7 +523,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                     href={match.metaInformation.youtube_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-[#F4AF23] hover:underline text-xs mt-1"
+                                    className="flex items-center gap-1 text-[#F4AF23] hover:underline text-[10px] sm:text-xs mt-1"
                                   >
                                     <Youtube className="w-3 h-3" />
                                     <span>Assistir</span>
@@ -483,8 +532,8 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                               </div>
 
                               {/* Time visitante */}
-                              <div className="flex items-center justify-start gap-2">
-                                <div className="w-10 h-10 relative flex-shrink-0">
+                              <div className={cn("flex items-center justify-start gap-1 sm:gap-2", showShootoutInputs ? 'mt-0' : 'mt-4')}>
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0">
                                   <Image
                                     src={awayTeam.logo?.url || "/placeholder.svg"}
                                     alt={awayTeam.name}
@@ -495,12 +544,14 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                 </div>
                                 <div className="flex-1 text-left overflow-hidden">
                                   <p className={cn(
-                                    "font-medium text-sm md:text-base truncate",
+                                    "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
                                     winner === 'away' ? "text-green-400" : "text-white"
-                                  )}>
+                                  )}
+                                    title={awayTeam.name} // Tooltip nativo para mostrar nome completo
+                                  >
                                     {awayTeam.name}
                                   </p>
-                                  <p className="text-xs text-gray-400 hidden md:block">
+                                  <p className="text-xs text-gray-400 hidden md:block truncate">
                                     {awayTeam.shortName}
                                   </p>
                                 </div>
