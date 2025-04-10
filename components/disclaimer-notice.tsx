@@ -15,37 +15,31 @@ export default function DisclaimerNotice({ forceShow = false }: DisclaimerNotice
   const [isClosing, setIsClosing] = useState(false)
 
   useEffect(() => {
-    // Só executa no lado do cliente
     setIsMounted(true)
 
-    // Se forceShow for true, exibimos independentemente do localStorage
     if (forceShow) {
       setIsVisible(true);
       return;
     }
 
-    // Verifica se o usuário já fechou o disclaimer anteriormente
-    const disclaimerClosed = localStorage.getItem('disclaimer-closed')
+    const disclaimerClosed = localStorage.getItem('kl-simulador:disclaimer-closed')
     if (!disclaimerClosed) {
       setIsVisible(true)
     }
   }, [forceShow])
 
   const handleClose = () => {
-    // Inicia a animação de fechamento
     setIsClosing(true)
 
-    // Após a animação, esconde o componente e salva no localStorage
     setTimeout(() => {
       if (!forceShow) {
-        localStorage.setItem('disclaimer-closed', 'true')
+        localStorage.setItem('@kl-simulador:disclaimer-closed', 'true')
       }
       setIsVisible(false)
       setIsClosing(false)
-    }, 300) // Tempo da transição
+    }, 300)
   }
 
-  // Se não estiver montado (SSR) ou não estiver visível, não renderiza nada
   if (!isMounted || !isVisible) {
     return null
   }
