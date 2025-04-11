@@ -71,7 +71,6 @@ export default function KingsLeagueSimulator() {
     homeShootoutScore?: number,
     awayShootoutScore?: number
   ) => {
-    // Salvar standings atuais antes da atualização
     setPreviousStandings(standings)
 
     const updatedRounds = rounds.map((round) => {
@@ -92,7 +91,6 @@ export default function KingsLeagueSimulator() {
               updatedScores.awayScore = awayScore
             }
 
-            // Atualizar shootouts se fornecidos
             if (homeShootoutScore !== undefined) {
               updatedScores.homeScoreP = homeShootoutScore
             }
