@@ -22,7 +22,7 @@ export default function DisclaimerNotice({ forceShow = false }: DisclaimerNotice
       return;
     }
 
-    const disclaimerClosed = localStorage.getItem('kl-simulador:disclaimer-closed')
+    const disclaimerClosed = localStorage.getItem('@kl-simulador:disclaimer-closed')
     if (!disclaimerClosed) {
       setIsVisible(true)
     }
