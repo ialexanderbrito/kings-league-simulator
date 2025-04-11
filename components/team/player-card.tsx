@@ -1,7 +1,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import type { Player } from "@/types/kings-league"
-import { calculateAge } from "@/lib/utils"
+import { calculateAge, cn } from "@/lib/utils"
 
 interface PlayerCardProps {
   player: Player
@@ -9,6 +9,8 @@ interface PlayerCardProps {
 
 export function PlayerCard({ player }: PlayerCardProps) {
   const [showStats, setShowStats] = useState(true)
+
+  const isWildcard = player.category === "wildcard"
 
   const roleMap = {
     goalkeeper: "Goleiro",
@@ -25,9 +27,9 @@ export function PlayerCard({ player }: PlayerCardProps) {
   }
 
   const age = player.birthDate ? calculateAge(player.birthDate) : null
-  const isWildcard = player.category === "wildcard"
 
-  const calculateRating = (): number => {
+  const calculateRating = (): number | null => {
+    if (isWildcard) return null
     if (!player.metaInformation) return 75
 
     if (player.role === 'goalkeeper') {
@@ -65,7 +67,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
       }
     }
 
-    if (playerRating >= 87) {
+    if (playerRating && playerRating >= 87) {
       return {
         borderColor: "#3D6EB9",
         headerBg: "bg-gradient-to-r from-blue-700 to-blue-900",
@@ -75,7 +77,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         imageBg: "bg-gradient-to-b from-blue-700/30 to-blue-900/20"
       }
     }
-    if (playerRating >= 83) {
+    if (playerRating && playerRating >= 83) {
       return {
         borderColor: "#D53121",
         headerBg: "bg-gradient-to-r from-red-700 to-red-900",
@@ -85,7 +87,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         imageBg: "bg-gradient-to-b from-red-700/30 to-red-900/20"
       }
     }
-    if (playerRating >= 78) {
+    if (playerRating && playerRating >= 78) {
       return {
         borderColor: "#10694D",
         headerBg: "bg-gradient-to-r from-green-700 to-green-900",
@@ -233,7 +235,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full ${cardStyle.ratingBg} ${cardStyle.ratingText} font-bold text-xl`}>
-                {playerRating}
+                {isWildcard ? "★" : playerRating}
               </div>
               <div>
                 <h3 className="font-bold text-white whitespace-nowrap">{player.shortName}</h3>
@@ -273,13 +275,16 @@ export function PlayerCard({ player }: PlayerCardProps) {
         </div>
 
         <div className="p-3 bg-[#1a1a1a]">
+
           <div className="flex justify-end mb-2">
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setShowStats(!showStats)
               }}
-              className="text-xs px-2 py-1 rounded bg-[#333] text-gray-300 hover:bg-[#444] transition-colors"
+              className={cn("text-xs px-2 py-1 rounded bg-[#333] text-gray-300 hover:bg-[#444] transition-colors",
+                isWildcard && "opacity-0 pointer-events-none"
+              )}
             >
               {showStats ? "Ver Atributos" : "Ver Estatísticas"}
             </button>
@@ -302,7 +307,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
             </div>
           </div>
 
-          {showStats ? renderGameStats() : renderAttributeBars()}
+          {isWildcard ? renderGameStats() : (showStats ? renderGameStats() : renderAttributeBars())}
         </div>
       </div>
     </div>
