@@ -5,16 +5,15 @@ export async function GET(
   { params }: { params: { teamId: string } }
 ) {
   try {
-    const teamId = params.teamId
+    const { teamId } = await params
 
-    // Buscar detalhes do time
     const teamDetailsResponse = await fetch(`https://kingsleague.pro/api/v1/competition/teams/${teamId}`, {
       headers: {
         referer: "https://kingsleague.pro/pt/brazil/teams",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       },
-      next: { revalidate: 3600 }, // Revalidar a cada hora
+      next: { revalidate: 3600 }, 
     })
 
     if (!teamDetailsResponse.ok) {
@@ -23,7 +22,6 @@ export async function GET(
 
     const teamDetails = await teamDetailsResponse.json()
 
-    // Buscar staff (presidente, treinadores)
     const staffResponse = await fetch(
       `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/33/staffs`,
       {
@@ -36,7 +34,6 @@ export async function GET(
       }
     )
 
-    // Buscar jogadores
     const playersResponse = await fetch(
       `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/33/players`,
       {
@@ -49,18 +46,49 @@ export async function GET(
       }
     )
 
-    // Compilar todos os dados
-    const staffData = staffResponse.ok ? await staffResponse.json() : { staffs: [] }
-    const playersData = playersResponse.ok ? await playersResponse.json() : []
+    let staffData = { staffs: [] };
+    if (staffResponse.ok) {
+      try {
+        staffData = await staffResponse.json();
+      } catch (error) {
+        console.error("Erro ao processar dados do staff:", error);
+      }
+    } else {
+      console.warn(`Erro na resposta do staff: ${staffResponse.status}`);
+    }
 
-    // Formatar resposta
+    let playersData = [];
+    if (playersResponse.ok) {
+      try {
+        playersData = await playersResponse.json();
+        
+        if (!Array.isArray(playersData)) {
+          console.warn("Dados de jogadores não estão em formato de array:", playersData);
+          playersData = [];
+        }
+        
+        playersData = playersData.map(player => ({
+          ...player,
+          role: player.role || 'midfielder', 
+          height: player.height || 175, 
+          stats: null, 
+          metaInformation: player.metaInformation || {} 
+        }));
+      } catch (error) {
+        console.error("Erro ao processar dados dos jogadores:", error);
+      }
+    } else {
+      console.warn(`Erro na resposta dos jogadores: ${playersResponse.status}`);
+    }
+
     const response = {
       ...teamDetails,
       staff: staffData.staffs || [],
       players: playersData || [],
     }
 
-    // Configurar cabeçalhos CORS
+  
+
     return new NextResponse(JSON.stringify(response), {
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -69,7 +97,8 @@ export async function GET(
         "Content-Type": "application/json",
       },
     })
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Erro na API de detalhes do time:", error);
     return NextResponse.json(
       {
         error: "Falha ao carregar detalhes do time",
@@ -87,7 +116,6 @@ export async function GET(
   }
 }
 
-// Adicionar suporte para preflight OPTIONS
 export async function OPTIONS() {
   return new NextResponse(null, {
     headers: {

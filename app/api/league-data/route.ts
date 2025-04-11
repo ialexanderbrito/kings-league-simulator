@@ -4,14 +4,13 @@ import type { LeagueData, Team, TeamStanding, Round } from "@/types/kings-league
 export async function GET() {
   try {
 
-    // Buscar dados da temporada
     const seasonResponse = await fetch("https://kingsleague.pro/api/v1/competition/seasons/33", {
       headers: {
         referer: "https://kingsleague.pro/pt/brazil/classificacao",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       },
-      next: { revalidate: 3600 }, // Revalidar a cada hora
+      next: { revalidate: 3600 },
     })
 
     if (!seasonResponse.ok) {
@@ -20,7 +19,6 @@ export async function GET() {
 
     const seasonData = await seasonResponse.json()
 
-    // Buscar dados das partidas
     const matchesResponse = await fetch(
       "https://kingsleague.pro/api/v1/competition/seasons/33/match-center-data?lang=pt",
       {
@@ -29,7 +27,7 @@ export async function GET() {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
-        next: { revalidate: 3600 }, // Revalidar a cada hora
+        next: { revalidate: 3600 }, 
       },
     )
 
@@ -39,11 +37,9 @@ export async function GET() {
 
     const matchesData = await matchesResponse.json()
 
-    // Processar rodadas e partidas
     let rounds: Round[] = []
 
     if (Array.isArray(matchesData) && matchesData.length > 0) {
-      // Se os dados já estão no formato esperado, usá-los diretamente
       rounds = matchesData.map((round: any) => ({
         id: round.id,
         name: round.turnName.replace('Jornada', 'Rodada'),
@@ -80,12 +76,10 @@ export async function GET() {
     }
 
 
-    // Verificar se temos dados da temporada
     if (!seasonData || !seasonData.phases || !seasonData.phases.length) {
       throw new Error("Estrutura de dados da API da Kings League inválida")
     }
 
-    // Extrair times e classificação
     const phase = seasonData.phases[0]
 
     if (!phase.groups || !phase.groups.length) {
@@ -94,7 +88,6 @@ export async function GET() {
 
     const group = phase.groups[0]
 
-    // Extrair times
     const teams: Team[] = group.teams.map((team: any) => {
       return {
         id: String(team.id),
@@ -109,7 +102,6 @@ export async function GET() {
       }
     })
 
-    // Extrair classificação
     const standings: TeamStanding[] = group.standings.map((standing: any) => ({
       id: String(standing.team.id),
       name: standing.team.name,
@@ -127,7 +119,6 @@ export async function GET() {
       rank: standing.rank,
     }))
 
-    // Criar objeto de dados da liga
     const leagueData: LeagueData = {
       id: seasonData.id,
       name: seasonData.name,
@@ -137,7 +128,6 @@ export async function GET() {
       rounds,
     }
 
-    // Configurar cabeçalhos CORS para permitir acesso de qualquer origem
     return new NextResponse(JSON.stringify(leagueData), {
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -166,7 +156,6 @@ export async function GET() {
   }
 }
 
-// Adicionar suporte para preflight OPTIONS
 export async function OPTIONS() {
   return new NextResponse(null, {
     headers: {
