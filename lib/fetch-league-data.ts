@@ -1,4 +1,4 @@
-import type { LeagueData, TeamDetails } from "@/types/kings-league"
+import type { LeagueData, TeamDetails, PlayerStats } from "@/types/kings-league"
 
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
@@ -61,9 +61,102 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
       throw new Error(`Erro ao buscar detalhes do time: ${response.status} ${response.statusText}`)
     }
     
-    return await response.json()
+    const teamDetails = await response.json()
+    
+    // Para cada jogador, buscar as estatísticas
+    if (teamDetails.players && teamDetails.players.length > 0) {
+      await Promise.all(
+        teamDetails.players.map(async (player) => {
+          try {
+            const playerStats = await fetchPlayerStats(player.id)
+            player.stats = playerStats
+          } catch (error) {
+            console.warn(`Erro ao buscar estatísticas para o jogador ${player.id}:`, error)
+          }
+        })
+      )
+    }
+    
+    return teamDetails
   } catch (error) {
     console.error(`Erro ao buscar detalhes do time ${teamId}:`, error)
     throw error
+  }
+}
+
+export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
+  try {
+    const response = await fetch(`/api/player-stats/${playerId}`)
+    
+    if (!response.ok) {
+      console.warn(`Não foi possível obter estatísticas para o jogador ${playerId} (status: ${response.status})`)
+      return {
+        matchesPlayed: 0,
+        goalsScored: 0,
+        assists: 0,
+        yellowCards: 0,
+        redCards: 0,
+        mvps: 0
+      }
+    }
+    
+    const data = await response.json()
+    
+    // Extrair dados relevantes da API e convertê-los para o formato esperado
+    // pelo nosso componente PlayerCard
+    const processedStats: PlayerStats = {
+      matchesPlayed: 0,
+      goalsScored: 0,
+      assists: 0,
+      yellowCards: 0,
+      redCards: 0,
+      mvps: 0
+    }
+    
+    // Verificar se temos rankings disponíveis
+    if (Array.isArray(data.rankings)) {
+      processedStats.rankings = data.rankings
+      
+      // Mapear os códigos da API para os campos do nosso objeto PlayerStats
+      data.rankings.forEach(ranking => {
+        const { parameter, total } = ranking
+        
+        // Mapeamento correto dos códigos da API Kings League
+        switch(parameter.code) {
+          case 'PG':  // Games Played
+            processedStats.matchesPlayed = total
+            break
+          case 'GOL':  // Goals
+            processedStats.goalsScored = total
+            break
+          case 'ASS-V':  // Assists
+            processedStats.assists = total
+            break
+          case 'CRT-G':  // Yellow Cards
+            processedStats.yellowCards = total
+            break
+          case 'CRT-R':  // Red Cards
+            processedStats.redCards = total
+            break
+          case 'MVP':  // MVP
+            processedStats.mvps = total
+            break
+        }
+      })
+    }
+    
+    console.log(`Estatísticas processadas para jogador ${playerId}:`, processedStats)
+    return processedStats
+  } catch (error) {
+    console.error(`Erro ao processar estatísticas do jogador ${playerId}:`, error)
+    // Retornar valores padrão em caso de erro
+    return {
+      matchesPlayed: 0,
+      goalsScored: 0,
+      assists: 0,
+      yellowCards: 0,
+      redCards: 0,
+      mvps: 0
+    }
   }
 }
