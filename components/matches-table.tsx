@@ -469,7 +469,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                       />
                                     </div>
 
-                                    {showShootoutInputs && (
+                                    {currentScores.home === currentScores.away && showShootoutInputs && (
                                       <div className="flex gap-1 items-center">
                                         <TooltipProvider>
                                           <Tooltip>
