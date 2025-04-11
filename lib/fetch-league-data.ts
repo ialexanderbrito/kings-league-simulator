@@ -2,7 +2,6 @@ import type { LeagueData, TeamDetails, PlayerStats } from "@/types/kings-league"
 
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
-    // Tentar buscar dados diretamente primeiro para diagnóstico
     try {
       const directResponse = await fetch("/api/direct-matches")
 
@@ -20,9 +19,8 @@ export async function fetchLeagueData(): Promise<LeagueData> {
       console.error("Erro ao buscar dados diretos:", directError)
     }
 
-    // Buscar dados da nossa API
     const response = await fetch("/api/league-data", {
-      cache: "no-store", // Garantir dados atualizados
+      cache: "no-store",
     })
 
     if (!response.ok) {
@@ -37,12 +35,10 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     }
 
     const data = await response.json()
-    // Verificar se a resposta contém um erro
     if (data.error) {
       throw new Error(data.error)
     }
 
-    // Verificar se os dados têm a estrutura esperada
     if (!data.teams || !data.standings || !data.rounds) {
       throw new Error("Dados incompletos recebidos da API")
     }
@@ -63,7 +59,6 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
     
     const teamDetails = await response.json()
     
-    // Para cada jogador, buscar as estatísticas
     if (teamDetails.players && teamDetails.players.length > 0) {
       await Promise.all(
         teamDetails.players.map(async (player) => {
@@ -102,8 +97,6 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
     
     const data = await response.json()
     
-    // Extrair dados relevantes da API e convertê-los para o formato esperado
-    // pelo nosso componente PlayerCard
     const processedStats: PlayerStats = {
       matchesPlayed: 0,
       goalsScored: 0,
@@ -113,15 +106,12 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
       mvps: 0
     }
     
-    // Verificar se temos rankings disponíveis
     if (Array.isArray(data.rankings)) {
       processedStats.rankings = data.rankings
       
-      // Mapear os códigos da API para os campos do nosso objeto PlayerStats
       data.rankings.forEach(ranking => {
         const { parameter, total } = ranking
         
-        // Mapeamento correto dos códigos da API Kings League
         switch(parameter.code) {
           case 'PG':  // Games Played
             processedStats.matchesPlayed = total
@@ -145,11 +135,9 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
       })
     }
     
-    console.log(`Estatísticas processadas para jogador ${playerId}:`, processedStats)
     return processedStats
   } catch (error) {
     console.error(`Erro ao processar estatísticas do jogador ${playerId}:`, error)
-    // Retornar valores padrão em caso de erro
     return {
       matchesPlayed: 0,
       goalsScored: 0,
