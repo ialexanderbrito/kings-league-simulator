@@ -1,5 +1,14 @@
 import type { LeagueData, TeamDetails, PlayerStats } from "@/types/kings-league"
 
+// Cache para estatísticas de jogadores
+const playerStatsCache: Record<number, { data: PlayerStats, timestamp: number }> = {}
+
+// Cache para detalhes dos times
+const teamDetailsCache: Record<string, { data: TeamDetails, timestamp: number }> = {}
+
+// Tempo de expiração do cache em milissegundos (12 horas)
+const CACHE_EXPIRY_TIME = 12 * 60 * 60 * 1000
+
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
     try {
@@ -51,6 +60,15 @@ export async function fetchLeagueData(): Promise<LeagueData> {
 
 export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
   try {
+    // Verificar se temos dados em cache e se ainda são válidos
+    const cachedData = teamDetailsCache[teamId]
+    const now = Date.now()
+    
+    if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
+      console.info(`Usando detalhes em cache para o time ${teamId}`)
+      return cachedData.data
+    }
+    
     const response = await fetch(`/api/team-details/${teamId}`)
     
     if (!response.ok) {
@@ -72,6 +90,12 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
       )
     }
     
+    // Armazenar no cache com timestamp atual
+    teamDetailsCache[teamId] = {
+      data: teamDetails,
+      timestamp: now
+    }
+    
     return teamDetails
   } catch (error) {
     console.error(`Erro ao buscar detalhes do time ${teamId}:`, error)
@@ -81,6 +105,15 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
 
 export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
   try {
+    // Verificar se temos dados em cache e se ainda são válidos
+    const cachedData = playerStatsCache[playerId]
+    const now = Date.now()
+    
+    if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
+      console.info(`Usando estatísticas em cache para o jogador ${playerId}`)
+      return cachedData.data
+    }
+    
     const response = await fetch(`/api/player-stats/${playerId}`)
     
     if (!response.ok) {
@@ -133,6 +166,12 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
             break
         }
       })
+    }
+    
+    // Armazenar no cache com timestamp atual
+    playerStatsCache[playerId] = {
+      data: processedStats,
+      timestamp: now
     }
     
     return processedStats

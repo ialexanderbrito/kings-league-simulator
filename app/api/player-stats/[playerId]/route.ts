@@ -16,7 +16,8 @@ export async function GET(
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
-        next: { revalidate: 3600 }, 
+        // Revalidar a cada 24 horas (86400 segundos)
+        next: { revalidate: 86400 }, 
       }
     )
 
@@ -32,6 +33,8 @@ export async function GET(
         "Access-Control-Allow-Methods": "GET, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
+        // Adicionar cabeçalhos de cache
+        "Cache-Control": "public, max-age=43200, s-maxage=86400", // 12 horas para cliente, 24 horas para CDN
       },
     })
   } catch (error: any) {
