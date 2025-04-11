@@ -57,19 +57,19 @@ function RatingLegend() {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-gradient-to-b from-[#3D6EB9] to-black border border-gray-600"></div>
-          <span className="text-xs text-gray-300">Rating 87+</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-b from-[#D53121] to-black border border-gray-600"></div>
-          <span className="text-xs text-gray-300">Rating 83-86</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-b from-[#10694D] to-black border border-gray-600"></div>
           <span className="text-xs text-gray-300">Rating 78-82</span>
         </div>
         <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-gradient-to-b from-[#D53121] to-black border border-gray-600"></div>
+          <span className="text-xs text-gray-300">Rating 74-77</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-gradient-to-b from-[#10694D] to-black border border-gray-600"></div>
+          <span className="text-xs text-gray-300">Rating 70-73</span>
+        </div>
+        <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-gradient-to-b from-[#323232] to-black border border-gray-600"></div>
-          <span className="text-xs text-gray-300">Rating &lt;78</span>
+          <span className="text-xs text-gray-300">Rating 65-69</span>
         </div>
       </div>
     </div>

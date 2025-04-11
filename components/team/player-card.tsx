@@ -30,24 +30,24 @@ export function PlayerCard({ player }: PlayerCardProps) {
 
   const calculateRating = (): number | null => {
     if (isWildcard) return null
-    if (!player.metaInformation) return 75
+    if (!player.metaInformation) return 70
 
     if (player.role === 'goalkeeper') {
       const attrs = [
-        parseInt(player.metaInformation.diving || '75'),
-        parseInt(player.metaInformation.handling || '75'),
-        parseInt(player.metaInformation.reflexes || '75'),
-        parseInt(player.metaInformation.anticipation || '75')
+        parseInt(player.metaInformation.diving || '70'),
+        parseInt(player.metaInformation.handling || '70'),
+        parseInt(player.metaInformation.reflexes || '70'),
+        parseInt(player.metaInformation.anticipation || '70')
       ]
       return Math.round(attrs.reduce((sum, val) => sum + val, 0) / attrs.length)
     } else {
       const attrs = [
-        parseInt(player.metaInformation.passing || '75'),
-        parseInt(player.metaInformation.shooting || '75'),
-        parseInt(player.metaInformation.defence || '75'),
-        parseInt(player.metaInformation.physical || '75'),
-        parseInt(player.metaInformation.duels || '75'),
-        parseInt(player.metaInformation.skills || '75')
+        parseInt(player.metaInformation.passing || '70'),
+        parseInt(player.metaInformation.shooting || '70'),
+        parseInt(player.metaInformation.defence || '70'),
+        parseInt(player.metaInformation.physical || '70'),
+        parseInt(player.metaInformation.duels || '70'),
+        parseInt(player.metaInformation.skills || '70')
       ]
       return Math.round(attrs.reduce((sum, val) => sum + val, 0) / attrs.length)
     }
@@ -67,7 +67,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
       }
     }
 
-    if (playerRating && playerRating >= 87) {
+    if (playerRating && playerRating >= 78) {
       return {
         borderColor: "#3D6EB9",
         headerBg: "bg-gradient-to-r from-blue-700 to-blue-900",
@@ -77,7 +77,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         imageBg: "bg-gradient-to-b from-blue-700/30 to-blue-900/20"
       }
     }
-    if (playerRating && playerRating >= 83) {
+    if (playerRating && playerRating >= 74) {
       return {
         borderColor: "#D53121",
         headerBg: "bg-gradient-to-r from-red-700 to-red-900",
@@ -87,7 +87,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         imageBg: "bg-gradient-to-b from-red-700/30 to-red-900/20"
       }
     }
-    if (playerRating && playerRating >= 78) {
+    if (playerRating && playerRating >= 70) {
       return {
         borderColor: "#10694D",
         headerBg: "bg-gradient-to-r from-green-700 to-green-900",
