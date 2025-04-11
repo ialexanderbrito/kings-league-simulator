@@ -15,6 +15,8 @@ interface MainContentProps {
   selectedTeam: string | null
   onTeamSelect: (teamId: string) => void
   onScoreUpdate: (roundId: number, matchId: number, homeScore: number | null, awayScore: number | null, homeShootoutScore?: number, awayShootoutScore?: number) => void
+  activeTab: 'matches' | 'team'
+  setActiveTab: (tab: 'matches' | 'team') => void
 }
 
 export function MainContent({
@@ -24,10 +26,10 @@ export function MainContent({
   previousStandings,
   selectedTeam,
   onTeamSelect,
-  onScoreUpdate
+  onScoreUpdate,
+  activeTab = "matches",
+  setActiveTab
 }: MainContentProps) {
-  const [activeTab, setActiveTab] = useState<string>(selectedTeam ? "team" : "matches")
-
   useEffect(() => {
     if (selectedTeam) {
       setActiveTab("team")
@@ -35,7 +37,7 @@ export function MainContent({
   }, [selectedTeam])
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'matches' | 'team')} className="w-full">
       <TabsList className="grid w-full grid-cols-2 mb-8 bg-[#1a1a1a]">
         <TabsTrigger
           value="matches"

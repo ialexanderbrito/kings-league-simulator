@@ -25,6 +25,7 @@ export default function KingsLeagueSimulator() {
   const [error, setError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const [usingFallback, setUsingFallback] = useState(false)
+  const [activeTab, setActiveTab] = useState<"matches" | "team">("matches")
 
   const loadData = async () => {
     try {
@@ -141,6 +142,7 @@ export default function KingsLeagueSimulator() {
         teams={teams}
         standings={standings}
         onTeamSelect={handleTeamSelect}
+        setActiveTab={setActiveTab}
       />
 
       <div className="container mx-auto px-4">
@@ -174,6 +176,8 @@ export default function KingsLeagueSimulator() {
           selectedTeam={selectedTeam}
           onTeamSelect={handleTeamSelect}
           onScoreUpdate={handleScoreUpdate}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
 
       </div>
