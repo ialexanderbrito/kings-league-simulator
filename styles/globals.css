@@ -88,6 +88,43 @@ body {
   .group:hover .card-container {
     transform: rotateY(180deg);
   }
+
+  /* Animação de brilho para cartões WC */
+  @keyframes shine {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 200%;
+    }
+  }
+
+  @keyframes diagonal-shine {
+    0% {
+      top: -200%;
+      left: -100%;
+    }
+    100% {
+      top: 200%;
+      left: 100%;
+    }
+  }
+
+  @keyframes pulse-glow {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.2;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .group-hover\:animate-shine {
+    animation: shine 1.5s ease-in-out infinite;
+  }
 }
 
 /* Cards dos jogadores */
