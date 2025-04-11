@@ -85,8 +85,6 @@ export interface Match {
   }
 }
 
-// Novos tipos para detalhes de times
-
 export interface TeamDetails extends Team {
   staff: StaffMember[]
   players: Player[]
@@ -123,6 +121,39 @@ export interface StaffMember {
   metaInformation?: Record<string, string> | null
 }
 
+export interface PlayerStats {
+  rankings?: PlayerRanking[]
+  matchesPlayed?: number
+  goalsScored?: number
+  assists?: number
+  yellowCards?: number
+  redCards?: number
+  mvps?: number
+}
+
+export interface PlayerRanking {
+  parameter: {
+    code: string
+    name: string
+    description: string
+    shortName: string | null
+    measureUnit: string | null
+    negative?: boolean
+  }
+  statsId: string
+  total: number
+  totalAvg: number
+  totalAVG: number
+  kamaScore: number | null
+  minutesPlayed: number
+  matchesPlayed: number
+  reliability: number | null
+  ranking: number
+  rankingAVG: number
+  bestValue: number
+  worstValue: number
+}
+
 export interface Player {
   id: number
   shortName: string
@@ -154,4 +185,5 @@ export interface Player {
     jerseyNumber?: string
   } | null
   category?: "wildcard" | "draft" | null
+  stats?: PlayerStats
 }
