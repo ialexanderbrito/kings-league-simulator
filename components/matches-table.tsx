@@ -420,7 +420,6 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                         pattern="[0-9]*"
                                         maxLength={2}
                                         className="w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[#F4AF23] text-white text-sm"
-                                        value={currentScores.home}
                                         onKeyDown={(e) => {
                                           if (e.key === "Backspace" && currentScores.home.length === 1) {
                                             handleScoreChange(round.id, match.id, "home", "", true);
@@ -448,7 +447,6 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                                         pattern="[0-9]*"
                                         maxLength={2}
                                         className="w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[#F4AF23] text-white text-sm"
-                                        value={currentScores.away}
                                         onKeyDown={(e) => {
                                           if (e.key === "Backspace" && currentScores.away.length === 1) {
                                             handleScoreChange(round.id, match.id, "away", "", true);
