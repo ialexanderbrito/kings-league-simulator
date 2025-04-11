@@ -3,18 +3,34 @@ import KingsLeagueLogo from "@/components/kings-league-logo"
 import TeamCarousel from "@/components/team-carousel"
 import { MatchesTableSkeleton } from "@/components/skeletons/matches-table-skeleton"
 import { StandingsTableSkeleton } from "@/components/skeletons/standings-table-skeleton"
-import { TableIcon } from "lucide-react"
+import { TableIcon, Trophy } from "lucide-react"
+import Link from "next/link"
 
 export function LoadingState() {
   return (
     <div className="flex flex-col min-h-screen bg-[#121212] w-full overflow-x-hidden">
-      <header className="bg-gradient-to-r from-black via-black/95 to-black/90 backdrop-blur-md sticky top-0 z-50 border-b border-[#222] shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <KingsLeagueLogo width={40} height={50} />
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#F4AF23] to-[#F7D380] bg-clip-text text-transparent">
-              Kings League Simulator
-            </h1>
+      <header className="backdrop-blur-md sticky top-0 z-50 border-b border-white/5 transition-all duration-300">
+        <div className="container mx-auto py-2.5 px-4">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="group flex items-center gap-2.5 transition-opacity hover:opacity-90"
+            >
+              <div className="relative overflow-hidden rounded-md">
+                <KingsLeagueLogo
+                  width={36}
+                  height={52}
+                  className="transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#F4AF23]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">
+                  <span className="text-[#F4AF23]">Kings</span> League
+                </h1>
+                <p className="text-xs text-gray-400 -mt-0.5">Simulador</p>
+              </div>
+            </Link>
           </div>
         </div>
       </header>
