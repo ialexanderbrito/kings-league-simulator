@@ -4,13 +4,13 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center justify-center text-center">
           <p className="text-sm text-gray-400">
-            Desenvolvido com <span className="text-[#F4AF23]">♥</span> por
+            Desenvolvido com <span className="text-[var(--team-primary)]">♥</span> por
           </p>
           <a
             href="https://ialexanderbrito.dev"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 text-md font-medium text-white hover:text-[#F4AF23] transition-colors group flex items-center gap-1.5"
+            className="mt-1 text-md font-medium text-white hover:text-[var(--team-primary)] transition-colors group flex items-center gap-1.5"
           >
             ialexanderbrito
             <svg
