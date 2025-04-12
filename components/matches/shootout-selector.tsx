@@ -37,7 +37,7 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
         </Tooltip>
       </TooltipProvider>
 
-      <Trophy className="w-4 h-4 text-[#F4AF23] mx-1" />
+      <Trophy className="w-4 h-4 text-[var(--team-primary)] mx-1" />
 
       <TooltipProvider>
         <Tooltip>

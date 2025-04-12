@@ -25,7 +25,7 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
             className={cn(
               "px-4 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
               selectedRound === round.id.toString()
-                ? "bg-[#F4AF23] text-black"
+                ? "bg-[var(--team-primary)] text-black"
                 : "bg-[#252525] text-gray-300 hover:bg-[#333]"
             )}
           >
@@ -37,7 +37,7 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
       <ScrollBar
         orientation="horizontal"
         className="h-1.5 bg-transparent mt-1"
-        thumbClassName="bg-[#F4AF23]/40 hover:bg-[#F4AF23]/60 active:bg-[#F4AF23]/80 transition-colors duration-200"
+        thumbClassName="bg-[var(--team-primary)]/40 hover:bg-[var(--team-primary)]/60 active:bg-[var(--team-primary)]/80 transition-colors duration-200"
       />
     </ScrollArea>
   );
