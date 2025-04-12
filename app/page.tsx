@@ -13,6 +13,7 @@ import { Footer } from "@/components/layout/footer"
 import { MainContent } from "@/components/layout/main-content"
 import { LoadingState } from "@/components/ui/loading-state"
 import { ErrorState } from "@/components/ui/error-state"
+import { SchemaMarkup } from "@/components/schema-markup"
 
 export default function KingsLeagueSimulator() {
   const [leagueData, setLeagueData] = useState<LeagueData | null>(null)
@@ -182,6 +183,15 @@ export default function KingsLeagueSimulator() {
 
       </div>
       <Footer />
+
+      {/* Adicionando Schema Markup para melhorar dados estruturados */}
+      <SchemaMarkup
+        type="league"
+        teams={teams}
+        standings={standings}
+        eventName="Kings League - Temporada Atual"
+        startDate={new Date().toISOString()}
+      />
     </main>
   )
 }
