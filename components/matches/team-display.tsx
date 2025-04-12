@@ -2,12 +2,14 @@ import { FC } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Team } from "@/types/kings-league";
+import { Heart } from "lucide-react";
 
 interface TeamDisplayProps {
   team: Team;
   isWinner: boolean;
   position: "left" | "right";
   showShootout: boolean;
+  isFavorite?: boolean;
 }
 
 export const TeamDisplay: FC<TeamDisplayProps> = ({
@@ -15,6 +17,7 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
   isWinner,
   position,
   showShootout,
+  isFavorite
 }) => {
   const isLeftSide = position === "left";
 
@@ -27,19 +30,26 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
       {isLeftSide ? (
         <>
           <div className="flex-1 text-right overflow-hidden">
-            <p className={cn(
-              "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
-              isWinner ? "text-green-400" : "text-white"
-            )}
-              title={team.name}
-            >
-              {team.name}
-            </p>
+            <div className="flex items-center justify-end gap-1">
+              {isFavorite && (
+                <Heart className="w-3 h-3 text-red-400" fill="currentColor" />
+              )}
+              <p className={cn(
+                "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
+                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-green-400" : "text-white"
+              )}
+                title={team.name}
+              >
+                {team.name}
+              </p>
+            </div>
             <p className="text-xs text-gray-400 hidden md:block truncate">
               {team.shortName}
             </p>
           </div>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0">
+          <div className={cn(
+            "w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0"
+          )}>
             <Image
               src={team.logo?.url || "/placeholder.svg"}
               alt={team.name}
@@ -51,7 +61,9 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
         </>
       ) : (
         <>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0">
+          <div className={cn(
+            "w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0",
+          )}>
             <Image
               src={team.logo?.url || "/placeholder.svg"}
               alt={team.name}
@@ -61,14 +73,19 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
             />
           </div>
           <div className="flex-1 text-left overflow-hidden">
-            <p className={cn(
-              "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
-              isWinner ? "text-green-400" : "text-white"
-            )}
-              title={team.name}
-            >
-              {team.name}
-            </p>
+            <div className="flex items-center gap-1">
+              <p className={cn(
+                "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
+                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-green-400" : "text-white"
+              )}
+                title={team.name}
+              >
+                {team.name}
+              </p>
+              {isFavorite && (
+                <Heart className="w-3 h-3 text-red-400" fill="currentColor" />
+              )}
+            </div>
             <p className="text-xs text-gray-400 hidden md:block truncate">
               {team.shortName}
             </p>

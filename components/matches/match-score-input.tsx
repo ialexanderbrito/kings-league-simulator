@@ -22,7 +22,7 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
       maxLength={2}
       value={value}
       placeholder="0"
-      className="w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[#F4AF23] text-white text-sm"
+      className="w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[var(--team-primary)] text-white text-sm sm:text-base"
       onKeyDown={(e) => {
         if (e.key === "Backspace" && currentValue.length === 1) {
           onScoreChange("", true);

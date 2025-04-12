@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { Youtube } from "lucide-react";
+import { Youtube, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Round, Team } from "@/types/kings-league";
 import { TeamDisplay } from "./team-display";
@@ -30,6 +30,7 @@ interface MatchCardProps {
     matchId: number,
     winner: "home" | "away" | null
   ) => void;
+  favoriteTeam?: Team | null;
 }
 
 export const MatchCard: FC<MatchCardProps> = ({
@@ -41,6 +42,7 @@ export const MatchCard: FC<MatchCardProps> = ({
   showShootout,
   onScoreChange,
   onShootoutWinnerSelect,
+  favoriteTeam
 }) => {
   const homeTeam = teams[match.participants.homeTeamId];
   const awayTeam = teams[match.participants.awayTeamId];
@@ -49,6 +51,16 @@ export const MatchCard: FC<MatchCardProps> = ({
   const homeScore = match.scores.homeScore;
   const awayScore = match.scores.awayScore;
   const shootoutWinner = currentScores.shootoutWinner;
+
+  // Verificar se algum dos times da partida é o time favorito
+  const isFavoriteTeamMatch = favoriteTeam && (
+    favoriteTeam.id === homeTeam.id ||
+    favoriteTeam.id === awayTeam.id
+  );
+
+  // Determinar qual lado é o time favorito (para destacar o lado)
+  const isHomeFavorite = favoriteTeam?.id === homeTeam.id;
+  const isAwayFavorite = favoriteTeam?.id === awayTeam.id;
 
   let winner = null;
   if (homeScore !== null && awayScore !== null) {
@@ -62,7 +74,12 @@ export const MatchCard: FC<MatchCardProps> = ({
   }
 
   return (
-    <div className="bg-[#252525] rounded-md p-3 border border-[#333] hover:border-[#444] transition-colors">
+    <div className={cn(
+      "rounded-md p-3 border transition-colors",
+      isFavoriteTeamMatch
+        ? "bg-[var(--team-primary)]/10 border-[var(--team-primary)] hover:border-[var(--team-primary)]"
+        : "bg-[#252525] border-[#333] hover:border-[#444]"
+    )}>
       <div className="grid grid-cols-[minmax(0,1.2fr),auto,minmax(0,1.2fr)] sm:grid-cols-[minmax(0,1.5fr),auto,minmax(0,1.5fr)] items-center gap-2 md:gap-4 w-full">
         {/* Time da casa */}
         <TeamDisplay
@@ -70,11 +87,12 @@ export const MatchCard: FC<MatchCardProps> = ({
           isWinner={winner === 'home'}
           position="left"
           showShootout={showShootout}
+          isFavorite={isHomeFavorite}
         />
 
         {/* Placar */}
         <div className="flex flex-col items-center px-1 sm:px-2">
-          <div className="text-[10px] sm:text-xs text-gray-400 mb-1 text-center">
+          <div className="text-[10px] sm:text-xs text-gray-400 mb-1 text-center flex items-center gap-1">
             {formatDate(match.date)}
           </div>
 
@@ -141,6 +159,7 @@ export const MatchCard: FC<MatchCardProps> = ({
           isWinner={winner === 'away'}
           position="right"
           showShootout={showShootout}
+          isFavorite={isAwayFavorite}
         />
       </div>
     </div>

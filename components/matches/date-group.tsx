@@ -27,6 +27,7 @@ interface DateGroupProps {
     matchId: number,
     winner: "home" | "away" | null
   ) => void;
+  favoriteTeam?: Team | null;
 }
 
 export const DateGroup: FC<DateGroupProps> = ({
@@ -37,7 +38,8 @@ export const DateGroup: FC<DateGroupProps> = ({
   scores,
   showShootout,
   onScoreChange,
-  onShootoutWinnerSelect
+  onShootoutWinnerSelect,
+  favoriteTeam
 }) => {
   return (
     <div className="space-y-2">
@@ -69,6 +71,7 @@ export const DateGroup: FC<DateGroupProps> = ({
               showShootout={showShootoutInputs}
               onScoreChange={onScoreChange}
               onShootoutWinnerSelect={onShootoutWinnerSelect}
+              favoriteTeam={favoriteTeam}
             />
           );
         })}
