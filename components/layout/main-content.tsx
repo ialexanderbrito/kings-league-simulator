@@ -41,14 +41,14 @@ export function MainContent({
       <TabsList className="grid w-full grid-cols-2 mb-8 bg-[#1a1a1a]">
         <TabsTrigger
           value="matches"
-          className="flex items-center gap-2 data-[state=active]:bg-[#F4AF23] data-[state=active]:text-black"
+          className="flex items-center gap-2 data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
         >
           <Calendar className="w-4 h-4" />
           <span>Partidas</span>
         </TabsTrigger>
         <TabsTrigger
           value="team"
-          className="flex items-center gap-2 data-[state=active]:bg-[#F4AF23] data-[state=active]:text-black"
+          className="flex items-center gap-2 data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
           disabled={!selectedTeam}
         >
           <Info className="w-4 h-4" />
@@ -64,7 +64,7 @@ export function MainContent({
             <Card className="bg-[#1a1a1a] border-[#333] text-white overflow-hidden lg:sticky lg:top-6">
               <CardHeader className="py-3 px-4 border-b border-[#333] bg-[#1f1f1f]">
                 <CardTitle className="text-lg flex items-center gap-2 text-gray-200">
-                  <TableIcon className="w-4 h-4 text-[#F4AF23]" />
+                  <TableIcon className="w-4 h-4 text-[var(--team-primary)]" />
                   Classificação
                 </CardTitle>
               </CardHeader>

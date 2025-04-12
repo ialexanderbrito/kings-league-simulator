@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Share2, Trophy } from "lucide-react"
+import { Share2, Trophy, Star } from "lucide-react"
 import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import Image from "next/image"
@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Team, TeamStanding } from "@/types/kings-league"
+import { useTeamTheme } from "@/contexts/team-theme-context"
+import { useToast } from "@/hooks/use-toast"
+import { FavoriteTeamModal } from "@/components/favorite-team-modal"
+import { RemoveFavoriteTeamModal } from "@/components/remove-favorite-team-modal"
 
 interface HeaderProps {
   loading: boolean
@@ -21,11 +25,12 @@ interface HeaderProps {
 
 export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, setActiveTab }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { favoriteTeam, setFavoriteTeam } = useTeamTheme()
+  const { toast } = useToast()
 
   const handleLogoClick = () => {
     if (selectedTeam) {
       setActiveTab("matches")
-      onTeamSelect("");
     }
   }
 
@@ -44,11 +49,11 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                 height={52}
                 className="transition-transform duration-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#F4AF23]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-[var(--team-primary)]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">
-                <span className="text-[#F4AF23]">Kings</span> League
+                <span className="text-[var(--team-primary)]">Kings</span> League
               </h1>
               <p className="text-xs text-gray-400 -mt-0.5">Simulador</p>
             </div>
@@ -62,6 +67,9 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                 teams={teams}
                 standings={standings}
                 onTeamSelect={onTeamSelect}
+                favoriteTeam={favoriteTeam}
+                setFavoriteTeam={setFavoriteTeam}
+                showToast={toast}
               />
               <MobileTeamButton
                 selectedTeam={selectedTeam}
@@ -70,6 +78,9 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                 onTeamSelect={onTeamSelect}
                 isMenuOpen={isMenuOpen}
                 setIsMenuOpen={setIsMenuOpen}
+                favoriteTeam={favoriteTeam}
+                setFavoriteTeam={setFavoriteTeam}
+                showToast={toast}
               />
             </div>
           )}
@@ -89,7 +100,7 @@ function ShareButton() {
           className="hover:bg-white/5 transition-colors rounded-full w-8 h-8 flex items-center justify-center"
           aria-label="Compartilhar site"
         >
-          <Share2 className="h-4 w-4 text-gray-300 group-hover:text-[#F4AF23]" />
+          <Share2 className="h-4 w-4 text-gray-300 group-hover:text-[var(--team-primary)]" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48 bg-[#0a0a0a] border-white/10 text-white shadow-xl" align="end">
@@ -112,13 +123,11 @@ function ShareButton() {
               }
             }}
           >
-            <div className="w-5 h-5 rounded-full flex items-center justify-center bg-white/5">
-              {item.icon === "facebook" && <FacebookLogo className="h-3.5 w-3.5 text-blue-400" />}
-              {item.icon === "twitter" && <XLogo className="h-3.5 w-3.5 text-white" />}
-              {item.icon === "whatsapp" && <WhatsappLogo className="h-3.5 w-3.5 text-green-400" />}
-              {item.icon === "link" && <LinkIcon className="h-3.5 w-3.5 text-gray-400" />}
-            </div>
-            <span className="truncate">{item.name}</span>
+            {item.icon === "facebook" && <FacebookLogo weight="fill" className="w-3.5 h-3.5" />}
+            {item.icon === "twitter" && <XLogo weight="fill" className="w-3.5 h-3.5" />}
+            {item.icon === "whatsapp" && <WhatsappLogo weight="fill" className="w-3.5 h-3.5" />}
+            {item.icon === "link" && <LinkIcon className="w-3.5 h-3.5" />}
+            {item.name}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -131,84 +140,259 @@ interface TeamSelectorProps {
   teams: Record<string, Team>
   standings: TeamStanding[]
   onTeamSelect: (teamId: string) => void
+  favoriteTeam: Team | null
+  setFavoriteTeam: (team: Team | null) => void
+  showToast: any
 }
 
-function TeamSelector({ selectedTeam, teams, standings, onTeamSelect }: TeamSelectorProps) {
+function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTeam, setFavoriteTeam, showToast }: TeamSelectorProps) {
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [removeModalOpen, setRemoveModalOpen] = useState(false);
+  const [pendingTeam, setPendingTeam] = useState<Team | null>(null);
+
+  const handleFavoriteButtonClick = (team: Team, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (favoriteTeam && favoriteTeam.id === team.id) {
+      // Remover time favorito, abrir modal de confirmação
+      setRemoveModalOpen(true);
+      return;
+    }
+
+    // Adicionar ou trocar o time favorito
+    setPendingTeam(team);
+    setConfirmModalOpen(true);
+  };
+
+  const handleConfirmFavorite = () => {
+    if (!pendingTeam) return;
+
+    setFavoriteTeam(pendingTeam);
+    showToast({
+      title: "Time definido como favorito",
+      description: `${pendingTeam.name} agora é seu time do coração! As cores do site foram atualizadas.`,
+      variant: "default",
+    });
+
+    setConfirmModalOpen(false);
+    setPendingTeam(null);
+  };
+
+  const handleCancelFavorite = () => {
+    setConfirmModalOpen(false);
+    setPendingTeam(null);
+  };
+
+  const handleRemoveFavorite = () => {
+    if (!favoriteTeam) return;
+
+    setFavoriteTeam(null);
+    showToast({
+      title: "Time removido dos favoritos",
+      description: `${favoriteTeam.name} não é mais seu time do coração!`,
+      variant: "default",
+    });
+
+    setRemoveModalOpen(false);
+  };
+
+  const handleCancelRemove = () => {
+    setRemoveModalOpen(false);
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          className="hidden sm:flex items-center gap-2 bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-200 h-8 px-3 text-sm"
-        >
-          {selectedTeam ? (
-            <>
-              <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
-                <Image
-                  src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
-                  alt={teams[selectedTeam].name}
-                  width={20}
-                  height={20}
-                  className="object-contain"
-                />
-              </div>
-              <span className="truncate max-w-[120px] text-white">{teams[selectedTeam].name}</span>
-            </>
-          ) : (
-            <span className="flex items-center gap-1.5 text-gray-300">
-              <Trophy className="w-3.5 h-3.5 text-[#F4AF23]" />
-              Selecionar Time
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-[#0a0a0a] border-white/10 text-white shadow-xl" align="end">
-        <DropdownMenuLabel className="text-xs font-normal text-gray-400">Times</DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-white/10" />
-        <div className="max-h-[60vh] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-          {standings.map((team) => (
-            <DropdownMenuItem
-              key={team.id}
-              className={cn(
-                "cursor-pointer flex items-center gap-2 hover:bg-white/5 focus:bg-white/5",
-                selectedTeam === team.id && "bg-white/5 font-medium"
-              )}
-              onClick={() => onTeamSelect(team.id)}
-            >
-              <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
-                <Image
-                  src={team.logo?.url || "/placeholder-logo.svg"}
-                  alt={team.name}
-                  width={20}
-                  height={20}
-                  className="object-contain"
-                />
-              </div>
-              <span className="truncate">{team.name}</span>
-            </DropdownMenuItem>
-          ))}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="hidden sm:flex items-center gap-2 bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-200 h-8 px-3 text-sm"
+          >
+            {favoriteTeam ? (
+              <>
+                <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+                  <Image
+                    src={favoriteTeam.logo?.url || "/placeholder-logo.svg"}
+                    alt={favoriteTeam.name}
+                    width={20}
+                    height={20}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="truncate max-w-[120px] text-white">{favoriteTeam.name}</span>
+              </>
+            ) : selectedTeam ? (
+
+              <>
+                <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+                  <Image
+                    src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
+                    alt={teams[selectedTeam].name}
+                    width={20}
+                    height={20}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="truncate max-w-[120px] text-white">{teams[selectedTeam].name}</span>
+              </>
+            ) : (
+              <span className="flex items-center gap-1.5 text-gray-300">
+                <Trophy className="w-3.5 h-3.5 text-[var(--team-primary)]" />
+                Selecionar Time
+              </span>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56 bg-[#0a0a0a] border-white/10 text-white shadow-xl" align="end">
+          <DropdownMenuLabel className="text-xs font-normal text-gray-400">Times</DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-white/10" />
+          <div className="max-h-[60vh] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            {standings.map((team) => (
+              <DropdownMenuItem
+                key={team.id}
+                className={cn(
+                  "cursor-pointer flex items-center gap-2 hover:bg-white/5 focus:bg-white/5 justify-between",
+                  selectedTeam === team.id && "bg-white/5 font-medium"
+                )}
+                onClick={() => onTeamSelect(team.id)}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+                    <Image
+                      src={team.logo?.url || "/placeholder-logo.svg"}
+                      alt={team.name}
+                      width={20}
+                      height={20}
+                      className="object-contain"
+                    />
+                  </div>
+                  <span className="truncate">{team.name}</span>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-6 w-6 p-0.5 rounded-full",
+                    favoriteTeam?.id === team.id && "text-[var(--team-primary)]"
+                  )}
+                  onClick={(e) => handleFavoriteButtonClick(teams[team.id], e)}
+                >
+                  <Star
+                    className="h-4 w-4"
+                    fill={favoriteTeam?.id === team.id ? "currentColor" : "none"}
+                  />
+                </Button>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Modal de confirmação */}
+      {pendingTeam && (
+        <FavoriteTeamModal
+          open={confirmModalOpen}
+          onOpenChange={setConfirmModalOpen}
+          onConfirm={handleConfirmFavorite}
+          onCancel={handleCancelFavorite}
+          currentTeam={favoriteTeam}
+          newTeam={pendingTeam}
+          isSwitching={!!favoriteTeam}
+        />
+      )}
+
+      {/* Modal de remoção */}
+      {favoriteTeam && (
+        <RemoveFavoriteTeamModal
+          open={removeModalOpen}
+          onOpenChange={setRemoveModalOpen}
+          onConfirm={handleRemoveFavorite}
+          onCancel={handleCancelRemove}
+          team={favoriteTeam}
+        />
+      )}
+    </>
   )
 }
 
-interface MobileTeamButtonProps extends TeamSelectorProps {
+interface MobileTeamButtonProps {
+  selectedTeam: string | null
+  teams: Record<string, Team>
+  standings: TeamStanding[]
+  onTeamSelect: (teamId: string) => void
   isMenuOpen: boolean
-  setIsMenuOpen: (isOpen: boolean) => void
+  setIsMenuOpen: (open: boolean) => void
+  favoriteTeam: Team | null
+  setFavoriteTeam: (team: Team | null) => void
+  showToast: any
 }
 
-function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenuOpen, setIsMenuOpen }: MobileTeamButtonProps) {
+function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenuOpen, setIsMenuOpen, favoriteTeam, setFavoriteTeam, showToast }: MobileTeamButtonProps) {
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [removeModalOpen, setRemoveModalOpen] = useState(false);
+  const [pendingTeam, setPendingTeam] = useState<Team | null>(null);
+
+  const handleFavoriteButtonClick = (team: Team, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (favoriteTeam && favoriteTeam.id === team.id) {
+      // Remover time favorito, abrir modal de confirmação
+      setRemoveModalOpen(true);
+      return;
+    }
+
+    // Adicionar ou trocar o time favorito
+    setPendingTeam(team);
+    setConfirmModalOpen(true);
+  };
+
+  const handleConfirmFavorite = () => {
+    if (!pendingTeam) return;
+
+    setFavoriteTeam(pendingTeam);
+    showToast({
+      title: "Time definido como favorito",
+      description: `${pendingTeam.name} agora é seu time do coração! As cores do site foram atualizadas.`,
+      variant: "default",
+    });
+
+    setConfirmModalOpen(false);
+    setPendingTeam(null);
+  };
+
+  const handleCancelFavorite = () => {
+    setConfirmModalOpen(false);
+    setPendingTeam(null);
+  };
+
+  const handleRemoveFavorite = () => {
+    if (!favoriteTeam) return;
+
+    setFavoriteTeam(null);
+    showToast({
+      title: "Time removido dos favoritos",
+      description: `${favoriteTeam.name} não é mais seu time do coração!`,
+      variant: "default",
+    });
+
+    setRemoveModalOpen(false);
+  };
+
+  const handleCancelRemove = () => {
+    setRemoveModalOpen(false);
+  };
+
   return (
     <>
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="sm:hidden flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/5 transition-colors"
+        className="sm:hidden bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-200"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
       >
         {selectedTeam ? (
-          <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/10 bg-black/50">
+          <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
             <Image
               src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
               alt={teams[selectedTeam].name}
@@ -218,10 +402,11 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
             />
           </div>
         ) : (
-          <Trophy className="h-4 w-4 text-[#F4AF23]" />
+          <Trophy className="h-4 w-4 text-[var(--team-primary)]" />
         )}
       </Button>
 
+      {/* Mobile menu */}
       {isMenuOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm sm:hidden"
@@ -239,7 +424,7 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
                 <button
                   key={team.id}
                   className={cn(
-                    "w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 transition-colors",
+                    "w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 transition-colors justify-between",
                     selectedTeam === team.id ? "bg-white/5" : "hover:bg-white/5"
                   )}
                   onClick={() => {
@@ -247,21 +432,62 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
                     setIsMenuOpen(false)
                   }}
                 >
-                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10 bg-black/50">
-                    <Image
-                      src={team.logo?.url || "/placeholder-logo.svg"}
-                      alt={team.name}
-                      width={20}
-                      height={20}
-                      className="object-contain"
-                    />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10 bg-black/50">
+                      <Image
+                        src={team.logo?.url || "/placeholder-logo.svg"}
+                        alt={team.name}
+                        width={20}
+                        height={20}
+                        className="object-contain"
+                      />
+                    </div>
+                    <span className="truncate">{team.name}</span>
                   </div>
-                  <span className="truncate">{team.name}</span>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-6 w-6 p-0.5 rounded-full",
+                      favoriteTeam?.id === team.id && "text-[var(--team-primary)]"
+                    )}
+                    onClick={(e) => handleFavoriteButtonClick(teams[team.id], e)}
+                  >
+                    <Star
+                      className="h-4 w-4"
+                      fill={favoriteTeam?.id === team.id ? "currentColor" : "none"}
+                    />
+                  </Button>
                 </button>
               ))}
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de confirmação */}
+      {pendingTeam && (
+        <FavoriteTeamModal
+          open={confirmModalOpen}
+          onOpenChange={setConfirmModalOpen}
+          onConfirm={handleConfirmFavorite}
+          onCancel={handleCancelFavorite}
+          currentTeam={favoriteTeam}
+          newTeam={pendingTeam}
+          isSwitching={!!favoriteTeam}
+        />
+      )}
+
+      {/* Modal de remoção */}
+      {favoriteTeam && (
+        <RemoveFavoriteTeamModal
+          open={removeModalOpen}
+          onOpenChange={setRemoveModalOpen}
+          onConfirm={handleRemoveFavorite}
+          onCancel={handleCancelRemove}
+          team={favoriteTeam}
+        />
       )}
     </>
   )
