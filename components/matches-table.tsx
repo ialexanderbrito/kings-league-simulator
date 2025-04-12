@@ -205,7 +205,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
   return (
     <Card className="bg-[#1a1a1a] border-[#333] text-white">
       <CardHeader className="border-b border-[#333] pb-2">
-        <div className="flex items-center gap-2 text-[#F4AF23]">
+        <div className="flex items-center gap-2 text-[var(--team-primary)]">
           <Calendar className="w-5 h-5" />
           <span className="text-lg font-medium">Calendário e Resultados</span>
         </div>

@@ -8,15 +8,17 @@ import type { TeamStanding } from "@/types/kings-league"
 import { ChevronsDown, ChevronsUp, Download } from "lucide-react"
 import html2canvas from "html2canvas"
 import { useRef } from "react"
+import { useTeamTheme } from "@/contexts/team-theme-context"
 
 interface StandingsTableProps {
   standings: TeamStanding[]
   onTeamSelect: (teamId: string) => void
-  previousStandings?: TeamStanding[] // Nova prop para comparar posições
+  previousStandings?: TeamStanding[]
 }
 
 export default function StandingsTable({ standings, onTeamSelect, previousStandings }: StandingsTableProps) {
   const tableRef = useRef<HTMLDivElement>(null)
+  const { primaryColor } = useTeamTheme()
 
   const downloadClassification = async () => {
     if (!tableRef.current) return
@@ -182,7 +184,7 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
       return { backgroundColor: "#4ade80", color: "white" }
     } else if (index >= 1 && index <= 6) {
       // 2º ao 7º - quartas de final
-      return { backgroundColor: "#F4AF23", color: "black" }
+      return { backgroundColor: "var(--team-primary)", color: "black" }
     }
     return {}
   }
@@ -274,7 +276,7 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center font-bold text-[#F4AF23] text-sm py-2 w-16">{team.points}</TableCell>
+                        <TableCell className="text-center font-bold text-[var(--team-primary)] text-sm py-2 w-16">{team.points}</TableCell>
                         <TableCell className="text-center text-xs text-gray-300 py-2 hidden sm:table-cell w-12">{team.played}</TableCell>
                         <TableCell className="text-center text-xs text-gray-300 py-2 hidden sm:table-cell w-12">{team.goalDifference}</TableCell>
                       </TableRow>
@@ -293,7 +295,7 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
               <span>Playoff: Semifinal</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Badge style={{ backgroundColor: "#F4AF23" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
+              <Badge style={{ backgroundColor: "var(--team-primary)" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
               <span>
                 Playoff: Quartas
               </span>

@@ -82,13 +82,13 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
         <TabsList className="grid w-full grid-cols-2 mb-6 bg-[#1a1a1a]">
           <TabsTrigger
             value="matches"
-            className="data-[state=active]:bg-[#F4AF23] data-[state=active]:text-black"
+            className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
           >
             Partidas
           </TabsTrigger>
           <TabsTrigger
             value="team"
-            className="data-[state=active]:bg-[#F4AF23] data-[state=active]:text-black"
+            className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
           >
             Elenco
           </TabsTrigger>
