@@ -12,6 +12,9 @@ export function PlayerCard({ player }: PlayerCardProps) {
 
   const isWildcard = player.category === "wildcard"
 
+  // Cor fixa para Wild Cards conforme solicitado
+  const wildcardColor = "#F4AF23";
+
   const roleMap = {
     goalkeeper: "Goleiro",
     defender: "Defensor",
@@ -58,11 +61,11 @@ export function PlayerCard({ player }: PlayerCardProps) {
   const getCardStyle = () => {
     if (isWildcard) {
       return {
-        borderColor: "#F4AF23",
+        borderColor: wildcardColor, // Mantendo a cor amarela fixa para Wild Cards
         headerBg: "bg-gradient-to-r from-amber-600 to-amber-800",
-        ratingBg: "bg-[#F4AF23]",
+        ratingBg: `bg-[${wildcardColor}]`,
         ratingText: "text-black",
-        categoryBadge: "bg-[#F4AF23] text-black",
+        categoryBadge: `bg-[${wildcardColor}] text-black`,
         imageBg: "bg-gradient-to-b from-amber-600/30 to-amber-900/20"
       }
     }

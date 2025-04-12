@@ -70,7 +70,7 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
         <CardContent>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-3xl font-bold text-[#F4AF23]">{
+              <div className="text-3xl font-bold text-[var(--team-primary)]">{
                 teamMatches.reduce((total, match) => {
                   if (match.scores.homeScore === null || match.scores.awayScore === null) return total
                   const isHome = match.participants.homeTeamId === team.id
@@ -116,7 +116,7 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
               <div className="text-xs text-gray-400">Jogadores</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-[#F4AF23]">{
+              <div className="text-3xl font-bold text-[var(--team-primary)]">{
                 teamDetails?.players.filter(p => p.category === "wildcard").length || 0
               }</div>
               <div className="text-xs text-gray-400">Wildcards</div>

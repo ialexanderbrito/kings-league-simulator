@@ -36,7 +36,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
         </div>
 
         <div className="text-center md:text-left flex-grow">
-          <h1 className="text-3xl font-bold text-[#F4AF23] mb-2">{team.name}</h1>
+          <h1 className="text-3xl font-bold text-[var(--team-primary)] mb-2">{team.name}</h1>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
             <Badge style={{ backgroundColor: team.firstColorHEX }} className="text-white">
               Cor Principal
@@ -53,7 +53,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                   href={teamDetails.metaInformation.instagram_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-[#F4AF23] transition-colors"
+                  className="flex items-center gap-1 hover:text-[var(--team-primary)] transition-colors"
                   aria-label={`Instagram de ${team.name}`}
                 >
                   <Instagram className="w-4 h-4" />
@@ -65,7 +65,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                   href={teamDetails.metaInformation.youtube_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-[#F4AF23] transition-colors"
+                  className="flex items-center gap-1 hover:text-[var(--team-primary)] transition-colors"
                   aria-label={`YouTube de ${team.name}`}
                 >
                   <Youtube className="w-4 h-4" />
@@ -77,7 +77,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                   href={teamDetails.metaInformation.twitch_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-[#F4AF23] transition-colors"
+                  className="flex items-center gap-1 hover:text-[var(--team-primary)] transition-colors"
                   aria-label={`Twitch de ${team.name}`}
                 >
                   <TwitchIcon className="w-4 h-4" />
@@ -108,7 +108,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#252525]/70 text-[#F4AF23] text-2xl font-bold">
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#252525]/70 text-[var(--team-primary)] text-2xl font-bold">
                     {teamDetails.staff[0].shortName.substring(0, 2).toUpperCase()}
                   </div>
                 )}

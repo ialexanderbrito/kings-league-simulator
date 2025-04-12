@@ -60,7 +60,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
   return (
     <Card className="bg-[#1a1a1a] border-[#333] text-white">
       <CardHeader className="pb-3 border-b border-[#333]">
-        <CardTitle className="text-xl text-[#F4AF23] flex items-center gap-2">
+        <CardTitle className="text-xl text-[var(--team-primary)] flex items-center gap-2">
           <Clock className="w-5 h-5" /> Partidas
         </CardTitle>
         <CardDescription className="text-gray-400">
@@ -77,7 +77,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
             {/* Jogos já realizados */}
             {pastMatches.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-[#F4AF23] mb-3 flex items-center gap-1.5">
+                <h3 className="text-sm font-medium text-[var(--team-primary)] mb-3 flex items-center gap-1.5">
                   <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
                   Partidas disputadas
                 </h3>
@@ -169,7 +169,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 <div className="flex items-center">
                                   <p className="font-medium truncate">{teams[leftTeamId].shortName}</p>
                                   {hasPenalties && showLeftTeamTrophy && (
-                                    <Trophy className="w-4 h-4 text-[#F4AF23] ml-1.5" />
+                                    <Trophy className="w-4 h-4 text-[var(--team-primary)] ml-1.5" />
                                   )}
                                 </div>
                                 <p className="text-xs text-gray-400">Local</p>
@@ -203,7 +203,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                               <div className="min-w-0 text-right">
                                 <div className="flex items-center justify-end">
                                   {hasPenalties && showRightTeamTrophy && (
-                                    <Trophy className="w-4 h-4 text-[#F4AF23] mr-1.5" />
+                                    <Trophy className="w-4 h-4 text-[var(--team-primary)] mr-1.5" />
                                   )}
                                   <p className="font-medium truncate">{teams[rightTeamId].shortName}</p>
                                 </div>
@@ -228,7 +228,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 href={match.metaInformation.youtube_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 text-[#F4AF23] text-sm hover:underline transition-colors"
+                                className="flex items-center gap-1.5 text-[var(--team-primary)] text-sm hover:underline transition-colors"
                               >
                                 <Youtube className="w-4 h-4" />
                                 <span>Assistir partida</span>
@@ -246,7 +246,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
             {/* Jogos futuros */}
             {futureMatches.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-[#F4AF23] mb-3 flex items-center gap-1.5">
+                <h3 className="text-sm font-medium text-[var(--team-primary)] mb-3 flex items-center gap-1.5">
                   <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>
                   Próximas partidas
                 </h3>
@@ -292,10 +292,14 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                             </div>
 
                             {/* Placar centralizado para partidas futuras */}
-                            <div className="px-4 py-1 rounded-lg bg-[#121212]/50 border border-[#333]/50">
-                              <span className="text-sm text-gray-400">Em breve</span>
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-center justify-center gap-3 px-3">
+                                <span className="text-lg font-medium text-gray-400">vs</span>
+                              </div>
+                              <div className="mt-1 text-xs text-gray-400">{match.ended ? 'Finalizada' : 'Não iniciada'}</div>
                             </div>
 
+                            {/* Time visitante */}
                             <div className="flex items-center gap-3">
                               <div className="min-w-0 text-right">
                                 <p className="font-medium truncate">{teams[match.participants.awayTeamId].shortName}</p>
