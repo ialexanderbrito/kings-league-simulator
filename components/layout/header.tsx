@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Share2, Trophy, Star } from "lucide-react"
+import { Share2, Trophy, Heart } from "lucide-react"
 import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import Image from "next/image"
@@ -278,7 +278,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                   )}
                   onClick={(e) => handleFavoriteButtonClick(teams[team.id], e)}
                 >
-                  <Star
+                  <Heart
                     className="h-4 w-4"
                     fill={favoriteTeam?.id === team.id ? "currentColor" : "none"}
                   />
@@ -387,22 +387,40 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
     <>
       <Button
         variant="outline"
-        size="icon"
-        className="sm:hidden bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-200"
+        className="sm:hidden flex items-center gap-2 bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-200 h-8 px-3 text-sm"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
       >
-        {selectedTeam ? (
-          <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
-            <Image
-              src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
-              alt={teams[selectedTeam].name}
-              width={20}
-              height={20}
-              className="object-contain"
-            />
-          </div>
+        {favoriteTeam ? (
+          <>
+            <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+              <Image
+                src={favoriteTeam.logo?.url || "/placeholder-logo.svg"}
+                alt={favoriteTeam.name}
+                width={20}
+                height={20}
+                className="object-contain"
+              />
+            </div>
+            <span className="truncate max-w-[120px] text-white">{favoriteTeam.name}</span>
+          </>
+        ) : selectedTeam ? (
+          <>
+            <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+              <Image
+                src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
+                alt={teams[selectedTeam].name}
+                width={20}
+                height={20}
+                className="object-contain"
+              />
+            </div>
+            <span className="truncate max-w-[120px] text-white">{teams[selectedTeam].name}</span>
+          </>
         ) : (
-          <Trophy className="h-4 w-4 text-[var(--team-primary)]" />
+          <span className="flex items-center gap-1.5 text-gray-300">
+            <Trophy className="w-3.5 h-3.5 text-[var(--team-primary)]" />
+            Selecionar Time
+          </span>
         )}
       </Button>
 
@@ -419,20 +437,20 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
             <div className="px-3 py-2 text-xs text-gray-400 border-b border-white/10">
               Times
             </div>
-            <div className="max-h-[70vh] overflow-y-auto">
+            <div className="max-h-[70vh] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
               {standings.map((team) => (
                 <button
                   key={team.id}
                   className={cn(
                     "w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 transition-colors justify-between",
-                    selectedTeam === team.id ? "bg-white/5" : "hover:bg-white/5"
+                    selectedTeam === team.id ? "bg-white/5 font-medium" : "hover:bg-white/5 focus:bg-white/5"
                   )}
                   onClick={() => {
                     onTeamSelect(team.id)
                     setIsMenuOpen(false)
                   }}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10 bg-black/50">
                       <Image
                         src={team.logo?.url || "/placeholder-logo.svg"}
@@ -454,7 +472,7 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
                     )}
                     onClick={(e) => handleFavoriteButtonClick(teams[team.id], e)}
                   >
-                    <Star
+                    <Heart
                       className="h-4 w-4"
                       fill={favoriteTeam?.id === team.id ? "currentColor" : "none"}
                     />
