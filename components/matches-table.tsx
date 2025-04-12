@@ -7,6 +7,7 @@ import type { Round, Team } from "@/types/kings-league"
 import { RoundSelector } from "@/components/matches/round-selector"
 import { DateGroup } from "@/components/matches/date-group"
 import { DateFormatter } from "@/lib/date-formatter"
+import { useTeamTheme } from "@/contexts/team-theme-context"
 
 interface MatchesTableProps {
   rounds: Round[]
@@ -30,6 +31,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
   }>>({})
   const [showShootout, setShowShootout] = useState<Record<string, boolean>>({})
   const [isClient, setIsClient] = useState(false)
+  const { favoriteTeam } = useTeamTheme()
 
   useEffect(() => {
     setIsClient(true)
@@ -232,6 +234,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                   showShootout={showShootout}
                   onScoreChange={handleScoreChange}
                   onShootoutWinnerSelect={handleShootoutWinner}
+                  favoriteTeam={favoriteTeam}
                 />
               ))}
             </div>

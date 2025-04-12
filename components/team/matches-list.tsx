@@ -4,6 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy, Clock, Youtube } from "lucide-react"
 import { Team } from "@/types/kings-league"
+import { useTeamTheme } from "@/contexts/team-theme-context"
+import { cn } from "@/lib/utils"
 
 interface MatchesListProps {
   teamId: string
@@ -45,6 +47,8 @@ function formatDate(dateString: string): string {
 }
 
 export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesListProps) {
+  const { favoriteTeam } = useTeamTheme();
+
   if (loading) {
     return <MatchesListSkeleton />
   }
@@ -56,6 +60,22 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
   const futureMatches = teamMatches
     .filter(m => m.scores.homeScore === null || m.scores.awayScore === null)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  // Função para verificar se um time da partida é o favorito (exceto o time atual da página)
+  const hasOpponentFavoriteTeam = (match: any) => {
+    if (!favoriteTeam) return false;
+
+    // Se o time atual não for o favorito, verificar se o oponente é o favorito
+    if (teamId !== favoriteTeam.id) {
+      const opponentId = match.participants.homeTeamId === teamId
+        ? match.participants.awayTeamId
+        : match.participants.homeTeamId;
+
+      return opponentId === favoriteTeam.id;
+    }
+
+    return false;
+  }
 
   return (
     <Card className="bg-[#1a1a1a] border-[#333] text-white">
@@ -85,6 +105,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                   {pastMatches.map((match) => {
                     const isHome = match.participants.homeTeamId === teamId;
                     const opponentId = isHome ? match.participants.awayTeamId : match.participants.homeTeamId;
+                    const isOpponentFavorite = hasOpponentFavoriteTeam(match);
 
                     const homeScore = match.scores.homeScore;
                     const awayScore = match.scores.awayScore;
@@ -132,10 +153,19 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     const showLeftTeamTrophy = homeScore === awayScore && hasPenalties && homeScoreP > awayScoreP;
                     const showRightTeamTrophy = homeScore === awayScore && hasPenalties && awayScoreP > homeScoreP;
 
+                    // Verificar se o time à esquerda ou à direita é o favorito
+                    const isLeftTeamFavorite = favoriteTeam?.id === leftTeamId;
+                    const isRightTeamFavorite = favoriteTeam?.id === rightTeamId;
+
                     return (
                       <div
                         key={match.id}
-                        className="bg-[#252525] rounded-lg border border-[#333] hover:border-[#444] transition-colors overflow-hidden"
+                        className={cn(
+                          "rounded-lg border overflow-hidden transition-colors",
+                          isOpponentFavorite
+                            ? "bg-[var(--team-primary)]/10 border-[var(--team-primary)]/30 hover:border-[var(--team-primary)]"
+                            : "bg-[#252525] border-[#333] hover:border-[#444]"
+                        )}
                       >
                         {/* Cabeçalho com rodada e data */}
                         <div className="bg-[#1f1f1f] px-4 py-2 flex items-center justify-between text-sm">
@@ -147,6 +177,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                           <div className="text-gray-400 text-xs flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" />
                             {formatDate(match.date)}
+
                           </div>
                         </div>
 
@@ -156,7 +187,10 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                           <div className="flex items-center justify-between">
                             {/* Time da casa (sempre à esquerda) */}
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 relative flex-shrink-0">
+                              <div className={cn(
+                                "w-10 h-10 relative flex-shrink-0",
+                                isLeftTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
+                              )}>
                                 <Image
                                   src={teams[leftTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[leftTeamId].name}
@@ -166,8 +200,13 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 />
                               </div>
                               <div className="min-w-0">
-                                <div className="flex items-center">
-                                  <p className="font-medium truncate">{teams[leftTeamId].shortName}</p>
+                                <div className="flex items-center gap-1">
+                                  <p className={cn(
+                                    "font-medium truncate",
+                                    isLeftTeamFavorite && "text-[var(--team-primary)]"
+                                  )}>
+                                    {teams[leftTeamId].shortName}
+                                  </p>
                                   {hasPenalties && showLeftTeamTrophy && (
                                     <Trophy className="w-4 h-4 text-[var(--team-primary)] ml-1.5" />
                                   )}
@@ -201,15 +240,24 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                             {/* Time visitante (sempre à direita) */}
                             <div className="flex items-center gap-3">
                               <div className="min-w-0 text-right">
-                                <div className="flex items-center justify-end">
+                                <div className="flex items-center justify-end gap-1">
                                   {hasPenalties && showRightTeamTrophy && (
                                     <Trophy className="w-4 h-4 text-[var(--team-primary)] mr-1.5" />
                                   )}
-                                  <p className="font-medium truncate">{teams[rightTeamId].shortName}</p>
+
+                                  <p className={cn(
+                                    "font-medium truncate",
+                                    isRightTeamFavorite && "text-[var(--team-primary)]"
+                                  )}>
+                                    {teams[rightTeamId].shortName}
+                                  </p>
                                 </div>
                                 <p className="text-xs text-gray-400">Visitante</p>
                               </div>
-                              <div className="w-10 h-10 relative flex-shrink-0">
+                              <div className={cn(
+                                "w-10 h-10 relative flex-shrink-0",
+                                isRightTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
+                              )}>
                                 <Image
                                   src={teams[rightTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[rightTeamId].name}
@@ -252,10 +300,19 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                 </h3>
                 <div className="space-y-3">
                   {futureMatches.map((match) => {
+                    const isOpponentFavorite = hasOpponentFavoriteTeam(match);
+                    const isHomeTeamFavorite = favoriteTeam?.id === match.participants.homeTeamId;
+                    const isAwayTeamFavorite = favoriteTeam?.id === match.participants.awayTeamId;
+
                     return (
                       <div
                         key={match.id}
-                        className="bg-[#252525] rounded-lg border border-[#333] hover:border-[#444] transition-colors overflow-hidden"
+                        className={cn(
+                          "rounded-lg border overflow-hidden transition-colors",
+                          isOpponentFavorite
+                            ? "bg-[var(--team-primary)]/10 border-[var(--team-primary)]/30 hover:border-[var(--team-primary)]"
+                            : "bg-[#252525] border-[#333] hover:border-[#444]"
+                        )}
                       >
                         {/* Cabeçalho com rodada e data */}
                         <div className="bg-[#1f1f1f] px-4 py-2 flex items-center justify-between text-sm">
@@ -267,6 +324,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                           <div className="text-gray-400 text-xs flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" />
                             {formatDate(match.date)}
+
                           </div>
                         </div>
 
@@ -276,7 +334,10 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                           <div className="flex items-center justify-between">
                             {/* Estrutura consistente: sempre time local à esquerda e visitante à direita */}
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 relative flex-shrink-0">
+                              <div className={cn(
+                                "w-10 h-10 relative flex-shrink-0",
+                                isHomeTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
+                              )}>
                                 <Image
                                   src={teams[match.participants.homeTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[match.participants.homeTeamId].name}
@@ -286,7 +347,15 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 />
                               </div>
                               <div className="min-w-0">
-                                <p className="font-medium truncate">{teams[match.participants.homeTeamId].shortName}</p>
+                                <div className="flex items-center gap-1">
+                                  <p className={cn(
+                                    "font-medium truncate",
+                                    isHomeTeamFavorite && "text-[var(--team-primary)]"
+                                  )}>
+                                    {teams[match.participants.homeTeamId].shortName}
+                                  </p>
+
+                                </div>
                                 <p className="text-xs text-gray-400">Local</p>
                               </div>
                             </div>
@@ -302,10 +371,20 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                             {/* Time visitante */}
                             <div className="flex items-center gap-3">
                               <div className="min-w-0 text-right">
-                                <p className="font-medium truncate">{teams[match.participants.awayTeamId].shortName}</p>
+                                <div className="flex items-center justify-end gap-1">
+                                  <p className={cn(
+                                    "font-medium truncate",
+                                    isAwayTeamFavorite && "text-[var(--team-primary)]"
+                                  )}>
+                                    {teams[match.participants.awayTeamId].shortName}
+                                  </p>
+                                </div>
                                 <p className="text-xs text-gray-400">Visitante</p>
                               </div>
-                              <div className="w-10 h-10 relative flex-shrink-0">
+                              <div className={cn(
+                                "w-10 h-10 relative flex-shrink-0",
+                                isAwayTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
+                              )}>
                                 <Image
                                   src={teams[match.participants.awayTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[match.participants.awayTeamId].name}

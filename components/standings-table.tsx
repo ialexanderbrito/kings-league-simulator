@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import type { TeamStanding } from "@/types/kings-league"
-import { ChevronsDown, ChevronsUp, Download } from "lucide-react"
+import { ChevronsDown, ChevronsUp, Download, Heart } from "lucide-react"
 import html2canvas from "html2canvas"
 import { useRef } from "react"
 import { useTeamTheme } from "@/contexts/team-theme-context"
+import { cn } from "@/lib/utils"
 
 interface StandingsTableProps {
   standings: TeamStanding[]
@@ -18,7 +19,7 @@ interface StandingsTableProps {
 
 export default function StandingsTable({ standings, onTeamSelect, previousStandings }: StandingsTableProps) {
   const tableRef = useRef<HTMLDivElement>(null)
-  const { primaryColor } = useTeamTheme()
+  const { primaryColor, favoriteTeam } = useTeamTheme()
 
   const downloadClassification = async () => {
     if (!tableRef.current) return
@@ -206,6 +207,11 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
     }
   }
 
+  // Verificar se o time atual é o time favorito do usuário
+  const isFavoriteTeam = (teamId: string) => {
+    return favoriteTeam?.id === teamId
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -227,11 +233,15 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                   {standings.map((team, index) => {
                     const positionStyle = getPositionStyle(team, index)
                     const positionChange = getPositionChange(team, index)
+                    const isTeamFavorite = isFavoriteTeam(team.id)
 
                     return (
                       <TableRow
                         key={team.id}
-                        className="cursor-pointer transition-colors hover:bg-[#1f1f1f] border-b border-[#333]"
+                        className={cn(
+                          "cursor-pointer transition-colors hover:bg-[#1f1f1f] border-b border-[#333]",
+                          isTeamFavorite && "hover:bg-[var(--team-primary)] hover:bg-opacity-20"
+                        )}
                         onClick={() => onTeamSelect(team.id)}
                       >
                         <TableCell className="text-center font-medium py-2 w-12">
@@ -268,12 +278,17 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                                 />
                               </div>
                             )}
-                            <span
-                              className="font-medium text-xs truncate flex-1"
-                              title={team.name} // Tooltip nativo para mostrar nome completo
-                            >
-                              {team.name}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              <span
+                                className="font-medium text-xs truncate"
+                                title={team.name} // Tooltip nativo para mostrar nome completo
+                              >
+                                {team.name}
+                              </span>
+                              {isTeamFavorite && (
+                                <Heart className="w-3 h-3 text-red-400 flex-shrink-0" fill="currentColor" />
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="text-center font-bold text-[var(--team-primary)] text-sm py-2 w-16">{team.points}</TableCell>
@@ -300,6 +315,12 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                 Playoff: Quartas
               </span>
             </div>
+            {favoriteTeam && (
+              <div className="flex items-center gap-1.5">
+                <Heart className="w-2.5 h-2.5 text-red-400 flex-shrink-0" fill="currentColor" />
+                <span>Seu time do coração</span>
+              </div>
+            )}
           </div>
 
           {/* <Button
