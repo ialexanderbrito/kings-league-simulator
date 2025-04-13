@@ -9,6 +9,7 @@ import type { Team } from "@/types/kings-league"
 import { useEffect, useState } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useRouter } from "next/navigation"
 
 interface TeamCarouselProps {
   teams: Team[]
@@ -54,6 +55,7 @@ function TeamCarouselSkeleton() {
 export default function TeamCarousel({ teams, onTeamSelect, className, loading = false }: TeamCarouselProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
@@ -72,6 +74,11 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
     }
   }, [teams, loading, mounted])
 
+  const handleTeamClick = (teamId: string) => {
+    onTeamSelect(teamId)
+    router.push(`/team/${teamId}`)
+  }
+
   if (!mounted || isLoading) {
     return <TeamCarouselSkeleton />
   }
@@ -88,7 +95,7 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
             <Button
               variant="ghost"
               className="rounded-lg w-[100px] h-[100px] xs:w-[100px] xs:h-[100px] sm:w-[100px] sm:h-[100px] md:w-[100px] md:h-[100px] flex flex-col items-center justify-center p-3 transition-all hover:bg-white/10 hover:scale-105 border-0"
-              onClick={() => onTeamSelect(team.id)}
+              onClick={() => handleTeamClick(team.id)}
               style={{
                 background: `linear-gradient(120deg, ${team.firstColorHEX}15, ${team.secondColorHEX}25)`
               }}
