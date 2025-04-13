@@ -10,7 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Sobre */}
           <div className="flex flex-col space-y-3">
-            <h3 className="text-lg font-semibold text-white">Kings League Simulator</h3>
+            <h3 className="text-lg font-semibold text-white">Kings League Simulador</h3>
             <p className="text-sm text-gray-400">
               Simulador não-oficial da Kings League, oferecendo estatísticas em tempo real,
               simulação de partidas e informações detalhadas sobre times e jogadores.
@@ -86,7 +86,7 @@ export function Footer() {
 
         <div className="flex flex-col md:flex-row items-center justify-between text-center md:text-left">
           <p className="text-sm text-gray-400">
-            © {currentYear} Kings League Simulator. Todos os direitos reservados.
+            © {currentYear} Kings League Simulador. Todos os direitos reservados.
           </p>
 
           <div className="mt-4 md:mt-0 flex items-center">

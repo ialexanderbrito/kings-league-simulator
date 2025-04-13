@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
 export const metadata = {
-  title: 'Página não encontrada | Kings League Simulator',
-  description: 'A página que você está procurando não foi encontrada. Retorne para a página inicial do Kings League Simulator.',
+  title: 'Página não encontrada | Kings League Simulador',
+  description: 'A página que você está procurando não foi encontrada. Retorne para a página inicial do Kings League Simulador.',
 }
 
 export default function NotFound() {

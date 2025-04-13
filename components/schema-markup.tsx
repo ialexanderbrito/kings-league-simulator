@@ -125,7 +125,7 @@ export function SchemaMarkup({
     return {
       "@context": "https://schema.org",
       "@type": "SportsOrganization",
-      "name": "Kings League Simulator",
+      "name": "Kings League Simulador",
       "url": "https://kings-league-simulator.vercel.app",
       "logo": "https://kings-league-simulator.vercel.app/favicon.svg",
       "description": "Simulador não-oficial da Kings League com estatísticas, partidas e classificações atualizadas"
