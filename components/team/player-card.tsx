@@ -10,7 +10,7 @@ interface PlayerCardProps {
 export function PlayerCard({ player }: PlayerCardProps) {
   const [showStats, setShowStats] = useState(true)
 
-  const isWildcard = player.category === "wildcard"
+  const isWildcard = player.category === "wildcard" || player?.metaInformation?.status === "Wildcard"
 
   // Cor fixa para Wild Cards conforme solicitado
   const wildcardColor = "#F4AF23";
