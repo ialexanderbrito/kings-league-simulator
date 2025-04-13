@@ -22,11 +22,11 @@ export function LoadingState() {
                   height={52}
                   className="transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#F4AF23]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-[var(--team-primary)]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">
-                  <span className="text-[#F4AF23]">Kings</span> League
+                  <span className="text-[var(--team-primary)]">Kings</span> League
                 </h1>
                 <p className="text-xs text-gray-400 -mt-0.5">Simulador</p>
               </div>
@@ -56,7 +56,7 @@ export function LoadingState() {
             <Card className="bg-[#1a1a1a] border-[#333] text-white overflow-hidden w-full">
               <CardHeader className="py-3 px-4 border-b border-[#333] bg-[#1f1f1f]">
                 <CardTitle className="text-lg flex items-center gap-2 text-gray-200">
-                  <TableIcon className="w-4 h-4 text-[#F4AF23]" />
+                  <TableIcon className="w-4 h-4 text-[var(--team-primary)]" />
                   Classificação
                 </CardTitle>
               </CardHeader>
