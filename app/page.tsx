@@ -14,6 +14,7 @@ import { MainContent } from "@/components/layout/main-content"
 import { LoadingState } from "@/components/ui/loading-state"
 import { ErrorState } from "@/components/ui/error-state"
 import { SchemaMarkup } from "@/components/schema-markup"
+import { useRouter } from "next/navigation"
 
 export default function KingsLeagueSimulator() {
   const [leagueData, setLeagueData] = useState<LeagueData | null>(null)
@@ -27,6 +28,7 @@ export default function KingsLeagueSimulator() {
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const [usingFallback, setUsingFallback] = useState(false)
   const [activeTab, setActiveTab] = useState<"matches" | "team">("matches")
+  const router = useRouter()
 
   const loadData = async () => {
     try {
@@ -125,6 +127,7 @@ export default function KingsLeagueSimulator() {
 
   const handleTeamSelect = (teamId: string) => {
     setSelectedTeam(teamId)
+    router.push(`/team/${teamId}`)
   }
 
   if (loading) {
