@@ -51,12 +51,12 @@ export function Footer() {
                     Início
                   </Link>
                 </li>
-                {/* <li>
+                <li>
                   <Link href="/teams" className="text-gray-400 hover:text-white transition-colors">
                     Times
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link href="/standings" className="text-gray-400 hover:text-white transition-colors">
                     Classificação
                   </Link>
