@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google'
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider'
 import { TeamThemeProvider } from '@/contexts/team-theme-context'
+import { ButtonTop } from "@/components/ui/button-top"
 import Script from 'next/script'
 
 const inter = Inter({
@@ -133,6 +134,7 @@ export default function RootLayout({
             {children}
             <Analytics />
             <Toaster />
+            <ButtonTop />
           </TeamThemeProvider>
         </ThemeProvider>
 
