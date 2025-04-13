@@ -6,6 +6,7 @@ import MatchesTable from "@/components/matches-table"
 import StandingsTable from "@/components/standings-table"
 import TeamInfo from "@/components/team-info"
 import { Team, Round, TeamStanding } from "@/types/kings-league"
+import { useRouter } from "next/navigation"
 
 interface MainContentProps {
   rounds: Round[]
@@ -30,35 +31,48 @@ export function MainContent({
   activeTab = "matches",
   setActiveTab
 }: MainContentProps) {
+  const router = useRouter()
+
   useEffect(() => {
     if (selectedTeam) {
       setActiveTab("team")
     }
-  }, [selectedTeam])
+  }, [selectedTeam, setActiveTab])
+
+  const handleTeamSelect = (teamId: string) => {
+    // Apenas redirecione para a página do time sem alterar a aba
+    // O componente da página específica lidará com a exibição correta
+    router.push(`/team/${teamId}`)
+
+    // Chamamos onTeamSelect depois porque pode ser usado para outras finalidades
+    // como rastreamento ou outras ações necessárias
+    onTeamSelect(teamId)
+  }
+
+  const handleScoreUpdate = (
+    roundId: number,
+    matchId: number,
+    homeScore: string | number | null,
+    awayScore: string | number | null,
+    homeShootoutScore?: number,
+    awayShootoutScore?: number
+  ) => {
+    // Converter para número se for string, ou passar null se o formato não for válido
+    const homeScoreNum = homeScore === null || homeScore === '' ? null :
+      typeof homeScore === 'number' ? homeScore :
+        !isNaN(Number(homeScore)) ? Number(homeScore) : null;
+    const awayScoreNum = awayScore === null || awayScore === '' ? null :
+      typeof awayScore === 'number' ? awayScore :
+        !isNaN(Number(awayScore)) ? Number(awayScore) : null;
+
+    onScoreUpdate(roundId, matchId, homeScoreNum, awayScoreNum, homeShootoutScore, awayShootoutScore);
+  }
 
   return (
     <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'matches' | 'team')} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-8 bg-[#1a1a1a]">
-        <TabsTrigger
-          value="matches"
-          className="flex items-center gap-2 data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
-        >
-          <Calendar className="w-4 h-4" />
-          <span>Partidas</span>
-        </TabsTrigger>
-        <TabsTrigger
-          value="team"
-          className="flex items-center gap-2 data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
-          disabled={!selectedTeam}
-        >
-          <Info className="w-4 h-4" />
-          <span>Time</span>
-        </TabsTrigger>
-      </TabsList>
-
       <TabsContent value="matches" className="mt-0">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
-          <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={onScoreUpdate} />
+          <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={handleScoreUpdate} />
 
           <div className="space-y-6">
             <Card className="bg-[#1a1a1a] border-[#333] text-white overflow-hidden lg:sticky lg:top-6">
@@ -71,7 +85,7 @@ export function MainContent({
               <CardContent className="p-0">
                 <StandingsTable
                   standings={standings}
-                  onTeamSelect={onTeamSelect}
+                  onTeamSelect={handleTeamSelect}
                   previousStandings={previousStandings}
                 />
               </CardContent>
@@ -80,9 +94,7 @@ export function MainContent({
         </div>
       </TabsContent>
 
-      <TabsContent value="team" className="mt-0">
-        {selectedTeam && <TeamInfo team={teams[selectedTeam]} rounds={rounds} teams={teams} />}
-      </TabsContent>
+
     </Tabs>
   )
 }
