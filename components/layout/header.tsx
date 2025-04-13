@@ -4,6 +4,7 @@ import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import KingsLeagueLogo from "@/components/kings-league-logo"
@@ -27,6 +28,12 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { favoriteTeam, setFavoriteTeam } = useTeamTheme()
   const { toast } = useToast()
+  const router = useRouter()
+
+  const handleTeamSelect = (teamId: string) => {
+    onTeamSelect(teamId)
+    router.push(`/team/${teamId}`)
+  }
 
   const handleLogoClick = () => {
     if (selectedTeam) {
@@ -66,7 +73,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                 selectedTeam={selectedTeam}
                 teams={teams}
                 standings={standings}
-                onTeamSelect={onTeamSelect}
+                onTeamSelect={handleTeamSelect}
                 favoriteTeam={favoriteTeam}
                 setFavoriteTeam={setFavoriteTeam}
                 showToast={toast}
@@ -75,7 +82,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                 selectedTeam={selectedTeam}
                 teams={teams}
                 standings={standings}
-                onTeamSelect={onTeamSelect}
+                onTeamSelect={handleTeamSelect}
                 isMenuOpen={isMenuOpen}
                 setIsMenuOpen={setIsMenuOpen}
                 favoriteTeam={favoriteTeam}
@@ -149,6 +156,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [pendingTeam, setPendingTeam] = useState<Team | null>(null);
+  const router = useRouter();
 
   const handleFavoriteButtonClick = (team: Team, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -198,6 +206,11 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
 
   const handleCancelRemove = () => {
     setRemoveModalOpen(false);
+  };
+
+  const handleTeamSelect = (teamId: string) => {
+    onTeamSelect(teamId);
+    router.push(`/team/${teamId}`);
   };
 
   return (
@@ -254,7 +267,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                   "cursor-pointer flex items-center gap-2 hover:bg-white/5 focus:bg-white/5 justify-between",
                   selectedTeam === team.id && "bg-white/5 font-medium"
                 )}
-                onClick={() => onTeamSelect(team.id)}
+                onClick={() => handleTeamSelect(team.id)}
               >
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
@@ -332,6 +345,7 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [pendingTeam, setPendingTeam] = useState<Team | null>(null);
+  const router = useRouter();
 
   const handleFavoriteButtonClick = (team: Team, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -381,6 +395,12 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
 
   const handleCancelRemove = () => {
     setRemoveModalOpen(false);
+  };
+
+  const handleTeamSelect = (teamId: string) => {
+    onTeamSelect(teamId);
+    setIsMenuOpen(false);
+    router.push(`/team/${teamId}`);
   };
 
   return (
@@ -445,10 +465,7 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
                     "w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 transition-colors justify-between",
                     selectedTeam === team.id ? "bg-white/5 font-medium" : "hover:bg-white/5 focus:bg-white/5"
                   )}
-                  onClick={() => {
-                    onTeamSelect(team.id)
-                    setIsMenuOpen(false)
-                  }}
+                  onClick={() => handleTeamSelect(team.id)}
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10 bg-black/50">
