@@ -125,8 +125,8 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
       matchId,
       currentScores?.home ? Number(currentScores.home) : null,
       currentScores?.away ? Number(currentScores.away) : null,
-      winner === "home" ? 5 : winner === "away" ? 3 : null,
-      winner === "home" ? 3 : winner === "away" ? 5 : null
+      winner === "home" ? 5 : winner === "away" ? 3 : undefined,
+      winner === "home" ? 3 : winner === "away" ? 5 : undefined
     )
 
     if (winner === null) {
@@ -179,11 +179,19 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
 
   useEffect(() => {
     if (rounds.length > 0 && !selectedRound) {
-      const firstUnfinishedRound = rounds.find((round) => !round.ended)
+      // Encontrar a rodada atual (primeira rodada não encerrada)
+      const firstUnfinishedRound = rounds.find((round) => {
+        // Verificar se a rodada não está encerrada OU se não tem todas as partidas finalizadas
+        return !round.ended || round.matches.some(
+          match => match.scores.homeScore === null || match.scores.awayScore === null
+        );
+      });
+
       if (firstUnfinishedRound) {
-        setSelectedRound(firstUnfinishedRound.id.toString())
+        setSelectedRound(firstUnfinishedRound.id.toString());
       } else {
-        setSelectedRound(rounds[rounds.length - 1].id.toString())
+        // Se todas rodadas estiverem encerradas, seleciona a última
+        setSelectedRound(rounds[rounds.length - 1].id.toString());
       }
     }
   }, [rounds, selectedRound])
