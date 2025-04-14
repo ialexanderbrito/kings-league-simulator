@@ -80,19 +80,9 @@ export interface Match {
     homeScoreP: number | null
     awayScoreP: number | null
   }
-  odds?: MatchOdds
   metaInformation?: {
     youtube_url?: string
   }
-}
-
-export interface MatchOdds {
-  homeWin: number | null
-  draw: number | null
-  awayWin: number | null
-  matchUuid?: string
-  matchName?: string
-  utcDate?: string
 }
 
 export interface TeamDetails extends Team {
