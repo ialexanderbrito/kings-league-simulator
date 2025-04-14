@@ -25,6 +25,7 @@ interface MatchesListProps {
     metaInformation?: {
       youtube_url?: string
     }
+    status?: string
   }>
   teams: Record<string, Team>
   loading: boolean
@@ -114,6 +115,9 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     const hasPenalties = homeScoreP !== undefined && homeScoreP !== null &&
                       awayScoreP !== undefined && awayScoreP !== null;
 
+                    // Verificar se a partida está ao vivo
+                    const isLiveMatch = match.status === "inPlay1H";
+
                     // Determinar qual time venceu nos pênaltis
                     const homePenaltyWin = hasPenalties && homeScoreP > awayScoreP;
                     const awayPenaltyWin = hasPenalties && awayScoreP > homeScoreP;
@@ -173,6 +177,15 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                             <Badge variant="outline" className="bg-[#333] text-xs font-normal">
                               {match.round}
                             </Badge>
+                            {isLiveMatch && (
+                              <Badge className="bg-red-600 text-white text-[9px] py-0 h-4 px-1 flex items-center gap-1 animate-pulse">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                                </span>
+                                AO VIVO
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-gray-400 text-xs flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" />
@@ -304,6 +317,9 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     const isHomeTeamFavorite = favoriteTeam?.id === match.participants.homeTeamId;
                     const isAwayTeamFavorite = favoriteTeam?.id === match.participants.awayTeamId;
 
+                    // Verificar se a partida está ao vivo
+                    const isLiveMatch = match.status === "inPlay1H";
+
                     return (
                       <div
                         key={match.id}
@@ -320,6 +336,15 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                             <Badge variant="outline" className="bg-[#333] text-xs font-normal">
                               {match.round}
                             </Badge>
+                            {isLiveMatch && (
+                              <Badge className="bg-red-600 text-white text-[9px] py-0 h-4 px-1 flex items-center gap-1 animate-pulse">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                                </span>
+                                AO VIVO
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-gray-400 text-xs flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" />
@@ -365,7 +390,13 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                               <div className="flex items-center justify-center gap-3 px-3">
                                 <span className="text-lg font-medium text-gray-400">vs</span>
                               </div>
-                              <div className="mt-1 text-xs text-gray-400">{match.ended ? 'Finalizada' : 'Não iniciada'}</div>
+                              <div className="mt-1 text-xs text-gray-400">
+                                {isLiveMatch ? (
+                                  <span className="text-red-400 font-medium">EM ANDAMENTO</span>
+                                ) : (
+                                  match.ended ? 'Finalizada' : 'Não iniciada'
+                                )}
+                              </div>
                             </div>
 
                             {/* Time visitante */}

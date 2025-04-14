@@ -6,6 +6,7 @@ import { TeamDisplay } from "./team-display";
 import { MatchScoreDisplay } from "./match-score-display";
 import { MatchScoreInput } from "./match-score-input";
 import { ShootoutSelector } from "./shootout-selector";
+import { Badge } from "@/components/ui/badge";
 
 interface MatchCardProps {
   match: Round["matches"][0];
@@ -47,6 +48,7 @@ export const MatchCard: FC<MatchCardProps> = ({
   const homeTeam = teams[match.participants.homeTeamId];
   const awayTeam = teams[match.participants.awayTeamId];
   const isMatchEnded = match.status === "ended";
+  const isLiveMatch = match.status === "inPlay1H";
 
   const homeScore = match.scores.homeScore;
   const awayScore = match.scores.awayScore;
@@ -92,6 +94,15 @@ export const MatchCard: FC<MatchCardProps> = ({
 
         {/* Placar */}
         <div className="flex flex-col items-center px-1 sm:px-2">
+          {isLiveMatch && (
+            <Badge className="ml-1 bg-red-600 text-white text-[9px] sm:text-[10px] py-0 h-4 px-1 flex items-center gap-1 hover:bg-red-600">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+              AO VIVO
+            </Badge>
+          )}
           <div className="text-[10px] sm:text-xs text-gray-400 mb-1 text-center flex items-center gap-1">
             {formatDate(match.date)}
           </div>
