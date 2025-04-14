@@ -49,30 +49,11 @@ export function MainContent({
     onTeamSelect(teamId)
   }
 
-  const handleScoreUpdate = (
-    roundId: number,
-    matchId: number,
-    homeScore: string | number | null,
-    awayScore: string | number | null,
-    homeShootoutScore?: number,
-    awayShootoutScore?: number
-  ) => {
-    // Converter para número se for string, ou passar null se o formato não for válido
-    const homeScoreNum = homeScore === null || homeScore === '' ? null :
-      typeof homeScore === 'number' ? homeScore :
-        !isNaN(Number(homeScore)) ? Number(homeScore) : null;
-    const awayScoreNum = awayScore === null || awayScore === '' ? null :
-      typeof awayScore === 'number' ? awayScore :
-        !isNaN(Number(awayScore)) ? Number(awayScore) : null;
-
-    onScoreUpdate(roundId, matchId, homeScoreNum, awayScoreNum, homeShootoutScore, awayShootoutScore);
-  }
-
   return (
     <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'matches' | 'team')} className="w-full">
       <TabsContent value="matches" className="mt-0">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
-          <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={handleScoreUpdate} />
+          <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={onScoreUpdate} />
 
           <div className="space-y-6">
             <Card className="bg-[#1a1a1a] border-[#333] text-white overflow-hidden lg:sticky lg:top-6">
