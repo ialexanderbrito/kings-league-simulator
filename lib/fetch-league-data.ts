@@ -1,4 +1,4 @@
-import type { LeagueData, TeamDetails, PlayerStats } from "@/types/kings-league"
+import type { LeagueData, TeamDetails, PlayerStats, MatchOdds } from "@/types/kings-league"
 
 // Cache para estatísticas de jogadores
 const playerStatsCache: Record<number, { data: PlayerStats, timestamp: number }> = {}
@@ -6,8 +6,14 @@ const playerStatsCache: Record<number, { data: PlayerStats, timestamp: number }>
 // Cache para detalhes dos times
 const teamDetailsCache: Record<string, { data: TeamDetails, timestamp: number }> = {}
 
+// Cache para odds das partidas
+const matchOddsCache: Record<string, { data: Record<string, MatchOdds>, timestamp: number }> = {}
+
 // Tempo de expiração do cache em milissegundos (12 horas)
 const CACHE_EXPIRY_TIME = 12 * 60 * 60 * 1000
+
+// Tempo de expiração do cache de odds em milissegundos (5 minutos)
+const ODDS_CACHE_EXPIRY_TIME = 5 * 60 * 1000
 
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
@@ -185,5 +191,102 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
       redCards: 0,
       mvps: 0
     }
+  }
+}
+
+export async function fetchMatchOdds(date?: string): Promise<Record<string, MatchOdds>> {
+  try {
+    // Chave de cache baseada na data ou 'today' como padrão
+    const cacheKey = date || 'today'
+    const now = Date.now()
+    
+    // Verificar se temos dados em cache e se ainda são válidos
+    const cachedData = matchOddsCache[cacheKey]
+    if (cachedData && (now - cachedData.timestamp) < ODDS_CACHE_EXPIRY_TIME) {
+      console.info(`Usando odds em cache para a data ${cacheKey}`)
+      return cachedData.data
+    }
+    
+    // Preparar query params
+    const params = new URLSearchParams()
+    if (date) {
+      params.append('startDate', date)
+    }
+    
+    const response = await fetch(`/api/match-odds?${params.toString()}`)
+    
+    if (!response.ok) {
+      console.warn(`Não foi possível obter odds (status: ${response.status})`)
+      return {}
+    }
+    
+    const data = await response.json()
+    
+    if (data.error || !data.data || !Array.isArray(data.data)) {
+      console.warn('Formato de dados inválido nas odds:', data)
+      return {}
+    }
+    
+    // Processar os dados de odds recebidos
+    const matchOdds: Record<string, MatchOdds> = {}
+    
+    data.data.forEach((match: any) => {
+      if (!match.odds || !Array.isArray(match.odds)) {
+        return
+      }
+      
+      // Encontrar as odds para casa, empate e fora
+      let homeWin = null
+      let draw = null
+      let awayWin = null
+      
+      for (const odd of match.odds) {
+        if (odd.marketName === "Resultado Final") {
+          if (odd.code === "1") homeWin = parseFloat(odd.price) || null
+          if (odd.code === "0") draw = parseFloat(odd.price) || null
+          if (odd.code === "2") awayWin = parseFloat(odd.price) || null
+        }
+      }
+      
+      // Extrair os nomes dos times do matchName (formato: "TimeA·TimeB")
+      const teamNames = match.matchName.split('·')
+      if (teamNames.length !== 2) {
+        return
+      }
+      
+      const homeTeamName = teamNames[0].trim() 
+      const awayTeamName = teamNames[1].trim()
+      
+      // Guardar as odds usando o formato 'homeTeamName|awayTeamName' como chave
+      const matchKeyByName = `${homeTeamName}|${awayTeamName}`.toLowerCase()
+      
+      // Manter a chave original também para compatibilidade
+      const matchKey = `${match.homeTeamId}-${match.awayTeamId}`
+      
+      const oddsData = {
+        homeWin,
+        draw,
+        awayWin,
+        matchUuid: match.uuid,
+        matchName: match.matchName,
+        utcDate: match.utcDate,
+        homeTeamName,
+        awayTeamName
+      }
+      
+      matchOdds[matchKey] = oddsData
+      matchOdds[matchKeyByName] = oddsData
+    })
+    
+    // Armazenar no cache com timestamp atual
+    matchOddsCache[cacheKey] = {
+      data: matchOdds,
+      timestamp: now
+    }
+    
+    return matchOdds
+  } catch (error) {
+    console.error('Erro ao buscar odds das partidas:', error)
+    return {}
   }
 }
