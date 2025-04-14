@@ -145,6 +145,11 @@ body {
   transform: rotateY(180deg);
 }
 
+::selection {
+  background: var(--team-primary);
+  color: var(--team-secondary);
+}
+
 .card-container > div {
   position: absolute;
   width: 100%;
