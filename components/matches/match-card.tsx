@@ -1,11 +1,12 @@
 import { FC } from "react";
-import { Youtube, Heart } from "lucide-react";
+import { Youtube, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Round, Team } from "@/types/kings-league";
 import { TeamDisplay } from "./team-display";
 import { MatchScoreDisplay } from "./match-score-display";
 import { MatchScoreInput } from "./match-score-input";
 import { ShootoutSelector } from "./shootout-selector";
+import { MatchOddsDisplay } from "./match-odds-display";
 
 interface MatchCardProps {
   match: Round["matches"][0];
@@ -48,6 +49,13 @@ export const MatchCard: FC<MatchCardProps> = ({
   const awayTeam = teams[match.participants.awayTeamId];
   const isMatchEnded = match.status === "ended";
 
+  // Verificação mais detalhada para as odds
+  const hasOdds = match.odds && (
+    typeof match.odds.homeWin === 'number' ||
+    typeof match.odds.draw === 'number' ||
+    typeof match.odds.awayWin === 'number'
+  );
+
   const homeScore = match.scores.homeScore;
   const awayScore = match.scores.awayScore;
   const shootoutWinner = currentScores.shootoutWinner;
@@ -73,6 +81,7 @@ export const MatchCard: FC<MatchCardProps> = ({
     }
   }
 
+
   return (
     <div className={cn(
       "rounded-md p-3 border transition-colors",
@@ -94,6 +103,9 @@ export const MatchCard: FC<MatchCardProps> = ({
         <div className="flex flex-col items-center px-1 sm:px-2">
           <div className="text-[10px] sm:text-xs text-gray-400 mb-1 text-center flex items-center gap-1">
             {formatDate(match.date)}
+            {hasOdds && (
+              <TrendingUp className="w-3 h-3 text-emerald-400 ml-0.5" />
+            )}
           </div>
 
           {isMatchEnded ? (
@@ -136,6 +148,13 @@ export const MatchCard: FC<MatchCardProps> = ({
                   }
                 />
               )}
+            </div>
+          )}
+
+          {/* Mostrar odds se disponíveis */}
+          {hasOdds && (
+            <div className="mt-2 bg-[#1a1a1a] px-2 py-1 rounded text-center">
+              <MatchOddsDisplay odds={match.odds!} />
             </div>
           )}
 
