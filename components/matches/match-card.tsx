@@ -48,7 +48,7 @@ export const MatchCard: FC<MatchCardProps> = ({
   const homeTeam = teams[match.participants.homeTeamId];
   const awayTeam = teams[match.participants.awayTeamId];
   const isMatchEnded = match.status === "ended";
-  const isLiveMatch = match.status === "inPlay1H";
+  const isLiveMatch = match.status === "inPlay1H" || match.status === "inPlay2H" || match.status === "inPlayET" || match.status === "inPlayP";
 
   const homeScore = match.scores.homeScore;
   const awayScore = match.scores.awayScore;

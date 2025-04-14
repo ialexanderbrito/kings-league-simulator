@@ -116,7 +116,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                       awayScoreP !== undefined && awayScoreP !== null;
 
                     // Verificar se a partida está ao vivo
-                    const isLiveMatch = match.status === "inPlay1H";
+                    const isLiveMatch = match.status === "inPlay1H" || match.status === "inPlay2H" || match.status === "inPlayET" || match.status === "inPlayP";
 
                     // Determinar qual time venceu nos pênaltis
                     const homePenaltyWin = hasPenalties && homeScoreP > awayScoreP;
@@ -318,7 +318,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     const isAwayTeamFavorite = favoriteTeam?.id === match.participants.awayTeamId;
 
                     // Verificar se a partida está ao vivo
-                    const isLiveMatch = match.status === "inPlay1H";
+                    const isLiveMatch = match.status === "inPlay1H" || match.status === "inPlay2H" || match.status === "inPlayET" || match.status === "inPlayP";
 
                     return (
                       <div
