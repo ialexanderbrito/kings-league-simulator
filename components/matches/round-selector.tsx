@@ -15,6 +15,18 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
   selectedRound,
   onRoundSelect,
 }) => {
+  // Verificar se a rodada está realmente completa (todas as partidas têm resultados)
+  const isRoundComplete = (round: Round): boolean => {
+    if (!round.ended) return false;
+
+    // Verificar se todas as partidas têm resultados
+    return round.matches.every(
+      match =>
+        match.scores.homeScore !== null &&
+        match.scores.awayScore !== null
+    );
+  };
+
   return (
     <ScrollArea className="w-full pb-1">
       <div className="flex space-x-1 px-1 min-w-max pb-1">
@@ -30,7 +42,7 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
             )}
           >
             {round.name.replace('Jornada', 'R').replace('Rodada', 'R')}
-            {round.ended && <Check className="inline w-3 h-3 ml-1" />}
+            {isRoundComplete(round) && <Check className="inline w-3 h-3 ml-1" />}
           </button>
         ))}
       </div>
