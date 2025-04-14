@@ -37,11 +37,9 @@ export default function Teams() {
             setStandings(parsedData.standings)
             setTeamDetails(parsedData.teamDetails)
             setLoading(false)
-            console.info('Carregando dados dos times do cache local')
             return
           } catch (parseError) {
             console.warn('Erro ao analisar dados em cache:', parseError)
-            // Se houver erro ao analisar o cache, continua para buscar dados frescos
           }
         }
 
@@ -80,7 +78,6 @@ export default function Teams() {
           }
           localStorage.setItem('teams-page-cache', JSON.stringify(dataToCache))
           localStorage.setItem('teams-page-cache-timestamp', now.toString())
-          console.info('Dados dos times atualizados e salvos no cache local')
 
           setLoading(false)
         }

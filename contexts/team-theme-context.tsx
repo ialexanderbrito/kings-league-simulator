@@ -95,8 +95,6 @@ export function TeamThemeProvider({ children }: { children: React.ReactNode }) {
         document.documentElement.style.setProperty('--team-primary', primary);
         document.documentElement.style.setProperty('--team-secondary', team.secondColorHEX);
       } catch (error) {
-        console.error('Erro ao carregar time favorito:', error);
-
         // Restaurar para as cores padrão
         setPrimaryColor(defaultColors.primaryColor);
         setSecondaryColor(defaultColors.secondaryColor);

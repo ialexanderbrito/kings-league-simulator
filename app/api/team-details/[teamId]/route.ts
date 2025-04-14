@@ -54,8 +54,6 @@ export async function GET(
       } catch (error) {
         console.error("Erro ao processar dados do staff:", error);
       }
-    } else {
-      console.warn(`Erro na resposta do staff: ${staffResponse.status}`);
     }
 
     let playersData = [];
@@ -64,7 +62,6 @@ export async function GET(
         playersData = await playersResponse.json();
         
         if (!Array.isArray(playersData)) {
-          console.warn("Dados de jogadores não estão em formato de array:", playersData);
           playersData = [];
         }
         
@@ -78,8 +75,6 @@ export async function GET(
       } catch (error) {
         console.error("Erro ao processar dados dos jogadores:", error);
       }
-    } else {
-      console.warn(`Erro na resposta dos jogadores: ${playersResponse.status}`);
     }
 
     const response = {
@@ -99,7 +94,6 @@ export async function GET(
       },
     })
   } catch (error: any) {
-    console.error("Erro na API de detalhes do time:", error);
     return NextResponse.json(
       {
         error: "Falha ao carregar detalhes do time",

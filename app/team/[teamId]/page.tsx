@@ -51,9 +51,7 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
           try {
             leagueData = JSON.parse(cachedLeagueData)
             leagueDataFromCache = true
-            console.info('Carregando dados da liga do cache local')
           } catch (parseError) {
-            console.warn('Erro ao analisar dados da liga em cache:', parseError)
             leagueData = null
           }
         }
@@ -63,10 +61,8 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
           try {
             teamDetailsData = JSON.parse(cachedTeamData)
             teamDataFromCache = true
-            console.info(`Carregando detalhes do time ${teamId} do cache local`)
             setTeamDetails(teamDetailsData)
           } catch (parseError) {
-            console.warn(`Erro ao analisar dados do time ${teamId} em cache:`, parseError)
             teamDetailsData = null
           }
         }
@@ -78,7 +74,6 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
           // Salvar dados da liga no cache
           localStorage.setItem('league-data-cache', JSON.stringify(leagueData))
           localStorage.setItem('league-data-cache-timestamp', now.toString())
-          console.info('Dados da liga atualizados e salvos no cache local')
         }
 
         // Converter lista de times para um Record (dicionário)
@@ -106,7 +101,6 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
           // Salvar detalhes do time no cache
           localStorage.setItem(`team-${teamId}-cache`, JSON.stringify(details))
           localStorage.setItem(`team-${teamId}-cache-timestamp`, now.toString())
-          console.info(`Detalhes do time ${teamId} atualizados e salvos no cache local`)
         }
 
         setLoading(false)

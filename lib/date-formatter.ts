@@ -13,7 +13,6 @@ export class DateFormatter {
         minute: "2-digit",
       }).format(date);
     } catch (error) {
-      console.error("Erro ao formatar data:", error);
       return dateString;
     }
   }
@@ -27,7 +26,6 @@ export class DateFormatter {
       const date = new Date(dateString);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     } catch (error) {
-      console.error("Erro ao formatar data para agrupamento:", error);
       return dateString.split('T')[0];
     }
   }
@@ -47,7 +45,6 @@ export class DateFormatter {
         year: "numeric"
       }).format(date);
     } catch (error) {
-      console.error("Erro ao formatar exibição da data:", error);
       return dateString;
     }
   }
@@ -62,7 +59,6 @@ export class DateFormatter {
       const date = new Date(year, month - 1, day, 12, 0, 0);
       return new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", "");
     } catch (error) {
-      console.error("Erro ao obter dia da semana:", error);
       return "";
     }
   }

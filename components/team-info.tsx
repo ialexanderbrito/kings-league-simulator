@@ -32,7 +32,6 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
         setTeamDetails(details)
         setError(null)
       } catch (err) {
-        console.error("Erro ao carregar detalhes do time:", err)
         setError("Não foi possível carregar todos os detalhes do time.")
       } finally {
         setLoading(false)

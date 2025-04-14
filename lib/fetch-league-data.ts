@@ -15,15 +15,8 @@ export async function fetchLeagueData(): Promise<LeagueData> {
       const directResponse = await fetch("/api/direct-matches")
 
       if (directResponse.ok) {
-        const directData = await directResponse.json()
-        console.log("Dados diretos recebidos:", {
-          tipo: typeof directData,
-          isArray: Array.isArray(directData),
-          tamanho: Array.isArray(directData) ? directData.length : "N/A",
-        })
-      } else {
-        console.log("Não foi possível buscar dados diretos:", directResponse.status)
-      }
+        await directResponse.json()
+      } 
     } catch (directError) {
       console.error("Erro ao buscar dados diretos:", directError)
     }
@@ -65,7 +58,6 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
     const now = Date.now()
     
     if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
-      console.info(`Usando detalhes em cache para o time ${teamId}`)
       return cachedData.data
     }
     
@@ -98,7 +90,6 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
     
     return teamDetails
   } catch (error) {
-    console.error(`Erro ao buscar detalhes do time ${teamId}:`, error)
     throw error
   }
 }
@@ -110,14 +101,12 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
     const now = Date.now()
     
     if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
-      console.info(`Usando estatísticas em cache para o jogador ${playerId}`)
       return cachedData.data
     }
     
     const response = await fetch(`/api/player-stats/${playerId}`)
     
     if (!response.ok) {
-      console.warn(`Não foi possível obter estatísticas para o jogador ${playerId} (status: ${response.status})`)
       return {
         matchesPlayed: 0,
         goalsScored: 0,
@@ -176,7 +165,6 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
     
     return processedStats
   } catch (error) {
-    console.error(`Erro ao processar estatísticas do jogador ${playerId}:`, error)
     return {
       matchesPlayed: 0,
       goalsScored: 0,

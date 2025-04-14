@@ -42,7 +42,6 @@ function formatDate(dateString: string): string {
       minute: "2-digit",
     }).format(date)
   } catch (error) {
-    console.error("Erro ao formatar data:", error)
     return dateString
   }
 }
