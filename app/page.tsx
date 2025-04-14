@@ -5,9 +5,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 import TeamCarousel from "@/components/team-carousel"
 import DisclaimerNotice from "@/components/disclaimer-notice"
-import { fetchLeagueData } from "@/lib/fetch-league-data"
+import { fetchLeagueData, fetchMatchOdds } from "@/lib/fetch-league-data"
 import { calculateStandings } from "@/lib/calculate-standings"
-import type { Round, Team, TeamStanding, LeagueData } from "@/types/kings-league"
+import type { Round, Team, TeamStanding, LeagueData, MatchOdds } from "@/types/kings-league"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { MainContent } from "@/components/layout/main-content"
@@ -51,7 +51,114 @@ export default function KingsLeagueSimulator() {
       })
       setTeams(teamsDict)
 
-      setRounds(data.rounds)
+      // Encontrar a rodada atual para buscar as odds
+      const currentRound = data.rounds.find(round => !round.ended) || data.rounds[data.rounds.length - 1]
+
+      if (currentRound) {
+        try {
+          // Formatar a data da primeira partida da rodada no formato necessário para a API de odds
+          const firstMatchDate = currentRound.matches[0]?.date
+          let formattedDate: string | undefined = undefined
+
+          if (firstMatchDate) {
+            const date = new Date(firstMatchDate)
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            const hours = String(date.getHours()).padStart(2, '0')
+            const minutes = String(date.getMinutes()).padStart(2, '0')
+            formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:00`
+          }
+
+
+          // Buscar as odds das partidas
+          const matchOdds = await fetchMatchOdds(formattedDate)
+
+
+          // Atualizar as partidas com as odds
+          const updatedRounds = data.rounds.map(round => {
+            const updatedMatches = round.matches.map(match => {
+              // Criar chaves para buscar as odds
+              const homeTeam = teamsDict[match.participants.homeTeamId];
+              const awayTeam = teamsDict[match.participants.awayTeamId];
+
+              if (!homeTeam || !awayTeam) {
+                return match;
+              }
+
+              // Tentar buscar odds usando ID
+              const oddsKeyById = `${match.participants.homeTeamId}-${match.participants.awayTeamId}`;
+
+              // Tentar buscar odds usando nome dos times
+              const oddsKeyByName = `${homeTeam.name}|${awayTeam.name}`.toLowerCase();
+              const oddsKeyByShortName = `${homeTeam.shortName}|${awayTeam.shortName}`.toLowerCase();
+
+              // Verificar também com o nome completo se disponível
+              const oddsKeyByFullName = homeTeam.completeName && awayTeam.completeName
+                ? `${homeTeam.completeName}|${awayTeam.completeName}`.toLowerCase()
+                : '';
+
+              // Verificar também se há correspondência com o matchName da API de odds
+              const matchNameOptions = [
+                `${homeTeam.name}·${awayTeam.name}`,
+                `${homeTeam.shortName}·${awayTeam.shortName}`,
+                homeTeam.completeName && awayTeam.completeName ? `${homeTeam.completeName}·${awayTeam.completeName}` : null
+              ].filter(Boolean);
+
+              // Tentar encontrar as odds por qualquer uma das chaves
+              let odds = matchOdds[oddsKeyById] || matchOdds[oddsKeyByName] || matchOdds[oddsKeyByShortName];
+
+              if (!odds && oddsKeyByFullName) {
+                odds = matchOdds[oddsKeyByFullName];
+              }
+
+              // Se ainda não encontrou, tentar percorrer todas as odds para encontrar por matchName
+              if (!odds) {
+                for (const key in matchOdds) {
+                  const currentOdds = matchOdds[key];
+                  if (matchNameOptions.includes(currentOdds.matchName)) {
+                    odds = currentOdds;
+                    break;
+                  }
+                }
+              }
+
+              if (odds) {
+
+                return {
+                  ...match,
+                  odds
+                };
+              }
+
+              return match;
+            });
+
+            return {
+              ...round,
+              matches: updatedMatches
+            };
+          });
+
+          // Verificar se alguma partida tem odds depois da atualização
+          let oddsFound = false
+          updatedRounds.forEach(round => {
+            round.matches.forEach(match => {
+              if (match.odds) {
+                oddsFound = true
+              }
+            })
+          })
+
+
+          setRounds(updatedRounds)
+        } catch (oddsError) {
+          console.warn("Erro ao carregar odds:", oddsError)
+          setRounds(data.rounds)
+        }
+      } else {
+        setRounds(data.rounds)
+      }
 
       setStandings(data.standings)
 
@@ -87,6 +194,8 @@ export default function KingsLeagueSimulator() {
 
             const updatedScores = { ...match.scores }
 
+            // Tratamento especial para valores zero (considerados vazios no input)
+            // Isso garante a persistência dos valores ao navegar entre páginas
             if (homeScore !== null) {
               updatedScores.homeScore = homeScore
             }
@@ -95,6 +204,7 @@ export default function KingsLeagueSimulator() {
               updatedScores.awayScore = awayScore
             }
 
+            // Atualiza o placar de pênaltis se for definido
             if (homeShootoutScore !== undefined) {
               updatedScores.homeScoreP = homeShootoutScore
             }
