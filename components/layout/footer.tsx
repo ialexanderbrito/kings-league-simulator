@@ -56,16 +56,11 @@ export function Footer() {
                     Times
                   </Link>
                 </li>
-                {/* <li>
+                <li>
                   <Link href="/standings" className="text-gray-400 hover:text-white transition-colors">
                     Classificação
                   </Link>
                 </li>
-                <li>
-                  <Link href="/players" className="text-gray-400 hover:text-white transition-colors">
-                    Jogadores
-                  </Link>
-                </li> */}
               </ul>
             </nav>
           </div>
