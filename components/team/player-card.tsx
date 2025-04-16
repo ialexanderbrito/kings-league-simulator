@@ -61,11 +61,11 @@ export function PlayerCard({ player }: PlayerCardProps) {
   const getCardStyle = () => {
     if (isWildcard) {
       return {
-        borderColor: wildcardColor, // Mantendo a cor amarela fixa para Wild Cards
+        borderColor: '#F4AF23', // Mantendo a cor amarela fixa para Wild Cards
         headerBg: "bg-gradient-to-r from-amber-600 to-amber-800",
-        ratingBg: `bg-[${wildcardColor}]`,
+        ratingBg: `bg-[#F4AF23]`,
         ratingText: "text-black",
-        categoryBadge: `bg-[${wildcardColor}] text-black`,
+        categoryBadge: `bg-[#F4AF23] text-black`,
         imageBg: "bg-gradient-to-b from-amber-600/30 to-amber-900/20"
       }
     }
