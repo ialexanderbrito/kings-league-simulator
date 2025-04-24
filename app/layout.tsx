@@ -121,13 +121,30 @@ export default function RootLayout({
         <link rel="apple-touch-startup-image" href="/splash.png" />
       </head>
       <body className={`${inter.className} min-h-screen antialiased`}>
-        {/* Google AdSense - implementação recomendada pelo Next.js */}
         <Script
           id="adsbygoogle-init"
           strategy="afterInteractive"
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4240296013936173`}
           crossOrigin="anonymous"
         />
+
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-GCWCQ08JFR"
+          strategy="afterInteractive"
+          id="google-analytics"
+        />
+        <Script
+          id="google-analytics-config"
+          strategy="afterInteractive"
+        >
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-GCWCQ08JFR');
+          `}
+        </Script>
 
         <ThemeProvider
           attribute="class"
