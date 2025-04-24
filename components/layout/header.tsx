@@ -251,7 +251,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
             ) : (
               <span className="flex items-center gap-1.5 text-gray-300">
                 <Trophy className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-                Selecionar Time
+                Time do coração
               </span>
             )}
           </Button>
@@ -439,7 +439,7 @@ function MobileTeamButton({ selectedTeam, teams, standings, onTeamSelect, isMenu
         ) : (
           <span className="flex items-center gap-1.5 text-gray-300">
             <Trophy className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-            Selecionar Time
+            Time do coração
           </span>
         )}
       </Button>
