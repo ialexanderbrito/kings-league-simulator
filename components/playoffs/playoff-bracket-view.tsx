@@ -29,18 +29,33 @@ export function PlayoffBracketView({
   const [showShootout, setShowShootout] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("desktop");
   const [isMobile, setIsMobile] = useState(false);
+  const [lastMobileTab, setLastMobileTab] = useState<string>("quarterfinals");
 
   // Detectar se estamos em um dispositivo móvel para escolher a visualização correta
   useEffect(() => {
     const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      setActiveTab(window.innerWidth < 768 ? "quarterfinals" : "desktop");
+      const isMobileView = window.innerWidth < 768;
+      setIsMobile(isMobileView);
+
+      if (activeTab === "desktop" || !activeTab) {
+        const initialTab = isMobileView ? "quarterfinals" : "desktop";
+        setActiveTab(initialTab);
+        setLastMobileTab(initialTab === "desktop" ? "quarterfinals" : initialTab);
+      }
     };
 
     checkIfMobile();
     window.addEventListener("resize", checkIfMobile);
     return () => window.removeEventListener("resize", checkIfMobile);
-  }, []);
+  }, [activeTab]);
+
+  // Função personalizada para lidar com a mudança de aba
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
+    if (tabValue !== "desktop") {
+      setLastMobileTab(tabValue);
+    }
+  };
 
   // Inicializar os placares
   useEffect(() => {
@@ -107,8 +122,17 @@ export function PlayoffBracketView({
     value: string,
     isBackspace?: boolean
   ) => {
-    // Se estamos em um dispositivo móvel, vamos manter a aba atual
-    const currentTab = activeTab;
+    let targetTab = activeTab;
+
+    if (isMobile) {
+      if (matchId.startsWith('qf')) {
+        targetTab = "quarterfinals";
+      } else if (matchId.startsWith('sf')) {
+        targetTab = "semifinals";
+      } else if (matchId === 'final') {
+        targetTab = "final";
+      }
+    }
 
     if (isBackspace) {
       setScores(prev => {
@@ -127,7 +151,6 @@ export function PlayoffBracketView({
         };
       });
 
-      // Se o campo foi limpo, também escondemos o seletor de pênaltis
       if (team === "home" || team === "away") {
         setShowShootout(prev => ({
           ...prev,
@@ -135,17 +158,14 @@ export function PlayoffBracketView({
         }));
       }
 
-      // Atualizar o chaveamento para remover o placar
       const match =
         bracket.quarterfinals.find(m => m.id === matchId) ||
         bracket.semifinals.find(m => m.id === matchId) ||
         (matchId === 'final' ? bracket.final : undefined);
 
       if (match) {
-        // Clone bracket para não mutar o original
         const updatedBracket = JSON.parse(JSON.stringify(bracket)) as PlayoffBracket;
 
-        // Encontrar e atualizar a partida
         const targetMatch =
           updatedBracket.quarterfinals.find(m => m.id === matchId) ||
           updatedBracket.semifinals.find(m => m.id === matchId) ||
@@ -155,19 +175,16 @@ export function PlayoffBracketView({
           if (team === "home") targetMatch.homeScore = null;
           if (team === "away") targetMatch.awayScore = null;
 
-          // Se algum dos placares foi limpo, também limpamos os pênaltis e o vencedor
           if (team === "home" || team === "away") {
             targetMatch.homeScoreP = null;
             targetMatch.awayScoreP = null;
             targetMatch.winnerId = null;
           }
 
-          // Atualizar próxima fase se necessário
           if (targetMatch.winnerId) {
             const previousWinnerId = targetMatch.winnerId;
             targetMatch.winnerId = null;
 
-            // Remover o time da próxima fase se necessário
             if (targetMatch.nextMatchId) {
               const nextMatch =
                 updatedBracket.semifinals.find(m => m.id === targetMatch.nextMatchId) ||
@@ -180,14 +197,12 @@ export function PlayoffBracketView({
                   nextMatch.awayTeamId = null;
                 }
 
-                // Resetar o placar e o vencedor da próxima partida
                 nextMatch.homeScore = null;
                 nextMatch.awayScore = null;
                 nextMatch.homeScoreP = null;
                 nextMatch.awayScoreP = null;
                 nextMatch.winnerId = null;
 
-                // Se for uma semifinal, também resetar a final
                 if (nextMatch.nextMatchId === 'final') {
                   const finalMatch = updatedBracket.final;
                   const nextWinnerId = nextMatch.winnerId;
@@ -210,15 +225,13 @@ export function PlayoffBracketView({
         }
       }
 
-      // Restaurar a aba atual após a atualização
-      if (isMobile && (matchId.startsWith('sf') || matchId === 'final')) {
-        setTimeout(() => setActiveTab(currentTab), 0);
+      if (isMobile && targetTab !== activeTab) {
+        setActiveTab(targetTab);
       }
 
       return;
     }
 
-    // Verificar se o valor é válido (apenas dígitos)
     if (!/^\d*$/.test(value)) {
       return;
     }
@@ -240,7 +253,6 @@ export function PlayoffBracketView({
 
       const updatedMatch = newScores[matchId];
 
-      // Se os dois placares estão preenchidos e são iguais, mostrar o seletor de pênaltis
       if (
         updatedMatch.home &&
         updatedMatch.away &&
@@ -251,16 +263,13 @@ export function PlayoffBracketView({
           [matchId]: true
         }));
       } else if (updatedMatch.home && updatedMatch.away) {
-        // Se os placares são diferentes, esconder o seletor de pênaltis
         setShowShootout(prev => ({
           ...prev,
           [matchId]: false
         }));
 
-        // Limpar o vencedor dos pênaltis
         newScores[matchId].shootoutWinner = null;
 
-        // Atualizar o chaveamento com os novos placares
         const homeScore = parseInt(updatedMatch.home);
         const awayScore = parseInt(updatedMatch.away);
 
@@ -274,9 +283,8 @@ export function PlayoffBracketView({
         onBracketUpdate(updatedBracket);
       }
 
-      // Restaurar a aba atual após a atualização
-      if (isMobile && (matchId.startsWith('sf') || matchId === 'final')) {
-        setTimeout(() => setActiveTab(currentTab), 0);
+      if (isMobile && targetTab !== activeTab) {
+        setActiveTab(targetTab);
       }
 
       return newScores;
@@ -287,8 +295,17 @@ export function PlayoffBracketView({
     matchId: string,
     winner: "home" | "away" | null
   ) => {
-    // Se estamos em um dispositivo móvel, vamos manter a aba atual
-    const currentTab = activeTab;
+    let targetTab = activeTab;
+
+    if (isMobile) {
+      if (matchId.startsWith('qf')) {
+        targetTab = "quarterfinals";
+      } else if (matchId.startsWith('sf')) {
+        targetTab = "semifinals";
+      } else if (matchId === 'final') {
+        targetTab = "final";
+      }
+    }
 
     setScores(prev => {
       const currentMatch = prev[matchId] || {
@@ -305,12 +322,10 @@ export function PlayoffBracketView({
         }
       };
 
-      // Se um vencedor foi selecionado, atualizar o chaveamento
       if (winner && currentMatch.home && currentMatch.away) {
         const homeScore = parseInt(currentMatch.home);
         const awayScore = parseInt(currentMatch.away);
 
-        // Definir placares de pênaltis (5x3 ou 3x5)
         const homeScoreP = winner === "home" ? 5 : 3;
         const awayScoreP = winner === "home" ? 3 : 5;
 
@@ -326,16 +341,14 @@ export function PlayoffBracketView({
         onBracketUpdate(updatedBracket);
       }
 
-      // Restaurar a aba atual após a atualização
-      if (isMobile && (matchId.startsWith('sf') || matchId === 'final')) {
-        setTimeout(() => setActiveTab(currentTab), 0);
+      if (isMobile && targetTab !== activeTab) {
+        setActiveTab(targetTab);
       }
 
       return newScores;
     });
   };
 
-  // Verificar se temos um campeão
   const champion = bracket.final.winnerId ? teams[bracket.final.winnerId] : null;
 
   return (
@@ -395,8 +408,7 @@ export function PlayoffBracketView({
           </div>
         )}
 
-        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* Versão Mobile: Navegação por abas */}
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className={cn("md:hidden mb-4", !isMobile && "hidden")}>
             <TabsList className="grid w-full grid-cols-3 bg-[#252525]">
               <TabsTrigger
@@ -420,7 +432,6 @@ export function PlayoffBracketView({
             </TabsList>
           </div>
 
-          {/* Versão Mobile: Conteúdo das abas */}
           <TabsContent value="quarterfinals" className="mt-0 md:hidden">
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Quartas de Final</h3>
@@ -479,10 +490,8 @@ export function PlayoffBracketView({
             </div>
           </TabsContent>
 
-          {/* Versão Desktop: Visualização completa */}
           <TabsContent value="desktop" className="mt-0 hidden md:block">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Coluna 1: Quartas de Final */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Quartas de Final</h3>
                 <div className="flex flex-col gap-4">
@@ -502,11 +511,9 @@ export function PlayoffBracketView({
                 </div>
               </div>
 
-              {/* Coluna 2: Semifinais */}
               <div>
                 <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Semifinais</h3>
                 <div className="flex flex-col h-full">
-                  {/* Primeira semifinal - alinhada com a primeira quarta */}
                   <div className="pt-16 flex items-center">
                     <PlayoffMatchCard
                       match={bracket.semifinals[0]}
@@ -520,7 +527,6 @@ export function PlayoffBracketView({
                     />
                   </div>
 
-                  {/* Segunda semifinal - alinhada com a última quarta */}
                   <div className="pt-6 flex items-center">
                     <PlayoffMatchCard
                       match={bracket.semifinals[1]}
@@ -536,7 +542,6 @@ export function PlayoffBracketView({
                 </div>
               </div>
 
-              {/* Coluna 3: Final */}
               <div>
                 <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Final</h3>
                 <div className="flex items-center h-full justify-center">
