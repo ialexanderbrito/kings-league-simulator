@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Trophy, ArrowRight, Users, Table, ChevronRight, PieChart, GitMerge, Zap, Star, Play, Eye } from "lucide-react"
+import { Trophy, ArrowRight, Users, Table, ChevronRight, PieChart, GitMerge, Zap, Volleyball, Crown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
@@ -220,33 +220,166 @@ export default function HomePage() {
             </div>
             <div className={`hidden lg:block flex-1 transition-all duration-1000 delay-300 transform ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <div className="relative w-full max-w-md mx-auto">
-                <div className="w-full h-[400px] relative rounded-2xl overflow-hidden border-2 border-[var(--team-primary)]/30 shadow-xl hover:shadow-2xl hover:shadow-[var(--team-primary)]/20 transition-all duration-300 transform hover:scale-[1.02] group">
-                  <Image
-                    src="/og-image.png"
-                    alt="Kings League Simulador Preview"
-                    fill
-                    priority
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                {/* Cards holográficos espalhados */}
+                <div className="absolute w-full h-[600px] top-[-100px] right-[-50px] left-[-50px] overflow-visible">
+                  {/* Card 1 */}
+                  <div className="absolute top-[-180px] right-[200px] w-32 h-40 transform -rotate-12 z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/loud.png"
+                        alt="Carta Loud"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
 
-                  {/* Botão de play para indicar demo/video */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="bg-[var(--team-primary)]/90 p-4 rounded-full pulse-animation">
-                      <Play className="w-8 h-8 text-black" fill="black" />
+                  {/* Card 2 */}
+                  <div className="absolute top-[-80px] right-20 w-32 h-40 transform rotate-6 z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/fluxo.png"
+                        alt="Carta Fluxo"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 3 */}
+                  <div className="absolute top-5 right-[400px] w-32 h-40 transform rotate-[-5deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/furia.png"
+                        alt="Carta Furia"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 4 */}
+                  <div className="absolute top-[-30px] right-[200px] w-32 h-40 transform rotate-[8deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/capim.png"
+                        alt="Carta Capim"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 5 */}
+                  <div className="absolute top-[150px] right-[220px] w-32 h-40 transform rotate-[-15deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/funkbol.png"
+                        alt="Carta Funkbol"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 6 */}
+                  <div className="absolute top-20 right-[320px] w-32 h-40 transform rotate-[10deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/g3x.png"
+                        alt="Carta G3X"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 7 */}
+                  <div className="absolute top-[0px] right-[10px] w-32 h-40 transform rotate-[20deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/goti.png"
+                        alt="Carta Goti"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 8 */}
+                  <div className="absolute top-[80px] right-[120px] w-32 h-40 transform rotate-[-8deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/dendele.png"
+                        alt="Carta Dendele"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 9 */}
+                  <div className="absolute top-[-150px] right-[380px] w-32 h-40 transform rotate-[15deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/nyvelados.png"
+                        alt="Carta Nyvelados"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 10 */}
+                  <div className="absolute top-[-50px] right-[320px] w-32 h-40 transform rotate-[-10deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
+                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
+                      <Image
+                        src="/cards/realelite.png"
+                        alt="Carta Real Elite"
+                        width={250}
+                        height={260}
+                        className="w-full h-full object-contain transform-gpu"
+                      />
                     </div>
                   </div>
                 </div>
 
+                <div className="absolute top-[-140px] left-[-120px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
+                  <KingsLeagueLogo className="w-10 h-10 text-[var(--team-primary)]" />
+                </div>
+
+                <div className="absolute top-[-220px] right-[365px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
+                  <Crown className="w-10 h-10 text-[var(--team-primary)]" />
+                </div>
+
+                <div className="absolute -bottom-12 right-[295px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
+                  <Volleyball className="w-10 h-10 text-[var(--team-primary)]" />
+                </div>
+
                 {/* Emblema/selo de qualidade */}
-                <div className="absolute -bottom-5 -right-5 bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300">
+                <div className="absolute -bottom-3 right-[190px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
                   <Trophy className="w-10 h-10 text-[var(--team-primary)]" />
                 </div>
 
-                {/* Tag flutuante para criar senso de exclusividade */}
-                <div className="absolute top-4 left-4 bg-[var(--team-primary)] text-black text-xs font-bold py-1 px-3 rounded-full shadow-lg">
-                  VERSÃO 2025
-                </div>
               </div>
             </div>
           </div>

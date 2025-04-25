@@ -133,6 +133,136 @@ body {
   }
 }
 
+/* Estilos específicos para as cartas holográficas */
+.holographic-sticker {
+  transition: all 0.5s ease-in-out;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.holographic-sticker:hover {
+  z-index: 50 !important;
+}
+
+.holographic-effect {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  height: 130px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 100%);
+}
+
+.holographic-effect::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.1),
+    rgba(0, 231, 255, 0.1),
+    rgba(255, 0, 231, 0.1),
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0)
+  );
+  transform: rotate(45deg);
+  transition: all 0.8s ease-in-out;
+  opacity: 0;
+  z-index: 1;
+}
+
+.holographic-sticker .holographic-effect::before {
+  animation: holographic-sweep 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  opacity: 1;
+}
+
+.team-sticker-light {
+  box-shadow: inset 0 0 10px 2px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  z-index: 0;
+}
+
+.holographic-sticker .team-sticker-light {
+  box-shadow: inset 0 0 15px 3px rgba(255, 255, 255, 0.4),
+              0 0 20px 2px rgba(var(--team-primary-rgb, 255, 0, 100), 0.3);
+}
+
+.holographic-sticker .team-sticker-light {
+  box-shadow: inset 0 0 20px 4px rgba(255, 255, 255, 0.6),
+              0 0 25px 3px rgba(var(--team-primary-rgb, 255, 0, 100), 0.4),
+              0 0 30px 4px rgba(var(--team-primary-rgb, 255, 0, 100), 0.2);
+}
+
+.holographic-sticker img {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes holographic-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%) rotate(45deg);
+  }
+  25% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(0%) rotate(45deg);
+  }
+  75% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+/* Removendo a animação de float para os cards */
+/* @keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+} */
+
+.animate-float {
+  animation: none;
+}
+
+.animate-float-delay-1 {
+  animation: none;
+}
+
+.animate-float-delay-2 {
+  animation: none;
+}
+
+/* Efeito de perspectiva tridimensional */
+.holographic-sticker:hover {
+  transform-style: preserve-3d;
+}
+
+/* .holographic-sticker:hover .holographic-effect {
+  transform: rotateY(5deg) rotateX(5deg);
+  transition: transform 0.3s ease;
+} */
+
+/* Sombra mais realista */
+.holographic-effect {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 
+              0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* .holographic-sticker:hover .holographic-effect {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 
+              0 6px 10px rgba(0, 0, 0, 0.4),
+              0 0 15px rgba(var(--team-primary-rgb, 255, 0, 100), 0.2);
+} */
+
 /* Cards dos jogadores */
 .card-container {
   height: 100%;
