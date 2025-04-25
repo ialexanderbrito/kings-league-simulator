@@ -107,6 +107,9 @@ export function PlayoffBracketView({
     value: string,
     isBackspace?: boolean
   ) => {
+    // Se estamos em um dispositivo móvel, vamos manter a aba atual
+    const currentTab = activeTab;
+
     if (isBackspace) {
       setScores(prev => {
         const currentMatch = prev[matchId] || {
@@ -207,6 +210,11 @@ export function PlayoffBracketView({
         }
       }
 
+      // Restaurar a aba atual após a atualização
+      if (isMobile && (matchId.startsWith('sf') || matchId === 'final')) {
+        setTimeout(() => setActiveTab(currentTab), 0);
+      }
+
       return;
     }
 
@@ -266,6 +274,11 @@ export function PlayoffBracketView({
         onBracketUpdate(updatedBracket);
       }
 
+      // Restaurar a aba atual após a atualização
+      if (isMobile && (matchId.startsWith('sf') || matchId === 'final')) {
+        setTimeout(() => setActiveTab(currentTab), 0);
+      }
+
       return newScores;
     });
   };
@@ -274,6 +287,9 @@ export function PlayoffBracketView({
     matchId: string,
     winner: "home" | "away" | null
   ) => {
+    // Se estamos em um dispositivo móvel, vamos manter a aba atual
+    const currentTab = activeTab;
+
     setScores(prev => {
       const currentMatch = prev[matchId] || {
         home: "",
@@ -308,6 +324,11 @@ export function PlayoffBracketView({
         );
 
         onBracketUpdate(updatedBracket);
+      }
+
+      // Restaurar a aba atual após a atualização
+      if (isMobile && (matchId.startsWith('sf') || matchId === 'final')) {
+        setTimeout(() => setActiveTab(currentTab), 0);
       }
 
       return newScores;
