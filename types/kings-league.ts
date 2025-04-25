@@ -187,3 +187,25 @@ export interface Player {
   category?: "wildcard" | "draft" | null
   stats?: PlayerStats
 }
+
+// Tipos para os playoffs
+export interface PlayoffMatch {
+  id: string;
+  stage: 'quarterfinal' | 'semifinal' | 'final';
+  matchNumber: number;
+  homeTeamId: string | null;
+  awayTeamId: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  homeScoreP: number | null;
+  awayScoreP: number | null;
+  winnerId: string | null;
+  nextMatchId: string | null;
+  order: number;
+}
+
+export interface PlayoffBracket {
+  quarterfinals: PlayoffMatch[];
+  semifinals: PlayoffMatch[];
+  final: PlayoffMatch;
+}
