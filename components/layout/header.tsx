@@ -126,10 +126,10 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
               {!loading && (
                 <nav className="hidden md:flex items-center gap-4 ml-4">
                   <Link
-                    href="/"
+                    href="/simulator"
                     className={cn(
                       "text-gray-300 hover:text-white text-sm transition-colors flex items-center gap-1.5 py-1.5 px-3 rounded-md",
-                      pathname === "/" && "bg-white/5 text-white"
+                      pathname === "/simulator" && "bg-white/5 text-white"
                     )}
                   >
                     <Home className="w-3.5 h-3.5" />
