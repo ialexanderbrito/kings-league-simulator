@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, KeyboardEvent } from "react";
 
 interface MatchScoreInputProps {
   value: string;
@@ -14,6 +14,13 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
   currentValue,
   teamName,
 }) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // Se for Backspace ou Delete e há apenas um caractere, limpa o campo
+    if ((e.key === "Backspace" || e.key === "Delete") && currentValue.length === 1) {
+      onScoreChange("", true);
+    }
+  };
+
   return (
     <input
       type="text"
@@ -23,11 +30,7 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
       value={value}
       placeholder="0"
       className="w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[var(--team-primary)] text-white text-sm sm:text-base"
-      onKeyDown={(e) => {
-        if (e.key === "Backspace" && currentValue.length === 1) {
-          onScoreChange("", true);
-        }
-      }}
+      onKeyDown={handleKeyDown}
       onChange={(e) => {
         const value = e.target.value.replace(/[^0-9]/g, "");
         if (value.length <= 2) {
