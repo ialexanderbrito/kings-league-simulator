@@ -204,7 +204,7 @@ export default function HomePage() {
               </div>
 
             </div>
-            <div className={`flex-1 transition-all duration-1000 delay-300 transform ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            <div className={`hidden lg:block flex-1 transition-all duration-1000 delay-300 transform ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <div className="relative w-full max-w-md mx-auto">
                 <div className="w-full h-[400px] relative rounded-2xl overflow-hidden border-2 border-[var(--team-primary)]/30 shadow-xl hover:shadow-2xl hover:shadow-[var(--team-primary)]/20 transition-all duration-300 transform hover:scale-[1.02] group">
                   <Image
