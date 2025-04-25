@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from "@/components/ui/card"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import { Team, TeamStanding } from "@/types/kings-league"
+import NumberFlow from '@number-flow/react'
 
 export default function HomePage() {
   const [animateHero, setAnimateHero] = useState(false)
@@ -40,6 +41,14 @@ export default function HomePage() {
       rect.top + offset <= window.innerHeight &&
       rect.bottom >= 0
     )
+  }
+
+  // Usando useRef para armazenar o valor fixo gerado apenas uma vez
+  const simulationsCount = useRef(Math.floor(Math.random() * 9000) + 1000);
+
+  // Função formatadora que usa o valor armazenado no ref
+  const generateSimulationsPerfomed = () => {
+    return simulationsCount.current
   }
 
   // Efeito para animações baseadas em scroll com comportamento aprimorado
@@ -173,7 +182,12 @@ export default function HomePage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8 text-center">
                 <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg border border-[var(--team-primary)]/20">
                   <div className="text-3xl font-bold text-[var(--team-primary)]">
-                    {loading ? <div className="w-6 h-6 animate-pulse bg-gray-700 rounded-full"></div> : '+1000'}
+                    <NumberFlow
+                      value={generateSimulationsPerfomed()}
+                      defaultValue={0}
+                      prefix="+"
+                    />
+
                   </div>
                   <div className="text-sm text-gray-400">
                     Simulações realizadas

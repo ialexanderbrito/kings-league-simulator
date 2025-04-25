@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 // Melhorando os metadados para SEO
 export const metadata: Metadata = {
   title: {
-    default: 'Kings League Simulador | Simulação Não-Oficial',
+    default: 'Kings League Simulador',
     template: '%s | Kings League Simulador'
   },
   description: 'Simulador completo da Kings League com partidas ao vivo, classificação, estatísticas de jogadores e times, histórico de torneios e muito mais. Site não-oficial dedicado aos fãs da Kings League.',
