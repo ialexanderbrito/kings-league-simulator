@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Footer } from "@/components/layout/footer"
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade | Kings League Simulador',
+  title: 'Política de Privacidade',
   description: 'Política de privacidade e uso de dados do Kings League Simulador, um projeto não-oficial criado por fãs.',
 }
 
