@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Footer } from "@/components/layout/footer"
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso | Kings League Simulador',
+  title: 'Termos de Uso',
   description: 'Termos de uso e condições para utilização do Kings League Simulador, um projeto não-oficial criado por fãs.',
 }
 
