@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Trophy } from "lucide-react"
 import TeamCarousel from "@/components/team-carousel"
 import DisclaimerNotice from "@/components/disclaimer-notice"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import { calculateStandings } from "@/lib/calculate-standings"
+import { saveSimulatedStandings, saveSimulatedRounds, saveSimulatedTeams } from "@/lib/simulated-data-manager"
 import type { Round, Team, TeamStanding, LeagueData } from "@/types/kings-league"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
@@ -15,6 +16,8 @@ import { LoadingState } from "@/components/ui/loading-state"
 import { ErrorState } from "@/components/ui/error-state"
 import { SchemaMarkup } from "@/components/schema-markup"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function KingsLeagueSimulator() {
   const [leagueData, setLeagueData] = useState<LeagueData | null>(null)
@@ -125,6 +128,11 @@ export default function KingsLeagueSimulator() {
 
     const updatedStandings = calculateStandings(updatedRounds, teams, leagueData?.standings || [])
     setStandings(updatedStandings)
+
+    // Salvar dados simulados no localStorage para uso nos playoffs
+    saveSimulatedStandings(updatedStandings)
+    saveSimulatedRounds(updatedRounds)
+    saveSimulatedTeams(teams)
   }
 
   const handleTeamSelect = (teamId: string) => {
@@ -159,6 +167,20 @@ export default function KingsLeagueSimulator() {
             className="mb-6"
             loading={loading}
           />
+        </div>
+
+        {/* Botão de acesso rápido aos playoffs */}
+        <div className="flex justify-center mb-6 px-2 sm:px-4 md:px-0">
+          <Link href="/playoffs" className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto bg-[#1A1A1A] border border-[var(--team-primary)]/40 hover:bg-[var(--team-primary)]/10 text-white transition-all duration-200 group flex items-center justify-center gap-2 py-3 px-4 sm:px-6 rounded-lg shadow-sm"
+            >
+              <Trophy className="w-4 h-4 md:w-5 md:h-5 text-[var(--team-primary)]" />
+              <span className="font-medium text-sm sm:text-base">Playoffs 2025</span>
+              <span className="sr-only">Simular Playoffs Kings League</span>
+            </Button>
+          </Link>
         </div>
 
         <DisclaimerNotice forceShow={false} />
