@@ -19,6 +19,10 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
   const isRoundComplete = (round: Round): boolean => {
     if (!round.ended) return false;
 
+    if (round.matches.some(match => match.status === 'inPlay1H' || match.status === 'inPlay2H')) {
+      return false;
+    }
+
     // Verificar se todas as partidas têm resultados
     return round.matches.every(
       match =>
@@ -30,21 +34,24 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
   return (
     <ScrollArea className="w-full pb-1">
       <div className="flex space-x-1 px-1 min-w-max pb-1">
-        {rounds.map((round) => (
-          <button
-            key={round.id}
-            onClick={() => onRoundSelect(round.id.toString())}
-            className={cn(
-              "px-4 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
-              selectedRound === round.id.toString()
-                ? "bg-[var(--team-primary)] text-black"
-                : "bg-[#252525] text-gray-300 hover:bg-[#333]"
-            )}
-          >
-            {round.name.replace('Jornada', 'R').replace('Rodada', 'R')}
-            {isRoundComplete(round) && <Check className="inline w-3 h-3 ml-1" />}
-          </button>
-        ))}
+        {rounds.map((round) => {
+          const roundComplete = isRoundComplete(round);
+          return (
+            <button
+              key={round.id}
+              onClick={() => onRoundSelect(round.id.toString())}
+              className={cn(
+                "px-4 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
+                selectedRound === round.id.toString()
+                  ? "bg-[var(--team-primary)] text-black"
+                  : "bg-[#252525] text-gray-300 hover:bg-[#333]",
+                roundComplete && "opacity-50 bg-[var(--team-primary)] text-black",
+              )}
+            >
+              {round.name.replace('Jornada', 'R').replace('Rodada', 'R')}
+            </button>
+          );
+        })}
       </div>
       <ScrollBar
         orientation="horizontal"

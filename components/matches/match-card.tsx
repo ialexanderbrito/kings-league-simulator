@@ -80,7 +80,8 @@ export const MatchCard: FC<MatchCardProps> = ({
       "rounded-md p-3 border transition-colors",
       isFavoriteTeamMatch
         ? "bg-[var(--team-primary)]/10 border-[var(--team-primary)] hover:border-[var(--team-primary)]"
-        : "bg-[#252525] border-[#333] hover:border-[#444]"
+        : "bg-[#252525] border-[#333] hover:border-[#444]",
+      isMatchEnded && "opacity-50"
     )}>
       <div className="grid grid-cols-[minmax(0,1.2fr),auto,minmax(0,1.2fr)] sm:grid-cols-[minmax(0,1.5fr),auto,minmax(0,1.5fr)] items-center gap-2 md:gap-4 w-full">
         {/* Time da casa */}
