@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Marquee } from "@/components/ui/marquee"
 import { cn } from "@/lib/utils"
@@ -103,7 +102,7 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
             >
               <div className="flex items-center justify-center w-full h-full">
                 {team.logo && (
-                  <Image
+                  <img
                     src={team.logo.url}
                     alt={team.name}
                     width={70}

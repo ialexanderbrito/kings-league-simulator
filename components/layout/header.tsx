@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { Menu, X, Share2, Trophy, Heart, ChevronDown, Home } from "lucide-react"
 import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
-import Image from "next/image"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -263,7 +262,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10 bg-black/50">
-                      <Image
+                      <img
                         src={team.logo?.url || "/placeholder-logo.svg"}
                         alt={team.name}
                         width={24}
@@ -417,7 +416,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
             {favoriteTeam ? (
               <>
                 <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
-                  <Image
+                  <img
                     src={favoriteTeam.logo?.url || "/placeholder-logo.svg"}
                     alt={favoriteTeam.name}
                     width={20}
@@ -431,7 +430,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
             ) : selectedTeam ? (
               <>
                 <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
-                  <Image
+                  <img
                     src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
                     alt={teams[selectedTeam].name}
                     width={20}
@@ -466,7 +465,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
               >
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
-                    <Image
+                    <img
                       src={team.logo?.url || "/placeholder-logo.svg"}
                       alt={team.name}
                       width={20}

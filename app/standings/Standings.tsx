@@ -10,7 +10,6 @@ import { useTeamTheme } from "@/contexts/team-theme-context"
 import { calculateStandings } from "@/lib/calculate-standings"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import { cn } from "@/lib/utils"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { FullTableSkeleton } from "@/components/skeletons/full-table-skeleton"
@@ -316,7 +315,7 @@ export default function StandingsPage() {
                             <div className="team-container flex items-center gap-2 min-w-0">
                               {team.logo && (
                                 <div className="team-logo w-6 h-6 flex-shrink-0 flex items-center justify-center">
-                                  <Image
+                                  <img
                                     src={team.logo.url || "/placeholder.svg"}
                                     alt={team.name}
                                     width={24}

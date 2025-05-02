@@ -1,4 +1,3 @@
-import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Instagram, TwitchIcon, Youtube } from "lucide-react"
@@ -23,7 +22,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
       <div className="relative z-10 p-6 flex flex-col md:flex-row items-center gap-6">
         <div className="w-32 h-32 relative">
           {teamDetails?.logo ? (
-            <Image
+            <img
               src={teamDetails.logo.url || "/placeholder.svg"}
               alt={team.name}
               fill
@@ -101,7 +100,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                 }}
               >
                 {teamDetails.staff[0].image?.url ? (
-                  <Image
+                  <img
                     src={teamDetails.staff[0].image.url}
                     alt={teamDetails.staff[0].shortName}
                     fill

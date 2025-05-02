@@ -1,5 +1,4 @@
 import { useState } from "react"
-import Image from "next/image"
 import type { Player } from "@/types/kings-league"
 import { calculateAge, cn } from "@/lib/utils"
 
@@ -261,14 +260,14 @@ export function PlayerCard({ player }: PlayerCardProps) {
 
         <div className={`relative h-48 ${cardStyle.imageBg}`}>
           {player.image?.url ? (
-            <Image
+            <img
               src={player.image.url}
               alt={player.shortName}
               fill
               className="object-contain"
             />
           ) : (
-            <Image
+            <img
               src="/kl-player-placeholder.webp"
               alt={`${player.shortName} placeholder`}
               fill

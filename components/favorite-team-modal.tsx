@@ -1,6 +1,5 @@
 import React from 'react';
 import { Team } from '@/types/kings-league';
-import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Heart, HeartCrack, Star, Trophy } from 'lucide-react';
@@ -55,7 +54,7 @@ export function FavoriteTeamModal({
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center gap-3 bg-[#252525] py-2 px-3 rounded-full">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
-                  <Image
+                  <img
                     src={currentTeam.logo?.url || "/placeholder-logo.svg"}
                     alt={currentTeam.name}
                     width={32}
@@ -73,7 +72,7 @@ export function FavoriteTeamModal({
 
               <div className="flex items-center gap-3 bg-[#252525] py-2 px-3 rounded-full">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
-                  <Image
+                  <img
                     src={newTeam.logo?.url || "/placeholder-logo.svg"}
                     alt={newTeam.name}
                     width={32}
@@ -93,7 +92,7 @@ export function FavoriteTeamModal({
             <div className="flex items-center justify-center">
               <div className="flex items-center gap-3 bg-[#252525] py-2 px-4 rounded-full">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
-                  <Image
+                  <img
                     src={newTeam.logo?.url || "/placeholder-logo.svg"}
                     alt={newTeam.name}
                     width={40}

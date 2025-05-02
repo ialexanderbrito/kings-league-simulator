@@ -1,4 +1,3 @@
-import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -203,7 +202,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 "w-10 h-10 relative flex-shrink-0",
                                 isLeftTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
                               )}>
-                                <Image
+                                <img
                                   src={teams[leftTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[leftTeamId].name}
                                   width={40}
@@ -270,7 +269,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 "w-10 h-10 relative flex-shrink-0",
                                 isRightTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
                               )}>
-                                <Image
+                                <img
                                   src={teams[rightTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[rightTeamId].name}
                                   width={40}
@@ -362,7 +361,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 "w-10 h-10 relative flex-shrink-0",
                                 isHomeTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
                               )}>
-                                <Image
+                                <img
                                   src={teams[match.participants.homeTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[match.participants.homeTeamId].name}
                                   width={40}
@@ -415,7 +414,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                 "w-10 h-10 relative flex-shrink-0",
                                 isAwayTeamFavorite && "ring-2 ring-[var(--team-primary)] rounded-full"
                               )}>
-                                <Image
+                                <img
                                   src={teams[match.participants.awayTeamId].logo?.url || "/placeholder.svg"}
                                   alt={teams[match.participants.awayTeamId].name}
                                   width={40}

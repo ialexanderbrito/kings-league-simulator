@@ -1,6 +1,5 @@
 import React from 'react';
 import { Team } from '@/types/kings-league';
-import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HeartOff, Frown, Ship, Trophy } from 'lucide-react';
@@ -52,7 +51,7 @@ export function RemoveFavoriteTeamModal({
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-[#252525] rounded-full relative">
               <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10 relative">
-                <Image
+                <img
                   src={team.logo?.url || "/placeholder-logo.svg"}
                   alt={team.name}
                   fill

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Header } from "@/components/layout/header"
@@ -174,7 +173,7 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
 
       <CardHeader className="flex flex-row items-center gap-4 p-4">
         <div className="w-12 h-12 relative flex-shrink-0 bg-black/30 rounded-full overflow-hidden">
-          <Image
+          <img
             src={team.logo?.url || "/placeholder-logo.svg"}
             alt={team.name}
             width={48}
@@ -203,7 +202,7 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
                 }}
               >
                 {president.image?.url ? (
-                  <Image
+                  <img
                     src={president.image.url}
                     alt={president.shortName}
                     fill

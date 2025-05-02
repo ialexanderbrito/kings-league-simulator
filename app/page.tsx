@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { Trophy, ArrowRight, Users, Table, ChevronRight, PieChart, GitMerge, Zap, Volleyball, Crown } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -226,7 +225,7 @@ export default function HomePage() {
                   <div className="absolute top-[-180px] right-[200px] w-32 h-40 transform -rotate-12 z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/loud.png"
                         alt="Carta Loud"
                         width={250}
@@ -240,7 +239,7 @@ export default function HomePage() {
                   <div className="absolute top-[-80px] right-20 w-32 h-40 transform rotate-6 z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/fluxo.png"
                         alt="Carta Fluxo"
                         width={250}
@@ -254,7 +253,7 @@ export default function HomePage() {
                   <div className="absolute top-5 right-[400px] w-32 h-40 transform rotate-[-5deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/furia.png"
                         alt="Carta Furia"
                         width={250}
@@ -268,7 +267,7 @@ export default function HomePage() {
                   <div className="absolute top-[-30px] right-[200px] w-32 h-40 transform rotate-[8deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/capim.png"
                         alt="Carta Capim"
                         width={250}
@@ -282,7 +281,7 @@ export default function HomePage() {
                   <div className="absolute top-[150px] right-[220px] w-32 h-40 transform rotate-[-15deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/funkbol.png"
                         alt="Carta Funkbol"
                         width={250}
@@ -296,7 +295,7 @@ export default function HomePage() {
                   <div className="absolute top-20 right-[320px] w-32 h-40 transform rotate-[10deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/g3x.png"
                         alt="Carta G3X"
                         width={250}
@@ -310,7 +309,7 @@ export default function HomePage() {
                   <div className="absolute top-[0px] right-[10px] w-32 h-40 transform rotate-[20deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/goti.png"
                         alt="Carta Goti"
                         width={250}
@@ -324,7 +323,7 @@ export default function HomePage() {
                   <div className="absolute top-[80px] right-[120px] w-32 h-40 transform rotate-[-8deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/dendele.png"
                         alt="Carta Dendele"
                         width={250}
@@ -338,7 +337,7 @@ export default function HomePage() {
                   <div className="absolute top-[-150px] right-[380px] w-32 h-40 transform rotate-[15deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/nyvelados.png"
                         alt="Carta Nyvelados"
                         width={250}
@@ -352,7 +351,7 @@ export default function HomePage() {
                   <div className="absolute top-[-50px] right-[320px] w-32 h-40 transform rotate-[-10deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <Image
+                      <img
                         src="/cards/realelite.png"
                         alt="Carta Real Elite"
                         width={250}
@@ -651,7 +650,7 @@ export default function HomePage() {
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--team-primary)]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                         {team.logo?.url ? (
-                          <Image
+                          <img
                             src={team.logo.url}
                             alt={team.name}
                             width={72}

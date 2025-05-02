@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import { useState } from 'react'
 
 interface OptimizedImageProps {
@@ -28,7 +27,7 @@ export function OptimizedImage({
 
   return (
     <div className={`relative overflow-hidden ${isLoading ? 'animate-pulse bg-gray-700/20' : ''} ${className}`}>
-      <Image
+      <img
         src={src}
         alt={alt}
         width={width}

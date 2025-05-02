@@ -1,4 +1,3 @@
-import Image from "next/image"
 import { Marquee } from "@/components/ui/marquee"
 
 export interface Sponsor {
@@ -46,7 +45,7 @@ export function Sponsors({ sponsors, className }: SponsorsProps) {
 function SponsorImage({ logo, name }: { logo: string, name: string }) {
   return (
     <div className="flex items-center justify-center h-14 w-auto relative">
-      <Image
+      <img
         className="object-contain transition duration-300 ease-in-out hover:scale-105 rounded-full"
         src={logo}
         alt={name}

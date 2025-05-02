@@ -3,7 +3,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
 import type { TeamStanding } from "@/types/kings-league"
 import { ChevronsDown, ChevronsUp, Download, Heart } from "lucide-react"
 import html2canvas from "html2canvas"
@@ -269,7 +268,7 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                           <div className="team-container flex items-center gap-2 min-w-0 max-w-[180px] sm:max-w-full">
                             {team.logo && (
                               <div className="team-logo w-6 h-6 flex-shrink-0 flex items-center justify-center">
-                                <Image
+                                <img
                                   src={team.logo.url || "/placeholder.svg"}
                                   alt={team.name}
                                   width={24}

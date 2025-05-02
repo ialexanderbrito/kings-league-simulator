@@ -6,7 +6,6 @@ import { updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
 import { useTeamTheme } from "@/contexts/team-theme-context";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PlayoffBracketViewProps {
@@ -378,7 +377,7 @@ export function PlayoffBracketView({
               </h2>
 
               <div className="w-16 h-16 sm:w-24 sm:h-24 relative mb-3 sm:mb-4 ring-3 sm:ring-4 ring-yellow-500 rounded-full p-1.5 sm:p-2 bg-black">
-                <Image
+                <img
                   src={champion.logo?.url || "/placeholder.svg"}
                   alt={champion.name}
                   fill

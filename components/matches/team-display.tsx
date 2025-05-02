@@ -1,6 +1,5 @@
 import { FC } from "react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { Team } from "@/types/kings-league";
 import { Heart } from "lucide-react";
 
@@ -50,7 +49,7 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
           <div className={cn(
             "w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0"
           )}>
-            <Image
+            <img
               src={team.logo?.url || "/placeholder.svg"}
               alt={team.name}
               width={40}
@@ -64,7 +63,7 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
           <div className={cn(
             "w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0",
           )}>
-            <Image
+            <img
               src={team.logo?.url || "/placeholder.svg"}
               alt={team.name}
               width={40}
