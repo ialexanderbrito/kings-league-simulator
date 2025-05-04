@@ -14,8 +14,6 @@ import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/hooks/use-toast"
 
-const GOOGLE_FORM_URL = process.env.NEXT_PUBLIC_GOOGLE_FORM_URL;
-
 const LEAGUES = [
   { id: "espanha", name: "Espanha" },
   { id: "americas", name: "Americas" },
@@ -69,38 +67,44 @@ export function LeaguesSuggestionModal() {
         leagues: selectedLeague
       };
 
-      if (!GOOGLE_FORM_URL) {
-        throw new Error('Google Form URL is not defined');
-      }
-
-      await fetch(GOOGLE_FORM_URL, {
+      const response = await fetch('/api/league-suggestion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
-        mode: 'no-cors'
+        body: JSON.stringify(payload)
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao enviar sugestão');
+      }
 
+      // Salva que o voto foi submetido antes de qualquer outra operação
       localStorage.setItem(VOTE_SUBMITTED_KEY, "true");
+      localStorage.setItem(MODAL_SHOWN_KEY, "true");
+
+      // Pequeno delay antes de fechar o modal
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Fecha o modal antes de mostrar o toast
+      setOpen(false);
 
       toast({
         title: "Obrigado pela sua sugestão!",
         description: "Sua preferência por " + LEAGUES.find(l => l.id === selectedLeague)?.name + " foi registrada com sucesso.",
       });
     } catch (error) {
-      console.error("Erro ao enviar sugestão:", error);
       toast({
         title: "Erro ao enviar sugestão",
         description: "Não foi possível registrar sua preferência. Tente novamente mais tarde.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+      // Fecha o modal mesmo em caso de erro
       setOpen(false);
       localStorage.setItem(MODAL_SHOWN_KEY, "true");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
