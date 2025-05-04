@@ -140,10 +140,6 @@ body {
   perspective: 1000px;
 }
 
-.holographic-sticker:hover {
-  z-index: 50 !important;
-}
-
 .holographic-effect {
   position: relative;
   overflow: hidden;
