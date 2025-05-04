@@ -222,7 +222,7 @@ export default function HomePage() {
                 {/* Cards holográficos espalhados */}
                 <div className="absolute w-full h-[600px] top-[-100px] right-[-50px] left-[-50px] overflow-visible">
                   {/* Card 1 */}
-                  <div className="absolute top-[-180px] right-[200px] w-32 h-40 transform -rotate-12 z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[-180px] right-[200px] w-32 h-40 transform -rotate-12 z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -236,7 +236,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 2 */}
-                  <div className="absolute top-[-80px] right-20 w-32 h-40 transform rotate-6 z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[-80px] right-20 w-32 h-40 transform rotate-6 z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -250,7 +250,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 3 */}
-                  <div className="absolute top-5 right-[400px] w-32 h-40 transform rotate-[-5deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-5 right-[400px] w-32 h-40 transform rotate-[-5deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -264,7 +264,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 4 */}
-                  <div className="absolute top-[-30px] right-[200px] w-32 h-40 transform rotate-[8deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[-30px] right-[200px] w-32 h-40 transform rotate-[8deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -278,7 +278,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 5 */}
-                  <div className="absolute top-[150px] right-[220px] w-32 h-40 transform rotate-[-15deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[150px] right-[220px] w-32 h-40 transform rotate-[-15deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -292,7 +292,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 6 */}
-                  <div className="absolute top-20 right-[320px] w-32 h-40 transform rotate-[10deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-20 right-[320px] w-32 h-40 transform rotate-[10deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -306,7 +306,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 7 */}
-                  <div className="absolute top-[0px] right-[10px] w-32 h-40 transform rotate-[20deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[0px] right-[10px] w-32 h-40 transform rotate-[20deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -320,7 +320,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 8 */}
-                  <div className="absolute top-[80px] right-[120px] w-32 h-40 transform rotate-[-8deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[80px] right-[120px] w-32 h-40 transform rotate-[-8deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -334,7 +334,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 9 */}
-                  <div className="absolute top-[-150px] right-[380px] w-32 h-40 transform rotate-[15deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[-150px] right-[380px] w-32 h-40 transform rotate-[15deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -348,7 +348,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Card 10 */}
-                  <div className="absolute top-[-50px] right-[320px] w-32 h-40 transform rotate-[-10deg] z-20 transition-all duration-500 hover:z-50 holographic-sticker">
+                  <div className="absolute top-[-50px] right-[320px] w-32 h-40 transform rotate-[-10deg] z-20 transition-all duration-500 holographic-sticker">
                     <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
                       <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
                       <img
@@ -362,20 +362,20 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="absolute top-[-140px] left-[-120px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
+                <div className="absolute top-[-140px] left-[-120px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
                   <KingsLeagueLogo className="w-10 h-10 text-[var(--team-primary)]" />
                 </div>
 
-                <div className="absolute top-[-220px] right-[365px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
+                <div className="absolute top-[-220px] right-[365px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
                   <Crown className="w-10 h-10 text-[var(--team-primary)]" />
                 </div>
 
-                <div className="absolute -bottom-12 right-[295px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
+                <div className="absolute -bottom-12 right-[295px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
                   <Volleyball className="w-10 h-10 text-[var(--team-primary)]" />
                 </div>
 
                 {/* Emblema/selo de qualidade */}
-                <div className="absolute -bottom-3 right-[190px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 hover:z-50 z-50">
+                <div className="absolute -bottom-3 right-[190px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
                   <Trophy className="w-10 h-10 text-[var(--team-primary)]" />
                 </div>
 
