@@ -23,20 +23,24 @@ export const viewport: Viewport = {
   userScalable: true,
 }
 
-// Melhorando os metadados para SEO
+// Metadados otimizados para SEO
 export const metadata: Metadata = {
   title: {
-    default: 'Kings League Simulador',
-    template: '%s | Kings League Simulador'
+    default: 'Kings League Simulador Oficial 2025 | Simule Partidas e Resultados',
+    template: '%s | Kings League Simulador 2025'
   },
-  description: 'Simulador completo da Kings League com partidas ao vivo, classificação, estatísticas de jogadores e times, histórico de torneios e muito mais. Site não-oficial dedicado aos fãs da Kings League.',
+  description: 'Simulador oficial da Kings League 2025! Simule partidas, acompanhe classificação ao vivo, estatísticas de jogadores e times. O mais completo simulador brasileiro da Kings League com dados em tempo real.',
   authors: [{ name: 'ialexanderbrito', url: 'https://ialexanderbrito.dev' }],
   creator: 'ialexanderbrito',
   publisher: 'Kings League Simulador',
   keywords: [
-    'kings league', 'futebol', 'simulador kings league', 'estatísticas kings league',
-    'campeonato', 'classificação kings league', 'times kings league', 'jogadores kings league',
-    'torneio', 'esportes', 'simulador de partidas', 'resultados king league', 'tabela kings league'
+    'kings league simulador', 'simulador kings league', 'kings league brasil',
+    'kings league 2025', 'simulador de jogos kings league', 'tabela kings league',
+    'classificação kings league', 'times kings league', 'jogadores kings league',
+    'kings league resultados', 'chaveamento kings league', 'playoffs kings league',
+    'kings league partidas', 'quem vai ganhar kings league', 'palpites kings league',
+    'prognósticos kings league', 'estatísticas kings league', 'como funciona kings league',
+    'times da kings league', 'jogos kings league', 'futebol 7'
   ],
   category: 'Esportes',
   applicationName: 'Kings League Simulador',
@@ -49,11 +53,13 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-video-preview': -1,
       'max-snippet': -1,
+      noimageindex: false,
+      'notranslate': false,
     },
   },
   openGraph: {
-    title: 'Kings League Simulador | Simulação Não-Oficial da Liga',
-    description: 'Acompanhe resultados, estatísticas e simulações da Kings League. Confira a tabela de classificação, jogos, gols e desempenho dos times. Site não oficial criado por fãs.',
+    title: 'Kings League Simulador 2025 | O Simulador Mais Completo da Kings League',
+    description: 'Simule partidas, acompanhe resultados em tempo real e descubra quem será o campeão da Kings League. O simulador perfeito para quem ama a Kings League!',
     siteName: 'Kings League Simulador',
     type: 'website',
     locale: 'pt_BR',
@@ -63,20 +69,20 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Kings League Simulador - Sua experiência completa da Kings League',
+        alt: 'Kings League Simulador 2025 - Sua experiência completa da Kings League',
         type: 'image/png',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kings League Simulador | Estatísticas e simulações',
-    description: 'Acompanhe jogos, classificação e estatísticas da Kings League com este simulador não-oficial. Dados atualizados e interface intuitiva.',
+    title: 'Kings League Simulador 2025 | Simule Jogos, Resultados e Playoffs',
+    description: 'Simulador completo da Kings League com dados ao vivo, estatísticas, playoffs e muito mais. Descubra quem será o campeão!',
     creator: '@ialexanderbrito',
     images: [
       {
         url: '/og-image-x.png',
-        alt: 'Kings League Simulador Preview',
+        alt: 'Kings League Simulador 2025 Preview',
         width: 1200,
         height: 630,
       }
@@ -91,7 +97,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   metadataBase: new URL('https://kings-league-simulator.vercel.app'),
   verification: {
-    google: 'google-site-verification-code', // Adicione seu código de verificação aqui quando tiver
+    google: 'google-site-verification-code',
   },
   other: {
     'apple-mobile-web-app-capable': 'yes',
@@ -167,17 +173,50 @@ export default function RootLayout({
             {
               "@context": "https://schema.org",
               "@type": "SportsOrganization",
-              "name": "Kings League Simulador",
+              "name": "Kings League Simulador Oficial 2025",
               "url": "https://kings-league-simulator.vercel.app",
               "logo": "https://kings-league-simulator.vercel.app/favicon.svg",
-              "description": "Simulador não-oficial da Kings League com estatísticas, partidas e classificações atualizadas",
+              "description": "Simulador completo da Kings League 2025 com estatísticas em tempo real, simulações de partidas, classificação ao vivo e playoffs.",
+              "foundingDate": "2023-01-01",
+              "keywords": "kings league, simulador, futebol, estatísticas, simulador kings league, tabela kings league, classificação kings league",
               "sameAs": [
                 "https://github.com/ialexanderbrito/kings-league-simulator"
               ],
-              "potentialAction": {
-                "@type": "ViewAction",
-                "target": "https://kings-league-simulator.vercel.app"
-              }
+              "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "BR"
+              },
+              "founder": {
+                "@type": "Person",
+                "name": "Alexander Brito",
+                "url": "https://github.com/ialexanderbrito"
+              },
+              "about": {
+                "@type": "Thing",
+                "name": "Kings League",
+                "description": "Liga de futebol 7 criada por Gerard Piqué com regras inovadoras e times presididos por personalidades conhecidas."
+              },
+              "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": "https://kings-league-simulator.vercel.app"
+              },
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "BRL",
+                "availability": "https://schema.org/InStock"
+              },
+              "potentialAction": [
+                {
+                  "@type": "ViewAction",
+                  "target": "https://kings-league-simulator.vercel.app"
+                },
+                {
+                  "@type": "SearchAction",
+                  "target": "https://kings-league-simulator.vercel.app/search?q={search_term_string}",
+                  "query-input": "required name=search_term_string"
+                }
+              ]
             }
           `}
         </Script>
