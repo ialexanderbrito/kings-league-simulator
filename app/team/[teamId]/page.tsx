@@ -32,11 +32,11 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
         setError(null)
 
         // Verifica se existe cache para os dados gerais da liga
-        const cachedLeagueData = localStorage.getItem('league-data-cache')
-        const cachedLeagueTimestamp = localStorage.getItem('league-data-cache-timestamp')
+        const cachedLeagueData = localStorage.getItem('@kl-simulador:league-data-cache')
+        const cachedLeagueTimestamp = localStorage.getItem('@kl-simulador:league-data-cache-timestamp')
         // Verifica se existe cache específico para este time
-        const cachedTeamData = localStorage.getItem(`team-${teamId}-cache`)
-        const cachedTeamTimestamp = localStorage.getItem(`team-${teamId}-cache-timestamp`)
+        const cachedTeamData = localStorage.getItem(`@kl-simulador:team-${teamId}-cache`)
+        const cachedTeamTimestamp = localStorage.getItem(`@kl-simulador:team-${teamId}-cache-timestamp`)
 
         const now = Date.now()
         const CACHE_EXPIRY_TIME = 24 * 60 * 60 * 1000 // 24 horas em milissegundos
@@ -72,8 +72,8 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
           leagueData = await fetchLeagueData()
 
           // Salvar dados da liga no cache
-          localStorage.setItem('league-data-cache', JSON.stringify(leagueData))
-          localStorage.setItem('league-data-cache-timestamp', now.toString())
+          localStorage.setItem('@kl-simulador:league-data-cache', JSON.stringify(leagueData))
+          localStorage.setItem('@kl-simulador:league-data-cache-timestamp', now.toString())
         }
 
         // Converter lista de times para um Record (dicionário)
@@ -99,8 +99,8 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
           setTeamDetails(details)
 
           // Salvar detalhes do time no cache
-          localStorage.setItem(`team-${teamId}-cache`, JSON.stringify(details))
-          localStorage.setItem(`team-${teamId}-cache-timestamp`, now.toString())
+          localStorage.setItem(`@kl-simulador:team-${teamId}-cache`, JSON.stringify(details))
+          localStorage.setItem(`@kl-simulador:team-${teamId}-cache-timestamp`, now.toString())
         }
 
         setLoading(false)

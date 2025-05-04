@@ -23,8 +23,8 @@ export default function Teams() {
     const loadData = async () => {
       try {
         // Verifica se existe cache no localStorage e se ainda é válido (24 horas)
-        const cachedData = localStorage.getItem('teams-page-cache')
-        const cachedTimestamp = localStorage.getItem('teams-page-cache-timestamp')
+        const cachedData = localStorage.getItem('@kl-simulador:teams-page-cache')
+        const cachedTimestamp = localStorage.getItem('@kl-simulador:teams-page-cache-timestamp')
         const now = Date.now()
         const CACHE_EXPIRY_TIME = 24 * 60 * 60 * 1000 // 24 horas em milissegundos
 
@@ -75,8 +75,8 @@ export default function Teams() {
             standings: leagueData.standings || [],
             teamDetails: teamDetailsMap
           }
-          localStorage.setItem('teams-page-cache', JSON.stringify(dataToCache))
-          localStorage.setItem('teams-page-cache-timestamp', now.toString())
+          localStorage.setItem('@kl-simulador:teams-page-cache', JSON.stringify(dataToCache))
+          localStorage.setItem('@kl-simulador:teams-page-cache-timestamp', now.toString())
 
           setLoading(false)
         }

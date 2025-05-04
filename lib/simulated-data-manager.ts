@@ -1,9 +1,9 @@
 import { TeamStanding, Round, Team } from "@/types/kings-league";
 
 // Chaves para armazenamento no localStorage
-const SIMULATED_STANDINGS_KEY = 'kl-simulated-standings';
-const SIMULATED_ROUNDS_KEY = 'kl-simulated-rounds';
-const SIMULATED_TEAMS_KEY = 'kl-simulated-teams';
+const SIMULATED_STANDINGS_KEY = '@kl-simulador:standings';
+const SIMULATED_ROUNDS_KEY = '@kl-simulador:rounds';
+const SIMULATED_TEAMS_KEY = '@kl-simulador:teams';
 
 /**
  * Salva a classificação simulada no localStorage
