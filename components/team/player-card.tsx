@@ -263,15 +263,15 @@ export function PlayerCard({ player }: PlayerCardProps) {
             <img
               src={player.image.url}
               alt={player.shortName}
-              fill
-              className="object-contain"
+              className="w-full h-full object-contain"
+              loading="lazy"
             />
           ) : (
             <img
               src="/kl-player-placeholder.webp"
               alt={`${player.shortName} placeholder`}
-              fill
-              className="object-contain"
+              className="w-full h-full object-contain"
+              loading="lazy"
             />
           )}
         </div>

@@ -267,7 +267,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                         alt={team.name}
                         width={24}
                         height={24}
-                        className="object-contain"
+                        className="object-contain w-full h-full"
                       />
                     </div>
                     <span className="truncate">{team.name}</span>
@@ -421,7 +421,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                     alt={favoriteTeam.name}
                     width={20}
                     height={20}
-                    className="object-contain"
+                    className="object-contain w-full h-full"
                   />
                 </div>
                 <span className="truncate max-w-[80px] text-white hidden sm:inline">{favoriteTeam.name}</span>
@@ -435,7 +435,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                     alt={teams[selectedTeam].name}
                     width={20}
                     height={20}
-                    className="object-contain"
+                    className="object-contain w-full h-full"
                   />
                 </div>
                 <span className="truncate max-w-[80px] text-white hidden sm:inline">{teams[selectedTeam].name}</span>
@@ -464,16 +464,16 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                 onClick={() => handleTeamSelect(team.id)}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+                  <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
                     <img
-                      src={team.logo?.url || "/placeholder-logo.svg"}
-                      alt={team.name}
-                      width={20}
-                      height={20}
-                      className="object-contain"
+                      src={teams[team.id].logo?.url || "/placeholder-logo.svg"}
+                      alt={teams[team.id].name}
+                      width={24}
+                      height={24}
+                      className="object-contain w-full h-full"
                     />
                   </div>
-                  <span className="truncate">{team.name}</span>
+                  <span className="truncate">{teams[team.id].name}</span>
                 </div>
 
                 <Button

@@ -108,7 +108,7 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
                     width={70}
                     height={70}
                     className="object-contain w-auto h-auto max-w-[85%] max-h-[85%]"
-                    priority
+                    loading={isLoading ? "eager" : "lazy"}
                   />
                 )}
               </div>

@@ -54,8 +54,8 @@ export function RemoveFavoriteTeamModal({
                 <img
                   src={team.logo?.url || "/placeholder-logo.svg"}
                   alt={team.name}
-                  fill
-                  className="object-contain"
+                  className="w-full h-full object-contain"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <Frown className="h-10 w-10 text-red-400/70" />

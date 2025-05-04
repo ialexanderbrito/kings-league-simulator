@@ -54,7 +54,8 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
               alt={team.name}
               width={40}
               height={40}
-              className="object-contain"
+              className="object-contain w-full h-full"
+              loading="lazy"
             />
           </div>
         </>
@@ -68,7 +69,8 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
               alt={team.name}
               width={40}
               height={40}
-              className="object-contain"
+              className="object-contain w-full h-full"
+              loading="lazy"
             />
           </div>
           <div className="flex-1 text-left overflow-hidden">

@@ -207,7 +207,8 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                   alt={teams[leftTeamId].name}
                                   width={40}
                                   height={40}
-                                  className="object-contain"
+                                  className="object-contain w-full h-full"
+                                  loading="lazy"
                                 />
                               </div>
                               <div className="min-w-0">
@@ -274,7 +275,8 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                   alt={teams[rightTeamId].name}
                                   width={40}
                                   height={40}
-                                  className="object-contain"
+                                  className="object-contain w-full h-full"
+                                  loading="lazy"
                                 />
                               </div>
                             </div>
@@ -366,7 +368,8 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                   alt={teams[match.participants.homeTeamId].name}
                                   width={40}
                                   height={40}
-                                  className="object-contain"
+                                  className="object-contain w-full h-full"
+                                  loading="lazy"
                                 />
                               </div>
                               <div className="min-w-0">
@@ -419,7 +422,8 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                                   alt={teams[match.participants.awayTeamId].name}
                                   width={40}
                                   height={40}
-                                  className="object-contain"
+                                  className="object-contain w-full h-full"
+                                  loading="lazy"
                                 />
                               </div>
                             </div>

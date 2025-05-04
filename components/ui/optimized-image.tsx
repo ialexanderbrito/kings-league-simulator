@@ -37,11 +37,13 @@ export function OptimizedImage({
           ${isLoading ? 'scale-110 blur-sm grayscale' : 'scale-100 blur-0 grayscale-0'}
           ${className}
         `}
-        sizes={sizes}
-        quality={quality}
-        loading={loading}
-        priority={priority}
-        onLoadingComplete={() => setIsLoading(false)}
+        loading={loading as 'lazy' | 'eager'}
+        onLoad={() => setIsLoading(false)}
+        style={{
+          objectFit: 'contain',
+          maxWidth: '100%',
+          height: 'auto'
+        }}
       />
     </div>
   )

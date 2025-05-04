@@ -25,9 +25,8 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
             <img
               src={teamDetails.logo.url || "/placeholder.svg"}
               alt={team.name}
-              fill
-              className="object-contain"
-              priority
+              className="w-full h-full object-contain"
+              loading="eager"
             />
           ) : (
             <Skeleton className="w-full h-full rounded-full" />
@@ -103,8 +102,8 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                   <img
                     src={teamDetails.staff[0].image.url}
                     alt={teamDetails.staff[0].shortName}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-[#252525]/70 text-[var(--team-primary)] text-2xl font-bold">

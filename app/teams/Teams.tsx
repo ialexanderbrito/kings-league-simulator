@@ -178,7 +178,7 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
             alt={team.name}
             width={48}
             height={48}
-            className="object-contain"
+            className="object-contain w-full h-full"
           />
         </div>
         <div className="flex-grow">
@@ -205,9 +205,7 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
                   <img
                     src={president.image.url}
                     alt={president.shortName}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-[#252525]/70 text-[var(--team-primary)] text-3xl font-bold">

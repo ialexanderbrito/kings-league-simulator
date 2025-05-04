@@ -380,8 +380,10 @@ export function PlayoffBracketView({
                 <img
                   src={champion.logo?.url || "/placeholder.svg"}
                   alt={champion.name}
-                  fill
-                  className="object-contain"
+                  width={96}
+                  height={96}
+                  className="object-contain w-full h-full"
+                  loading="lazy"
                 />
               </div>
 

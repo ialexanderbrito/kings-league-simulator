@@ -59,7 +59,8 @@ export function FavoriteTeamModal({
                     alt={currentTeam.name}
                     width={32}
                     height={32}
-                    className="object-contain"
+                    className="object-contain w-full h-full"
+                    loading="lazy"
                   />
                 </div>
                 <span className="text-sm text-gray-300 flex items-center gap-1.5">
@@ -77,7 +78,8 @@ export function FavoriteTeamModal({
                     alt={newTeam.name}
                     width={32}
                     height={32}
-                    className="object-contain"
+                    className="object-contain w-full h-full"
+                    loading="lazy"
                   />
                 </div>
                 <span className="text-sm text-gray-300 flex items-center gap-1.5">
@@ -97,7 +99,8 @@ export function FavoriteTeamModal({
                     alt={newTeam.name}
                     width={40}
                     height={40}
-                    className="object-contain"
+                    className="object-contain w-full h-full"
+                    loading="lazy"
                   />
                 </div>
                 <span className="text-white font-medium">{newTeam.name}</span>
