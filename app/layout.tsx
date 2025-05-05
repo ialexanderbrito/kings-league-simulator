@@ -124,6 +124,7 @@ export default function RootLayout({
 
         {/* Tags PWA para iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="google-adsense-account" content="ca-pub-4240296013936173" />
         <link rel="apple-touch-startup-image" href="/splash.png" />
       </head>
       <body className={`${inter.className} min-h-screen antialiased`}>
