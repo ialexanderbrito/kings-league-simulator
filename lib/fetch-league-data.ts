@@ -44,6 +44,16 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     if (!data.teams || !data.standings || !data.rounds) {
       throw new Error("Dados incompletos recebidos da API")
     }
+    
+    // Filtrando as rodadas para remover playoffs (Quartas-de-final, Semifinais e Final)
+    if (data.rounds && Array.isArray(data.rounds)) {
+      data.rounds = data.rounds.filter(round => {
+        const roundName = round.name?.toLowerCase() || '';
+        return !roundName.includes('quarta') && 
+               !roundName.includes('semi') && 
+               !roundName.includes('final');
+      });
+    }
 
     return data
   } catch (error) {
