@@ -8,6 +8,8 @@ import { RoundSelector } from "@/components/matches/round-selector"
 import { DateGroup } from "@/components/matches/date-group"
 import { DateFormatter } from "@/lib/date-formatter"
 import { useTeamTheme } from "@/contexts/team-theme-context"
+import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 interface MatchesTableProps {
   rounds: Round[]
@@ -223,11 +225,27 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
       </CardHeader>
       <CardContent className="p-0">
         <div className="p-4">
-          <RoundSelector
-            rounds={rounds}
-            selectedRound={selectedRound}
-            onRoundSelect={handleRoundSelect}
-          />
+          <div className="flex items-center justify-between mb-4">
+            <RoundSelector
+              rounds={rounds}
+              selectedRound={selectedRound}
+              onRoundSelect={handleRoundSelect}
+            />
+
+            {/* se as rodadas acabaram mostrar o playoffs */}
+
+            {rounds.every(round => round.ended) && (
+              <Link
+                href={"/playoffs"}
+                onClick={() => handleRoundSelect("playoffs")}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors bg-[var(--team-primary)] text-black filter hover:brightness-95",
+                )}
+              >
+                Playoffs
+              </Link>
+            )}
+          </div>
 
           {currentRound && (
             <div className="space-y-4 mt-4">
