@@ -202,10 +202,11 @@ export interface PlayoffMatch {
   winnerId: string | null;
   nextMatchId: string | null;
   order: number;
+  youtubeUrl?: string; // URL para assistir a partida no YouTube
 }
 
 export interface PlayoffBracket {
   quarterfinals: PlayoffMatch[];
   semifinals: PlayoffMatch[];
-  final: PlayoffMatch;
+  final: PlayoffMatch | undefined;
 }
