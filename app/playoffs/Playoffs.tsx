@@ -15,8 +15,120 @@ import { Button } from "@/components/ui/button"
 import {
   getSimulatedStandings,
   getSimulatedTeams,
-  hasSimulatedData
+  hasSimulatedData,
+  getSimulatedPlayoffs,
+  saveSimulatedPlayoffs,
+  hasSimulatedPlayoffs
 } from "@/lib/simulated-data-manager"
+
+// Função auxiliar para converter o formato de turnos da API para o formato bracket
+const convertTurnsToBracket = (turnsData: any[]): PlayoffBracket => {
+  // Inicializar um bracket vazio
+  const bracket: PlayoffBracket = {
+    quarterfinals: [],
+    semifinals: [],
+    final: undefined
+  };
+
+  console.log("Convertendo dados da API para formato de bracket", turnsData);
+
+  // Processar cada turno
+  for (const turn of turnsData) {
+    const turnName = turn.turnName.toLowerCase();
+
+    // Processar quartas de final
+    if (turnName.includes("quartas") || turnName.includes("quarter")) {
+      bracket.quarterfinals = turn.matches.map((match: any) => {
+        return {
+          id: `qf${match.id % 10}`, // Extrair último dígito do ID
+          stage: "quarterfinal",
+          matchNumber: match.id % 10, // Extrair último dígito do ID
+          order: match.id % 10,
+          homeTeamId: match.participants.homeTeamId?.toString() || null,
+          awayTeamId: match.participants.awayTeamId?.toString() || null,
+          homeScore: match.scores.homeScore,
+          awayScore: match.scores.awayScore,
+          homeScoreP: match.scores.homeScoreP,
+          awayScoreP: match.scores.awayScoreP,
+          winnerId: determineWinner(match),
+          nextMatchId: `sf${Math.ceil((match.id % 10) / 2)}`, // Calcular próximo matchId
+          youtubeUrl: match.metaInformation?.youtube_url
+        };
+      });
+    }
+
+    // Processar semifinais
+    else if (turnName.includes("semi")) {
+      bracket.semifinals = turn.matches.map((match: any) => {
+        return {
+          id: `sf${match.id % 10}`, // Extrair último dígito do ID
+          stage: "semifinal",
+          matchNumber: match.id % 10, // Extrair último dígito do ID
+          order: match.id % 10,
+          homeTeamId: match.participants.homeTeamId?.toString() || null,
+          awayTeamId: match.participants.awayTeamId?.toString() || null,
+          homeScore: match.scores.homeScore,
+          awayScore: match.scores.awayScore,
+          homeScoreP: match.scores.homeScoreP,
+          awayScoreP: match.scores.awayScoreP,
+          winnerId: determineWinner(match),
+          nextMatchId: "final",
+          youtubeUrl: match.metaInformation?.youtube_url
+        };
+      });
+    }
+
+    // Processar final
+    else if (turnName.includes("final")) {
+      if (turn.matches.length > 0) {
+        const finalMatch = turn.matches[0];
+        bracket.final = {
+          id: "final",
+          stage: "final",
+          matchNumber: 1,
+          order: 1,
+          homeTeamId: finalMatch.participants.homeTeamId?.toString() || null,
+          awayTeamId: finalMatch.participants.awayTeamId?.toString() || null,
+          homeScore: finalMatch.scores.homeScore,
+          awayScore: finalMatch.scores.awayScore,
+          homeScoreP: finalMatch.scores.homeScoreP,
+          awayScoreP: finalMatch.scores.awayScoreP,
+          winnerId: determineWinner(finalMatch),
+          nextMatchId: null,
+          youtubeUrl: finalMatch.metaInformation?.youtube_url
+        };
+      }
+    }
+  }
+
+  return bracket;
+}
+
+// Função auxiliar para determinar o vencedor de uma partida
+const determineWinner = (match: any): string | null => {
+  if (match.scores.homeScore === null || match.scores.awayScore === null) {
+    return null;
+  }
+
+  if (match.scores.homeScore > match.scores.awayScore) {
+    return match.participants.homeTeamId?.toString() || null;
+  }
+
+  if (match.scores.homeScore < match.scores.awayScore) {
+    return match.participants.awayTeamId?.toString() || null;
+  }
+
+  // Se empatou, verificar pênaltis
+  if (match.scores.homeScoreP !== null && match.scores.awayScoreP !== null) {
+    if (match.scores.homeScoreP > match.scores.awayScoreP) {
+      return match.participants.homeTeamId?.toString() || null;
+    } else {
+      return match.participants.awayTeamId?.toString() || null;
+    }
+  }
+
+  return null;
+}
 
 export default function PlayoffsPage() {
   const [loading, setLoading] = useState(true)
@@ -26,6 +138,7 @@ export default function PlayoffsPage() {
   const [bracket, setBracket] = useState<PlayoffBracket | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [usingSimulatedData, setUsingSimulatedData] = useState(false)
+  const [liveResultsAvailable, setLiveResultsAvailable] = useState(false)
 
   // Carregar dados da liga
   useEffect(() => {
@@ -34,12 +147,78 @@ export default function PlayoffsPage() {
         setLoading(true)
         setError(null)
 
+        // Primeiro, tentar obter resultados ao vivo dos playoffs da API
+        try {
+          const livePlayoffsResponse = await fetch('/api/playoff-matches', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+            next: { revalidate: 60 }, // Revalidar a cada 1 minuto
+          });
+
+          if (livePlayoffsResponse.ok) {
+            const livePlayoffsData = await livePlayoffsResponse.json();
+
+            if (livePlayoffsData) {
+              console.log("Usando resultados ao vivo dos playoffs");
+              setLiveResultsAvailable(true);
+
+              // Precisamos ainda buscar os dados dos times e classificação
+              const data = await fetchLeagueData();
+
+              // Converter o array de times para um objeto Record para facilitar acesso
+              const teamsRecord: Record<string, Team> = {};
+              data.teams.forEach(team => {
+                teamsRecord[team.id] = team;
+              });
+
+              setTeams(teamsRecord);
+              setStandings(data.standings);
+
+              // Converter o formato de turnos para o formato bracket
+              const bracketData = convertTurnsToBracket(livePlayoffsData);
+
+              // Usar o chaveamento com resultados ao vivo
+              setBracket(bracketData);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (liveError) {
+          console.error("Erro ao buscar resultados ao vivo:", liveError);
+          // Continuar com o fluxo normal se falhar a busca dos resultados ao vivo
+        }
+
         // Verificar se existem dados simulados
         const hasSimulated = hasSimulatedData();
         const simulatedStandings = getSimulatedStandings();
         const simulatedTeams = getSimulatedTeams();
+        const simulatedPlayoffs = getSimulatedPlayoffs();
 
-        // Se tiver dados simulados, usar eles para os playoffs
+        // Se tiver dados simulados de playoffs, usar eles com prioridade
+        if (hasSimulatedPlayoffs() && simulatedPlayoffs && simulatedTeams) {
+          console.log("Usando playoffs simulados");
+
+          setTeams(simulatedTeams);
+
+          // Se tivermos standings simulados, usá-los também
+          if (simulatedStandings) {
+            setStandings(simulatedStandings);
+          } else {
+            // Se não, buscar standings da API
+            const data = await fetchLeagueData();
+            setStandings(data.standings);
+          }
+
+          setBracket(simulatedPlayoffs);
+          setUsingSimulatedData(true);
+          setLoading(false);
+          return;
+        }
+
+        // Se tiver dados simulados da liga, mas não dos playoffs, gerar os playoffs a partir deles
         if (hasSimulated && simulatedStandings && simulatedTeams) {
           console.log("Usando dados simulados para os playoffs");
 
@@ -57,6 +236,9 @@ export default function PlayoffsPage() {
           // Gerar o chaveamento dos playoffs com base na classificação simulada
           const playoffBracket = generatePlayoffBracket(simulatedStandings, simulatedTeams);
           setBracket(playoffBracket);
+
+          // Salvar o chaveamento gerado
+          saveSimulatedPlayoffs(playoffBracket);
 
           setLoading(false);
           return;
@@ -108,8 +290,45 @@ export default function PlayoffsPage() {
   }
 
   // Handler para atualização do chaveamento
-  const handleBracketUpdate = (updatedBracket: PlayoffBracket) => {
-    setBracket(updatedBracket)
+  const handleBracketUpdate = async (updatedBracket: PlayoffBracket) => {
+    // Atualizar o estado local
+    setBracket(updatedBracket);
+
+    // Ver se algum jogo está em andamento (tem placar sem vencedor definido)
+    const hasLiveMatches = [
+      ...updatedBracket.quarterfinals,
+      ...updatedBracket.semifinals,
+      ...(updatedBracket.final ? [updatedBracket.final] : [])
+    ].some(match =>
+      match && (match.homeScore !== null || match.awayScore !== null) && match.winnerId === null
+    );
+
+    // Atualizar o indicador de resultados ao vivo
+    setLiveResultsAvailable(hasLiveMatches);
+
+    // Salvar os resultados simulados no localStorage
+    if (usingSimulatedData) {
+      saveSimulatedPlayoffs(updatedBracket);
+    }
+
+    // Enviar os resultados atualizados para a API (para atualizações ao vivo)
+    try {
+      // Converter diretamente o bracket para o formato de turnos
+      // para garantir compatibilidade com o novo formato da API
+      const response = await fetch('/api/playoff-matches', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bracket: updatedBracket }),
+      });
+
+      if (!response.ok) {
+        console.error('Erro ao salvar resultados na API:', await response.text());
+      }
+    } catch (error) {
+      console.error('Erro ao enviar resultados dos playoffs:', error);
+    }
   }
 
   if (loading) {
@@ -160,19 +379,28 @@ export default function PlayoffsPage() {
             </p>
           </div>
 
-          {usingSimulatedData && (
-            <Button
-              onClick={() => window.location.reload()}
-              variant="outline"
-              className="min-w-24 text-sm gap-2 border-[#333] bg-[#252525] hover:bg-[#333] text-gray-300"
-            >
-              <RefreshCcw className="w-3.5 h-3.5" />
-              Atualizar
-            </Button>
-          )}
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            className="min-w-24 text-sm gap-2 border-[#333] bg-[#252525] hover:bg-[#333] text-gray-300"
+          >
+            <RefreshCcw className="w-3.5 h-3.5" />
+            Atualizar
+          </Button>
         </div>
 
-        {usingSimulatedData && (
+        {liveResultsAvailable && (
+          <Alert className="mb-6 bg-[#1E3A29] border-[#34D399] text-white">
+            <Trophy className="h-4 w-4 text-[#34D399]" />
+            <AlertTitle className="text-[#34D399]">Resultados ao vivo</AlertTitle>
+            <AlertDescription>
+              Estamos exibindo os resultados atualizados em tempo real dos playoffs da Kings League.
+              Você pode editar os resultados dos jogos que ainda não terminaram.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {usingSimulatedData && !liveResultsAvailable && (
           <Alert className="mb-6 bg-[#2A2D4A] border-[var(--team-primary)] text-white">
             <Trophy className="h-4 w-4 text-[var(--team-primary)]" />
             <AlertTitle className="text-[var(--team-primary)]">Usando dados simulados</AlertTitle>
