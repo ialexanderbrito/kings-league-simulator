@@ -66,50 +66,60 @@ export function PlayoffBracketView({
     const initialShowShootout: Record<string, boolean> = {};
 
     // Quartas de final
-    bracket.quarterfinals.forEach(match => {
-      const matchKey = match.id;
-      initialScores[matchKey] = {
-        home: match.homeScore !== null ? match.homeScore.toString() : "",
-        away: match.awayScore !== null ? match.awayScore.toString() : "",
-        shootoutWinner: match.homeScoreP !== null && match.awayScoreP !== null
-          ? (match.homeScoreP > match.awayScoreP ? "home" : "away")
-          : null
-      };
+    if (Array.isArray(bracket.quarterfinals)) {
+      bracket.quarterfinals.forEach(match => {
+        if (!match) return;
 
-      initialShowShootout[matchKey] =
-        (match.homeScoreP !== null && match.awayScoreP !== null) ||
-        (match.homeScore === match.awayScore && match.homeScore !== null);
-    });
+        const matchKey = match.id;
+        initialScores[matchKey] = {
+          home: match.homeScore !== null ? match.homeScore.toString() : "",
+          away: match.awayScore !== null ? match.awayScore.toString() : "",
+          shootoutWinner: match.homeScoreP !== null && match.awayScoreP !== null
+            ? (match.homeScoreP > match.awayScoreP ? "home" : "away")
+            : null
+        };
+
+        initialShowShootout[matchKey] =
+          (match.homeScoreP !== null && match.awayScoreP !== null) ||
+          (match.homeScore === match.awayScore && match.homeScore !== null);
+      });
+    }
 
     // Semifinais
-    bracket.semifinals.forEach(match => {
-      const matchKey = match.id;
-      initialScores[matchKey] = {
-        home: match.homeScore !== null ? match.homeScore.toString() : "",
-        away: match.awayScore !== null ? match.awayScore.toString() : "",
-        shootoutWinner: match.homeScoreP !== null && match.awayScoreP !== null
-          ? (match.homeScoreP > match.awayScoreP ? "home" : "away")
+    if (Array.isArray(bracket.semifinals)) {
+      bracket.semifinals.forEach(match => {
+        if (!match) return;
+
+        const matchKey = match.id;
+        initialScores[matchKey] = {
+          home: match.homeScore !== null ? match.homeScore.toString() : "",
+          away: match.awayScore !== null ? match.awayScore.toString() : "",
+          shootoutWinner: match.homeScoreP !== null && match.awayScoreP !== null
+            ? (match.homeScoreP > match.awayScoreP ? "home" : "away")
+            : null
+        };
+
+        initialShowShootout[matchKey] =
+          (match.homeScoreP !== null && match.awayScoreP !== null) ||
+          (match.homeScore === match.awayScore && match.homeScore !== null);
+      });
+    }
+
+    // Final
+    if (bracket.final) {
+      const finalKey = bracket.final.id;
+      initialScores[finalKey] = {
+        home: bracket.final.homeScore !== null ? bracket.final.homeScore.toString() : "",
+        away: bracket.final.awayScore !== null ? bracket.final.awayScore.toString() : "",
+        shootoutWinner: bracket.final.homeScoreP !== null && bracket.final.awayScoreP !== null
+          ? (bracket.final.homeScoreP > bracket.final.awayScoreP ? "home" : "away")
           : null
       };
 
-      initialShowShootout[matchKey] =
-        (match.homeScoreP !== null && match.awayScoreP !== null) ||
-        (match.homeScore === match.awayScore && match.homeScore !== null);
-    });
-
-    // Final
-    const finalKey = bracket.final.id;
-    initialScores[finalKey] = {
-      home: bracket.final.homeScore !== null ? bracket.final.homeScore.toString() : "",
-      away: bracket.final.awayScore !== null ? bracket.final.awayScore.toString() : "",
-      shootoutWinner: bracket.final.homeScoreP !== null && bracket.final.awayScoreP !== null
-        ? (bracket.final.homeScoreP > bracket.final.awayScoreP ? "home" : "away")
-        : null
-    };
-
-    initialShowShootout[finalKey] =
-      (bracket.final.homeScoreP !== null && bracket.final.awayScoreP !== null) ||
-      (bracket.final.homeScore === bracket.final.awayScore && bracket.final.homeScore !== null);
+      initialShowShootout[finalKey] =
+        (bracket.final.homeScoreP !== null && bracket.final.awayScoreP !== null) ||
+        (bracket.final.homeScore === bracket.final.awayScore && bracket.final.homeScore !== null);
+    }
 
     setScores(initialScores);
     setShowShootout(initialShowShootout);
@@ -348,7 +358,15 @@ export function PlayoffBracketView({
     });
   };
 
-  const champion = bracket.final.winnerId ? teams[bracket.final.winnerId] : null;
+  const champion = bracket.final?.winnerId ? teams[bracket.final.winnerId] : null;
+
+  // Verificar se algum jogo está ao vivo (apenas para indicação visual) com proteção contra valores undefined
+  const isQuarterfinalLive = Array.isArray(bracket.quarterfinals) &&
+    bracket.quarterfinals.some(m => m && !m.winnerId && (m.homeScore !== null || m.awayScore !== null));
+  const isSemifinalLive = Array.isArray(bracket.semifinals) &&
+    bracket.semifinals.some(m => m && !m.winnerId && (m.homeScore !== null || m.awayScore !== null));
+  const isFinalLive = bracket.final && !bracket.final.winnerId &&
+    (bracket.final.homeScore !== null || bracket.final.awayScore !== null);
 
   return (
     <Card className="bg-[#1a1a1a] border-[#333] text-white">
@@ -458,45 +476,8 @@ export function PlayoffBracketView({
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Semifinais</h3>
               <div className="flex flex-col gap-4">
-                {bracket.semifinals.map(match => (
-                  <PlayoffMatchCard
-                    key={match.id}
-                    match={match}
-                    teams={teams}
-                    onScoreChange={handleScoreChange}
-                    onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                    currentScores={scores[match.id] || { home: "", away: "", shootoutWinner: null }}
-                    showShootout={showShootout[match.id] || false}
-                    stage="semifinal"
-                    favoriteTeam={favoriteTeam}
-                  />
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="final" className="mt-0 md:hidden">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Final</h3>
-              <PlayoffMatchCard
-                match={bracket.final}
-                teams={teams}
-                onScoreChange={handleScoreChange}
-                onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                currentScores={scores[bracket.final.id] || { home: "", away: "", shootoutWinner: null }}
-                showShootout={showShootout[bracket.final.id] || false}
-                stage="final"
-                favoriteTeam={favoriteTeam}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="desktop" className="mt-0 hidden md:block">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Quartas de Final</h3>
-                <div className="flex flex-col gap-4">
-                  {bracket.quarterfinals.map(match => (
+                {Array.isArray(bracket.semifinals) && bracket.semifinals.map(match => (
+                  match && (
                     <PlayoffMatchCard
                       key={match.id}
                       match={match}
@@ -505,9 +486,58 @@ export function PlayoffBracketView({
                       onShootoutWinnerSelect={handleShootoutWinnerSelect}
                       currentScores={scores[match.id] || { home: "", away: "", shootoutWinner: null }}
                       showShootout={showShootout[match.id] || false}
-                      stage="quarterfinal"
+                      stage="semifinal"
                       favoriteTeam={favoriteTeam}
+                      isLive={!match.winnerId && (match.homeScore !== null || match.awayScore !== null)}
                     />
+                  )
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="final" className="mt-0 md:hidden">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Final</h3>
+              {bracket.final && (
+                <PlayoffMatchCard
+                  match={bracket.final}
+                  teams={teams}
+                  onScoreChange={handleScoreChange}
+                  onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                  currentScores={scores[bracket.final?.id] || { home: "", away: "", shootoutWinner: null }}
+                  showShootout={showShootout[bracket.final?.id] || false}
+                  stage="final"
+                  favoriteTeam={favoriteTeam}
+                  isLive={bracket.final && !bracket.final.winnerId &&
+                    (bracket.final.homeScore !== null || bracket.final.awayScore !== null)}
+                  youtubeUrl={bracket.final.youtubeUrl}
+                />
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="desktop" className="mt-0 hidden md:block">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Quartas de Final</h3>
+                <div className="flex flex-col gap-4">
+                  {Array.isArray(bracket.quarterfinals) && bracket.quarterfinals.map(match => (
+                    match && (
+                      <PlayoffMatchCard
+                        key={match.id}
+                        match={match}
+                        teams={teams}
+                        onScoreChange={handleScoreChange}
+                        onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                        currentScores={scores[match.id] || { home: "", away: "", shootoutWinner: null }}
+                        showShootout={showShootout[match.id] || false}
+                        stage="quarterfinal"
+                        favoriteTeam={favoriteTeam}
+                        isLive={!match.winnerId && (match.homeScore !== null || match.awayScore !== null)}
+                        youtubeUrl={match.youtubeUrl}
+                      />
+                    )
                   ))}
                 </div>
               </div>
@@ -516,29 +546,41 @@ export function PlayoffBracketView({
                 <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Semifinais</h3>
                 <div className="flex flex-col h-full">
                   <div className="pt-16 flex items-center">
-                    <PlayoffMatchCard
-                      match={bracket.semifinals[0]}
-                      teams={teams}
-                      onScoreChange={handleScoreChange}
-                      onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                      currentScores={scores[bracket.semifinals[0].id] || { home: "", away: "", shootoutWinner: null }}
-                      showShootout={showShootout[bracket.semifinals[0].id] || false}
-                      stage="semifinal"
-                      favoriteTeam={favoriteTeam}
-                    />
+                    {Array.isArray(bracket.semifinals) && bracket.semifinals[0] && (
+                      <PlayoffMatchCard
+                        match={bracket.semifinals[0]}
+                        teams={teams}
+                        onScoreChange={handleScoreChange}
+                        youtubeUrl={bracket.semifinals[0].youtubeUrl}
+                        onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                        currentScores={scores[bracket.semifinals[0]?.id] || { home: "", away: "", shootoutWinner: null }}
+                        showShootout={showShootout[bracket.semifinals[0]?.id] || false}
+                        stage="semifinal"
+                        favoriteTeam={favoriteTeam}
+                        isLive={bracket.semifinals[0] &&
+                          !bracket.semifinals[0].winnerId &&
+                          (bracket.semifinals[0].homeScore !== null || bracket.semifinals[0].awayScore !== null)}
+                      />
+                    )}
                   </div>
 
                   <div className="pt-6 flex items-center">
-                    <PlayoffMatchCard
-                      match={bracket.semifinals[1]}
-                      teams={teams}
-                      onScoreChange={handleScoreChange}
-                      onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                      currentScores={scores[bracket.semifinals[1].id] || { home: "", away: "", shootoutWinner: null }}
-                      showShootout={showShootout[bracket.semifinals[1].id] || false}
-                      stage="semifinal"
-                      favoriteTeam={favoriteTeam}
-                    />
+                    {Array.isArray(bracket.semifinals) && bracket.semifinals[1] && (
+                      <PlayoffMatchCard
+                        match={bracket.semifinals[1]}
+                        teams={teams}
+                        onScoreChange={handleScoreChange}
+                        onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                        currentScores={scores[bracket.semifinals[1]?.id] || { home: "", away: "", shootoutWinner: null }}
+                        showShootout={showShootout[bracket.semifinals[1]?.id] || false}
+                        stage="semifinal"
+                        favoriteTeam={favoriteTeam}
+                        isLive={bracket.semifinals[1] &&
+                          !bracket.semifinals[1].winnerId &&
+                          (bracket.semifinals[1].homeScore !== null || bracket.semifinals[1].awayScore !== null)}
+                        youtubeUrl={bracket.semifinals[1].youtubeUrl}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -546,16 +588,20 @@ export function PlayoffBracketView({
               <div>
                 <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Final</h3>
                 <div className="flex items-center h-full justify-center">
-                  <PlayoffMatchCard
-                    match={bracket.final}
-                    teams={teams}
-                    onScoreChange={handleScoreChange}
-                    onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                    currentScores={scores[bracket.final.id] || { home: "", away: "", shootoutWinner: null }}
-                    showShootout={showShootout[bracket.final.id] || false}
-                    stage="final"
-                    favoriteTeam={favoriteTeam}
-                  />
+                  {bracket.final && (
+                    <PlayoffMatchCard
+                      match={bracket.final}
+                      teams={teams}
+                      onScoreChange={handleScoreChange}
+                      onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                      currentScores={scores[bracket.final?.id] || { home: "", away: "", shootoutWinner: null }}
+                      showShootout={showShootout[bracket.final?.id] || false}
+                      stage="final"
+                      favoriteTeam={favoriteTeam}
+                      isLive={!bracket.final.winnerId && (bracket.final.homeScore !== null || bracket.final.awayScore !== null)}
+                      youtubeUrl={bracket.final.youtubeUrl}
+                    />
+                  )}
                 </div>
               </div>
             </div>
