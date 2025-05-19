@@ -1,9 +1,10 @@
-import { TeamStanding, Round, Team } from "@/types/kings-league";
+import { TeamStanding, Round, Team, PlayoffBracket } from "@/types/kings-league";
 
 // Chaves para armazenamento no localStorage
 const SIMULATED_STANDINGS_KEY = '@kl-simulador:standings';
 const SIMULATED_ROUNDS_KEY = '@kl-simulador:rounds';
 const SIMULATED_TEAMS_KEY = '@kl-simulador:teams';
+const SIMULATED_PLAYOFFS_KEY = '@kl-simulador:playoffs';
 
 /**
  * Salva a classificação simulada no localStorage
@@ -93,4 +94,36 @@ export function clearSimulatedData(): void {
 export function hasSimulatedData(): boolean {
   if (typeof window === 'undefined') return false;
   return !!localStorage.getItem(SIMULATED_STANDINGS_KEY);
+}
+
+/**
+ * Salva o chaveamento dos playoffs simulados no localStorage
+ */
+export function saveSimulatedPlayoffs(bracket: PlayoffBracket): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SIMULATED_PLAYOFFS_KEY, JSON.stringify(bracket));
+}
+
+/**
+ * Obtém o chaveamento dos playoffs simulados do localStorage
+ */
+export function getSimulatedPlayoffs(): PlayoffBracket | null {
+  if (typeof window === 'undefined') return null;
+  const data = localStorage.getItem(SIMULATED_PLAYOFFS_KEY);
+  if (!data) return null;
+  
+  try {
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Erro ao carregar playoffs simulados:', error);
+    return null;
+  }
+}
+
+/**
+ * Verifica se existem dados de playoffs simulados
+ */
+export function hasSimulatedPlayoffs(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem(SIMULATED_PLAYOFFS_KEY);
 }
