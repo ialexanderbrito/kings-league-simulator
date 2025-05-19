@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { MatchScoreInput } from "@/components/matches/match-score-input";
 import { ShootoutSelector } from "@/components/matches/shootout-selector";
 import { TeamDisplay } from "@/components/matches/team-display";
+import { Badge } from "@/components/ui/badge";
+import { Youtube } from "lucide-react";
 
 interface PlayoffMatchCardProps {
   match: PlayoffMatch;
@@ -27,6 +29,8 @@ interface PlayoffMatchCardProps {
   showShootout: boolean;
   stage: "quarterfinal" | "semifinal" | "final";
   favoriteTeam?: Team | null;
+  isLive?: boolean;
+  youtubeUrl?: string; // URL para assistir a partida no YouTube
 }
 
 export function PlayoffMatchCard({
@@ -37,7 +41,9 @@ export function PlayoffMatchCard({
   currentScores,
   showShootout,
   stage,
-  favoriteTeam
+  favoriteTeam,
+  isLive = false,
+  youtubeUrl
 }: PlayoffMatchCardProps) {
   const homeTeam = match.homeTeamId ? teams[match.homeTeamId] : null;
   const awayTeam = match.awayTeamId ? teams[match.awayTeamId] : null;
@@ -49,9 +55,10 @@ export function PlayoffMatchCard({
   );
 
   // Determinar qual lado é o time favorito (para destacar o lado)
-  const isHomeFavorite = favoriteTeam && homeTeam && favoriteTeam.id === homeTeam.id;
-  const isAwayFavorite = favoriteTeam && awayTeam && favoriteTeam.id === awayTeam.id;
+  const isHomeFavorite: boolean | undefined = favoriteTeam && homeTeam ? favoriteTeam.id === homeTeam.id : undefined;
+  const isAwayFavorite: boolean | undefined = favoriteTeam && awayTeam ? favoriteTeam.id === awayTeam.id : undefined;
 
+  // Determinar vencedor da partida
   let winner = null;
   if (match.homeScore !== null && match.awayScore !== null) {
     if (match.homeScore > match.awayScore) {
@@ -63,12 +70,15 @@ export function PlayoffMatchCard({
     }
   }
 
+  // Verificar se o jogo já foi encerrado (tem vencedor definido)
+  const isFinished = match.winnerId !== null;
+
   return (
     <Card className={cn(
       "w-full bg-[#252525] border-[#333] hover:border-[#444] transition-colors",
       isFavoriteTeamMatch && "bg-[var(--team-primary)]/10 border-[var(--team-primary)]/30"
     )}>
-      <CardContent className="p-4">
+      <CardContent className={`p-4 ${isFinished ? 'opacity-50' : ''}`}>
         <div className="grid grid-cols-[minmax(0,1.2fr),auto,minmax(0,1.2fr)] sm:grid-cols-[minmax(0,1.5fr),auto,minmax(0,1.5fr)] items-center gap-2 md:gap-4 w-full">
           {/* Time da casa */}
           {homeTeam ? (
@@ -97,24 +107,37 @@ export function PlayoffMatchCard({
                 stage === 'semifinal' ? 'Semifinal' : 'Final'}
             </div>
 
-            <div className="flex flex-col items-center gap-2">
+            {isLive && (
+              <Badge className="mb-2 bg-red-600 text-white hover:bg-red-700 animate-pulse">
+                Ao Vivo
+              </Badge>
+            )}
+
+            {/* Área de placar com opacidade reduzida se o jogo estiver encerrado */}
+            <div className={`flex flex-col items-center gap-2 ${isFinished ? 'opacity-50' : ''}`}>
               <div className="flex items-center gap-1">
                 <MatchScoreInput
                   value={currentScores.home}
                   onScoreChange={(value, isBackspace) => {
-                    onScoreChange(match.id, "home", value, isBackspace);
+                    if (!isFinished) {
+                      onScoreChange(match.id, "home", value, isBackspace);
+                    }
                   }}
                   currentValue={currentScores.home}
                   teamName={homeTeam?.name || "Time da casa"}
+                  disabled={isFinished}
                 />
                 <span className="text-gray-400">:</span>
                 <MatchScoreInput
                   value={currentScores.away}
                   onScoreChange={(value, isBackspace) => {
-                    onScoreChange(match.id, "away", value, isBackspace);
+                    if (!isFinished) {
+                      onScoreChange(match.id, "away", value, isBackspace);
+                    }
                   }}
                   currentValue={currentScores.away}
                   teamName={awayTeam?.name || "Time visitante"}
+                  disabled={isFinished}
                 />
               </div>
 
@@ -126,9 +149,12 @@ export function PlayoffMatchCard({
                     homeTeamShortName={homeTeam?.shortName || "Casa"}
                     awayTeamShortName={awayTeam?.shortName || "Visitante"}
                     selectedWinner={currentScores.shootoutWinner}
-                    onWinnerSelect={(winner) =>
-                      onShootoutWinnerSelect(match.id, winner)
-                    }
+                    onWinnerSelect={(winner) => {
+                      if (!isFinished) {
+                        onShootoutWinnerSelect(match.id, winner);
+                      }
+                    }}
+                    disabled={isFinished}
                   />
                 )}
             </div>
@@ -154,6 +180,19 @@ export function PlayoffMatchCard({
             </div>
           )}
         </div>
+
+        {/* Link do YouTube na parte inferior do card, seguindo o padrão do sistema */}
+        {youtubeUrl && (
+          <a
+            href={youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 py-2 flex items-center justify-center gap-2 text-[var(--team-primary)] text-xs rounded-b-md"
+          >
+            <Youtube className="w-3 h-3" />
+            <span>Assistir</span>
+          </a>
+        )}
       </CardContent>
     </Card>
   );
