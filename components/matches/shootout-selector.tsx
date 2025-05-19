@@ -8,6 +8,7 @@ interface ShootoutSelectorProps {
   awayTeamShortName: string;
   selectedWinner: "home" | "away" | null;
   onWinnerSelect: (winner: "home" | "away" | null) => void;
+  disabled?: boolean;
 }
 
 export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
@@ -15,6 +16,7 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
   awayTeamShortName,
   selectedWinner,
   onWinnerSelect,
+  disabled = false
 }) => {
   return (
     <div className="flex gap-1 items-center">
@@ -26,9 +28,11 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
                 "w-4 h-4 rounded-full border transition-colors",
                 selectedWinner === "home"
                   ? "bg-green-600 border-green-500"
-                  : "bg-[#333] border-[#555] hover:bg-[#444]"
+                  : "bg-[#333] border-[#555] hover:bg-[#444]",
+                disabled && "opacity-70 cursor-not-allowed"
               )}
-              onClick={() => onWinnerSelect(selectedWinner === "home" ? null : "home")}
+              onClick={() => !disabled && onWinnerSelect(selectedWinner === "home" ? null : "home")}
+              disabled={disabled}
             />
           </TooltipTrigger>
           <TooltipContent side="bottom">
@@ -47,9 +51,11 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
                 "w-4 h-4 rounded-full border transition-colors",
                 selectedWinner === "away"
                   ? "bg-green-600 border-green-500"
-                  : "bg-[#333] border-[#555] hover:bg-[#444]"
+                  : "bg-[#333] border-[#555] hover:bg-[#444]",
+                disabled && "opacity-70 cursor-not-allowed"
               )}
-              onClick={() => onWinnerSelect(selectedWinner === "away" ? null : "away")}
+              onClick={() => !disabled && onWinnerSelect(selectedWinner === "away" ? null : "away")}
+              disabled={disabled}
             />
           </TooltipTrigger>
           <TooltipContent side="bottom">
