@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Trophy, ArrowRight, Users, Table, ChevronRight, PieChart, GitMerge, Zap, Volleyball, Crown } from "lucide-react"
+import { Trophy, ArrowRight, Users, Table, ChevronRight, PieChart, GitMerge, Zap, TrendingUp, Star, Sparkles, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import KingsLeagueLogo from "@/components/kings-league-logo"
-import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from "@/components/ui/card"
-import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import { Team, TeamStanding } from "@/types/kings-league"
 import NumberFlow from '@number-flow/react'
 
@@ -115,7 +113,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[#121212] text-white overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212]">
       <Header
         loading={loading}
         selectedTeam={null}
@@ -125,452 +123,243 @@ export default function HomePage() {
         setActiveTab={() => { }}
       />
 
-      {/* Hero Section com animações avançadas */}
+      {/* Hero Section - Redesenhado */}
       <section
         ref={heroRef}
-        className="relative overflow-hidden mb-8 sm:mb-12 lg:mb-16 min-h-[90vh] flex items-center"
+        className="relative pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden"
         aria-labelledby="hero-heading"
       >
-        {/* Fundo dinâmico com efeitos visuais */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#121212] to-transparent z-10"></div>
-        <div className="absolute inset-0 bg-[url('/bg-card-president.jpg')] bg-cover bg-center opacity-20"></div>
-
-        {/* Efeito de partículas para dar mais dinamismo (apenas visual) */}
-        <div className="absolute inset-0 z-0 opacity-30">
-          <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-[var(--team-primary)] animate-pulse"></div>
-          <div className="absolute top-3/4 left-1/3 w-3 h-3 rounded-full bg-[var(--team-primary)] animate-pulse"></div>
-          <div className="absolute top-1/2 right-1/4 w-2 h-2 rounded-full bg-[var(--team-primary)] animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/3 w-4 h-4 rounded-full bg-[var(--team-primary)] animate-pulse"></div>
+        {/* Background Effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--team-primary)]/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[var(--team-primary)]/5 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
 
-        <div className="container mx-auto px-4 pt-12 pb-20 sm:pt-16 sm:pb-24 lg:pt-20 lg:pb-32 relative z-20">
-          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-            <div className={`flex-1 transition-all duration-1000 transform ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="relative overflow-hidden rounded-md group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[var(--team-primary)]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
-                  <KingsLeagueLogo
-                    width={56}
-                    height={78}
-                    className="transition-transform duration-300 group-hover:scale-110"
-                  />
-                </div>
-                <div>
-                  <h1 id="hero-heading" className="text-2xl font-bold text-white">
-                    <span className="text-[var(--team-primary)] animate-pulse">Kings</span> League
-                  </h1>
-                  <p className="text-sm text-gray-400 -mt-0.5">Simulador 2025</p>
-                </div>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className={`max-w-4xl mx-auto text-center transition-all duration-1000 ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+
+            {/* Logo Badge */}
+            <div className="inline-flex items-center gap-3 mb-6 px-4 py-2 bg-[#1a1a1a] border border-[var(--team-primary)]/20 rounded-full">
+              <KingsLeagueLogo width={32} height={44} />
+              <div className="text-left">
+                <p className="text-sm font-bold text-white">Kings League</p>
+                <p className="text-xs text-gray-400">Simulador 2025</p>
               </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
-                <span className="inline-block relative">
-                  Simule
-                  <span className="absolute -bottom-2 left-0 w-full h-1 bg-[var(--team-primary)]"></span>
-                </span> a <span className="text-[var(--team-primary)] relative">
-                  Kings League
-                  <span className="absolute -bottom-2 left-0 w-full h-1 bg-[var(--team-primary)]"></span>
-                </span> <br className="md:hidden" />e preveja o <span className="text-[var(--team-primary)]">campeão</span>
-              </h2>
-              <p className="text-lg text-gray-300 mb-8 max-w-2xl leading-relaxed">
-                Experimente o simulador de partidas mais completo da Kings League:
-                simule resultados, acompanhe estatísticas em tempo real e descubra o caminho
-                do seu time até o título.
-              </p>
-
-              {/* Estatísticas animadas para criar urgência */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8 text-center">
-                <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg border border-[var(--team-primary)]/20">
-                  <div className="text-3xl font-bold text-[var(--team-primary)]">
-                    <NumberFlow
-                      value={generateSimulationsPerfomed()}
-                      defaultValue={0}
-                      prefix="+"
-                    />
-
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Simulações realizadas
-                  </div>
-                </div>
-                <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg border border-[var(--team-primary)]/20">
-                  <div className="text-3xl font-bold text-[var(--team-primary)]">10</div>
-                  <div className="text-sm text-gray-400">Times da liga</div>
-                </div>
-                <div className="hidden sm:block bg-black/30 backdrop-blur-sm p-3 rounded-lg border border-[var(--team-primary)]/20">
-                  <div className="text-3xl font-bold text-[var(--team-primary)]">100%</div>
-                  <div className="text-sm text-gray-400">Gratuito</div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-[var(--team-primary)] hover:bg-[var(--team-primary)]/90 text-black font-bold group relative overflow-hidden transition-all duration-300 shadow-lg shadow-[var(--team-primary)]/20"
-                >
-                  <Link href="/simulator">
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/20 to-transparent transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
-                    <Zap className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-                    <span>Começar a Simular Agora</span>
-                  </Link>
-                </Button>
-              </div>
-
             </div>
-            <div className={`hidden lg:block flex-1 transition-all duration-1000 delay-300 transform ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <div className="relative w-full max-w-md mx-auto">
-                {/* Cards holográficos espalhados */}
-                <div className="absolute w-full h-[600px] top-[-100px] right-[-50px] left-[-50px] overflow-visible">
-                  {/* Card 1 */}
-                  <div className="absolute top-[-180px] right-[200px] w-32 h-40 transform -rotate-12 z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/loud.png"
-                        alt="Carta Loud"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Card 2 */}
-                  <div className="absolute top-[-80px] right-20 w-32 h-40 transform rotate-6 z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/fluxo.png"
-                        alt="Carta Fluxo"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
+            {/* Main Headline */}
+            <h1 id="hero-heading" className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
+              <span className="bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
+                Simule o Futuro
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-[var(--team-primary)] to-[var(--team-primary)]/60 bg-clip-text text-transparent">
+                Do Seu Time
+              </span>
+            </h1>
 
-                  {/* Card 3 */}
-                  <div className="absolute top-5 right-[400px] w-32 h-40 transform rotate-[-5deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/furia.png"
-                        alt="Carta Furia"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
+            {/* Subtitle */}
+            <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Descubra quem será o campeão da Kings League.
+              Simule partidas, acompanhe estatísticas em tempo real e
+              compartilhe suas previsões com a comunidade.
+            </p>
 
-                  {/* Card 4 */}
-                  <div className="absolute top-[-30px] right-[200px] w-32 h-40 transform rotate-[8deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/capim.png"
-                        alt="Carta Capim"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
+            {/* Social Proof */}
+            <div className="flex items-center justify-center gap-6 mb-10 text-sm text-gray-400">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <NumberFlow
+                  value={generateSimulationsPerfomed()}
+                  defaultValue={0}
+                  prefix="+"
+                  className="font-bold text-white"
+                />
+                <span>simulações</span>
+              </div>
+              <div className="w-px h-4 bg-gray-700" />
+              <div className="flex items-center gap-2">
+                <Star className="w-4 h-4 text-[var(--team-primary)]" />
+                <span>100% Gratuito</span>
+              </div>
+            </div>
 
-                  {/* Card 5 */}
-                  <div className="absolute top-[150px] right-[220px] w-32 h-40 transform rotate-[-15deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/funkbol.png"
-                        alt="Carta Funkbol"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+              <Button
+                asChild
+                size="lg"
+                className="w-full sm:w-auto bg-[var(--team-primary)] hover:bg-[var(--team-primary)]/90 text-black font-bold text-base px-8 h-12 rounded-full shadow-lg shadow-[var(--team-primary)]/20 hover:shadow-xl hover:shadow-[var(--team-primary)]/30 transition-all duration-300"
+              >
+                <Link href="/simulator" className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  Começar Simulação
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto border-gray-700 hover:border-[var(--team-primary)]/50 hover:bg-[var(--team-primary)]/5 text-white h-12 px-8 rounded-full transition-all duration-300"
+              >
+                <Link href="/standings" className="flex items-center gap-2">
+                  Ver Classificação
+                </Link>
+              </Button>
+            </div>
 
-                  {/* Card 6 */}
-                  <div className="absolute top-20 right-[320px] w-32 h-40 transform rotate-[10deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/g3x.png"
-                        alt="Carta G3X"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Card 7 */}
-                  <div className="absolute top-[0px] right-[10px] w-32 h-40 transform rotate-[20deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/goti.png"
-                        alt="Carta Goti"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Card 8 */}
-                  <div className="absolute top-[80px] right-[120px] w-32 h-40 transform rotate-[-8deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/dendele.png"
-                        alt="Carta Dendele"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Card 9 */}
-                  <div className="absolute top-[-150px] right-[380px] w-32 h-40 transform rotate-[15deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/nyvelados.png"
-                        alt="Carta Nyvelados"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Card 10 */}
-                  <div className="absolute top-[-50px] right-[320px] w-32 h-40 transform rotate-[-10deg] z-20 transition-all duration-500 holographic-sticker">
-                    <div className="relative w-full h-full holographic-effect team-sticker rounded-lg shadow-xl">
-                      <div className="absolute inset-0 rounded-lg team-sticker-light"></div>
-                      <img
-                        src="/cards/realelite.png"
-                        alt="Carta Real Elite"
-                        width={250}
-                        height={260}
-                        className="w-full h-full object-contain transform-gpu"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute top-[-140px] left-[-120px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
-                  <KingsLeagueLogo className="w-10 h-10 text-[var(--team-primary)]" />
-                </div>
-
-                <div className="absolute top-[-220px] right-[365px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
-                  <Crown className="w-10 h-10 text-[var(--team-primary)]" />
-                </div>
-
-                <div className="absolute -bottom-12 right-[295px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
-                  <Volleyball className="w-10 h-10 text-[var(--team-primary)]" />
-                </div>
-
-                {/* Emblema/selo de qualidade */}
-                <div className="absolute -bottom-3 right-[190px] bg-[#1a1a1a] border border-[#333] rounded-full p-3 shadow-lg transform rotate-6 hover:rotate-12 transition-all duration-300 z-50">
-                  <Trophy className="w-10 h-10 text-[var(--team-primary)]" />
-                </div>
-
+            {/* Trust Indicators */}
+            <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+              <div className="flex flex-col items-center p-4 rounded-xl bg-[#1a1a1a]/50 border border-gray-800">
+                <Trophy className="w-6 h-6 text-[var(--team-primary)] mb-2" />
+                <p className="text-2xl font-bold text-white">10</p>
+                <p className="text-xs text-gray-400">Times</p>
+              </div>
+              <div className="flex flex-col items-center p-4 rounded-xl bg-[#1a1a1a]/50 border border-gray-800">
+                <TrendingUp className="w-6 h-6 text-[var(--team-primary)] mb-2" />
+                <p className="text-2xl font-bold text-white">Real</p>
+                <p className="text-xs text-gray-400">Estatísticas</p>
+              </div>
+              <div className="flex flex-col items-center p-4 rounded-xl bg-[#1a1a1a]/50 border border-gray-800">
+                <Sparkles className="w-6 h-6 text-[var(--team-primary)] mb-2" />
+                <p className="text-2xl font-bold text-white">Live</p>
+                <p className="text-xs text-gray-400">Atualizações</p>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Marcador de ondas na parte inferior com animação suave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="w-full">
-            <path
-              fill="#121212"
-              fillOpacity="1"
-              d="M0,64L80,58.7C160,53,320,43,480,42.7C640,43,800,53,960,58.7C1120,64,1280,64,1360,64L1440,64L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z"
-            >
-              <animate
-                attributeName="d"
-                dur="10s"
-                repeatCount="indefinite"
-                values="M0,64L80,58.7C160,53,320,43,480,42.7C640,43,800,53,960,58.7C1120,64,1280,64,1360,64L1440,64L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z;
-                       M0,64L80,69C160,74,320,84,480,80C640,76,800,58,960,53.3C1120,48,1280,58,1360,63.3L1440,69L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z;
-                       M0,64L80,58.7C160,53,320,43,480,42.7C640,43,800,53,960,58.7C1120,64,1280,64,1360,64L1440,64L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z"
-              />
-            </path>
-          </svg>
         </div>
       </section>
 
-      {/* Seção Recursos */}
-      <section ref={featuresRef} className="py-12 bg-[#121212]" id="recursos">
+      {/* Seção Recursos - Redesenhada */}
+      <section ref={featuresRef} className="py-16 md:py-24" id="recursos">
         <div className="container mx-auto px-4">
-          <div className={`text-center mb-12 transition-all duration-700 transform ${visibleSections.features ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <span className="inline-block px-4 py-1 bg-[var(--team-primary)]/10 text-[var(--team-primary)] text-sm font-medium rounded-full mb-4">FUNCIONALIDADES EXCLUSIVAS</span>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Recursos <span className="text-[var(--team-primary)]">Exclusivos</span></h2>
+          <div className={`text-center mb-12 md:mb-16 transition-all duration-700 ${visibleSections.features ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            <span className="inline-block px-4 py-1.5 bg-[var(--team-primary)]/10 text-[var(--team-primary)] text-sm font-semibold rounded-full mb-4 border border-[var(--team-primary)]/20">
+              FUNCIONALIDADES
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Tudo que você precisa para
+              <span className="block text-[var(--team-primary)]">simular a temporada</span>
+            </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Explore todas as funcionalidades do Kings League Simulator para ter a melhor experiência
-              acompanhando e prevendo os resultados da liga.
+              Ferramentas completas para acompanhar cada detalhe da Kings League
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Simulador de Partidas */}
-            <Card className={`bg-[#1a1a1a] border-[#333] hover:border-[var(--team-primary)]/50 transition-all hover:shadow-lg overflow-hidden group transform hover:-translate-y-1 hover:scale-[1.01] ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '100ms', transitionDuration: '500ms' }}>
-              <div className="h-2 bg-gradient-to-r from-[var(--team-primary)] to-[#333]"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {/* Simulador */}
+            <Card className={`group bg-[#1a1a1a]/50 border-gray-800 hover:border-[var(--team-primary)]/50 hover:bg-[#1a1a1a] transition-all duration-300 ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '100ms' }}>
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-full bg-[#252525] flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors duration-300">
-                  <Zap className="w-6 h-6 text-[var(--team-primary)] group-hover:scale-110 transition-transform duration-300" />
+                <div className="w-12 h-12 rounded-xl bg-[var(--team-primary)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors">
+                  <Zap className="w-6 h-6 text-[var(--team-primary)]" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Simulador de Partidas</h3>
-                <p className="text-gray-400 mb-4">
-                  Simule os resultados de todas as partidas da temporada e veja como o seu time favorito se sai.
+                <h3 className="text-xl font-bold mb-2">Simulador Completo</h3>
+                <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                  Simule todas as partidas da temporada com algoritmo realista baseado em estatísticas reais
                 </p>
                 <Link
                   href="/simulator"
-                  className="text-[var(--team-primary)] inline-flex items-center text-sm hover:underline group/link"
-                  aria-label="Experimentar o Simulador de Partidas"
+                  className="text-[var(--team-primary)] text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all"
                 >
-                  Experimentar
-                  <ChevronRight className="w-4 h-4 ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  Simular agora <ChevronRight className="w-4 h-4" />
                 </Link>
               </CardContent>
             </Card>
 
-            {/* Tabela de Classificação */}
-            <Card className={`bg-[#1a1a1a] border-[#333] hover:border-[var(--team-primary)]/50 transition-all hover:shadow-lg overflow-hidden group transform hover:-translate-y-1 hover:scale-[1.01] ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '200ms', transitionDuration: '500ms' }}>
-              <div className="h-2 bg-gradient-to-r from-[var(--team-primary)] to-[#333]"></div>
+            {/* Classificação */}
+            <Card className={`group bg-[#1a1a1a]/50 border-gray-800 hover:border-[var(--team-primary)]/50 hover:bg-[#1a1a1a] transition-all duration-300 ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '200ms' }}>
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-full bg-[#252525] flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors duration-300">
-                  <Table className="w-6 h-6 text-[var(--team-primary)] group-hover:scale-110 transition-transform duration-300" />
+                <div className="w-12 h-12 rounded-xl bg-[var(--team-primary)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors">
+                  <Table className="w-6 h-6 text-[var(--team-primary)]" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Tabela Completa</h3>
-                <p className="text-gray-400 mb-4">
-                  Acompanhe a classificação completa da liga com estatísticas detalhadas de cada time.
+                <h3 className="text-xl font-bold mb-2">Classificação Live</h3>
+                <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                  Acompanhe a tabela em tempo real com vitórias, derrotas, gols e saldo
                 </p>
                 <Link
                   href="/standings"
-                  className="text-[var(--team-primary)] inline-flex items-center text-sm hover:underline group/link"
-                  aria-label="Ver a tabela de classificação completa"
+                  className="text-[var(--team-primary)] text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all"
                 >
-                  Ver classificação
-                  <ChevronRight className="w-4 h-4 ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  Ver tabela <ChevronRight className="w-4 h-4" />
                 </Link>
               </CardContent>
             </Card>
 
-            {/* Chaveamento de Playoffs */}
-            <Card className={`bg-[#1a1a1a] border-[#333] hover:border-[var(--team-primary)]/50 transition-all hover:shadow-lg overflow-hidden group transform hover:-translate-y-1 hover:scale-[1.01] ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '300ms', transitionDuration: '500ms' }}>
-              <div className="h-2 bg-gradient-to-r from-[var(--team-primary)] to-[#333]"></div>
+            {/* Playoffs */}
+            <Card className={`group bg-[#1a1a1a]/50 border-gray-800 hover:border-[var(--team-primary)]/50 hover:bg-[#1a1a1a] transition-all duration-300 ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '300ms' }}>
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-full bg-[#252525] flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors duration-300">
-                  <GitMerge className="w-6 h-6 text-[var(--team-primary)] group-hover:scale-110 transition-transform duration-300" />
+                <div className="w-12 h-12 rounded-xl bg-[var(--team-primary)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors">
+                  <GitMerge className="w-6 h-6 text-[var(--team-primary)]" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Chaveamento Playoffs</h3>
-                <p className="text-gray-400 mb-4">
-                  Visualize o chaveamento dos playoffs e simule os confrontos eliminatórios até a grande final.
+                <h3 className="text-xl font-bold mb-2">Chaveamento</h3>
+                <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                  Visualize e simule os playoffs até descobrir o grande campeão
                 </p>
                 <Link
                   href="/playoffs"
-                  className="text-[var(--team-primary)] inline-flex items-center text-sm hover:underline group/link"
-                  aria-label="Ver o chaveamento dos playoffs"
+                  className="text-[var(--team-primary)] text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all"
                 >
-                  Ver playoffs
-                  <ChevronRight className="w-4 h-4 ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  Ver playoffs <ChevronRight className="w-4 h-4" />
                 </Link>
               </CardContent>
             </Card>
 
-            {/* Estatísticas de Times */}
-            <Card className={`bg-[#1a1a1a] border-[#333] hover:border-[var(--team-primary)]/50 transition-all hover:shadow-lg overflow-hidden group transform hover:-translate-y-1 hover:scale-[1.01] ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '400ms', transitionDuration: '500ms' }}>
-              <div className="h-2 bg-gradient-to-r from-[var(--team-primary)] to-[#333]"></div>
+            {/* Estatísticas */}
+            <Card className={`group bg-[#1a1a1a]/50 border-gray-800 hover:border-[var(--team-primary)]/50 hover:bg-[#1a1a1a] transition-all duration-300 ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '400ms' }}>
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-full bg-[#252525] flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors duration-300">
-                  <PieChart className="w-6 h-6 text-[var(--team-primary)] group-hover:scale-110 transition-transform duration-300" />
+                <div className="w-12 h-12 rounded-xl bg-[var(--team-primary)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors">
+                  <PieChart className="w-6 h-6 text-[var(--team-primary)]" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Estatísticas Detalhadas</h3>
-                <p className="text-gray-400 mb-4">
-                  Analise estatísticas detalhadas de cada time, incluindo gols, vitórias, derrotas e muito mais.
+                <h3 className="text-xl font-bold mb-2">Stats Detalhadas</h3>
+                <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                  Analise jogadores, gols, assistências e desempenho de cada time
                 </p>
                 <Link
                   href="/teams"
-                  className="text-[var(--team-primary)] inline-flex items-center text-sm hover:underline group/link"
-                  aria-label="Ver estatísticas detalhadas dos times"
+                  className="text-[var(--team-primary)] text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all"
                 >
-                  Ver times
-                  <ChevronRight className="w-4 h-4 ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  Explorar stats <ChevronRight className="w-4 h-4" />
                 </Link>
               </CardContent>
             </Card>
 
-            {/* Tema do Time */}
-            <Card className={`bg-[#1a1a1a] border-[#333] hover:border-[var(--team-primary)]/50 transition-all hover:shadow-lg overflow-hidden group transform hover:-translate-y-1 hover:scale-[1.01] ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '500ms', transitionDuration: '500ms' }}>
-              <div className="h-2 bg-gradient-to-r from-[var(--team-primary)] to-[#333]"></div>
+            {/* Personalização */}
+            <Card className={`group bg-[#1a1a1a]/50 border-gray-800 hover:border-[var(--team-primary)]/50 hover:bg-[#1a1a1a] transition-all duration-300 ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '500ms' }}>
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-full bg-[#252525] flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors duration-300">
-                  <Users className="w-6 h-6 text-[var(--team-primary)] group-hover:scale-110 transition-transform duration-300" />
+                <div className="w-12 h-12 rounded-xl bg-[var(--team-primary)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors">
+                  <Users className="w-6 h-6 text-[var(--team-primary)]" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Time do Coração</h3>
-                <p className="text-gray-400 mb-4">
-                  Escolha seu time favorito e personalize a interface do simulador com as cores do seu time.
+                <h3 className="text-xl font-bold mb-2">Tema Personalizado</h3>
+                <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                  Escolha seu time favorito e personalize as cores da interface
                 </p>
                 <Link
                   href="/simulator"
-                  className="text-[var(--team-primary)] inline-flex items-center text-sm hover:underline group/link"
-                  aria-label="Escolher seu time do coração"
+                  className="text-[var(--team-primary)] text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all"
                 >
-                  Escolher time
-                  <ChevronRight className="w-4 h-4 ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  Personalizar <ChevronRight className="w-4 h-4" />
                 </Link>
               </CardContent>
             </Card>
 
             {/* Compartilhamento */}
-            <Card className={`bg-[#1a1a1a] border-[#333] hover:border-[var(--team-primary)]/50 transition-all hover:shadow-lg overflow-hidden group transform hover:-translate-y-1 hover:scale-[1.01] ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '600ms', transitionDuration: '500ms' }}>
-              <div className="h-2 bg-gradient-to-r from-[var(--team-primary)] to-[#333]"></div>
+            <Card className={`group bg-[#1a1a1a]/50 border-gray-800 hover:border-[var(--team-primary)]/50 hover:bg-[#1a1a1a] transition-all duration-300 ${visibleSections.features ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '600ms' }}>
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-full bg-[#252525] flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors duration-300">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-6 h-6 text-[var(--team-primary)] group-hover:scale-110 transition-transform duration-300"
-                  >
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                    <polyline points="16 6 12 2 8 6"></polyline>
-                    <line x1="12" y1="2" x2="12" y2="15"></line>
-                  </svg>
+                <div className="w-12 h-12 rounded-xl bg-[var(--team-primary)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--team-primary)]/20 transition-colors">
+                  <Sparkles className="w-6 h-6 text-[var(--team-primary)]" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Compartilhamento</h3>
-                <p className="text-gray-400 mb-4">
-                  Compartilhe suas simulações e previsões com amigos nas redes sociais com apenas um clique.
+                <h3 className="text-xl font-bold mb-2">Compartilhe</h3>
+                <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                  Compartilhe suas simulações e previsões com a comunidade
                 </p>
-                <div className="flex gap-2">
-                  <button
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-[#252525] hover:bg-[#333] transition-colors transform hover:scale-110"
-                    aria-label="Compartilhar no Twitter/X"
-                  >
-                    <XLogo weight="fill" className="w-3.5 h-3.5 text-white" />
-                  </button>
-                  <button
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-[#252525] hover:bg-[#333] transition-colors transform hover:scale-110"
-                    aria-label="Compartilhar no Facebook"
-                  >
-                    <FacebookLogo weight="fill" className="w-3.5 h-3.5 text-white" />
-                  </button>
-                  <button
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-[#252525] hover:bg-[#333] transition-colors transform hover:scale-110"
-                    aria-label="Compartilhar no WhatsApp"
-                  >
-                    <WhatsappLogo weight="fill" className="w-3.5 h-3.5 text-white" />
-                  </button>
+                <div className="flex items-center gap-2 text-[var(--team-primary)] text-sm font-medium">
+                  <span>Redes sociais</span>
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary)] animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary)] animate-pulse" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary)] animate-pulse" style={{ animationDelay: '0.4s' }} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -578,283 +367,159 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Seção de times */}
-      <section ref={teamsRef} className="py-20 bg-[#0a0a0a] relative">
-        {/* Fundo com efeito de gradiente avançado */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#121212] via-[#0c0c0c] to-[#0a0a0a]"></div>
-        <div className="absolute inset-0 bg-[url('/bg-card-president.jpg')] opacity-[0.03] bg-fixed"></div>
-
-        {/* Efeitos visuais mais sofisticados */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-1 h-1 rounded-full bg-[var(--team-primary)]/70 animate-ping" style={{ animationDuration: '3s' }}></div>
-          <div className="absolute bottom-40 right-20 w-1 h-1 rounded-full bg-[var(--team-primary)]/70 animate-ping" style={{ animationDuration: '4s' }}></div>
-          <div className="absolute top-1/2 left-1/4 w-1 h-1 rounded-full bg-[var(--team-primary)]/70 animate-ping" style={{ animationDuration: '5s' }}></div>
-
-          {/* Linhas decorativas */}
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[var(--team-primary)]/20 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[var(--team-primary)]/20 to-transparent"></div>
+      {/* Seção de Times - Redesenhada */}
+      <section ref={teamsRef} className="py-16 md:py-24 bg-[#0a0a0a] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[var(--team-primary)]/5 rounded-full blur-3xl" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className={`text-center mb-12 transition-all duration-700 transform ${visibleSections.teams ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <span className="inline-block px-4 py-1 bg-[var(--team-primary)]/10 text-[var(--team-primary)] text-sm font-medium rounded-full mb-4">OS MELHORES TIMES</span>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">A Elite da <span className="text-[var(--team-primary)]">Kings League</span></h2>
+          <div className={`text-center mb-12 md:mb-16 transition-all duration-700 ${visibleSections.teams ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            <span className="inline-block px-4 py-1.5 bg-[var(--team-primary)]/10 text-[var(--team-primary)] text-sm font-semibold rounded-full mb-4 border border-[var(--team-primary)]/20">
+              TIMES
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Conheça os
+              <span className="block text-[var(--team-primary)]">Competidores</span>
+            </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Explore os 12 times que competem pelo título da Kings League e descubra estatísticas,
-              jogadores e estratégias de cada um deles.
+              10 times lutando pelo título da Kings League. Escolha o seu favorito.
             </p>
           </div>
 
           {loading ? (
-            // Estado de carregamento aprimorado com animação de pulso
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, index) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {[...Array(10)].map((_, index) => (
                 <div
                   key={index}
-                  className="aspect-[4/5] bg-[#1a1a1a] rounded-xl border border-[#333] flex flex-col items-center justify-center p-4 animate-pulse relative overflow-hidden"
+                  className="aspect-square bg-[#1a1a1a]/50 rounded-2xl border border-gray-800 flex flex-col items-center justify-center p-4 animate-pulse"
                 >
-                  <div className="w-20 h-20 rounded-full bg-[#252525] mb-4"></div>
-                  <div className="h-4 bg-[#252525] w-3/4 mx-auto rounded mb-2"></div>
-                  <div className="h-3 bg-[#252525] w-1/2 mx-auto rounded"></div>
-                  <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#252525]/20 to-transparent"></div>
+                  <div className="w-16 h-16 rounded-full bg-[#252525] mb-3"></div>
+                  <div className="h-3 bg-[#252525] w-3/4 mx-auto rounded"></div>
                 </div>
               ))}
             </div>
           ) : (
-            // Container principal com grid responsivo e layout aprimorado - 5 times por linha
-            <div className="relative">
-              {/* Cartões de time com design avançado e interativo - 5 times por linha para 10 times no total */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
-                {teams.slice(0, 10).map((team, index) => (
-                  <Link
-                    key={team.id}
-                    href={`/team/${team.id}`}
-                    className={`team-card aspect-[4/5] bg-[#141414] rounded-xl border border-[#333] flex flex-col items-center justify-between p-0 hover:scale-[1.03] transition-all duration-500 hover:shadow-xl hover:shadow-[var(--team-primary)]/10 hover:border-[var(--team-primary)]/50 group relative overflow-hidden ${visibleSections.teams ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-                    style={{
-                      background: `linear-gradient(165deg, ${team.firstColorHEX}10, #141414 70%)`,
-                      transitionDelay: `${index * 50}ms`,
-                    }}
-                    aria-label={`Ver detalhes do time ${team.name}`}
-                  >
-                    {/* Efeito de brilho ao passar o mouse */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 bg-gradient-to-br from-transparent via-white/5 to-transparent group-hover:translate-x-full -translate-x-full transform transition-transform duration-1500"></div>
-
-                    {/* Borda superior decorativa */}
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[var(--team-primary)]/30 to-transparent"></div>
-
-                    {/* Conteúdo principal do card */}
-                    <div className="flex flex-col items-center pt-6 md:pt-8 pb-4 w-full relative z-10">
-                      {/* Logo e imagem do time */}
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-[#0a0a0a]/90 flex items-center justify-center p-2 overflow-hidden border-2 border-transparent group-hover:border-[var(--team-primary)]/30 transition-all duration-300 mb-4 relative">
-                        {/* Efeito de brilho circular */}
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--team-primary)]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                        {team.logo?.url ? (
-                          <img
-                            src={team.logo.url}
-                            alt={team.name}
-                            width={72}
-                            height={72}
-                            className="object-contain transition-transform duration-500 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="text-2xl font-bold text-white/50">
-                            {team.name.substring(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Nome e informações do time */}
-                      <div className="text-center px-2">
-                        <h3 className="font-bold text-sm sm:text-base mb-1 group-hover:text-[var(--team-primary)] transition-colors duration-300 line-clamp-1">{team.name}</h3>
-                        <p className="text-xs text-gray-500 max-w-[90%] mx-auto line-clamp-1">
-                          {team.coach || 'Kings League Pro Team'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Rodapé com estatísticas e informações adicionais */}
-                    <div className="w-full bg-black/40 backdrop-blur-sm p-2 px-3 transition-all duration-300 group-hover:bg-[var(--team-primary)]/10 border-t border-[#333] group-hover:border-[var(--team-primary)]/30">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full bg-[var(--team-primary)]/10 flex items-center justify-center mr-1">
-                            <Trophy className="w-3 h-3 text-[var(--team-primary)]" />
-                          </div>
-                          <span className="text-xs font-medium">{team.titles || 0} Títulos</span>
-                        </div>
-                        <span className="text-xs text-[var(--team-primary)] font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center">
-                          Ver
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 transition-transform duration-300 group-hover:translate-x-1"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Indicador de posição na classificação se disponível */}
-                    {standings.findIndex(s => s.teamId === team.id) >= 0 && (
-                      <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-xs font-bold py-1 px-2 rounded-full shadow-lg flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary)]"></span>
-                        <span>{`#${standings.findIndex(s => s.teamId === team.id) + 1}`}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+              {teams.slice(0, 10).map((team, index) => (
+                <Link
+                  key={team.id}
+                  href={`/team/${team.id}`}
+                  className={`group aspect-square bg-[#1a1a1a]/50 rounded-2xl border border-gray-800 hover:border-[var(--team-primary)]/50 hover:bg-[#1a1a1a] p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 ${visibleSections.teams ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                  style={{ transitionDelay: `${index * 50}ms` }}
+                  aria-label={`Ver detalhes do time ${team.name}`}
+                >
+                  <div className="relative">
+                    {team.logo?.url ? (
+                      <img
+                        src={team.logo.url}
+                        alt={team.name}
+                        width={64}
+                        height={64}
+                        className="object-contain transition-transform duration-300 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-[var(--team-primary)]/10 flex items-center justify-center text-xl font-bold">
+                        {team.name.substring(0, 2).toUpperCase()}
                       </div>
                     )}
-                  </Link>
-                ))}
-              </div>
+                  </div>
+                  <h3 className="font-bold text-sm text-center line-clamp-2 group-hover:text-[var(--team-primary)] transition-colors">
+                    {team.name}
+                  </h3>
+                </Link>
+              ))}
             </div>
           )}
 
-          {/* Botão de "Ver todos os times" aprimorado */}
-          <div className={`mt-12 text-center transition-all duration-700 transform ${visibleSections.teams ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`} style={{ transitionDelay: '700ms' }}>
+          <div className={`mt-10 text-center transition-all duration-700 ${visibleSections.teams ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`} style={{ transitionDelay: '600ms' }}>
             <Button
               asChild
               variant="outline"
               size="lg"
-              className="border-[var(--team-primary)]/30 hover:bg-[var(--team-primary)]/10 transition-all duration-300 group relative overflow-hidden py-6 px-8"
+              className="border-gray-700 hover:border-[var(--team-primary)]/50 hover:bg-[var(--team-primary)]/5 rounded-full px-8 h-12 transition-all duration-300"
             >
-              <Link href="/teams" className="flex items-center">
-                <span className="relative z-10 flex items-center">
-                  Explorar todos os times e estatísticas
-                  <ArrowRight className="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
-                </span>
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[var(--team-primary)]/5 to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></span>
+              <Link href="/teams" className="flex items-center gap-2">
+                Ver Todos os Times
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
           </div>
-
-          {/* Marcador visual para melhorar a estrutura da seção */}
-          <div className={`mt-16 w-full h-px bg-gradient-to-r from-transparent via-[var(--team-primary)]/20 to-transparent transition-opacity duration-700 ${visibleSections.teams ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: '800ms' }}></div>
         </div>
       </section>
 
-      {/* Seção CTA */}
-      <section ref={ctaRef} className="py-24 bg-[#121212] relative overflow-hidden">
-        {/* Fundo com efeito dinâmico */}
-        <div className="absolute inset-0 bg-[url('/bg-card-president.jpg')] opacity-5 bg-cover bg-center"></div>
-
-        {/* Efeito de partículas e linhas */}
+      {/* CTA Final - Redesenhado */}
+      <section ref={ctaRef} className="py-16 md:py-24 relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--team-primary)]/20 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--team-primary)]/20 to-transparent"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[var(--team-primary)]/10 rounded-full blur-3xl" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className={`max-w-4xl mx-auto transition-all duration-1000 transform ${visibleSections.cta ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className={`max-w-3xl mx-auto text-center transition-all duration-1000 ${visibleSections.cta ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
 
-            {/* Card flutuante para o CTA principal */}
-            <div className="bg-[#0f0f0f]/80 backdrop-blur-lg rounded-xl border border-[var(--team-primary)]/20 p-8 md:p-12 shadow-xl relative overflow-hidden">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--team-primary)]/10 border border-[var(--team-primary)]/20 mb-6">
+              <Trophy className="w-8 h-8 text-[var(--team-primary)]" />
+            </div>
 
-              {/* Efeito de gradiente animado no fundo */}
-              <div className="absolute -inset-[2px] bg-gradient-to-r from-[var(--team-primary)]/0 via-[var(--team-primary)]/20 to-[var(--team-primary)]/0 blur-xl opacity-50 animate-pulse" style={{ animationDuration: '3s' }}></div>
+            <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+              Seu time pode ser
+              <span className="block bg-gradient-to-r from-[var(--team-primary)] to-[var(--team-primary)]/60 bg-clip-text text-transparent">
+                o próximo campeão
+              </span>
+            </h2>
 
-              <div className="text-center relative z-10">
-                {/* Badge de destaque */}
-                <div className="inline-block px-4 py-1 bg-[var(--team-primary)]/10 text-[var(--team-primary)] text-sm font-medium rounded-full mb-6 backdrop-blur-sm">
-                  TEMPORADA 2025
-                </div>
+            <p className="text-lg text-gray-400 mb-8 leading-relaxed">
+              Simule a temporada completa, acompanhe cada partida e descubra
+              se o seu time tem o que é preciso para conquistar o título da Kings League 2025.
+            </p>
 
-                <h2 className="text-3xl md:text-5xl font-extrabold mb-6 leading-tight">
-                  Pronto para se tornar o <span className="text-[var(--team-primary)] relative inline-block">
-                    estrategista
-                    <span className="absolute -bottom-1 left-0 w-full h-1 bg-[var(--team-primary)]"></span>
-                  </span> da Kings League?
-                </h2>
-
-                <p className="text-gray-300 text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed">
-                  Simule resultados, descubra caminhos para o título e compartilhe suas
-                  previsões com outros fãs da Liga. Leve seu time do coração ao topo!
-                </p>
-
-                {/* Características em destaque */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 text-sm">
-                  <div className="flex items-center justify-center gap-2 bg-black/30 rounded-lg p-3">
-                    <div className="w-8 h-8 rounded-full bg-[var(--team-primary)]/10 flex items-center justify-center">
-                      <Zap className="w-4 h-4 text-[var(--team-primary)]" />
-                    </div>
-                    <span>Totalmente gratuito</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 bg-black/30 rounded-lg p-3">
-                    <div className="w-8 h-8 rounded-full bg-[var(--team-primary)]/10 flex items-center justify-center">
-                      <Trophy className="w-4 h-4 text-[var(--team-primary)]" />
-                    </div>
-                    <span>Dados atualizados</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 bg-black/30 rounded-lg p-3">
-                    <div className="w-8 h-8 rounded-full bg-[var(--team-primary)]/10 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-[var(--team-primary)]" />
-                    </div>
-                    <span>Interface personalizada</span>
-                  </div>
-                </div>
-
-                {/* CTA Principal */}
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="bg-[var(--team-primary)] hover:bg-[var(--team-primary)]/90 text-black font-bold text-lg py-6 px-8 group relative overflow-hidden transition-all duration-300 shadow-lg shadow-[var(--team-primary)]/20 w-full sm:w-auto"
-                  >
-                    <Link href="/simulator">
-                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/20 to-transparent transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
-                      <span className="flex items-center justify-center">
-                        Simular Agora
-                        <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                      </span>
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="border-[var(--team-primary)]/40 hover:bg-[var(--team-primary)]/10 transition-all duration-300 backdrop-blur-sm text-lg py-6 px-8 w-full sm:w-auto"
-                  >
-                    <Link href="/teams" className="flex items-center justify-center">
-                      <span>Explorar Times</span>
-                    </Link>
-                  </Button>
-                </div>
+            {/* Benefícios */}
+            <div className="flex flex-wrap items-center justify-center gap-6 mb-10 text-sm text-gray-400">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-[var(--team-primary)]" />
+                <span>Simulações ilimitadas</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-[var(--team-primary)]" />
+                <span>Estatísticas em tempo real</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-[var(--team-primary)]" />
+                <span>100% gratuito</span>
               </div>
             </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                asChild
+                size="lg"
+                className="w-full sm:w-auto bg-[var(--team-primary)] hover:bg-[var(--team-primary)]/90 text-black font-bold text-base px-10 h-14 rounded-full shadow-lg shadow-[var(--team-primary)]/20 hover:shadow-xl hover:shadow-[var(--team-primary)]/30 transition-all duration-300"
+              >
+                <Link href="/simulator" className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  Começar Agora
+                </Link>
+              </Button>
+            </div>
+
+            <p className="mt-6 text-sm text-gray-500">
+              Junte-se a <NumberFlow value={generateSimulationsPerfomed()} prefix="+" className="font-bold text-[var(--team-primary)]" /> fãs que já simularam
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Adicionar CSS para animações personalizadas e corrigir problemas */}
+      {/* CSS customizado */}
       <style jsx global>{`
-        @keyframes pulse-animation {
-          0% {
-            box-shadow: 0 0 0 0 rgba(var(--team-primary-rgb), 0.7);
-          }
-          70% {
-            box-shadow: 0 0 0 15px rgba(var(--team-primary-rgb), 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(var(--team-primary-rgb), 0);
-          }
-        }
-        
-        .pulse-animation {
-          animation: pulse-animation 2s infinite;
-        }
-        
-        .team-card {
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          will-change: transform, opacity;
-        }
-        
         @keyframes float {
-          0% { transform: translateY(0px); }
+          0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-10px); }
-          100% { transform: translateY(0px); }
         }
         
-        /* Otimizações para animações mais suaves */
-        [class*="translate"], 
-        [class*="scale"],
-        [class*="rotate"],
-        [class*="opacity"] {
-          will-change: transform, opacity;
+        html {
+          scroll-behavior: smooth;
         }
         
-        /* Melhorar performance de animações em dispositivos móveis */
         @media (prefers-reduced-motion: reduce) {
           *, ::before, ::after {
             animation-duration: 0.01ms !important;
@@ -862,23 +527,6 @@ export default function HomePage() {
             transition-duration: 0.01ms !important;
             scroll-behavior: auto !important;
           }
-        }
-        
-        /* Garantir que animações sejam mais suaves em todos os navegadores */
-        html {
-          scroll-behavior: smooth;
-        }
-        
-        /* Melhorar a experiência de transições */
-        .duration-300 { transition-duration: 300ms; }
-        .duration-500 { transition-duration: 500ms; }
-        .duration-700 { transition-duration: 700ms; }
-        .duration-1000 { transition-duration: 1000ms; }
-        
-        /* Melhorar visualização de animações */
-        .transform-gpu {
-          transform: translateZ(0);
-          backface-visibility: hidden;
         }
       `}</style>
 
