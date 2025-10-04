@@ -124,7 +124,7 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
   // Renderizando o estado de carregamento com o componente específico para time
   if (loading) {
     return (
-      <main className="bg-[#121212] min-h-screen text-white">
+      <main className="bg-card min-h-screen text-white">
         <Header
           loading={true}
           selectedTeam={null}
@@ -147,7 +147,7 @@ export default function TeamPage({ params }: { params: { teamId: string } }) {
   }
 
   return (
-    <main className="bg-[#121212] min-h-screen text-white">
+    <main className="bg-card min-h-screen text-white">
       <Header
         loading={false}
         selectedTeam={team.id}
