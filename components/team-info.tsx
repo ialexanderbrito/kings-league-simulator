@@ -105,7 +105,7 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
 
         {/* Aba de Elenco */}
         <TabsContent value="team" className="mt-0">
-          <Card className="bg-[#1a1a1a] border-[#333] text-white">
+          <Card className="bg-card border-[#333] text-white">
             <CardHeader className="pb-2 border-b border-[#333]">
               <CardTitle className="text-xl text-[#F4AF23]">Elenco</CardTitle>
               <CardDescription className="text-gray-400">

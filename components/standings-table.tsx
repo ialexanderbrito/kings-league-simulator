@@ -181,12 +181,12 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
   const getPositionStyle = (standing: TeamStanding, index: number) => {
     if (index === 0) {
       // Primeiro colocado - semifinal
-      return { backgroundColor: "#4ade80", color: "white" }
+      return { backgroundColor: "#22c55e", color: "white" }
     } else if (index >= 1 && index <= 6) {
       // 2º ao 7º - quartas de final
       return { backgroundColor: "var(--team-primary)", color: "black" }
     }
-    return {}
+    return { backgroundColor: "transparent", color: "inherit" }
   }
 
   // Função para determinar a mudança de posição
@@ -215,17 +215,25 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
     <>
       <div className="space-y-4">
         <div className="w-full" ref={tableRef}>
-          <div className="bg-[#121212] rounded-lg">
-            <div className="w-full overflow-x-hidden">
+          <div className="bg-card rounded-xl shadow-lg overflow-hidden">
+            <div className="w-full overflow-x-auto">
               <Table className="w-full text-sm">
                 <TableHeader>
-                  <TableRow className="border-b border-[#333] bg-transparent">
-                    <TableHead className="w-12 text-center text-xs text-gray-400 font-normal py-3">P</TableHead>
-                    <TableHead className="w-8 px-0"></TableHead>
-                    <TableHead className="text-xs text-gray-400 font-normal py-3">TIME</TableHead>
-                    <TableHead className="text-center text-xs text-gray-400 font-normal w-16 py-3">PTS</TableHead>
-                    <TableHead className="text-center text-xs text-gray-400 font-normal w-12 py-3 hidden sm:table-cell">J</TableHead>
-                    <TableHead className="text-center text-xs text-gray-400 font-normal w-12 py-3 hidden sm:table-cell">SG</TableHead>
+                  <TableRow className="border-border bg-card">
+                    <TableHead className="w-12 text-center text-xs font-semibold text-muted-foreground py-4">
+                      <abbr title="Posição" className="no-underline cursor-help">P</abbr>
+                    </TableHead>
+                    <TableHead className="w-8 px-0" aria-label="Mudança de posição"></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground py-4">TIME</TableHead>
+                    <TableHead className="text-center text-xs font-semibold text-muted-foreground w-16 py-4">
+                      <abbr title="Pontos" className="no-underline cursor-help">PTS</abbr>
+                    </TableHead>
+                    <TableHead className="text-center text-xs font-semibold text-muted-foreground w-12 py-4 hidden sm:table-cell">
+                      <abbr title="Jogos" className="no-underline cursor-help">J</abbr>
+                    </TableHead>
+                    <TableHead className="text-center text-xs font-semibold text-muted-foreground w-12 py-4 hidden sm:table-cell">
+                      <abbr title="Saldo de Gols" className="no-underline cursor-help">SG</abbr>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -238,16 +246,32 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                       <TableRow
                         key={team.id}
                         className={cn(
-                          "cursor-pointer transition-colors hover:bg-[#1f1f1f] border-b border-[#333]",
-                          isTeamFavorite && "hover:bg-[var(--team-primary)] hover:bg-opacity-20"
+                          "cursor-pointer transition-all duration-200 border-b border-border/50",
+                          "hover:bg-accent focus-within:bg-accent",
+                          isTeamFavorite && "bg-[var(--team-primary)]/5 hover:bg-[var(--team-primary)]/10"
                         )}
                         onClick={() => onTeamSelect(team.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onTeamSelect(team.id);
+                          }
+                        }}
+                        aria-label={`Ver detalhes do time ${team.name}, ${index + 1}º lugar, ${team.points} pontos`}
                       >
-                        <TableCell className="text-center font-medium py-2 w-12">
+                        <TableCell className="text-center font-medium py-3 w-12">
                           <div className="flex items-center justify-center h-full">
                             <Badge
                               style={positionStyle}
-                              className="w-6 h-6 flex items-center justify-center p-0 text-xs font-medium rounded-full"
+                              className={cn(
+                                "w-7 h-7 flex items-center justify-center p-0 text-xs font-bold rounded-full",
+                                "transition-all duration-200",
+                                index === 0 ? "shadow-md shadow-green-500/30" : "",
+                                index >= 1 && index <= 6 ? "shadow-md shadow-[var(--team-primary)]/20" : "bg-muted text-muted-foreground"
+                              )}
+                              aria-label={`Posição ${index + 1}`}
                             >
                               {index + 1}
                             </Badge>
@@ -255,44 +279,48 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
                         </TableCell>
                         <TableCell className="w-8 px-0">
                           {positionChange && (
-                            <div className="flex items-center justify-center h-full">
+                            <div className="flex items-center justify-center h-full" aria-label={`${positionChange.direction === "up" ? "Subiu" : "Desceu"} ${positionChange.value} ${positionChange.value === 1 ? "posição" : "posições"}`}>
                               {positionChange.direction === "up" ? (
-                                <ChevronsUp className="w-3 h-3 text-green-400" />
+                                <ChevronsUp className="w-4 h-4 text-green-500" aria-hidden="true" />
                               ) : (
-                                <ChevronsDown className="w-3 h-3 text-red-400" />
+                                <ChevronsDown className="w-4 h-4 text-red-500" aria-hidden="true" />
                               )}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="py-2">
-                          <div className="team-container flex items-center gap-2 min-w-0 max-w-[180px] sm:max-w-full">
+                        <TableCell className="py-3">
+                          <div className="team-container flex items-center gap-2.5 min-w-0 max-w-[180px] sm:max-w-full">
                             {team.logo && (
-                              <div className="team-logo w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                              <div className="team-logo w-8 h-8 flex-shrink-0 rounded-lg bg-muted/30 p-1 border border-border/50">
                                 <img
                                   src={team.logo.url || "/placeholder.svg"}
-                                  alt={team.name}
-                                  width={24}
-                                  height={24}
-                                  className="object-contain"
+                                  alt={`Logo do ${team.name}`}
+                                  width={32}
+                                  height={32}
+                                  className="object-contain w-full h-full"
+                                  loading="lazy"
                                 />
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
                               <span
-                                className="font-medium text-xs truncate"
-                                title={team.name} // Tooltip nativo para mostrar nome completo
+                                className="font-semibold text-xs sm:text-sm truncate text-foreground"
+                                title={team.name}
                               >
                                 {team.name}
                               </span>
                               {isTeamFavorite && (
-                                <Heart className="w-3 h-3 text-red-400 flex-shrink-0" fill="currentColor" />
+                                <Heart className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="currentColor" aria-label="Time favorito" />
                               )}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center font-bold text-[var(--team-primary)] text-sm py-2 w-16">{team.points}</TableCell>
-                        <TableCell className="text-center text-xs text-gray-300 py-2 hidden sm:table-cell w-12">{team.played}</TableCell>
-                        <TableCell className="text-center text-xs text-gray-300 py-2 hidden sm:table-cell w-12">{team.goalDifference}</TableCell>
+                        <TableCell className="text-center font-bold text-[var(--team-primary)] text-sm sm:text-base py-3 w-16">{team.points}</TableCell>
+                        <TableCell className="text-center text-xs sm:text-sm text-muted-foreground font-medium py-3 hidden sm:table-cell w-12">{team.played}</TableCell>
+                        <TableCell className={cn(
+                          "text-center text-xs sm:text-sm font-semibold py-3 hidden sm:table-cell w-12",
+                          team.goalDifference > 0 ? "text-green-500" : team.goalDifference < 0 ? "text-red-500" : "text-muted-foreground"
+                        )}>{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</TableCell>
                       </TableRow>
                     )
                   })}
@@ -302,22 +330,20 @@ export default function StandingsTable({ standings, onTeamSelect, previousStandi
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 px-2 py-2">
-          <div className="text-xs text-gray-400 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <div className="flex items-center gap-1.5">
-              <Badge style={{ backgroundColor: "#4ade80" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-              <span>Playoff: Semifinal</span>
+        <div className="flex items-center justify-between gap-4 px-3 py-3 bg-muted/30 rounded-lg border border-border/50">
+          <div className="text-xs sm:text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-2" role="list" aria-label="Legenda da classificação">
+            <div className="flex items-center gap-2" role="listitem">
+              <Badge style={{ backgroundColor: "#22c55e" }} className="w-3 h-3 p-0 rounded-full shadow-md shadow-green-500/30" aria-hidden="true"></Badge>
+              <span className="font-medium">Playoff: Semifinal</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Badge style={{ backgroundColor: "var(--team-primary)" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-              <span>
-                Playoff: Quartas
-              </span>
+            <div className="flex items-center gap-2" role="listitem">
+              <Badge style={{ backgroundColor: "var(--team-primary)" }} className="w-3 h-3 p-0 rounded-full shadow-md shadow-[var(--team-primary)]/20" aria-hidden="true"></Badge>
+              <span className="font-medium">Playoff: Quartas</span>
             </div>
             {favoriteTeam && (
-              <div className="flex items-center gap-1.5">
-                <Heart className="w-2.5 h-2.5 text-red-400 flex-shrink-0" fill="currentColor" />
-                <span>Seu time do coração</span>
+              <div className="flex items-center gap-2" role="listitem">
+                <Heart className="w-3 h-3 text-red-500 flex-shrink-0" fill="currentColor" aria-hidden="true" />
+                <span className="font-medium">Seu time do coração</span>
               </div>
             )}
           </div>

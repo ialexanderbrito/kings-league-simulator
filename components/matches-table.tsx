@@ -215,40 +215,89 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
   }
 
   return (
-    <Card className="bg-[#1a1a1a] border-[#333] text-white">
-      <CardHeader className="border-b border-[#333] pb-2">
-        <div className="flex items-center gap-2 text-[var(--team-primary)]">
-          <Calendar className="w-5 h-5" />
-          <span className="text-lg font-medium">Calendário e Resultados</span>
-        </div>
-        <p className="text-gray-400 text-sm mt-1">Acompanhe as partidas e simule resultados</p>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <RoundSelector
-              rounds={rounds}
-              selectedRound={selectedRound}
-              onRoundSelect={handleRoundSelect}
-            />
+    <Card className="bg-card border-border shadow-lg">
+      <CardHeader className="border-b border-border space-y-3 pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full bg-[var(--team-primary)]/10">
+              <Calendar className="w-5 h-5 text-[var(--team-primary)]" aria-hidden="true" />
+            </div>
+            <div className="space-y-0.5">
+              <h2 className="text-xl font-bold text-foreground">
+                Calendário e Resultados
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Acompanhe as partidas e simule resultados
+              </p>
+            </div>
+          </div>
 
-            {/* se as rodadas acabaram mostrar o playoffs */}
+          {rounds.every(round => round.ended) && (
+            <Link
+              href="/playoffs"
+              onClick={() => handleRoundSelect("playoffs")}
+              aria-label="Ver playoffs"
+              className={cn(
+                "hidden sm:flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-full",
+                "bg-[var(--team-primary)] text-background shadow-md shadow-[var(--team-primary)]/20",
+                "transition-all duration-200 hover:brightness-95",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)] focus:ring-offset-2 focus:ring-offset-background"
+              )}
+            >
+              <span>Playoffs</span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-4 sm:p-6">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1">
+              <RoundSelector
+                rounds={rounds}
+                selectedRound={selectedRound}
+                onRoundSelect={handleRoundSelect}
+              />
+            </div>
 
             {rounds.every(round => round.ended) && (
               <Link
-                href={"/playoffs"}
+                href="/playoffs"
                 onClick={() => handleRoundSelect("playoffs")}
+                aria-label="Ver playoffs"
                 className={cn(
-                  "px-4 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors bg-[var(--team-primary)] text-black filter hover:brightness-95",
+                  "sm:hidden flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-full",
+                  "bg-[var(--team-primary)] text-background shadow-md shadow-[var(--team-primary)]/20",
+                  "transition-all duration-200 hover:brightness-95",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)] focus:ring-offset-2 focus:ring-offset-background"
                 )}
               >
-                Playoffs
+                <span>Ver Playoffs</span>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
             )}
           </div>
 
-          {currentRound && (
-            <div className="space-y-4 mt-4">
+          {currentRound ? (
+            <div className="space-y-6" role="region" aria-label="Partidas da rodada">
               {Object.entries(getMatchesByDate(currentRound)).map(([date, matches]) => (
                 <DateGroup
                   key={date}
@@ -263,6 +312,15 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
                   favoriteTeam={favoriteTeam}
                 />
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
+                <Calendar className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Selecione uma rodada para visualizar as partidas
+              </p>
             </div>
           )}
         </div>
