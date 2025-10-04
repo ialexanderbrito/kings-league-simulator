@@ -41,7 +41,7 @@ export default function HomePage() {
   }
 
   // Usando useRef para armazenar o valor fixo gerado apenas uma vez
-  const simulationsCount = useRef(Math.floor(Math.random() * 9000) + 1000);
+  const simulationsCount = useRef(Math.floor(Math.random() * 40000) + 10000);
 
   // Função formatadora que usa o valor armazenado no ref
   const generateSimulationsPerfomed = () => {
