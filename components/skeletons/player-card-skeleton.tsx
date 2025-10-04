@@ -3,11 +3,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 export function PlayerCardSkeleton() {
   // Simulamos um card médio/padrão
   const cardStyle = {
-    borderColor: "#333",
-    headerBg: "bg-gradient-to-r from-zinc-700 to-zinc-900",
-    ratingBg: "bg-zinc-700",
-    ratingText: "text-white",
-    imageBg: "bg-gradient-to-b from-zinc-700/30 to-zinc-900/20"
+    borderColor: "var(--border)",
+    headerBg: "bg-gradient-to-r from-muted to-muted/80",
+    ratingBg: "bg-muted",
+    ratingText: "text-foreground",
+    imageBg: "bg-gradient-to-b from-muted/30 to-muted/20"
   }
 
   return (
@@ -39,23 +39,23 @@ export function PlayerCardSkeleton() {
           <Skeleton className="h-40 w-32" />
         </div>
 
-        <div className="p-3 bg-[#1a1a1a]">
+        <div className="p-3 bg-card">
           <div className="flex justify-end mb-2">
             <Skeleton className="h-6 w-24 rounded" />
           </div>
 
-          <div className="mb-3 pb-3 border-b border-[#333]">
+          <div className="mb-3 pb-3 border-b border-border">
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div>
-                <div className="text-gray-400">Idade</div>
+                <div className="text-muted-foreground">Idade</div>
                 <Skeleton className="h-3 w-10 mt-1" />
               </div>
               <div>
-                <div className="text-gray-400">Altura</div>
+                <div className="text-muted-foreground">Altura</div>
                 <Skeleton className="h-3 w-12 mt-1" />
               </div>
               <div>
-                <div className="text-gray-400">Posição</div>
+                <div className="text-muted-foreground">Posição</div>
                 <Skeleton className="h-3 w-14 mt-1" />
               </div>
             </div>
@@ -65,7 +65,7 @@ export function PlayerCardSkeleton() {
           <div className="space-y-2">
             {Array(5).fill(0).map((_, i) => (
               <div key={i} className="mb-1 last:mb-0">
-                <div className="flex justify-between text-xs text-gray-300 mb-0.5">
+                <div className="flex justify-between text-xs text-foreground mb-0.5">
                   <Skeleton className="h-3 w-16" />
                   <Skeleton className="h-3 w-6" />
                 </div>
