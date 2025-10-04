@@ -80,6 +80,11 @@ function RatingLegend() {
           <span className="text-xs text-muted-foreground">Rating 65-69</span>
         </div>
       </div>
+      <div className="mt-3 pt-3 border-t border-border">
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium">Nota:</span> Os jogadores Wild Card não possuem atributos detalhados, pois os ratings são definidos pela equipe da Kings League apenas para os jogadores draftados.
+        </p>
+      </div>
     </div>
   )
 }
