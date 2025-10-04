@@ -403,6 +403,7 @@ export async function GET() {
         status: 200,
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300, s-maxage=600",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type",
@@ -420,8 +421,7 @@ export async function GET() {
             referer: "https://kingsleague.pro/en/brazil/matches",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
           },
-          cache: "no-store",
-          next: { revalidate: 60 }, // Revalidar a cada 1 minuto
+          next: { revalidate: 300 }, // Revalidar a cada 5 minutos
         }
       );
 
@@ -450,6 +450,7 @@ export async function GET() {
         status: 200,
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300, s-maxage=600",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type",
@@ -469,6 +470,7 @@ export async function GET() {
         status: 200,
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300, s-maxage=600",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type",

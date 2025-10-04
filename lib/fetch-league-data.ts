@@ -12,7 +12,9 @@ const CACHE_EXPIRY_TIME = 12 * 60 * 60 * 1000
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
     try {
-      const directResponse = await fetch("/api/direct-matches")
+      const directResponse = await fetch("/api/direct-matches", {
+        next: { revalidate: 300 }
+      })
 
       if (directResponse.ok) {
         await directResponse.json()
@@ -22,7 +24,7 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     }
 
     const response = await fetch("/api/league-data", {
-      cache: "no-store",
+      next: { revalidate: 300 }
     })
 
     if (!response.ok) {
@@ -47,7 +49,7 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     
     // Filtrando as rodadas para remover playoffs (Quartas-de-final, Semifinais e Final)
     if (data.rounds && Array.isArray(data.rounds)) {
-      data.rounds = data.rounds.filter(round => {
+      data.rounds = data.rounds.filter((round: any) => {
         const roundName = round.name?.toLowerCase() || '';
         return !roundName.includes('quarta') && 
                !roundName.includes('semi') && 
@@ -56,7 +58,7 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     }
 
     return data
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(`Falha ao carregar dados da Kings League Brasil: ${error.message}`)
   }
 }
@@ -81,7 +83,7 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
     
     if (teamDetails.players && teamDetails.players.length > 0) {
       await Promise.all(
-        teamDetails.players.map(async (player) => {
+        teamDetails.players.map(async (player: any) => {
           try {
             const playerStats = await fetchPlayerStats(player.id)
             player.stats = playerStats
@@ -141,7 +143,7 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
     if (Array.isArray(data.rankings)) {
       processedStats.rankings = data.rankings
       
-      data.rankings.forEach(ranking => {
+      data.rankings.forEach((ranking: any) => {
         const { parameter, total } = ranking
         
         switch(parameter.code) {
