@@ -9,7 +9,7 @@ import { generatePlayoffBracket } from "@/lib/generate-playoff-bracket"
 import { PlayoffBracketView } from "@/components/playoffs/playoff-bracket-view"
 import { Card, CardContent } from "@/components/ui/card"
 import { useTeamTheme } from "@/contexts/team-theme-context"
-import { Trophy, AlertTriangle, RefreshCcw } from "lucide-react"
+import { Trophy, AlertTriangle, RefreshCcw, Sparkles } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -333,7 +333,7 @@ export default function PlayoffsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#121212] text-white">
+      <main className="min-h-screen bg-background">
         <Header
           loading={true}
           selectedTeam={null}
@@ -343,11 +343,12 @@ export default function PlayoffsPage() {
           setActiveTab={() => { }}
         />
         <div className="container mx-auto py-8 px-4">
-          <div className="animate-pulse">
-            <div className="h-8 w-64 bg-[#252525] rounded-md mb-4"></div>
-            <div className="h-4 w-96 bg-[#252525] rounded-md mb-8"></div>
-
-            <div className="h-96 bg-[#1a1a1a] border border-[#333] rounded-lg"></div>
+          <div className="animate-pulse space-y-6">
+            <div className="space-y-2">
+              <div className="h-8 w-64 bg-muted rounded-md"></div>
+              <div className="h-4 w-96 bg-muted rounded-md"></div>
+            </div>
+            <div className="h-96 bg-card border border-border rounded-lg"></div>
           </div>
         </div>
         <Footer />
@@ -356,7 +357,7 @@ export default function PlayoffsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#121212] text-white">
+    <main className="min-h-screen bg-background">
       <Header
         loading={false}
         selectedTeam={selectedTeam}
@@ -366,14 +367,15 @@ export default function PlayoffsPage() {
         setActiveTab={handleSetActiveTab}
       />
 
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-[var(--team-primary)] mb-2 flex items-center gap-2">
-              <Trophy className="w-8 h-8" />
+      <div className="container mx-auto py-6 sm:py-8 px-4">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
+              <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--team-primary)]" />
               Playoffs Kings League
             </h1>
-            <p className="text-gray-400 max-w-2xl">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
               Simule os playoffs da Kings League com o formato eliminatório. O 1º colocado vai
               direto para a semifinal, enquanto os times do 2º ao 7º lugar disputam as quartas.
             </p>
@@ -382,18 +384,20 @@ export default function PlayoffsPage() {
           <Button
             onClick={() => window.location.reload()}
             variant="outline"
-            className="min-w-24 text-sm gap-2 border-[#333] bg-[#252525] hover:bg-[#333] text-gray-300"
+            size="sm"
+            className="gap-2 self-start sm:self-auto"
           >
-            <RefreshCcw className="w-3.5 h-3.5" />
+            <RefreshCcw className="w-4 h-4" />
             Atualizar
           </Button>
         </div>
 
+        {/* Alerts */}
         {liveResultsAvailable && (
-          <Alert className="mb-6 bg-[#1E3A29] border-[#34D399] text-white">
-            <Trophy className="h-4 w-4 text-[#34D399]" />
-            <AlertTitle className="text-[#34D399]">Resultados ao vivo</AlertTitle>
-            <AlertDescription>
+          <Alert className="mb-6 bg-green-500/10 border-green-500/50">
+            <Trophy className="h-4 w-4 text-green-500" />
+            <AlertTitle className="text-green-500">Resultados ao vivo</AlertTitle>
+            <AlertDescription className="text-muted-foreground">
               Estamos exibindo os resultados atualizados em tempo real dos playoffs da Kings League.
               Você pode editar os resultados dos jogos que ainda não terminaram.
             </AlertDescription>
@@ -401,21 +405,22 @@ export default function PlayoffsPage() {
         )}
 
         {usingSimulatedData && !liveResultsAvailable && (
-          <Alert className="mb-6 bg-[#2A2D4A] border-[var(--team-primary)] text-white">
-            <Trophy className="h-4 w-4 text-[var(--team-primary)]" />
+          <Alert className="mb-6 bg-[var(--team-primary)]/10 border-[var(--team-primary)]/50">
+            <Sparkles className="h-4 w-4 text-[var(--team-primary)]" />
             <AlertTitle className="text-[var(--team-primary)]">Usando dados simulados</AlertTitle>
-            <AlertDescription>
+            <AlertDescription className="text-muted-foreground">
               Este chaveamento dos playoffs está sendo gerado com base nas suas simulações de resultados
               na tabela de classificação. Continue simulando resultados para ver como eles afetam o chaveamento.
             </AlertDescription>
           </Alert>
         )}
 
+        {/* Content */}
         {error ? (
-          <Alert className="mb-6 bg-[#332700] border-[#F4AF23] text-white">
-            <AlertTriangle className="h-4 w-4 text-[#F4AF23]" />
-            <AlertTitle className="text-[#F4AF23]">Não foi possível gerar os playoffs</AlertTitle>
-            <AlertDescription>
+          <Alert className="mb-6 bg-yellow-500/10 border-yellow-500/50">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <AlertTitle className="text-yellow-500">Não foi possível gerar os playoffs</AlertTitle>
+            <AlertDescription className="text-muted-foreground">
               {error}
             </AlertDescription>
           </Alert>
@@ -426,15 +431,17 @@ export default function PlayoffsPage() {
             onBracketUpdate={handleBracketUpdate}
           />
         ) : (
-          <Card className="bg-[#1a1a1a] border-[#333] text-white">
-            <CardContent className="p-6">
-              <div className="text-center py-12">
-                <Trophy className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">Dados de playoffs indisponíveis</h3>
-                <p className="text-gray-400">
-                  Não foi possível gerar o chaveamento dos playoffs. Verifique a classificação
-                  e tente novamente.
-                </p>
+          <Card className="bg-card border-border">
+            <CardContent className="p-8 sm:p-12">
+              <div className="text-center space-y-4">
+                <Trophy className="w-16 h-16 text-muted-foreground mx-auto" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-foreground">Dados de playoffs indisponíveis</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Não foi possível gerar o chaveamento dos playoffs. Verifique a classificação
+                    e tente novamente.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
