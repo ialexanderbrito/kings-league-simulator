@@ -1,4 +1,5 @@
 import { FC, KeyboardEvent } from "react";
+import { cn } from "@/lib/utils";
 
 interface MatchScoreInputProps {
   value: string;
@@ -31,7 +32,14 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
       maxLength={2}
       value={value}
       placeholder="0"
-      className={`w-8 h-8 text-center bg-[#333] border border-[#444] rounded focus:outline-none focus:ring-1 focus:ring-[var(--team-primary)] text-white text-sm sm:text-base ${disabled ? 'cursor-not-allowed' : ''}`}
+      className={cn(
+        "w-9 h-9 sm:w-10 sm:h-10 text-center rounded-lg text-sm sm:text-base font-semibold",
+        "bg-muted border-2 border-border text-foreground placeholder:text-muted-foreground",
+        "transition-all duration-200",
+        "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)] focus:ring-offset-2 focus:ring-offset-background focus:border-[var(--team-primary)]",
+        "hover:border-border/80",
+        disabled ? "cursor-not-allowed opacity-60" : "hover:bg-accent"
+      )}
       onKeyDown={handleKeyDown}
       onChange={(e) => {
         if (disabled) return;
@@ -40,7 +48,8 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
           onScoreChange(value);
         }
       }}
-      aria-label={`Placar ${teamName}`}
+      aria-label={`Placar do ${teamName}`}
+      aria-describedby={disabled ? undefined : `score-help-${teamName}`}
       disabled={disabled}
     />
   );

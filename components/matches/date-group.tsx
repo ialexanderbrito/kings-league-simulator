@@ -42,15 +42,21 @@ export const DateGroup: FC<DateGroupProps> = ({
   favoriteTeam
 }) => {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm text-gray-400 px-1">
-        <DateIcon className="w-3.5 h-3.5" />
-        <span>
+    <div className="space-y-3">
+      <div
+        className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-muted/30 border-l-4 border-[var(--team-primary)]"
+        role="heading"
+        aria-level={3}
+      >
+        <div className="p-1.5 rounded-md bg-[var(--team-primary)]/10">
+          <DateIcon className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
+        </div>
+        <span className="text-sm font-semibold text-foreground">
           {DateFormatter.getWeekdayName(date)}, {DateFormatter.formatDateDisplay(date)}
         </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {matches.map((match) => {
           const matchKey = `${round.id}-${match.id}`;
           const currentScores = scores[matchKey] || {

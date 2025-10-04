@@ -64,7 +64,7 @@ export const MatchCard: FC<MatchCardProps> = ({
   const isHomeFavorite = favoriteTeam?.id === homeTeam.id;
   const isAwayFavorite = favoriteTeam?.id === awayTeam.id;
 
-  let winner = null;
+  let winner: 'home' | 'away' | null = null;
   if (homeScore !== null && awayScore !== null) {
     if (homeScore > awayScore) {
       winner = 'home';
@@ -76,14 +76,18 @@ export const MatchCard: FC<MatchCardProps> = ({
   }
 
   return (
-    <div className={cn(
-      "rounded-md p-3 border transition-colors",
-      isFavoriteTeamMatch
-        ? "bg-[var(--team-primary)]/10 border-[var(--team-primary)] hover:border-[var(--team-primary)]"
-        : "bg-[#252525] border-[#333] hover:border-[#444]",
-      isMatchEnded && "opacity-50"
-    )}>
-      <div className="grid grid-cols-[minmax(0,1.2fr),auto,minmax(0,1.2fr)] sm:grid-cols-[minmax(0,1.5fr),auto,minmax(0,1.5fr)] items-center gap-2 md:gap-4 w-full">
+    <article
+      className={cn(
+        "rounded-xl p-4 border transition-all duration-200",
+        "hover:shadow-md",
+        isFavoriteTeamMatch
+          ? "bg-[var(--team-primary)]/5 border-[var(--team-primary)]/30 hover:border-[var(--team-primary)]/50 hover:bg-[var(--team-primary)]/10"
+          : "bg-card border-border hover:border-border/80",
+        isMatchEnded && "opacity-60"
+      )}
+      aria-label={`Partida: ${homeTeam.name} vs ${awayTeam.name}`}
+    >
+      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] items-center gap-3 sm:gap-4 md:gap-6 w-full">
         {/* Time da casa */}
         <TeamDisplay
           team={homeTeam}
@@ -94,19 +98,25 @@ export const MatchCard: FC<MatchCardProps> = ({
         />
 
         {/* Placar */}
-        <div className="flex flex-col items-center px-1 sm:px-2">
+        <div className="flex flex-col items-center px-2 sm:px-3 min-w-[80px] sm:min-w-[100px]">
           {isLiveMatch && (
-            <Badge className="ml-1 bg-red-600 text-white text-[9px] sm:text-[10px] py-0 h-4 px-1 flex items-center gap-1 hover:bg-red-600">
-              <span className="relative flex h-2 w-2">
+            <Badge
+              className="mb-1.5 bg-red-600 text-white text-[10px] sm:text-xs py-1 px-2 h-auto flex items-center gap-1.5 hover:bg-red-600 shadow-md shadow-red-600/20"
+              aria-live="polite"
+            >
+              <span className="relative flex h-2 w-2" aria-hidden="true">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
               </span>
-              AO VIVO
+              <span className="font-semibold">AO VIVO</span>
             </Badge>
           )}
-          <div className="text-[10px] sm:text-xs text-gray-400 mb-1 text-center flex items-center gap-1">
+          <time
+            className="text-xs text-muted-foreground mb-2 text-center font-medium"
+            dateTime={match.date}
+          >
             {formatDate(match.date)}
-          </div>
+          </time>
 
           {isMatchEnded ? (
             <MatchScoreDisplay
@@ -157,9 +167,15 @@ export const MatchCard: FC<MatchCardProps> = ({
               href={match.metaInformation.youtube_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[#F4AF23] hover:underline text-[10px] sm:text-xs mt-1"
+              aria-label={`Assistir partida no YouTube: ${homeTeam.name} vs ${awayTeam.name}`}
+              className={cn(
+                "inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-full",
+                "text-xs font-medium transition-all duration-200",
+                "bg-red-600/10 text-red-600 hover:bg-red-600/20 hover:scale-105",
+                "focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-background"
+              )}
             >
-              <Youtube className="w-3 h-3" />
+              <Youtube className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Assistir</span>
             </a>
           )}
@@ -174,6 +190,6 @@ export const MatchCard: FC<MatchCardProps> = ({
           isFavorite={isAwayFavorite}
         />
       </div>
-    </div>
+    </article>
   );
 };

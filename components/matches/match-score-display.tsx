@@ -17,40 +17,50 @@ export const MatchScoreDisplay: FC<MatchScoreDisplayProps> = ({
   winner,
 }) => {
   return (
-    <div className="flex flex-col items-center">
-      <div className="flex items-center justify-center">
+    <div className="flex flex-col items-center" role="status" aria-live="polite">
+      <div className="flex items-center justify-center gap-2">
         <div className={cn(
-          "w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded bg-[#333] font-semibold text-sm sm:text-base",
-          winner === 'home' && "bg-green-900/50"
-        )}>
+          "w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg font-bold text-base sm:text-lg",
+          "bg-muted border-2 border-border text-foreground",
+          "transition-colors duration-200",
+          winner === 'home' && "bg-green-600/20 border-green-500 text-green-500"
+        )}
+          aria-label={`Placar casa: ${homeScore}`}
+        >
           {homeScore}
         </div>
-        <span className="text-gray-400 mx-1">:</span>
+        <span className="text-muted-foreground font-bold text-lg" aria-hidden="true">×</span>
         <div className={cn(
-          "w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded bg-[#333] font-semibold text-sm sm:text-base",
-          winner === 'away' && "bg-green-900/50"
-        )}>
+          "w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg font-bold text-base sm:text-lg",
+          "bg-muted border-2 border-border text-foreground",
+          "transition-colors duration-200",
+          winner === 'away' && "bg-green-600/20 border-green-500 text-green-500"
+        )}
+          aria-label={`Placar visitante: ${awayScore}`}
+        >
           {awayScore}
         </div>
       </div>
 
       {homeScorePenalty !== null && awayScorePenalty !== null && (
-        <div className="flex items-center mt-1.5">
-          <span className="text-[10px] sm:text-xs text-gray-400 mr-1">(pen</span>
+        <div
+          className="flex items-center mt-2 px-2 py-1 rounded-md bg-muted/50 border border-border/50"
+          aria-label="Resultado dos pênaltis"
+        >
+          <span className="text-xs text-muted-foreground font-medium mr-1">Pên:</span>
           <span className={cn(
-            "text-[10px] sm:text-xs font-medium",
-            homeScorePenalty > awayScorePenalty ? "text-green-400" : "text-gray-400"
+            "text-xs font-semibold",
+            homeScorePenalty > awayScorePenalty ? "text-green-500" : "text-muted-foreground"
           )}>
             {homeScorePenalty}
           </span>
-          <span className="text-gray-400 mx-0.5">:</span>
+          <span className="text-muted-foreground mx-1 text-xs">×</span>
           <span className={cn(
-            "text-[10px] sm:text-xs font-medium",
-            awayScorePenalty > homeScorePenalty ? "text-green-400" : "text-gray-400"
+            "text-xs font-semibold",
+            awayScorePenalty > homeScorePenalty ? "text-green-500" : "text-muted-foreground"
           )}>
             {awayScorePenalty}
           </span>
-          <span className="text-[10px] sm:text-xs text-gray-400 ml-1">)</span>
         </div>
       )}
     </div>

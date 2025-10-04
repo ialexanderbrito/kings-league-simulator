@@ -22,38 +22,38 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
 
   return (
     <div className={cn(
-      "flex items-center gap-1 sm:gap-2 min-w-0",
+      "flex items-center gap-2 sm:gap-3 min-w-0",
       showShootout ? "mt-0" : "mt-4",
       isLeftSide ? "justify-end" : "justify-start"
     )}>
       {isLeftSide ? (
         <>
           <div className="flex-1 text-right overflow-hidden">
-            <div className="flex items-center justify-end gap-1">
+            <div className="flex items-center justify-end gap-1.5">
               {isFavorite && (
-                <Heart className="w-3 h-3 text-red-400" fill="currentColor" />
+                <Heart className="w-3.5 h-3.5 text-red-500" fill="currentColor" aria-label="Time favorito" />
               )}
               <p className={cn(
-                "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
-                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-green-400" : "text-white"
+                "font-semibold text-xs sm:text-sm md:text-base truncate max-w-full",
+                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-green-500" : "text-foreground"
               )}
                 title={team.name}
               >
                 {team.name}
               </p>
             </div>
-            <p className="text-xs text-gray-400 hidden md:block truncate">
+            <p className="text-xs text-muted-foreground hidden md:block truncate mt-0.5">
               {team.shortName}
             </p>
           </div>
           <div className={cn(
-            "w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0"
+            "w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0 rounded-lg bg-muted/30 p-1.5 border border-border/50"
           )}>
             <img
               src={team.logo?.url || "/placeholder.svg"}
-              alt={team.name}
-              width={40}
-              height={40}
+              alt={`Logo do ${team.name}`}
+              width={48}
+              height={48}
               className="object-contain w-full h-full"
               loading="lazy"
             />
@@ -62,32 +62,32 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
       ) : (
         <>
           <div className={cn(
-            "w-8 h-8 sm:w-10 sm:h-10 relative flex-shrink-0",
+            "w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0 rounded-lg bg-muted/30 p-1.5 border border-border/50"
           )}>
             <img
               src={team.logo?.url || "/placeholder.svg"}
-              alt={team.name}
-              width={40}
-              height={40}
+              alt={`Logo do ${team.name}`}
+              width={48}
+              height={48}
               className="object-contain w-full h-full"
               loading="lazy"
             />
           </div>
           <div className="flex-1 text-left overflow-hidden">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <p className={cn(
-                "font-medium text-xs sm:text-sm md:text-base truncate max-w-full",
-                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-green-400" : "text-white"
+                "font-semibold text-xs sm:text-sm md:text-base truncate max-w-full",
+                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-green-500" : "text-foreground"
               )}
                 title={team.name}
               >
                 {team.name}
               </p>
               {isFavorite && (
-                <Heart className="w-3 h-3 text-red-400" fill="currentColor" />
+                <Heart className="w-3.5 h-3.5 text-red-500" fill="currentColor" aria-label="Time favorito" />
               )}
             </div>
-            <p className="text-xs text-gray-400 hidden md:block truncate">
+            <p className="text-xs text-muted-foreground hidden md:block truncate mt-0.5">
               {team.shortName}
             </p>
           </div>

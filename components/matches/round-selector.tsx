@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { Check } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Round } from "@/types/kings-league";
@@ -32,32 +32,67 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
   };
 
   return (
-    <ScrollArea className="w-full pb-1">
-      <div className="flex space-x-1 px-1 min-w-max pb-1">
-        {rounds.map((round) => {
-          const roundComplete = isRoundComplete(round);
-          return (
-            <button
-              key={round.id}
-              onClick={() => onRoundSelect(round.id.toString())}
-              className={cn(
-                "px-4 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
-                selectedRound === round.id.toString()
-                  ? "bg-[var(--team-primary)] text-black"
-                  : "bg-[#252525] text-gray-300 hover:bg-[#333]",
-                roundComplete && "opacity-50 bg-[var(--team-primary)] text-black",
-              )}
-            >
-              {round.name.replace('Jornada', 'R').replace('Rodada', 'R')}
-            </button>
-          );
-        })}
+    <div className="w-full space-y-3">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-sm font-semibold text-foreground/90">
+          Selecione a Rodada
+        </h3>
+        <span className="text-xs text-muted-foreground">
+          {rounds.length} rodada{rounds.length !== 1 ? 's' : ''}
+        </span>
       </div>
-      <ScrollBar
-        orientation="horizontal"
-        className="h-1.5 bg-transparent mt-1"
-        thumbClassName="bg-[var(--team-primary)]/40 hover:bg-[var(--team-primary)]/60 active:bg-[var(--team-primary)]/80 transition-colors duration-200"
-      />
-    </ScrollArea>
+
+      <ScrollArea className="w-full">
+        <div
+          className="flex gap-2 px-1 pb-3"
+          role="tablist"
+          aria-label="Seletor de rodadas"
+        >
+          {rounds.map((round) => {
+            const roundComplete = isRoundComplete(round);
+            const isSelected = selectedRound === round.id.toString();
+
+            return (
+              <button
+                key={round.id}
+                onClick={() => onRoundSelect(round.id.toString())}
+                role="tab"
+                aria-selected={isSelected}
+                aria-label={`${round.name}${roundComplete ? ' - Concluída' : ''}`}
+                className={cn(
+                  "group relative flex items-center gap-2 px-4 py-2.5 min-w-fit",
+                  "text-sm font-medium rounded-full whitespace-nowrap",
+                  "transition-colors duration-200",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)] focus:ring-offset-2 focus:ring-offset-background",
+                  isSelected
+                    ? "bg-[var(--team-primary)] text-background shadow-lg shadow-[var(--team-primary)]/20"
+                    : "bg-card hover:bg-accent text-foreground/70 hover:text-foreground border border-border/50 hover:border-border",
+                  roundComplete && !isSelected && "opacity-60"
+                )}
+              >
+                <span className="relative z-10">
+                  {round.name.replace('Jornada', 'R').replace('Rodada', 'R')}
+                </span>
+
+                {roundComplete && (
+                  <CheckCircle2
+                    className={cn(
+                      "w-4 h-4 transition-colors",
+                      isSelected ? "text-background" : "text-[var(--team-primary)]"
+                    )}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <ScrollBar
+          orientation="horizontal"
+          className="h-2 bg-muted/20 rounded-full"
+          thumbClassName="bg-[var(--team-primary)]/60 hover:bg-[var(--team-primary)]/80 rounded-full transition-colors"
+        />
+      </ScrollArea>
+    </div>
   );
 };
