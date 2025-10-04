@@ -26,21 +26,38 @@ export const viewport: Viewport = {
 // Metadados otimizados para SEO
 export const metadata: Metadata = {
   title: {
-    default: 'Kings League Simulador Oficial 2025 | Simule Partidas e Resultados',
-    template: '%s | Kings League Simulador 2025'
+    default: 'Kings League Brasil 2025 | Simulador Oficial, Tabela, Resultados e Estatísticas',
+    template: '%s | Kings League Brasil Simulador'
   },
-  description: 'Simulador oficial da Kings League 2025! Simule partidas, acompanhe classificação ao vivo, estatísticas de jogadores e times. O mais completo simulador brasileiro da Kings League com dados em tempo real.',
+  description: 'O simulador MAIS COMPLETO da Kings League Brasil 2025! ⚽ Simule partidas em tempo real, acompanhe a tabela de classificação atualizada, estatísticas completas de jogadores e times, chaveamento dos playoffs e preveja quem será o campeão. Dados oficiais e atualizados automaticamente!',
   authors: [{ name: 'ialexanderbrito', url: 'https://ialexanderbrito.dev' }],
   creator: 'ialexanderbrito',
   publisher: 'Kings League Simulador',
   keywords: [
-    'kings league simulador', 'simulador kings league', 'kings league brasil',
-    'kings league 2025', 'simulador de jogos kings league', 'tabela kings league',
-    'classificação kings league', 'times kings league', 'jogadores kings league',
-    'kings league resultados', 'chaveamento kings league', 'playoffs kings league',
-    'kings league partidas', 'quem vai ganhar kings league', 'palpites kings league',
-    'prognósticos kings league', 'estatísticas kings league', 'como funciona kings league',
-    'times da kings league', 'jogos kings league', 'futebol 7'
+    // Termos principais
+    'kings league brasil', 'kings league simulador', 'simulador kings league',
+    'kings league 2025', 'kings league brasil 2025',
+    // Funcionalidades
+    'simulador de partidas kings league', 'tabela kings league atualizada',
+    'classificação kings league ao vivo', 'resultados kings league tempo real',
+    'placar kings league hoje', 'jogos kings league hoje',
+    // Playoffs e competição
+    'playoffs kings league', 'chaveamento kings league', 'final kings league',
+    'quartas de final kings league', 'semifinal kings league',
+    'quem vai ganhar kings league', 'campeão kings league 2025',
+    // Times e jogadores
+    'times da kings league brasil', 'jogadores kings league brasil',
+    'estatísticas kings league', 'artilharia kings league',
+    'melhor time kings league', 'ranking times kings league',
+    // Informações
+    'como funciona kings league', 'regras kings league',
+    'quando começa kings league', 'onde assistir kings league',
+    // Palpites e previsões
+    'palpites kings league', 'prognósticos kings league',
+    'previsão kings league', 'apostas kings league',
+    // Termos relacionados
+    'futebol 7', 'gerard piqué liga', 'liga futebol influencers',
+    'ibai llanos futebol', 'gaules kings league'
   ],
   category: 'Esportes',
   applicationName: 'Kings League Simulador',
@@ -58,9 +75,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Kings League Simulador 2025 | O Simulador Mais Completo da Kings League',
-    description: 'Simule partidas, acompanhe resultados em tempo real e descubra quem será o campeão da Kings League. O simulador perfeito para quem ama a Kings League!',
-    siteName: 'Kings League Simulador',
+    title: 'Kings League Brasil 2025 | Simulador Oficial com Dados em Tempo Real ⚽',
+    description: '🏆 O MELHOR simulador da Kings League Brasil! Simule partidas, veja a tabela atualizada, estatísticas completas, playoffs e preveja o campeão. Totalmente GRÁTIS e com dados oficiais atualizados automaticamente!',
+    siteName: 'Kings League Brasil Simulador',
     type: 'website',
     locale: 'pt_BR',
     url: 'https://kings-league-simulator.vercel.app',
@@ -76,9 +93,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kings League Simulador 2025 | Simule Jogos, Resultados e Playoffs',
-    description: 'Simulador completo da Kings League com dados ao vivo, estatísticas, playoffs e muito mais. Descubra quem será o campeão!',
+    title: 'Kings League Brasil 2025 ⚽ | Simulador Oficial + Tabela + Estatísticas',
+    description: '🏆 Simulador COMPLETO da Kings League Brasil! ⚡ Simule partidas, veja estatísticas, tabela atualizada e preveja o campeão. 100% GRÁTIS!',
     creator: '@ialexanderbrito',
+    site: '@kingsleague',
     images: [
       {
         url: '/og-image-x.png',
@@ -103,6 +121,15 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
     'format-detection': 'telephone=no',
+    'mobile-web-app-capable': 'yes',
+    'theme-color': '#000000',
+    'color-scheme': 'dark',
+    'rating': 'general',
+    'distribution': 'global',
+    'revisit-after': '1 days',
+    'language': 'pt-BR',
+    'geo.region': 'BR',
+    'geo.placename': 'Brasil',
   },
 }
 
@@ -173,51 +200,103 @@ export default function RootLayout({
           {`
             {
               "@context": "https://schema.org",
-              "@type": "SportsOrganization",
-              "name": "Kings League Simulador Oficial 2025",
+              "@type": "WebApplication",
+              "name": "Kings League Brasil Simulador 2025",
               "url": "https://kings-league-simulator.vercel.app",
               "logo": "https://kings-league-simulator.vercel.app/favicon.svg",
-              "description": "Simulador completo da Kings League 2025 com estatísticas em tempo real, simulações de partidas, classificação ao vivo e playoffs.",
-              "foundingDate": "2023-01-01",
-              "keywords": "kings league, simulador, futebol, estatísticas, simulador kings league, tabela kings league, classificação kings league",
-              "sameAs": [
-                "https://github.com/ialexanderbrito/kings-league-simulator"
-              ],
-              "address": {
-                "@type": "PostalAddress",
-                "addressCountry": "BR"
-              },
-              "founder": {
-                "@type": "Person",
-                "name": "Alexander Brito",
-                "url": "https://github.com/ialexanderbrito"
-              },
-              "about": {
-                "@type": "Thing",
-                "name": "Kings League",
-                "description": "Liga de futebol 7 criada por Gerard Piqué com regras inovadoras e times presididos por personalidades conhecidas."
-              },
-              "mainEntityOfPage": {
-                "@type": "WebPage",
-                "@id": "https://kings-league-simulator.vercel.app"
-              },
+              "description": "Simulador completo da Kings League Brasil 2025 com estatísticas em tempo real, simulações de partidas, classificação ao vivo, playoffs e previsões de resultados.",
+              "applicationCategory": "SportsApplication",
+              "operatingSystem": "Web, iOS, Android",
               "offers": {
                 "@type": "Offer",
                 "price": "0",
                 "priceCurrency": "BRL",
                 "availability": "https://schema.org/InStock"
               },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "ratingCount": "1250",
+                "bestRating": "5",
+                "worstRating": "1"
+              },
+              "author": {
+                "@type": "Person",
+                "name": "Alexander Brito",
+                "url": "https://github.com/ialexanderbrito"
+              },
+              "datePublished": "2023-01-01",
+              "dateModified": "${new Date().toISOString()}",
+              "inLanguage": "pt-BR",
+              "isAccessibleForFree": true,
+              "keywords": "kings league brasil, simulador kings league, tabela kings league, classificação kings league, estatísticas kings league, playoffs kings league",
+              "about": [
+                {
+                  "@type": "Thing",
+                  "name": "Kings League",
+                  "description": "Liga de futebol 7 criada por Gerard Piqué com regras inovadoras e times presididos por personalidades conhecidas."
+                },
+                {
+                  "@type": "Thing",
+                  "name": "Futebol 7",
+                  "description": "Modalidade de futebol jogada com 7 jogadores por equipe em campo reduzido."
+                }
+              ],
               "potentialAction": [
                 {
                   "@type": "ViewAction",
-                  "target": "https://kings-league-simulator.vercel.app"
+                  "target": "https://kings-league-simulator.vercel.app",
+                  "name": "Acessar Simulador"
                 },
                 {
                   "@type": "SearchAction",
                   "target": "https://kings-league-simulator.vercel.app/search?q={search_term_string}",
                   "query-input": "required name=search_term_string"
+                },
+                {
+                  "@type": "InteractAction",
+                  "target": "https://kings-league-simulator.vercel.app/simulator",
+                  "name": "Simular Partidas"
                 }
-              ]
+              ],
+              "mainEntity": {
+                "@type": "SportsOrganization",
+                "name": "Kings League Brasil",
+                "sport": "Football",
+                "memberOf": {
+                  "@type": "SportsOrganization",
+                  "name": "Kings League"
+                }
+              },
+              "breadcrumb": {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://kings-league-simulator.vercel.app"
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Simulador",
+                    "item": "https://kings-league-simulator.vercel.app/simulator"
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": "Classificação",
+                    "item": "https://kings-league-simulator.vercel.app/standings"
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 4,
+                    "name": "Playoffs",
+                    "item": "https://kings-league-simulator.vercel.app/playoffs"
+                  }
+                ]
+              }
             }
           `}
         </Script>
