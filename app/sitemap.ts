@@ -14,32 +14,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/simulator`,
       lastModified,
-      changeFrequency: 'daily',
+      changeFrequency: 'hourly',
       priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/playoffs`,
-      lastModified,
-      changeFrequency: 'daily',
-      priority: 0.9,
     },
     {
       url: `${baseUrl}/standings`,
       lastModified,
-      changeFrequency: 'daily',
+      changeFrequency: 'hourly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/playoffs`,
+      lastModified,
+      changeFrequency: 'hourly',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/teams`,
       lastModified,
       changeFrequency: 'daily',
-      priority: 0.8,
+      priority: 0.85,
     },
     {
-      url: `${baseUrl}/players`,
+      url: `${baseUrl}/resultados-enquete`,
       lastModified,
       changeFrequency: 'weekly',
-      priority: 0.7,
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/termos-de-uso`,
