@@ -10,6 +10,8 @@ import { ButtonTop } from "@/components/ui/button-top"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import type { Team, TeamDetails } from "@/types/kings-league"
 import { cn } from "@/lib/utils"
+import { Users, Trophy, Shield } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 export default function Teams() {
   const [loading, setLoading] = useState(true)
@@ -101,7 +103,7 @@ export default function Teams() {
   }, {} as Record<string, Team>)
 
   return (
-    <main className="min-h-screen bg-[#121212] text-white">
+    <main className="min-h-screen bg-card">
       {/* Header */}
       <Header
         loading={loading}
@@ -112,14 +114,24 @@ export default function Teams() {
         setActiveTab={() => { }}
       />
 
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-center mb-2">Times da Kings League</h1>
-        <p className="text-gray-400 text-center mb-8">Conheça os times e seus presidentes</p>
+      <div className="container mx-auto px-4 py-8 sm:py-12">
+        {/* Header da Página */}
+        <div className="text-center mb-8 sm:mb-12 space-y-3">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Shield className="w-8 h-8 text-[var(--team-primary)]" aria-hidden="true" />
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+              Times da Kings League
+            </h1>
+          </div>
+          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+            Conheça os times, presidentes e comissões técnicas da competição
+          </p>
+        </div>
 
         {loading ? (
           <TeamsGridSkeleton />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {teams.map((team) => (
               <TeamCard
                 key={team.id}
@@ -145,56 +157,87 @@ interface TeamCardProps {
 }
 
 function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
-  const hasPresident = teamDetails?.staff && teamDetails.staff.length > 0
-  const president = hasPresident ? teamDetails.staff[0] : null
   const router = useRouter()
+
+  // Separar presidente e técnico
+  const president = teamDetails?.staff?.find(s => s.role === 'president')
+  const coach = teamDetails?.staff?.find(s => s.role === 'coach')
+  const playersCount = teamDetails?.players?.length || 0
 
   const handleClick = () => {
     router.push(`/team/${team.id}`)
   }
 
   return (
-    <Card
+    <article
       onClick={handleClick}
       className={cn(
-        "cursor-pointer overflow-hidden transition-all bg-[#1a1a1a] border-[#333] hover:border-[var(--team-primary)] hover:shadow-md hover:scale-[1.02]",
-        isSelected && "border-[var(--team-primary)]"
+        "group cursor-pointer overflow-hidden transition-all duration-300 bg-card border border-border rounded-xl hover:shadow-xl hover:shadow-[var(--team-primary)]/10 hover:-translate-y-1",
+        isSelected && "ring-2 ring-[var(--team-primary)] shadow-lg shadow-[var(--team-primary)]/20"
       )}
-      style={{
-        borderColor: isSelected ? team.firstColorHEX : undefined,
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver detalhes do time ${team.name}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleClick()
+        }
       }}
     >
+      {/* Faixa de Cores do Time */}
       <div
-        className="h-2"
+        className="h-2.5"
         style={{
           background: `linear-gradient(90deg, ${team.firstColorHEX}, ${team.secondColorHEX})`
         }}
+        aria-hidden="true"
       />
 
-      <CardHeader className="flex flex-row items-center gap-4 p-4">
-        <div className="w-12 h-12 relative flex-shrink-0 bg-black/30 rounded-full overflow-hidden">
-          <img
-            src={team.logo?.url || "/placeholder-logo.svg"}
-            alt={team.name}
-            width={48}
-            height={48}
-            className="object-contain w-full h-full"
-          />
-        </div>
-        <div className="flex-grow">
-          <h3 className="font-semibold text-lg">{team.name}</h3>
-          <p className="text-sm text-gray-400">{team.shortName}</p>
+      {/* Header do Card com Logo e Nome */}
+      <CardHeader className="p-5 pb-4 space-y-0">
+        <div className="flex items-center gap-4">
+          <div className="relative w-14 h-14 shrink-0 bg-background rounded-full overflow-hidden ring-1 ring-border group-hover:ring-[var(--team-primary)] transition-all duration-300">
+            <img
+              src={team.logo?.url || "/placeholder-logo.svg"}
+              alt=""
+              width={56}
+              height={56}
+              className="object-contain w-full h-full p-1"
+              loading="lazy"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-lg text-foreground truncate group-hover:text-[var(--team-primary)] transition-colors">
+              {team.name}
+            </h3>
+            <p className="text-sm text-muted-foreground">{team.shortName}</p>
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="p-0">
+      <CardContent className="p-5 pt-0 space-y-4">
+        {/* Estatísticas Rápidas */}
+        <div className="flex items-center justify-center gap-4 py-3 px-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
+            <span className="text-sm font-medium text-foreground">{playersCount}</span>
+            <span className="text-xs text-muted-foreground">jogadores</span>
+          </div>
+        </div>
+
         {/* Presidente */}
-        <div className="p-4">
-          <div className="mb-1 text-sm text-gray-400 text-center">Presidente</div>
-          {president ? (
+        {president ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Presidente
+              </h4>
+            </div>
             <div className="flex flex-col items-center">
               <div
-                className="relative w-32 h-32 mb-2 bg-[#252525] border border-[#333] overflow-hidden"
+                className="relative w-full aspect-square max-w-[160px] mb-3 bg-muted rounded-lg overflow-hidden ring-1 ring-border"
                 style={{
                   backgroundImage: "url('/bg-card-president.jpg')",
                   backgroundSize: 'cover',
@@ -204,53 +247,109 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
                 {president.image?.url ? (
                   <img
                     src={president.image.url}
-                    alt={president.shortName}
+                    alt=""
                     className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#252525]/70 text-[var(--team-primary)] text-3xl font-bold">
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted text-[var(--team-primary)] text-4xl font-bold">
                     {president.shortName.substring(0, 2).toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="text-center">
-                <div className="text-base font-semibold">{president.shortName}</div>
-                <div className="text-xs text-gray-400">Presidente</div>
+                <p className="font-semibold text-base text-foreground">{president.shortName}</p>
+                <Badge variant="secondary" className="mt-1.5 text-xs">
+                  Presidente
+                </Badge>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[180px]">
-              <div className="text-sm text-gray-500">Informações não disponíveis</div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-[220px] text-center">
+            <Trophy className="w-10 h-10 text-muted-foreground/30 mb-2" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground">Presidente não disponível</p>
+          </div>
+        )}
+
+        {/* Técnico */}
+        {coach && (
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-center gap-3">
+              <div className="relative w-12 h-12 shrink-0 bg-muted rounded-full overflow-hidden ring-1 ring-border">
+                {coach.image?.url ? (
+                  <img
+                    src={coach.image.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-muted text-[var(--team-primary)] text-sm font-bold">
+                    {coach.shortName.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground truncate">{coach.shortName}</p>
+                <Badge variant="outline" className="text-xs mt-0.5">
+                  Técnico
+                </Badge>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
-    </Card>
+    </article>
   )
 }
 
 function TeamsGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
       {Array(12).fill(0).map((_, index) => (
-        <Card key={index} className="overflow-hidden bg-[#1a1a1a] border-[#333]">
-          <div className="h-2 bg-gray-700" />
+        <Card key={index} className="overflow-hidden bg-card border-border rounded-xl">
+          <div className="h-2.5 bg-muted animate-pulse" />
 
-          <CardHeader className="flex flex-row items-center gap-4 p-4">
-            <Skeleton className="w-12 h-12 rounded-full" />
-            <div className="flex-grow">
-              <Skeleton className="h-5 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-1/2" />
+          <CardHeader className="p-5 pb-4">
+            <div className="flex items-center gap-4">
+              <Skeleton className="w-14 h-14 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
             </div>
           </CardHeader>
 
-          <CardContent className="p-0">
-            <div className="bg-[#121212] p-4">
-              <Skeleton className="h-4 w-24 mx-auto mb-3" />
-              <div className="flex flex-col items-center">
-                <Skeleton className="w-32 h-32 mb-2" />
-                <Skeleton className="h-5 w-32 mb-1" />
-                <Skeleton className="h-4 w-20" />
+          <CardContent className="p-5 pt-0 space-y-4">
+            {/* Stats skeleton */}
+            <div className="flex items-center justify-center gap-4 py-3 px-4 bg-muted/50 rounded-lg">
+              <Skeleton className="h-4 w-24" />
+            </div>
+
+            {/* Title skeleton */}
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4 rounded" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+
+            {/* President image skeleton */}
+            <div className="flex flex-col items-center space-y-3">
+              <Skeleton className="w-full aspect-square max-w-[160px] rounded-lg" />
+              <div className="text-center space-y-2">
+                <Skeleton className="h-5 w-32 mx-auto" />
+                <Skeleton className="h-5 w-20 mx-auto rounded-full" />
+              </div>
+            </div>
+
+            {/* Coach skeleton */}
+            <div className="pt-4 border-t border-border">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
+                </div>
               </div>
             </div>
           </CardContent>
