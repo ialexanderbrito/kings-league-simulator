@@ -4,9 +4,10 @@ import { PlayoffMatchCard } from "./playoff-match-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
 import { useTeamTheme } from "@/contexts/team-theme-context";
-import { Trophy } from "lucide-react";
+import { Trophy, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PlayoffBracketViewProps {
   bracket: PlayoffBracket;
@@ -212,7 +213,7 @@ export function PlayoffBracketView({
                 nextMatch.awayScoreP = null;
                 nextMatch.winnerId = null;
 
-                if (nextMatch.nextMatchId === 'final') {
+                if (nextMatch.nextMatchId === 'final' && updatedBracket.final) {
                   const finalMatch = updatedBracket.final;
                   const nextWinnerId = nextMatch.winnerId;
                   if (finalMatch.homeTeamId === nextWinnerId) {
@@ -360,124 +361,86 @@ export function PlayoffBracketView({
 
   const champion = bracket.final?.winnerId ? teams[bracket.final.winnerId] : null;
 
-  // Verificar se algum jogo está ao vivo (apenas para indicação visual) com proteção contra valores undefined
-  const isQuarterfinalLive = Array.isArray(bracket.quarterfinals) &&
-    bracket.quarterfinals.some(m => m && !m.winnerId && (m.homeScore !== null || m.awayScore !== null));
-  const isSemifinalLive = Array.isArray(bracket.semifinals) &&
-    bracket.semifinals.some(m => m && !m.winnerId && (m.homeScore !== null || m.awayScore !== null));
-  const isFinalLive = bracket.final && !bracket.final.winnerId &&
-    (bracket.final.homeScore !== null || bracket.final.awayScore !== null);
-
   return (
-    <Card className="bg-[#1a1a1a] border-[#333] text-white">
-      <CardHeader className="border-b border-[#333] pb-3">
-        <CardTitle className="text-xl flex items-center gap-2 text-[var(--team-primary)]">
-          <Trophy className="w-5 h-5" />
-          Playoffs Kings League
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="p-4">
-        {champion && (
-          <div className="mb-8 mx-auto max-w-lg bg-gradient-to-r from-[#1c1c1c] via-[#252525] to-[#1c1c1c] rounded-xl p-4 xs:p-6 shadow-lg border border-[#333] overflow-hidden relative">
-            <div className="absolute inset-0 opacity-10 bg-repeat" style={{
-              backgroundImage: 'url("/bg-card-president.jpg")',
-              backgroundSize: '200px'
-            }}></div>
-
-            <div className="flex flex-col items-center justify-center relative z-10">
-              <div className="absolute -top-2 left-0 right-0 flex justify-center">
-                <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500" />
+    <div className="space-y-6">
+      {/* Champion Banner */}
+      {champion && (
+        <Card className="bg-card border-border">
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-[var(--team-primary)]/20 blur-3xl rounded-full"></div>
+                <Trophy className="w-12 h-12 sm:w-16 sm:h-16 text-[var(--team-primary)] relative z-10 drop-shadow-[0_0_10px_rgba(244,175,35,0.5)]" />
               </div>
 
-              <h2 className="text-lg sm:text-2xl text-center font-bold text-[var(--team-primary)] mt-6 sm:mt-8 mb-3 sm:mb-4">
-                CAMPEÃO KINGS LEAGUE 2025
-              </h2>
+              <div className="space-y-2">
+                <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider font-medium">
+                  Campeão Kings League 2025
+                </p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+                  {champion.name}
+                </h2>
+              </div>
 
-              <div className="w-16 h-16 sm:w-24 sm:h-24 relative mb-3 sm:mb-4 ring-3 sm:ring-4 ring-yellow-500 rounded-full p-1.5 sm:p-2 bg-black">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 relative ring-4 ring-[var(--team-primary)]/30 rounded-full p-2 bg-background/50 backdrop-blur-sm">
                 <img
                   src={champion.logo?.url || "/placeholder.svg"}
-                  alt={champion.name}
-                  width={96}
-                  height={96}
+                  alt={`Logo ${champion.name}`}
+                  width={112}
+                  height={112}
                   className="object-contain w-full h-full"
                   loading="lazy"
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-              <div className="w-full px-2 flex flex-col items-center">
-                <h3
-                  className="text-xl sm:text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500 truncate w-full text-center"
-                  title={champion.name}
+      {/* Bracket Content */}
+      <Card className="bg-card border-border">
+        <CardHeader className="border-b border-border pb-4">
+          <CardTitle className="text-xl sm:text-2xl flex items-center gap-2 text-foreground">
+            <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--team-primary)]" />
+            Chaveamento dos Playoffs
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="p-4 sm:p-6">
+          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className="w-full">
+            {/* Mobile Tabs */}
+            <div className={cn("md:hidden mb-6", !isMobile && "hidden")}>
+              <TabsList className="grid w-full grid-cols-3 bg-muted">
+                <TabsTrigger
+                  value="quarterfinals"
+                  className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-primary-foreground"
                 >
-                  {champion.name}
-                </h3>
-
-                <span className="text-xs sm:text-sm text-gray-300 mt-1 block">
-                  {champion.shortName}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 mt-3">
-                <div className="h-0.5 w-8 sm:w-12 bg-gradient-to-r from-transparent to-yellow-500/50"></div>
-                <span className="text-yellow-200 font-medium text-xs sm:text-sm uppercase tracking-wider">Temporada 2025</span>
-                <div className="h-0.5 w-8 sm:w-12 bg-gradient-to-l from-transparent to-yellow-500/50"></div>
-              </div>
+                  Quartas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="semifinals"
+                  className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-primary-foreground"
+                >
+                  Semifinais
+                </TabsTrigger>
+                <TabsTrigger
+                  value="final"
+                  className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-primary-foreground"
+                >
+                  Final
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </div>
-        )}
 
-        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className={cn("md:hidden mb-4", !isMobile && "hidden")}>
-            <TabsList className="grid w-full grid-cols-3 bg-[#252525]">
-              <TabsTrigger
-                value="quarterfinals"
-                className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
-              >
-                Quartas
-              </TabsTrigger>
-              <TabsTrigger
-                value="semifinals"
-                className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
-              >
-                Semifinais
-              </TabsTrigger>
-              <TabsTrigger
-                value="final"
-                className="data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black"
-              >
-                Final
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="quarterfinals" className="mt-0 md:hidden">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Quartas de Final</h3>
-              <div className="flex flex-col gap-4">
-                {bracket.quarterfinals.map(match => (
-                  <PlayoffMatchCard
-                    key={match.id}
-                    match={match}
-                    teams={teams}
-                    onScoreChange={handleScoreChange}
-                    onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                    currentScores={scores[match.id] || { home: "", away: "", shootoutWinner: null }}
-                    showShootout={showShootout[match.id] || false}
-                    stage="quarterfinal"
-                    favoriteTeam={favoriteTeam}
-                  />
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="semifinals" className="mt-0 md:hidden">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Semifinais</h3>
-              <div className="flex flex-col gap-4">
-                {Array.isArray(bracket.semifinals) && bracket.semifinals.map(match => (
-                  match && (
+            {/* Quarterfinals Tab */}
+            <TabsContent value="quarterfinals" className="mt-0 md:hidden">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-1 w-1 rounded-full bg-[var(--team-primary)]"></div>
+                  <h3 className="text-lg font-semibold text-foreground">Quartas de Final</h3>
+                </div>
+                <div className="flex flex-col gap-4">
+                  {bracket.quarterfinals.map(match => (
                     <PlayoffMatchCard
                       key={match.id}
                       match={match}
@@ -486,43 +449,23 @@ export function PlayoffBracketView({
                       onShootoutWinnerSelect={handleShootoutWinnerSelect}
                       currentScores={scores[match.id] || { home: "", away: "", shootoutWinner: null }}
                       showShootout={showShootout[match.id] || false}
-                      stage="semifinal"
+                      stage="quarterfinal"
                       favoriteTeam={favoriteTeam}
-                      isLive={!match.winnerId && (match.homeScore !== null || match.awayScore !== null)}
                     />
-                  )
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="final" className="mt-0 md:hidden">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Final</h3>
-              {bracket.final && (
-                <PlayoffMatchCard
-                  match={bracket.final}
-                  teams={teams}
-                  onScoreChange={handleScoreChange}
-                  onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                  currentScores={scores[bracket.final?.id] || { home: "", away: "", shootoutWinner: null }}
-                  showShootout={showShootout[bracket.final?.id] || false}
-                  stage="final"
-                  favoriteTeam={favoriteTeam}
-                  isLive={bracket.final && !bracket.final.winnerId &&
-                    (bracket.final.homeScore !== null || bracket.final.awayScore !== null)}
-                  youtubeUrl={bracket.final.youtubeUrl}
-                />
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="desktop" className="mt-0 hidden md:block">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Semifinals Tab */}
+            <TabsContent value="semifinals" className="mt-0 md:hidden">
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Quartas de Final</h3>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-1 w-1 rounded-full bg-[var(--team-primary)]"></div>
+                  <h3 className="text-lg font-semibold text-foreground">Semifinais</h3>
+                </div>
                 <div className="flex flex-col gap-4">
-                  {Array.isArray(bracket.quarterfinals) && bracket.quarterfinals.map(match => (
+                  {Array.isArray(bracket.semifinals) && bracket.semifinals.map(match => (
                     match && (
                       <PlayoffMatchCard
                         key={match.id}
@@ -532,108 +475,176 @@ export function PlayoffBracketView({
                         onShootoutWinnerSelect={handleShootoutWinnerSelect}
                         currentScores={scores[match.id] || { home: "", away: "", shootoutWinner: null }}
                         showShootout={showShootout[match.id] || false}
-                        stage="quarterfinal"
+                        stage="semifinal"
                         favoriteTeam={favoriteTeam}
                         isLive={!match.winnerId && (match.homeScore !== null || match.awayScore !== null)}
-                        youtubeUrl={match.youtubeUrl}
                       />
                     )
                   ))}
                 </div>
               </div>
+            </TabsContent>
 
-              <div>
-                <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Semifinais</h3>
-                <div className="flex flex-col h-full">
-                  <div className="pt-16 flex items-center">
-                    {Array.isArray(bracket.semifinals) && bracket.semifinals[0] && (
-                      <PlayoffMatchCard
-                        match={bracket.semifinals[0]}
-                        teams={teams}
-                        onScoreChange={handleScoreChange}
-                        youtubeUrl={bracket.semifinals[0].youtubeUrl}
-                        onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                        currentScores={scores[bracket.semifinals[0]?.id] || { home: "", away: "", shootoutWinner: null }}
-                        showShootout={showShootout[bracket.semifinals[0]?.id] || false}
-                        stage="semifinal"
-                        favoriteTeam={favoriteTeam}
-                        isLive={bracket.semifinals[0] &&
-                          !bracket.semifinals[0].winnerId &&
-                          (bracket.semifinals[0].homeScore !== null || bracket.semifinals[0].awayScore !== null)}
-                      />
-                    )}
+            {/* Final Tab */}
+            <TabsContent value="final" className="mt-0 md:hidden">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-1 w-1 rounded-full bg-[var(--team-primary)]"></div>
+                  <h3 className="text-lg font-semibold text-foreground">Final</h3>
+                </div>
+                {bracket.final && (
+                  <PlayoffMatchCard
+                    match={bracket.final}
+                    teams={teams}
+                    onScoreChange={handleScoreChange}
+                    onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                    currentScores={scores[bracket.final?.id] || { home: "", away: "", shootoutWinner: null }}
+                    showShootout={showShootout[bracket.final?.id] || false}
+                    stage="final"
+                    favoriteTeam={favoriteTeam}
+                    isLive={bracket.final && !bracket.final.winnerId &&
+                      (bracket.final.homeScore !== null || bracket.final.awayScore !== null)}
+                    youtubeUrl={bracket.final.youtubeUrl}
+                  />
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Desktop View */}
+            <TabsContent value="desktop" className="mt-0 hidden md:block">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Quarterfinals */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-1 w-1 rounded-full bg-[var(--team-primary)]"></div>
+                    <h3 className="text-lg font-semibold text-foreground">Quartas de Final</h3>
                   </div>
+                  <div className="flex flex-col gap-4">
+                    {Array.isArray(bracket.quarterfinals) && bracket.quarterfinals.map(match => (
+                      match && (
+                        <PlayoffMatchCard
+                          key={match.id}
+                          match={match}
+                          teams={teams}
+                          onScoreChange={handleScoreChange}
+                          onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                          currentScores={scores[match.id] || { home: "", away: "", shootoutWinner: null }}
+                          showShootout={showShootout[match.id] || false}
+                          stage="quarterfinal"
+                          favoriteTeam={favoriteTeam}
+                          isLive={!match.winnerId && (match.homeScore !== null || match.awayScore !== null)}
+                          youtubeUrl={match.youtubeUrl}
+                        />
+                      )
+                    ))}
+                  </div>
+                </div>
 
-                  <div className="pt-6 flex items-center">
-                    {Array.isArray(bracket.semifinals) && bracket.semifinals[1] && (
+                {/* Semifinals */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-1 w-1 rounded-full bg-[var(--team-primary)]"></div>
+                    <h3 className="text-lg font-semibold text-foreground">Semifinais</h3>
+                  </div>
+                  <div className="flex flex-col h-full">
+                    <div className="pt-16 flex items-center">
+                      {Array.isArray(bracket.semifinals) && bracket.semifinals[0] && (
+                        <PlayoffMatchCard
+                          match={bracket.semifinals[0]}
+                          teams={teams}
+                          onScoreChange={handleScoreChange}
+                          youtubeUrl={bracket.semifinals[0].youtubeUrl}
+                          onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                          currentScores={scores[bracket.semifinals[0]?.id] || { home: "", away: "", shootoutWinner: null }}
+                          showShootout={showShootout[bracket.semifinals[0]?.id] || false}
+                          stage="semifinal"
+                          favoriteTeam={favoriteTeam}
+                          isLive={bracket.semifinals[0] &&
+                            !bracket.semifinals[0].winnerId &&
+                            (bracket.semifinals[0].homeScore !== null || bracket.semifinals[0].awayScore !== null)}
+                        />
+                      )}
+                    </div>
+
+                    <div className="pt-6 flex items-center">
+                      {Array.isArray(bracket.semifinals) && bracket.semifinals[1] && (
+                        <PlayoffMatchCard
+                          match={bracket.semifinals[1]}
+                          teams={teams}
+                          onScoreChange={handleScoreChange}
+                          onShootoutWinnerSelect={handleShootoutWinnerSelect}
+                          currentScores={scores[bracket.semifinals[1]?.id] || { home: "", away: "", shootoutWinner: null }}
+                          showShootout={showShootout[bracket.semifinals[1]?.id] || false}
+                          stage="semifinal"
+                          favoriteTeam={favoriteTeam}
+                          isLive={bracket.semifinals[1] &&
+                            !bracket.semifinals[1].winnerId &&
+                            (bracket.semifinals[1].homeScore !== null || bracket.semifinals[1].awayScore !== null)}
+                          youtubeUrl={bracket.semifinals[1].youtubeUrl}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Final */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-1 w-1 rounded-full bg-[var(--team-primary)]"></div>
+                    <h3 className="text-lg font-semibold text-foreground">Final</h3>
+                  </div>
+                  <div className="flex items-center h-full justify-center">
+                    {bracket.final && (
                       <PlayoffMatchCard
-                        match={bracket.semifinals[1]}
+                        match={bracket.final}
                         teams={teams}
                         onScoreChange={handleScoreChange}
                         onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                        currentScores={scores[bracket.semifinals[1]?.id] || { home: "", away: "", shootoutWinner: null }}
-                        showShootout={showShootout[bracket.semifinals[1]?.id] || false}
-                        stage="semifinal"
+                        currentScores={scores[bracket.final?.id] || { home: "", away: "", shootoutWinner: null }}
+                        showShootout={showShootout[bracket.final?.id] || false}
+                        stage="final"
                         favoriteTeam={favoriteTeam}
-                        isLive={bracket.semifinals[1] &&
-                          !bracket.semifinals[1].winnerId &&
-                          (bracket.semifinals[1].homeScore !== null || bracket.semifinals[1].awayScore !== null)}
-                        youtubeUrl={bracket.semifinals[1].youtubeUrl}
+                        isLive={!bracket.final.winnerId && (bracket.final.homeScore !== null || bracket.final.awayScore !== null)}
+                        youtubeUrl={bracket.final.youtubeUrl}
                       />
                     )}
                   </div>
                 </div>
               </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
-              <div>
-                <h3 className="text-lg font-medium text-[var(--team-primary)] mb-4">Final</h3>
-                <div className="flex items-center h-full justify-center">
-                  {bracket.final && (
-                    <PlayoffMatchCard
-                      match={bracket.final}
-                      teams={teams}
-                      onScoreChange={handleScoreChange}
-                      onShootoutWinnerSelect={handleShootoutWinnerSelect}
-                      currentScores={scores[bracket.final?.id] || { home: "", away: "", shootoutWinner: null }}
-                      showShootout={showShootout[bracket.final?.id] || false}
-                      stage="final"
-                      favoriteTeam={favoriteTeam}
-                      isLive={!bracket.final.winnerId && (bracket.final.homeScore !== null || bracket.final.awayScore !== null)}
-                      youtubeUrl={bracket.final.youtubeUrl}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <div className="mt-6 p-3 bg-[#252525] border border-[#333] rounded-lg">
-          <h4 className="text-sm font-medium text-[var(--team-primary)] mb-2">Formato dos Playoffs (Atualizado em 16.04.2025)</h4>
-          <ul className="space-y-1 text-sm text-gray-300">
+      {/* Rules Card */}
+      <Alert className="bg-card border-border">
+        <Info className="h-4 w-4 text-[var(--team-primary)]" />
+        <AlertDescription className="ml-6">
+          <h4 className="font-semibold text-foreground mb-3">Formato dos Playoffs</h4>
+          <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              O 1º colocado avança diretamente para as Semifinais
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></span>
+              <span>O 1º colocado avança diretamente para as Semifinais</span>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              Quartas de Final: 4º vs 5º, 3º vs 6º, 2º vs 7º
+              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+              <span>Quartas de Final: 4º vs 5º, 3º vs 6º, 2º vs 7º</span>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-              Semifinal 1: 1º vs vencedor de (4º vs 5º)
+              <span className="w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0"></span>
+              <span>Semifinal 1: 1º vs vencedor de (4º vs 5º)</span>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-              Semifinal 2: vencedor de (3º vs 6º) vs vencedor de (2º vs 7º)
+              <span className="w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0"></span>
+              <span>Semifinal 2: vencedor de (3º vs 6º) vs vencedor de (2º vs 7º)</span>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-white rounded-full"></span>
-              Sistema eliminatório: quem perder está fora!
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></span>
+              <span>Sistema eliminatório: quem perder está fora!</span>
             </li>
           </ul>
-        </div>
-      </CardContent>
-    </Card>
+        </AlertDescription>
+      </Alert>
+    </div>
   );
 }
