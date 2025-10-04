@@ -149,7 +149,7 @@ export default function SimulatorPage() {
   }
 
   return (
-    <main className="bg-[#121212] min-h-screen text-white">
+    <main className="bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] min-h-screen text-white">
       <Header
         loading={loading}
         selectedTeam={selectedTeam}
@@ -167,20 +167,6 @@ export default function SimulatorPage() {
             className="mb-6"
             loading={loading}
           />
-        </div>
-
-        {/* Botão de acesso rápido aos playoffs */}
-        <div className="flex justify-center mb-6 px-2 sm:px-4 md:px-0">
-          <Link href="/playoffs" className="w-full sm:w-auto">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto bg-[#1A1A1A] border border-[var(--team-primary)]/40 hover:bg-[var(--team-primary)]/10 text-white transition-all duration-200 group flex items-center justify-center gap-2 py-3 px-4 sm:px-6 rounded-lg shadow-sm"
-            >
-              <Trophy className="w-4 h-4 md:w-5 md:h-5 text-[var(--team-primary)]" />
-              <span className="font-medium text-sm sm:text-base">Playoffs 2025</span>
-              <span className="sr-only">Simular Playoffs Kings League</span>
-            </Button>
-          </Link>
         </div>
 
         <DisclaimerNotice forceShow={false} />
