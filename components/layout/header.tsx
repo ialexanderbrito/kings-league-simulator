@@ -84,72 +84,112 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
 
   return (
     <>
-      <header className="backdrop-blur-md sticky top-0 z-40 border-b border-white/5 transition-all duration-300">
-        <div className="container mx-auto py-2.5 px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto py-3 px-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               {/* Menu para mobile */}
               <Button
                 id="menu-button"
                 variant="ghost"
                 size="icon"
-                className="md:hidden flex items-center justify-center rounded-full w-9 h-9 p-0 hover:bg-white/5"
+                className="md:hidden shrink-0 h-10 w-10 rounded-lg hover:bg-muted"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                aria-label="Abrir menu"
+                aria-expanded={isSidebarOpen}
+                aria-controls="mobile-sidebar"
               >
-                <Menu className="h-5 w-5 text-gray-300" />
+                <Menu className="h-5 w-5" />
               </Button>
 
               {/* Logo */}
               <Link
                 href="/"
-                className="group flex items-center gap-2.5 transition-opacity hover:opacity-90"
+                className="group flex items-center gap-2.5 transition-opacity hover:opacity-90 shrink-0"
                 onClick={handleLogoClick}
+                aria-label="Ir para página inicial"
               >
                 <div className="relative overflow-hidden rounded-md">
                   <KingsLeagueLogo
                     width={36}
                     height={52}
-                    className="transition-transform duration-300"
+                    className="transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-[var(--team-primary)]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[var(--team-primary)]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">
+                <div className="hidden sm:block">
+                  <h1 className="text-xl font-bold text-foreground leading-tight">
                     <span className="text-[var(--team-primary)]">Kings</span> League
                   </h1>
-                  <p className="text-xs text-gray-400 -mt-0.5">Simulador</p>
+                  <p className="text-xs text-muted-foreground">Simulador</p>
                 </div>
               </Link>
 
               {/* Navegação desktop */}
               {!loading && (
-                <nav className="hidden md:flex items-center gap-4 ml-4">
+                <nav className="hidden lg:flex items-center gap-1 ml-2" aria-label="Navegação principal">
                   <Link
                     href="/simulator"
                     className={cn(
-                      "text-gray-300 hover:text-white text-sm transition-colors flex items-center gap-1.5 py-1.5 px-3 rounded-md",
-                      pathname === "/simulator" && "bg-white/5 text-white"
+                      "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
+                      pathname === "/simulator"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
+                    aria-current={pathname === "/simulator" ? "page" : undefined}
                   >
-                    <Home className="w-3.5 h-3.5" />
-                    Classificação
+                    <Home className="w-4 h-4" />
+                    <span>Simulador</span>
+                  </Link>
+                  <Link
+                    href="/standings"
+                    className={cn(
+                      "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
+                      pathname === "/standings"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    aria-current={pathname === "/standings" ? "page" : undefined}
+                  >
+                    <Trophy className="w-4 h-4 text-[var(--team-primary)]" />
+                    <span>Classificação</span>
+                  </Link>
+                  <Link
+                    href="/teams"
+                    className={cn(
+                      "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
+                      pathname === "/teams"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    aria-current={pathname === "/teams" ? "page" : undefined}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span>Times</span>
                   </Link>
                   <Link
                     href="/playoffs"
                     className={cn(
-                      "text-gray-300 hover:text-white text-sm transition-colors flex items-center gap-1.5 py-1.5 px-3 rounded-md",
-                      pathname === "/playoffs" && "bg-white/5 text-white"
+                      "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
+                      pathname === "/playoffs"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
+                    aria-current={pathname === "/playoffs" ? "page" : undefined}
                   >
-                    <Trophy className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-                    Playoffs
+                    <svg className="w-4 h-4 text-[var(--team-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                    <span>Playoffs</span>
                   </Link>
                 </nav>
               )}
             </div>
 
             {!loading && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <ShareButton />
                 <TeamSelector
                   selectedTeam={selectedTeam}
@@ -166,124 +206,176 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
         </div>
       </header>
 
-      {/* Sidebar mobile com transição CSS - Movido para fora do header para ocupar toda a tela */}
+      {/* Sidebar mobile - Overlay com backdrop blur */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/80 backdrop-blur-sm z-50 md:hidden transition-opacity duration-300",
+          "fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden transition-opacity duration-300",
           isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setIsSidebarOpen(false)}
+        aria-hidden={!isSidebarOpen}
       >
-        <div
+        <aside
           id="mobile-sidebar"
           className={cn(
-            "fixed left-0 top-0 bottom-0 w-80 max-w-[80vw] bg-[#0a0a0a] border-r border-white/10 shadow-2xl overflow-y-auto transition-transform duration-300 ease-out h-full",
+            "fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-card border-r border-border shadow-2xl overflow-y-auto transition-transform duration-300 ease-out",
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
           onClick={(e) => e.stopPropagation()}
+          role="navigation"
+          aria-label="Menu lateral"
         >
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
+          {/* Header da Sidebar */}
+          <div className="flex items-center justify-between p-4 border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-10">
             <Link
               href="/"
               className="group flex items-center gap-2.5"
               onClick={handleLogoClick}
+              aria-label="Ir para página inicial"
             >
               <div className="relative overflow-hidden rounded-md">
                 <KingsLeagueLogo
                   width={32}
                   height={46}
-                  className="transition-transform duration-300"
+                  className="transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">
+                <h1 className="text-lg font-bold text-foreground">
                   <span className="text-[var(--team-primary)]">Kings</span> League
                 </h1>
-                <p className="text-xs text-gray-400 -mt-0.5">Simulador</p>
+                <p className="text-xs text-muted-foreground">Simulador</p>
               </div>
             </Link>
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full w-8 h-8 p-0 hover:bg-white/5"
+              className="rounded-lg h-9 w-9 hover:bg-muted"
               onClick={() => setIsSidebarOpen(false)}
+              aria-label="Fechar menu"
             >
-              <X className="h-4 w-4 text-gray-300" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="p-4">
-            <h2 className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Navegação</h2>
-
-            <div className="space-y-1">
-              <Link
-                href="/"
-                className={cn(
-                  "w-full py-2.5 px-3 flex items-center gap-3 text-left text-sm rounded-md transition-colors",
-                  pathname === "/"
-                    ? "bg-white/10 text-white"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                )}
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                <Home className="w-5 h-5" />
-                <span>Classificação</span>
-              </Link>
-
-              <Link
-                href="/playoffs"
-                className={cn(
-                  "w-full py-2.5 px-3 flex items-center gap-3 text-left text-sm rounded-md transition-colors",
-                  pathname === "/playoffs"
-                    ? "bg-white/10 text-white"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                )}
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                <Trophy className="w-5 h-5 text-[var(--team-primary)]" />
-                <span>Playoffs</span>
-              </Link>
-            </div>
-          </div>
-
-          <div className="p-4 border-t border-white/10">
-            <h2 className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Times</h2>
-            <div className="space-y-0.5 max-h-[60vh] overflow-y-auto pr-2 -mr-2">
-              {standings.map((team) => (
-                <button
-                  key={team.id}
+          {/* Navegação */}
+          <div className="p-4 space-y-6">
+            <div>
+              <h2 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider px-2">
+                Navegação
+              </h2>
+              <div className="space-y-1">
+                <Link
+                  href="/simulator"
                   className={cn(
-                    "w-full py-2 px-3 text-left text-sm flex items-center gap-2.5 transition-colors justify-between rounded-md",
-                    selectedTeam === team.id
-                      ? "bg-white/10 font-medium"
-                      : "hover:bg-white/5 focus:bg-white/5"
+                    "w-full py-2.5 px-3 flex items-center gap-3 text-sm rounded-lg transition-colors font-medium",
+                    pathname === "/simulator"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
-                  onClick={() => handleTeamSelect(team.id)}
+                  onClick={() => setIsSidebarOpen(false)}
+                  aria-current={pathname === "/simulator" ? "page" : undefined}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10 bg-black/50">
-                      <img
-                        src={team.logo?.url || "/placeholder-logo.svg"}
-                        alt={team.name}
-                        width={24}
-                        height={24}
-                        className="object-contain w-full h-full"
-                      />
-                    </div>
-                    <span className="truncate">{team.name}</span>
-                  </div>
+                  <Home className="w-5 h-5 shrink-0" />
+                  <span>Simulador</span>
+                </Link>
 
-                  {favoriteTeam?.id === team.id && (
-                    <Heart
-                      className="h-4 w-4 text-[var(--team-primary)]"
-                      fill="currentColor"
-                    />
+                <Link
+                  href="/standings"
+                  className={cn(
+                    "w-full py-2.5 px-3 flex items-center gap-3 text-sm rounded-lg transition-colors font-medium",
+                    pathname === "/standings"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
-                </button>
-              ))}
+                  onClick={() => setIsSidebarOpen(false)}
+                  aria-current={pathname === "/standings" ? "page" : undefined}
+                >
+                  <Trophy className="w-5 h-5 shrink-0 text-[var(--team-primary)]" />
+                  <span>Classificação</span>
+                </Link>
+
+                <Link
+                  href="/teams"
+                  className={cn(
+                    "w-full py-2.5 px-3 flex items-center gap-3 text-sm rounded-lg transition-colors font-medium",
+                    pathname === "/teams"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                  onClick={() => setIsSidebarOpen(false)}
+                  aria-current={pathname === "/teams" ? "page" : undefined}
+                >
+                  <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>Times</span>
+                </Link>
+
+                <Link
+                  href="/playoffs"
+                  className={cn(
+                    "w-full py-2.5 px-3 flex items-center gap-3 text-sm rounded-lg transition-colors font-medium",
+                    pathname === "/playoffs"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                  onClick={() => setIsSidebarOpen(false)}
+                  aria-current={pathname === "/playoffs" ? "page" : undefined}
+                >
+                  <svg className="w-5 h-5 shrink-0 text-[var(--team-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  <span>Playoffs</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Times */}
+            <div>
+              <h2 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider px-2">
+                Times
+              </h2>
+              <div className="space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto">
+                {standings.map((team) => (
+                  <button
+                    key={team.id}
+                    className={cn(
+                      "w-full py-2.5 px-3 text-sm flex items-center gap-2.5 transition-colors justify-between rounded-lg group",
+                      selectedTeam === team.id
+                        ? "bg-muted text-foreground font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                    onClick={() => handleTeamSelect(team.id)}
+                    aria-current={selectedTeam === team.id ? "true" : undefined}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 ring-1 ring-border bg-background">
+                        <img
+                          src={team.logo?.url || "/placeholder-logo.svg"}
+                          alt=""
+                          width={28}
+                          height={28}
+                          className="object-contain w-full h-full"
+                          loading="lazy"
+                        />
+                      </div>
+                      <span className="truncate">{team.name}</span>
+                    </div>
+
+                    {favoriteTeam?.id === team.id && (
+                      <Heart
+                        className="h-4 w-4 text-[var(--team-primary)] shrink-0"
+                        fill="currentColor"
+                        aria-label="Time favorito"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </>
   )
@@ -296,24 +388,42 @@ function ShareButton() {
         <Button
           variant="ghost"
           size="icon"
-          className="hover:bg-white/5 transition-colors rounded-full w-9 h-9 flex items-center justify-center"
+          className="hover:bg-muted transition-colors rounded-lg h-10 w-10"
           aria-label="Compartilhar site"
         >
-          <Share2 className="h-4 w-4 text-gray-300" />
+          <Share2 className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48 bg-[#0a0a0a] border-white/10 text-white shadow-xl" align="end">
-        <DropdownMenuLabel className="text-xs font-normal text-gray-400">Compartilhar</DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-white/10" />
+      <DropdownMenuContent className="w-52 bg-card border-border shadow-xl" align="end" sideOffset={8}>
+        <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+          Compartilhar
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator className="bg-border" />
         {[
-          { name: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`, icon: "facebook" },
-          { name: "Twitter", href: `https://twitter.com/intent/tweet?text=🔥 Simule os resultados da Kings League Brasil! Teste suas previsões e veja como fica a tabela de classificação 🏆⚽ &url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`, icon: "twitter" },
-          { name: "WhatsApp", href: `https://wa.me/?text=🏆 *Simulador Kings League Brasil!* Acabei de testar este simulador de resultados da liga! Confira: ${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`, icon: "whatsapp" },
-          { name: "Copiar link", action: "copy", icon: "link" }
+          {
+            name: "Facebook",
+            href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`,
+            icon: "facebook"
+          },
+          {
+            name: "Twitter",
+            href: `https://twitter.com/intent/tweet?text=🔥 Simule os resultados da Kings League Brasil! Teste suas previsões e veja como fica a tabela de classificação 🏆⚽ &url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`,
+            icon: "twitter"
+          },
+          {
+            name: "WhatsApp",
+            href: `https://wa.me/?text=🏆 *Simulador Kings League Brasil!* Acabei de testar este simulador de resultados da liga! Confira: ${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app')}`,
+            icon: "whatsapp"
+          },
+          {
+            name: "Copiar link",
+            action: "copy",
+            icon: "link"
+          }
         ].map((item) => (
           <DropdownMenuItem
             key={item.name}
-            className="cursor-pointer flex items-center gap-2 hover:bg-white/5 focus:bg-white/5"
+            className="cursor-pointer flex items-center gap-2.5 hover:bg-muted focus:bg-muted py-2.5"
             onClick={() => {
               if (item.action === "copy") {
                 navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : 'https://kings-league-simulator.vercel.app');
@@ -322,11 +432,11 @@ function ShareButton() {
               }
             }}
           >
-            {item.icon === "facebook" && <FacebookLogo weight="fill" className="w-3.5 h-3.5" />}
-            {item.icon === "twitter" && <XLogo weight="fill" className="w-3.5 h-3.5" />}
-            {item.icon === "whatsapp" && <WhatsappLogo weight="fill" className="w-3.5 h-3.5" />}
-            {item.icon === "link" && <LinkIcon className="w-3.5 h-3.5" />}
-            {item.name}
+            {item.icon === "facebook" && <FacebookLogo weight="fill" className="w-4 h-4" />}
+            {item.icon === "twitter" && <XLogo weight="fill" className="w-4 h-4" />}
+            {item.icon === "whatsapp" && <WhatsappLogo weight="fill" className="w-4 h-4" />}
+            {item.icon === "link" && <LinkIcon className="w-4 h-4" />}
+            <span className="text-sm">{item.name}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -411,79 +521,90 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="flex items-center gap-2 bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-200 h-9 px-3 text-sm"
+            className="flex items-center gap-2 bg-card border-border hover:bg-muted transition-all duration-200 h-10 px-3 text-sm"
+            aria-label={favoriteTeam ? `Time selecionado: ${favoriteTeam.name}` : selectedTeam ? `Time selecionado: ${teams[selectedTeam].name}` : "Selecionar time"}
           >
             {favoriteTeam ? (
               <>
-                <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+                <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-background ring-1 ring-border">
                   <img
                     src={favoriteTeam.logo?.url || "/placeholder-logo.svg"}
-                    alt={favoriteTeam.name}
-                    width={20}
-                    height={20}
+                    alt=""
+                    width={24}
+                    height={24}
                     className="object-contain w-full h-full"
+                    loading="lazy"
                   />
                 </div>
-                <span className="truncate max-w-[80px] text-white hidden sm:inline">{favoriteTeam.name}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400 ml-0.5" />
+                <span className="truncate max-w-[100px] text-foreground hidden sm:inline font-medium">
+                  {favoriteTeam.name}
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
               </>
             ) : selectedTeam ? (
               <>
-                <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-black/50 ring-1 ring-white/10">
+                <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-background ring-1 ring-border">
                   <img
                     src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
-                    alt={teams[selectedTeam].name}
-                    width={20}
-                    height={20}
+                    alt=""
+                    width={24}
+                    height={24}
                     className="object-contain w-full h-full"
+                    loading="lazy"
                   />
                 </div>
-                <span className="truncate max-w-[80px] text-white hidden sm:inline">{teams[selectedTeam].name}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400 ml-0.5" />
+                <span className="truncate max-w-[100px] text-foreground hidden sm:inline">
+                  {teams[selectedTeam].name}
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
               </>
             ) : (
-              <span className="flex items-center gap-1.5 text-gray-300">
-                <Trophy className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-                <span className="hidden sm:inline">Time</span>
-                <ChevronDown className="w-4 h-4 text-gray-400 ml-0.5" />
-              </span>
+              <>
+                <Trophy className="w-4 h-4 text-[var(--team-primary)] shrink-0" />
+                <span className="hidden sm:inline text-muted-foreground">Times</span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+              </>
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 bg-[#0a0a0a] border-white/10 text-white shadow-xl" align="end">
-          <DropdownMenuLabel className="text-xs font-normal text-gray-400">Times</DropdownMenuLabel>
-          <DropdownMenuSeparator className="bg-white/10" />
-          <div className="max-h-[60vh] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <DropdownMenuContent className="w-64 bg-card border-border shadow-xl" align="end" sideOffset={8}>
+          <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+            Times
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-border" />
+          <div className="max-h-[60vh] overflow-y-auto py-1">
             {standings.map((team) => (
               <DropdownMenuItem
                 key={team.id}
                 className={cn(
-                  "cursor-pointer flex items-center gap-2 hover:bg-white/5 focus:bg-white/5 justify-between",
-                  selectedTeam === team.id && "bg-white/5 font-medium"
+                  "cursor-pointer flex items-center gap-2.5 hover:bg-muted focus:bg-muted justify-between py-2.5",
+                  selectedTeam === team.id && "bg-muted"
                 )}
                 onClick={() => handleTeamSelect(team.id)}
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-background ring-1 ring-border">
                     <img
                       src={teams[team.id].logo?.url || "/placeholder-logo.svg"}
-                      alt={teams[team.id].name}
-                      width={24}
-                      height={24}
+                      alt=""
+                      width={28}
+                      height={28}
                       className="object-contain w-full h-full"
+                      loading="lazy"
                     />
                   </div>
-                  <span className="truncate">{teams[team.id].name}</span>
+                  <span className="truncate text-sm">{teams[team.id].name}</span>
                 </div>
 
                 <Button
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "h-6 w-6 p-0.5 rounded-full",
+                    "h-7 w-7 p-0 rounded-full hover:bg-muted-foreground/10 shrink-0",
                     favoriteTeam?.id === team.id && "text-[var(--team-primary)]"
                   )}
                   onClick={(e) => handleFavoriteButtonClick(teams[team.id], e)}
+                  aria-label={favoriteTeam?.id === team.id ? `Remover ${teams[team.id].name} dos favoritos` : `Adicionar ${teams[team.id].name} aos favoritos`}
                 >
                   <Heart
                     className="h-4 w-4"

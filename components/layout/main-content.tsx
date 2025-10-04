@@ -52,15 +52,17 @@ export function MainContent({
   return (
     <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'matches' | 'team')} className="w-full">
       <TabsContent value="matches" className="mt-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] xl:grid-cols-[1fr,420px] gap-4 lg:gap-6">
           <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={onScoreUpdate} />
 
           <div className="space-y-6">
-            <Card className="bg-[#1a1a1a] border-[#333] text-white overflow-hidden lg:sticky lg:top-6">
-              <CardHeader className="py-3 px-4 border-b border-[#333] bg-[#1f1f1f]">
-                <CardTitle className="text-lg flex items-center gap-2 text-gray-200">
-                  <TableIcon className="w-4 h-4 text-[var(--team-primary)]" />
-                  Classificação
+            <Card className="bg-card border-border shadow-lg overflow-hidden lg:sticky lg:top-6">
+              <CardHeader className="py-3 px-4 border-b border-border bg-muted/50">
+                <CardTitle className="text-lg flex items-center gap-2.5 text-foreground">
+                  <div className="p-1.5 rounded-md bg-[var(--team-primary)]/10">
+                    <TableIcon className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
+                  </div>
+                  <span className="font-bold">Classificação</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
