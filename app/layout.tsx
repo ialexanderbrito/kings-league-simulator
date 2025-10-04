@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { TeamThemeProvider } from '@/contexts/team-theme-context'
 import { ButtonTop } from "@/components/ui/button-top"
 import { LeaguesSuggestionModal } from '@/components/leagues-suggestion-modal'
+import { CookieConsentBanner } from '@/components/cookie-consent-banner'
 import Script from 'next/script'
 
 const inter = Inter({
@@ -192,6 +193,7 @@ export default function RootLayout({
             <Toaster />
             <ButtonTop />
             <LeaguesSuggestionModal />
+            <CookieConsentBanner />
           </TeamThemeProvider>
         </ThemeProvider>
 
@@ -297,77 +299,6 @@ export default function RootLayout({
                   }
                 ]
               }
-            }
-          `}
-        </Script>
-
-        {/* Script para política de cookies - GDPR/LGPD compliant */}
-        <Script id="cookie-consent" strategy="afterInteractive">
-          {`
-            function createCookieBanner() {
-              if (localStorage.getItem('cookie-consent') === 'accepted') return;
-              
-              const banner = document.createElement('div');
-              banner.id = 'cookie-banner';
-              banner.style.position = 'fixed';
-              banner.style.bottom = '0';
-              banner.style.left = '0';
-              banner.style.right = '0';
-              banner.style.padding = '1rem';
-              banner.style.backgroundColor = '#1a1a1a';
-              banner.style.color = 'white';
-              banner.style.zIndex = '9999';
-              banner.style.display = 'flex';
-              banner.style.flexDirection = 'column';
-              banner.style.gap = '0.5rem';
-              banner.style.boxShadow = '0 -2px 10px rgba(0, 0, 0, 0.3)';
-              banner.style.borderTop = '1px solid #333';
-              
-              const content = document.createElement('div');
-              content.innerHTML = '<p style="margin-bottom: 10px;">Este site utiliza cookies para melhorar a experiência do usuário e exibir anúncios personalizados. Ao continuar navegando, você concorda com nossa <a href="/politica-de-privacidade" style="color: #F4AF23; text-decoration: underline;">Política de Privacidade</a> e <a href="/termos-de-uso" style="color: #F4AF23; text-decoration: underline;">Termos de Uso</a>.</p>';
-              
-              const buttons = document.createElement('div');
-              buttons.style.display = 'flex';
-              buttons.style.gap = '0.5rem';
-              buttons.style.justifyContent = 'flex-end';
-              
-              const acceptButton = document.createElement('button');
-              acceptButton.textContent = 'Aceitar';
-              acceptButton.style.padding = '0.5rem 1rem';
-              acceptButton.style.backgroundColor = '#F4AF23';
-              acceptButton.style.color = 'black';
-              acceptButton.style.border = 'none';
-              acceptButton.style.borderRadius = '4px';
-              acceptButton.style.cursor = 'pointer';
-              acceptButton.onclick = function() {
-                localStorage.setItem('cookie-consent', 'accepted');
-                document.body.removeChild(banner);
-              };
-              
-              const rejectButton = document.createElement('button');
-              rejectButton.textContent = 'Rejeitar';
-              rejectButton.style.padding = '0.5rem 1rem';
-              rejectButton.style.backgroundColor = 'transparent';
-              rejectButton.style.color = 'white';
-              rejectButton.style.border = '1px solid #666';
-              rejectButton.style.borderRadius = '4px';
-              rejectButton.style.cursor = 'pointer';
-              rejectButton.onclick = function() {
-                localStorage.setItem('cookie-consent', 'rejected');
-                document.body.removeChild(banner);
-              };
-              
-              buttons.appendChild(rejectButton);
-              buttons.appendChild(acceptButton);
-              
-              banner.appendChild(content);
-              banner.appendChild(buttons);
-              document.body.appendChild(banner);
-            }
-            
-            // Executar após carregar a página
-            if (typeof window !== 'undefined') {
-              setTimeout(createCookieBanner, 1000);
             }
           `}
         </Script>
