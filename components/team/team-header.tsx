@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Instagram, TwitchIcon, Youtube } from "lucide-react"
+import { Instagram, TwitchIcon, Youtube, User } from "lucide-react"
 import type { Team, TeamDetails } from "@/types/kings-league"
 
 interface TeamHeaderProps {
@@ -9,113 +9,170 @@ interface TeamHeaderProps {
 }
 
 export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
+  const president = teamDetails?.staff?.find((member) => member.role === "president")
+  const coach = teamDetails?.staff?.find((member) => member.role === "coach")
+
+  const socialLinks = [
+    {
+      url: teamDetails?.metaInformation?.instagram_url,
+      icon: Instagram,
+      label: "Instagram",
+      name: "Instagram",
+    },
+    {
+      url: teamDetails?.metaInformation?.youtube_url,
+      icon: Youtube,
+      label: "YouTube",
+      name: "YouTube",
+    },
+    {
+      url: teamDetails?.metaInformation?.twitch_url,
+      icon: TwitchIcon,
+      label: "Twitch",
+      name: "Twitch",
+    },
+  ].filter((link) => link.url)
+
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-b from-black to-[#121212] border border-[#333]">
-      <div className="absolute inset-0 opacity-10" style={{
-        backgroundImage: teamDetails?.metaInformation?.loop_video_poster ?
-          `url('${teamDetails.metaInformation.loop_video_poster}')` :
-          'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}></div>
+    <div className="bg-card rounded-lg border border-border overflow-hidden relative">
+      {/* Background pattern opcional */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `linear-gradient(135deg, ${team.firstColorHEX}15 0%, ${team.secondColorHEX}10 50%, transparent 100%)`,
+        }}
+        aria-hidden="true"
+      />
 
-      <div className="relative z-10 p-6 flex flex-col md:flex-row items-center gap-6">
-        <div className="w-32 h-32 relative">
-          {teamDetails?.logo ? (
-            <img
-              src={teamDetails.logo.url || "/placeholder.svg"}
-              alt={team.name}
-              className="w-full h-full object-contain"
-              loading="eager"
-            />
-          ) : (
-            <Skeleton className="w-full h-full rounded-full" />
-          )}
-        </div>
-
-        <div className="text-center md:text-left flex-grow">
-          <h1 className="text-3xl font-bold text-[var(--team-primary)] mb-2">{team.name}</h1>
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-            <Badge style={{ backgroundColor: team.firstColorHEX }} className="text-white">
-              Cor Principal
-            </Badge>
-            <Badge style={{ backgroundColor: team.secondColorHEX }} className="text-white">
-              Cor Secundária
-            </Badge>
-          </div>
-
-          {teamDetails?.metaInformation && (
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-gray-300">
-              {teamDetails.metaInformation.instagram_url && (
-                <a
-                  href={teamDetails.metaInformation.instagram_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-[var(--team-primary)] transition-colors"
-                  aria-label={`Instagram de ${team.name}`}
-                >
-                  <Instagram className="w-4 h-4" />
-                  <span className="text-sm">Instagram</span>
-                </a>
-              )}
-              {teamDetails.metaInformation.youtube_url && (
-                <a
-                  href={teamDetails.metaInformation.youtube_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-[var(--team-primary)] transition-colors"
-                  aria-label={`YouTube de ${team.name}`}
-                >
-                  <Youtube className="w-4 h-4" />
-                  <span className="text-sm">YouTube</span>
-                </a>
-              )}
-              {teamDetails.metaInformation.twitch_url && (
-                <a
-                  href={teamDetails.metaInformation.twitch_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-[var(--team-primary)] transition-colors"
-                  aria-label={`Twitch de ${team.name}`}
-                >
-                  <TwitchIcon className="w-4 h-4" />
-                  <span className="text-sm">Twitch</span>
-                </a>
+      <div className="relative p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          {/* Logo do Time */}
+          <div className="flex-shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 relative">
+              {teamDetails?.logo ? (
+                <img
+                  src={teamDetails.logo.url || "/placeholder.svg"}
+                  alt={`Logo do ${team.name}`}
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                />
+              ) : (
+                <Skeleton className="w-full h-full rounded-lg" />
               )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {teamDetails?.staff && teamDetails.staff.length > 0 && (
-          <div className="text-center min-w-[170px]">
-            <div className="mb-1 text-xs text-gray-400">Presidente</div>
-            <div className="flex flex-col items-center">
-              <div
-                className="relative w-24 h-24 mb-2 bg-[#252525] border border-[#333] overflow-hidden"
-                style={{
-                  backgroundImage: "url('/bg-card-president.jpg')",
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              >
-                {teamDetails.staff[0].image?.url ? (
-                  <img
-                    src={teamDetails.staff[0].image.url}
-                    alt={teamDetails.staff[0].shortName}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#252525]/70 text-[var(--team-primary)] text-2xl font-bold">
-                    {teamDetails.staff[0].shortName.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
+          {/* Informações do Time */}
+          <div className="flex-grow text-center sm:text-left space-y-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              {team.name}
+            </h1>
+
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+              {/* Cores do Time */}
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="w-5 h-5 rounded-full border border-border"
+                  style={{ backgroundColor: team.firstColorHEX }}
+                  aria-label="Cor principal do time"
+                  title="Cor principal"
+                />
+                <div
+                  className="w-5 h-5 rounded-full border border-border"
+                  style={{ backgroundColor: team.secondColorHEX }}
+                  aria-label="Cor secundária do time"
+                  title="Cor secundária"
+                />
               </div>
-              <div className="text-sm font-semibold">{teamDetails.staff[0].shortName}</div>
-              <div className="text-xs text-gray-400">Presidente</div>
+
+              {/* Redes Sociais */}
+              {socialLinks.length > 0 && (
+                <nav aria-label="Redes sociais do time" className="flex items-center gap-2">
+                  {socialLinks.map((link) => {
+                    const Icon = link.icon
+                    return (
+                      <a
+                        key={link.name}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={`${link.label} do ${team.name}`}
+                      >
+                        <Icon className="w-4 h-4" aria-hidden="true" />
+                      </a>
+                    )
+                  })}
+                </nav>
+              )}
             </div>
           </div>
-        )}
+
+          {/* Staff (Presidente e Técnico) - Compacto */}
+          {(president || coach) && (
+            <div className="flex items-center gap-3 sm:gap-4">
+              {president && (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-md overflow-hidden bg-muted border border-border"
+                    style={{
+                      backgroundImage: "url('/bg-card-president.jpg')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    {president.image?.url ? (
+                      <img
+                        src={president.image.url}
+                        alt={president.shortName}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
+                        <User className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="hidden sm:block">
+                    <div className="text-xs text-muted-foreground">Presidente</div>
+                    <div className="text-sm font-semibold text-foreground">{president.shortName}</div>
+                  </div>
+                </div>
+              )}
+
+              {coach && (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-md overflow-hidden bg-muted border border-border"
+                    style={{
+                      backgroundImage: "url('/bg-card-president.jpg')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    {coach.image?.url ? (
+                      <img
+                        src={coach.image.url}
+                        alt={coach.shortName}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
+                        <User className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="hidden sm:block">
+                    <div className="text-xs text-muted-foreground">Técnico</div>
+                    <div className="text-sm font-semibold text-foreground">{coach.shortName}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -123,19 +180,34 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
 
 export function TeamHeaderSkeleton() {
   return (
-    <div className="relative rounded-xl bg-gradient-to-b from-black to-[#121212] border border-[#333] p-6">
-      <div className="flex flex-col md:flex-row items-center gap-6">
-        <Skeleton className="w-28 h-28 rounded-md" />
-        <div className="text-center md:text-left flex-grow">
-          <Skeleton className="h-8 w-44 mb-4 mx-auto md:mx-0" />
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-            <Skeleton className="h-6 w-24 rounded-full" />
-            <Skeleton className="h-6 w-24 rounded-full" />
+    <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        {/* Logo Skeleton */}
+        <div className="flex-shrink-0">
+          <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg" />
+        </div>
+
+        {/* Informações Skeleton */}
+        <div className="flex-grow space-y-2 text-center sm:text-left">
+          <Skeleton className="h-7 sm:h-8 w-40 mx-auto sm:mx-0" />
+
+          <div className="flex items-center justify-center sm:justify-start gap-3">
+            <div className="flex gap-1.5">
+              <Skeleton className="w-5 h-5 rounded-full" />
+              <Skeleton className="w-5 h-5 rounded-full" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="w-4 h-4 rounded" />
+              <Skeleton className="w-4 h-4 rounded" />
+              <Skeleton className="w-4 h-4 rounded" />
+            </div>
           </div>
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-20" />
-          </div>
+        </div>
+
+        {/* Staff Skeleton */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Skeleton className="w-12 h-12 sm:w-14 sm:h-14 rounded-md" />
+          <Skeleton className="w-12 h-12 sm:w-14 sm:h-14 rounded-md" />
         </div>
       </div>
     </div>

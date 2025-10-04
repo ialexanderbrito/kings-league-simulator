@@ -1,6 +1,7 @@
 import { useState } from "react"
 import type { Player } from "@/types/kings-league"
 import { calculateAge, cn } from "@/lib/utils"
+import { Trophy, TrendingUp, Award } from "lucide-react"
 
 interface PlayerCardProps {
   player: Player
@@ -8,17 +9,22 @@ interface PlayerCardProps {
 
 export function PlayerCard({ player }: PlayerCardProps) {
   const [showStats, setShowStats] = useState(true)
+  const [isHovered, setIsHovered] = useState(false)
 
   const isWildcard = player.category === "wildcard" || player?.metaInformation?.status === "Wildcard"
-
-  // Cor fixa para Wild Cards conforme solicitado
-  const wildcardColor = "#F4AF23";
 
   const roleMap = {
     goalkeeper: "Goleiro",
     defender: "Defensor",
     midfielder: "Meio-campo",
     forward: "Atacante",
+  }
+
+  const roleAbbr = {
+    goalkeeper: "GOL",
+    defender: "DEF",
+    midfielder: "MEI",
+    forward: "ATA",
   }
 
   const roleColor = {
@@ -60,57 +66,68 @@ export function PlayerCard({ player }: PlayerCardProps) {
   const getCardStyle = () => {
     if (isWildcard) {
       return {
-        borderColor: '#F4AF23', // Mantendo a cor amarela fixa para Wild Cards
-        headerBg: "bg-gradient-to-r from-amber-600 to-amber-800",
-        ratingBg: `bg-[#F4AF23]`,
+        borderColor: '#F4AF23',
+        cardBg: "from-amber-950/40 via-amber-900/30 to-black/50",
+        ratingBg: "bg-gradient-to-br from-amber-400 to-amber-600",
         ratingText: "text-black",
-        categoryBadge: `bg-[#F4AF23] text-black`,
-        imageBg: "bg-gradient-to-b from-amber-600/30 to-amber-900/20"
+        categoryBadge: "bg-gradient-to-r from-amber-400 to-amber-600 text-black",
+        accentColor: "#F4AF23",
+        glowColor: "rgba(244, 175, 35, 0.4)",
+        tier: "wildcard"
       }
     }
 
     if (playerRating && playerRating >= 78) {
       return {
         borderColor: "#3D6EB9",
-        headerBg: "bg-gradient-to-r from-blue-700 to-blue-900",
-        ratingBg: "bg-blue-600",
+        cardBg: "from-blue-950/40 via-blue-900/30 to-black/50",
+        ratingBg: "bg-gradient-to-br from-blue-500 to-blue-700",
         ratingText: "text-white",
-        categoryBadge: "bg-blue-500 text-white",
-        imageBg: "bg-gradient-to-b from-blue-700/30 to-blue-900/20"
+        categoryBadge: "bg-gradient-to-r from-blue-500 to-blue-700 text-white",
+        accentColor: "#3D6EB9",
+        glowColor: "rgba(61, 110, 185, 0.3)",
+        tier: "elite"
       }
     }
     if (playerRating && playerRating >= 74) {
       return {
         borderColor: "#D53121",
-        headerBg: "bg-gradient-to-r from-red-700 to-red-900",
-        ratingBg: "bg-red-600",
+        cardBg: "from-red-950/40 via-red-900/30 to-black/50",
+        ratingBg: "bg-gradient-to-br from-red-500 to-red-700",
         ratingText: "text-white",
-        categoryBadge: "bg-red-500 text-white",
-        imageBg: "bg-gradient-to-b from-red-700/30 to-red-900/20"
+        categoryBadge: "bg-gradient-to-r from-red-500 to-red-700 text-white",
+        accentColor: "#D53121",
+        glowColor: "rgba(213, 49, 33, 0.3)",
+        tier: "rare"
       }
     }
     if (playerRating && playerRating >= 70) {
       return {
         borderColor: "#10694D",
-        headerBg: "bg-gradient-to-r from-green-700 to-green-900",
-        ratingBg: "bg-green-600",
+        cardBg: "from-green-950/40 via-green-900/30 to-black/50",
+        ratingBg: "bg-gradient-to-br from-green-600 to-green-800",
         ratingText: "text-white",
-        categoryBadge: "bg-green-500 text-white",
-        imageBg: "bg-gradient-to-b from-green-700/30 to-green-900/20"
+        categoryBadge: "bg-gradient-to-r from-green-600 to-green-800 text-white",
+        accentColor: "#10694D",
+        glowColor: "rgba(16, 105, 77, 0.3)",
+        tier: "uncommon"
       }
     }
 
     return {
-      borderColor: "#333",
-      headerBg: "bg-gradient-to-r from-zinc-700 to-zinc-900",
-      ratingBg: "bg-zinc-700",
+      borderColor: "#444",
+      cardBg: "from-zinc-900/40 via-zinc-800/30 to-black/50",
+      ratingBg: "bg-gradient-to-br from-zinc-600 to-zinc-800",
       ratingText: "text-white",
-      categoryBadge: "bg-zinc-600 text-white",
-      imageBg: "bg-gradient-to-b from-zinc-700/30 to-zinc-900/20"
+      categoryBadge: "bg-gradient-to-r from-zinc-600 to-zinc-800 text-white",
+      accentColor: "#666",
+      glowColor: "rgba(100, 100, 100, 0.2)",
+      tier: "common"
     }
   }
 
   const cardStyle = getCardStyle()
+
 
   const renderAttributeBars = () => {
     if (!player.metaInformation) return null
@@ -120,28 +137,50 @@ export function PlayerCard({ player }: PlayerCardProps) {
     }
 
     const getBarColor = (value: number): string => {
-      if (value >= 90) return 'bg-green-500'
+      if (value >= 90) return 'bg-emerald-500'
       if (value >= 80) return 'bg-lime-500'
       if (value >= 70) return 'bg-yellow-500'
       if (value >= 60) return 'bg-orange-500'
       return 'bg-red-500'
     }
 
+    const getBarGlow = (value: number): string => {
+      if (value >= 90) return 'shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+      if (value >= 80) return 'shadow-[0_0_8px_rgba(132,204,22,0.4)]'
+      if (value >= 70) return 'shadow-[0_0_6px_rgba(234,179,8,0.3)]'
+      return ''
+    }
+
     const renderAttributeBar = (label: string, value: number) => (
-      <div className="mb-1 last:mb-0">
-        <div className="flex justify-between text-xs text-gray-300 mb-0.5">
-          <span>{label}</span>
-          <span className="font-medium">{value}</span>
+      <div className="group/attr">
+        <div className="flex justify-between items-center text-xs mb-1.5">
+          <span className="text-gray-300 font-medium tracking-wide">{label}</span>
+          <span className={cn(
+            "font-bold px-2 py-0.5 rounded-md text-xs min-w-[2.5rem] text-center transition-all",
+            value >= 85 ? "bg-emerald-500/20 text-emerald-400" :
+              value >= 75 ? "bg-lime-500/20 text-lime-400" :
+                value >= 65 ? "bg-yellow-500/20 text-yellow-400" :
+                  "bg-gray-500/20 text-gray-400"
+          )}>{value}</span>
         </div>
-        <div className="h-1.5 w-full bg-black/30 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full ${getBarColor(value)}`} style={{ width: `${value}%` }}></div>
+        <div className="relative h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/10">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-500 ease-out",
+              getBarColor(value),
+              getBarGlow(value)
+            )}
+            style={{ width: `${value}%` }}
+          >
+            <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+          </div>
         </div>
       </div>
     )
 
     if (player.role === 'goalkeeper') {
       return (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {renderAttributeBar('Reflexos', getAttrValue(player.metaInformation.reflexes))}
           {renderAttributeBar('Defesa', getAttrValue(player.metaInformation.diving))}
           {renderAttributeBar('Mãos', getAttrValue(player.metaInformation.handling))}
@@ -150,7 +189,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
       )
     } else {
       return (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {renderAttributeBar('Físico', getAttrValue(player.metaInformation.physical))}
           {renderAttributeBar('Técnica', getAttrValue(player.metaInformation.skills))}
           {renderAttributeBar('Passe', getAttrValue(player.metaInformation.passing))}
@@ -162,12 +201,13 @@ export function PlayerCard({ player }: PlayerCardProps) {
     }
   }
 
+
   const renderGameStats = () => {
     const gameStats = player.stats
 
     if (!gameStats) {
       return (
-        <div className="text-center py-2 text-gray-500 text-sm">
+        <div className="text-center py-6 text-gray-500 text-sm">
           Estatísticas não disponíveis
         </div>
       )
@@ -180,138 +220,213 @@ export function PlayerCard({ player }: PlayerCardProps) {
     const redCards = gameStats.redCards || 0
     const mvps = gameStats.mvps || 0
 
-    const statItem = (value: number, label: string) => (
-
-      <div className="flex flex-col items-center">
-        <div className="text-lg font-bold">{value}</div>
-        <div className="text-xs text-gray-400">{label}</div>
+    const statItem = (value: number, label: string, icon?: React.ReactNode) => (
+      <div className="flex flex-col items-center gap-1 group/stat">
+        <div className={cn(
+          "text-xl font-bold transition-all",
+          value > 0 ? "text-white" : "text-gray-600"
+        )}>
+          {value}
+        </div>
+        <div className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{label}</div>
+        {icon && <div className="opacity-0 group-hover/stat:opacity-100 transition-opacity">{icon}</div>}
       </div>
     )
 
     return (
-      <div className="grid grid-cols-3 gap-3 mt-4">
-        {statItem(games, "Jogos")}
-        {statItem(goals, "Gols")}
-        {statItem(assists, "Assists")}
-        {statItem(yellowCards, "Amarelos")}
-        {statItem(redCards, "Vermelhos")}
-        {statItem(mvps, "MVP")}
+      <div className="space-y-3">
+        <div className="grid grid-cols-3 gap-4">
+          {statItem(games, "Jogos")}
+          {statItem(goals, "Gols")}
+          {statItem(assists, "Assists")}
+        </div>
+        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+        <div className="grid grid-cols-3 gap-4">
+          {statItem(yellowCards, "Amarelos")}
+          {statItem(redCards, "Vermelhos")}
+          {statItem(mvps, "MVP")}
+        </div>
       </div>
     )
   }
 
   return (
-    <div
-      className="group relative h-full w-72"
-      style={{ minHeight: '420px' }}
+    <article
+      className="group relative h-full w-full max-w-[280px] mx-auto"
+      style={{ minHeight: '440px' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      aria-label={`Cartão do jogador ${player.shortName}`}
     >
+      {/* Card Container com efeito de profundidade */}
       <div
-        className={`h-full rounded-lg overflow-hidden border transition-all duration-300 shadow-lg ${isWildcard ? "shadow-amber-900/30 relative" : ""}`}
-        style={{ borderColor: cardStyle.borderColor, borderWidth: "2px" }}
+        className={cn(
+          "relative h-full rounded-xl overflow-hidden border-2 transition-all duration-500",
+          "shadow-2xl backdrop-blur-sm",
+          isHovered && "transform scale-105 -translate-y-2"
+        )}
+        style={{
+          borderColor: cardStyle.borderColor,
+          boxShadow: isHovered ? `0 20px 40px ${cardStyle.glowColor}, 0 0 20px ${cardStyle.glowColor}` : undefined
+        }}
       >
+        {/* Background gradient */}
+        <div
+          className={cn(
+            "absolute inset-0 bg-gradient-to-b",
+            cardStyle.cardBg
+          )}
+          style={{
+            backgroundImage: `
+              radial-gradient(circle at 20% 80%, ${cardStyle.glowColor} 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, ${cardStyle.glowColor} 0%, transparent 50%)
+            `
+          }}
+        />
+
+        {/* Wildcard shimmer effect */}
         {isWildcard && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {/* Efeito de brilho diagonal aprimorado */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
             <div
-              className="absolute -inset-full w-[60%] h-[200%] z-5 block opacity-0 group-hover:opacity-100 transition-opacity"
+              className={cn(
+                "absolute -inset-full w-[60%] h-[200%] opacity-0 transition-opacity duration-300",
+                isHovered && "opacity-100"
+              )}
               style={{
-                background: "linear-gradient(225deg, transparent, rgba(255,255,255,0.4) 30%, transparent 60%)",
+                background: "linear-gradient(225deg, transparent, rgba(255,255,255,0.5) 30%, transparent 60%)",
                 transform: "rotate(30deg)",
-                animation: "diagonal-shine 1.7s ease-in-out infinite",
-                animationDelay: "0.1s",
+                animation: isHovered ? "diagonal-shine 1.7s ease-in-out infinite" : "none",
                 top: "-200%",
                 left: "-100%"
-              }}
-            />
-            <div
-              className="absolute inset-0 w-full h-full z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{
-                background: "radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 60%)",
-                animation: "pulse-glow 1s ease-in-out infinite"
               }}
             />
           </div>
         )}
 
-        <div className={`p-3 ${cardStyle.headerBg}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${cardStyle.ratingBg} ${cardStyle.ratingText} font-bold text-xl`}>
-                {isWildcard ? "★" : playerRating}
+        {/* Card Content */}
+        <div className="relative z-20 h-full flex flex-col">
+          {/* Header */}
+          <div className="p-4 pb-3">
+            <div className="flex items-start justify-between gap-3">
+              {/* Rating Badge */}
+              <div className={cn(
+                "flex items-center justify-center w-14 h-14 rounded-lg font-black text-2xl shadow-lg relative overflow-hidden",
+                cardStyle.ratingBg,
+                cardStyle.ratingText
+              )}>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <span className="relative z-10 drop-shadow-md">
+                  {isWildcard ? "★" : playerRating}
+                </span>
               </div>
-              <div>
-                <h3 className="font-bold text-white whitespace-nowrap">{player.shortName}</h3>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: roleColor[player.role], color: 'white' }}>
-                    {player.role === 'goalkeeper' ? 'GOL' : player.role === 'defender' ? 'DEF' : player.role === 'midfielder' ? 'MEI' : 'ATA'}
+
+              {/* Player Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-black text-lg text-white truncate mb-1 drop-shadow-lg">
+                  {player.shortName}
+                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className="text-[10px] font-black px-2 py-1 rounded-md shadow-md uppercase tracking-wider"
+                    style={{ backgroundColor: roleColor[player.role] }}
+                  >
+                    {roleAbbr[player.role]}
                   </span>
-                  <span className="text-xs text-gray-300">#{player.jersey}</span>
+                  <span className="text-xs text-white/80 font-bold">#{player.jersey}</span>
+                </div>
+              </div>
+
+              {/* Category Badge */}
+              {player.category && (
+                <div className={cn(
+                  "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-lg",
+                  cardStyle.categoryBadge
+                )}>
+                  {isWildcard ? "★ WC" : "DFT"}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Player Image */}
+          <div className="relative flex-1 flex items-end justify-center px-4 pb-2 overflow-hidden">
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(ellipse at bottom, ${cardStyle.glowColor} 0%, transparent 70%)`
+              }}
+            />
+            {player.image?.url ? (
+              <img
+                src={player.image.url}
+                alt={player.shortName}
+                className={cn(
+                  "relative z-10 w-full h-44 object-contain transition-all duration-500",
+                  isHovered && "scale-110 filter drop-shadow-2xl"
+                )}
+                loading="lazy"
+              />
+            ) : (
+              <img
+                src="/kl-player-placeholder.webp"
+                alt={`${player.shortName} placeholder`}
+                className="relative z-10 w-full h-44 object-contain opacity-60"
+                loading="lazy"
+              />
+            )}
+
+            {/* Geometric patterns */}
+            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent"></div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="relative bg-black/60 backdrop-blur-md border-t border-white/10 p-4">
+            {/* Info Bar */}
+            <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
+              <div className="flex items-center gap-3 text-xs">
+                <div className="flex flex-col">
+                  <span className="text-gray-400 text-[9px] uppercase tracking-wider">Idade</span>
+                  <span className="text-white font-bold">{age || '–'}</span>
+                </div>
+                <div className="w-px h-6 bg-white/20"></div>
+                <div className="flex flex-col">
+                  <span className="text-gray-400 text-[9px] uppercase tracking-wider">Altura</span>
+                  <span className="text-white font-bold">{player.height}cm</span>
+                </div>
+                <div className="w-px h-6 bg-white/20"></div>
+                <div className="flex flex-col">
+                  <span className="text-gray-400 text-[9px] uppercase tracking-wider">Posição</span>
+                  <span className="text-white font-bold text-[10px]">{roleMap[player.role]}</span>
                 </div>
               </div>
             </div>
 
-            {player.category && (
-              <div className={`px-1 py-0 rounded-full text-[10px] font-bold ${cardStyle.categoryBadge}`}>
-                {isWildcard ? "★ WC" : "DRAFT"}
-              </div>
+            {/* Toggle Button */}
+            {!isWildcard && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowStats(!showStats)
+                }}
+                className={cn(
+                  "w-full mb-3 text-[10px] px-3 py-2 rounded-lg font-bold uppercase tracking-wider",
+                  "bg-white/10 hover:bg-white/20 text-white/90 hover:text-white",
+                  "border border-white/20 hover:border-white/40",
+                  "transition-all duration-200 backdrop-blur-sm"
+                )}
+                aria-label={showStats ? "Mostrar atributos" : "Mostrar estatísticas"}
+              >
+                {showStats ? "Ver Atributos" : "Ver Estatísticas"}
+              </button>
             )}
-          </div>
-        </div>
 
-        <div className={`relative h-48 ${cardStyle.imageBg}`}>
-          {player.image?.url ? (
-            <img
-              src={player.image.url}
-              alt={player.shortName}
-              className="w-full h-full object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <img
-              src="/kl-player-placeholder.webp"
-              alt={`${player.shortName} placeholder`}
-              className="w-full h-full object-contain"
-              loading="lazy"
-            />
-          )}
-        </div>
-
-        <div className="p-3 bg-[#1a1a1a]">
-
-          <div className="flex justify-end mb-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowStats(!showStats)
-              }}
-              className={cn("text-xs px-2 py-1 rounded bg-[#333] text-gray-300 hover:bg-[#444] transition-colors",
-                isWildcard && "opacity-0 pointer-events-none"
-              )}
-            >
-              {showStats ? "Ver Atributos" : "Ver Estatísticas"}
-            </button>
-          </div>
-
-          <div className="mb-3 pb-3 border-b border-[#333]">
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div>
-                <div className="text-gray-400">Idade</div>
-                <div>{age || '–'} anos</div>
-              </div>
-              <div>
-                <div className="text-gray-400">Altura</div>
-                <div>{player.height}cm</div>
-              </div>
-              <div>
-                <div className="text-gray-400">Posição</div>
-                <div>{roleMap[player.role]}</div>
-              </div>
+            {/* Content */}
+            <div className="min-h-[140px]">
+              {isWildcard ? renderGameStats() : (showStats ? renderGameStats() : renderAttributeBars())}
             </div>
           </div>
-
-          {isWildcard ? renderGameStats() : (showStats ? renderGameStats() : renderAttributeBars())}
         </div>
       </div>
-    </div>
+    </article>
   )
 }

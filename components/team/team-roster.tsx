@@ -1,6 +1,8 @@
 import { PlayerCard } from "@/components/team/player-card"
 import { PlayerCardSkeleton } from "@/components/skeletons/player-card-skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Player } from "@/types/kings-league"
+import { Users } from "lucide-react"
 
 interface TeamRosterProps {
   players: Player[]
@@ -38,8 +40,11 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
       )}
 
       {players.length === 0 && (
-        <div className="text-center py-10 text-gray-400">
-          Nenhum jogador encontrado para este time
+        <div className="text-center py-16">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <Users className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">Nenhum jogador encontrado para este time</p>
         </div>
       )}
     </div>
@@ -48,28 +53,31 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
 
 function RatingLegend() {
   return (
-    <div className="mb-4 p-3 bg-[#252525] border border-[#333] rounded-lg">
-      <h4 className="text-sm font-medium text-[#F4AF23] mb-2">Legenda de cards</h4>
+    <div className="mb-6 p-4 bg-muted/50 border border-border rounded-xl">
+      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary)]"></span>
+        Legenda de cards
+      </h4>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-b from-[#8B6810] to-black border border-[#F4AF23]"></div>
-          <span className="text-xs text-gray-300">Wild Card</span>
+          <div className="w-5 h-5 bg-gradient-to-b from-[#8B6810] to-black border border-[#F4AF23] rounded"></div>
+          <span className="text-xs text-muted-foreground">Wild Card</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-b from-[#3D6EB9] to-black border border-gray-600"></div>
-          <span className="text-xs text-gray-300">Rating 78-82</span>
+          <div className="w-5 h-5 bg-gradient-to-b from-[#3D6EB9] to-black border border-gray-600 rounded"></div>
+          <span className="text-xs text-muted-foreground">Rating 78-82</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-b from-[#D53121] to-black border border-gray-600"></div>
-          <span className="text-xs text-gray-300">Rating 74-77</span>
+          <div className="w-5 h-5 bg-gradient-to-b from-[#D53121] to-black border border-gray-600 rounded"></div>
+          <span className="text-xs text-muted-foreground">Rating 74-77</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-b from-[#10694D] to-black border border-gray-600"></div>
-          <span className="text-xs text-gray-300">Rating 70-73</span>
+          <div className="w-5 h-5 bg-gradient-to-b from-[#10694D] to-black border border-gray-600 rounded"></div>
+          <span className="text-xs text-muted-foreground">Rating 70-73</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-b from-[#323232] to-black border border-gray-600"></div>
-          <span className="text-xs text-gray-300">Rating 65-69</span>
+          <div className="w-5 h-5 bg-gradient-to-b from-[#323232] to-black border border-gray-600 rounded"></div>
+          <span className="text-xs text-muted-foreground">Rating 65-69</span>
         </div>
       </div>
     </div>
@@ -84,8 +92,11 @@ interface PositionSectionProps {
 function PositionSection({ title, players }: PositionSectionProps) {
   return (
     <div>
-      <h3 className="font-medium text-lg mb-3 text-[#F4AF23]">{title}</h3>
-      <div className="flex flex-wrap justify-center sm:justify-start gap-6">
+      <h3 className="font-semibold text-base mb-4 text-foreground flex items-center gap-2">
+        <span className="w-1 h-5 bg-[var(--team-primary)] rounded-full"></span>
+        {title}
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
         {players.map(player => (
           <div key={player.id} className="w-72">
             <PlayerCard player={player} />
@@ -99,14 +110,14 @@ function PositionSection({ title, players }: PositionSectionProps) {
 function TeamRosterSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="mb-4 p-3 bg-[#252525] border border-[#333] rounded-lg">
+      <div className="mb-6 p-4 bg-muted/50 border border-border rounded-xl">
         {/* Skeleton para a legenda */}
-        <div className="h-6 w-32 mb-3 bg-[#333] rounded animate-pulse"></div>
+        <Skeleton className="h-5 w-32 mb-3" />
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {Array(5).fill(0).map((_, i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-[#333] rounded"></div>
-              <div className="h-3 w-16 bg-[#333] rounded animate-pulse"></div>
+              <Skeleton className="w-5 h-5 rounded" />
+              <Skeleton className="h-3 w-20" />
             </div>
           ))}
         </div>
@@ -114,7 +125,7 @@ function TeamRosterSkeleton() {
 
       {['Goleiros', 'Defensores', 'Meio-campistas', 'Atacantes'].map((position) => (
         <div key={position}>
-          <div className="h-6 w-32 mb-3 bg-[#333] rounded animate-pulse"></div>
+          <Skeleton className="h-6 w-32 mb-4" />
           <div className="flex flex-wrap justify-center sm:justify-start gap-6">
             {Array(position === 'Goleiros' ? 2 : 4).fill(0).map((_, i) => (
               <div key={i} className="w-72">
