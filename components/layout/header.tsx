@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Menu, X, Share2, Trophy, Heart, ChevronDown, Home } from "lucide-react"
+import { Menu, X, Share2, Trophy, Heart, ChevronDown, Home, Shield } from "lucide-react"
 import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import Link from "next/link"
@@ -521,98 +521,124 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="flex items-center gap-2 bg-card border-border hover:bg-muted transition-all duration-200 h-10 px-3 text-sm"
+            className="flex items-center gap-2 bg-card border-border hover:bg-muted transition-all duration-200 h-10 px-3 text-sm shadow-sm"
             aria-label={favoriteTeam ? `Time selecionado: ${favoriteTeam.name}` : selectedTeam ? `Time selecionado: ${teams[selectedTeam].name}` : "Selecionar time"}
           >
             {favoriteTeam ? (
               <>
-                <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-background ring-1 ring-border">
+                <div className="w-6 h-6 rounded-lg overflow-hidden shrink-0 bg-background ring-1 ring-[#F4AF23]/50 shadow-sm">
                   <img
                     src={favoriteTeam.logo?.url || "/placeholder-logo.svg"}
                     alt=""
                     width={24}
                     height={24}
-                    className="object-contain w-full h-full"
+                    className="object-contain w-full h-full p-0.5"
                     loading="lazy"
                   />
                 </div>
                 <span className="truncate max-w-[100px] text-foreground hidden sm:inline font-medium">
                   {favoriteTeam.name}
                 </span>
-                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Heart className="w-3.5 h-3.5 text-[#F4AF23] shrink-0" fill="currentColor" strokeWidth={0} aria-hidden="true" />
               </>
             ) : selectedTeam ? (
               <>
-                <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-background ring-1 ring-border">
+                <div className="w-6 h-6 rounded-lg overflow-hidden shrink-0 bg-background ring-1 ring-border">
                   <img
                     src={teams[selectedTeam].logo?.url || "/placeholder-logo.svg"}
                     alt=""
                     width={24}
                     height={24}
-                    className="object-contain w-full h-full"
+                    className="object-contain w-full h-full p-0.5"
                     loading="lazy"
                   />
                 </div>
                 <span className="truncate max-w-[100px] text-foreground hidden sm:inline">
                   {teams[selectedTeam].name}
                 </span>
-                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
               </>
             ) : (
               <>
-                <Trophy className="w-4 h-4 text-[var(--team-primary)] shrink-0" />
+                <Shield className="w-4 h-4 text-[#F4AF23] shrink-0" aria-hidden="true" />
                 <span className="hidden sm:inline text-muted-foreground">Times</span>
-                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
               </>
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-64 bg-card border-border shadow-xl" align="end" sideOffset={8}>
-          <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
-            Times
+        <DropdownMenuContent className="w-72 bg-card border-border shadow-xl" align="end" sideOffset={8}>
+          <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 flex items-center justify-between">
+            <span>Escolha seu time</span>
+            <span className="text-[10px] font-normal normal-case text-muted-foreground/60">
+              {standings.length} times
+            </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border" />
-          <div className="max-h-[60vh] overflow-y-auto py-1">
-            {standings.map((team) => (
-              <DropdownMenuItem
-                key={team.id}
-                className={cn(
-                  "cursor-pointer flex items-center gap-2.5 hover:bg-muted focus:bg-muted justify-between py-2.5",
-                  selectedTeam === team.id && "bg-muted"
-                )}
-                onClick={() => handleTeamSelect(team.id)}
-              >
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-background ring-1 ring-border">
-                    <img
-                      src={teams[team.id].logo?.url || "/placeholder-logo.svg"}
-                      alt=""
-                      width={28}
-                      height={28}
-                      className="object-contain w-full h-full"
-                      loading="lazy"
-                    />
-                  </div>
-                  <span className="truncate text-sm">{teams[team.id].name}</span>
-                </div>
+          <div className="h-[62vh]  py-1">
+            {standings.map((team) => {
+              const isFavorite = favoriteTeam?.id === team.id
+              const isSelected = selectedTeam === team.id
 
-                <Button
-                  variant="ghost"
-                  size="icon"
+              return (
+                <DropdownMenuItem
+                  key={team.id}
                   className={cn(
-                    "h-7 w-7 p-0 rounded-full hover:bg-muted-foreground/10 shrink-0",
-                    favoriteTeam?.id === team.id && "text-[var(--team-primary)]"
+                    "cursor-pointer flex items-center gap-3 hover:bg-muted focus:bg-muted justify-between py-2.5 px-3 mx-1 rounded-md transition-colors group",
+                    isSelected && "bg-muted/50",
+                    isFavorite && "bg-[#F4AF23]/5 hover:bg-[#F4AF23]/10"
                   )}
-                  onClick={(e) => handleFavoriteButtonClick(teams[team.id], e)}
-                  aria-label={favoriteTeam?.id === team.id ? `Remover ${teams[team.id].name} dos favoritos` : `Adicionar ${teams[team.id].name} aos favoritos`}
+                  onClick={() => handleTeamSelect(team.id)}
                 >
-                  <Heart
-                    className="h-4 w-4"
-                    fill={favoriteTeam?.id === team.id ? "currentColor" : "none"}
-                  />
-                </Button>
-              </DropdownMenuItem>
-            ))}
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={cn(
+                      "w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-background ring-1 transition-all",
+                      isFavorite ? "ring-[#F4AF23]/50 shadow-sm shadow-[#F4AF23]/20" : "ring-border"
+                    )}>
+                      <img
+                        src={teams[team.id].logo?.url || "/placeholder-logo.svg"}
+                        alt=""
+                        width={36}
+                        height={36}
+                        className="object-contain w-full h-full p-1"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "truncate text-sm font-medium",
+                        isFavorite && "text-[#F4AF23]"
+                      )}>
+                        {teams[team.id].name}
+                      </p>
+                      {isFavorite && (
+                        <p className="text-[10px] text-muted-foreground">Seu favorito</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8 p-0 rounded-lg hover:bg-background/80 shrink-0 transition-all",
+                      isFavorite && "text-[#F4AF23] hover:text-[#F4AF23]/80"
+                    )}
+                    onClick={(e) => handleFavoriteButtonClick(teams[team.id], e)}
+                    aria-label={isFavorite ? `Remover ${teams[team.id].name} dos favoritos` : `Adicionar ${teams[team.id].name} aos favoritos`}
+                  >
+                    <Heart
+                      className={cn(
+                        "h-4 w-4 transition-all",
+                        isFavorite && "scale-110"
+                      )}
+                      fill={isFavorite ? "currentColor" : "none"}
+                      strokeWidth={isFavorite ? 0 : 2}
+                    />
+                  </Button>
+                </DropdownMenuItem>
+              )
+            })}
           </div>
         </DropdownMenuContent>
       </DropdownMenu>

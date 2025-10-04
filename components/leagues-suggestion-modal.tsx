@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/hooks/use-toast"
 
-const LEAGUES = [
+export const LEAGUES = [
   { id: "espanha", name: "Espanha" },
   { id: "americas", name: "Americas" },
   { id: "italia", name: "Itália" },

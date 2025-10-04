@@ -2,7 +2,9 @@ import React from 'react';
 import { Team } from '@/types/kings-league';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Heart, HeartCrack, Star, Trophy } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Heart, Sparkles, ArrowRight, Info } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FavoriteTeamModalProps {
   open: boolean;
@@ -23,115 +25,171 @@ export function FavoriteTeamModal({
   newTeam,
   isSwitching,
 }: FavoriteTeamModalProps) {
-  const messages = {
-    add: {
-      title: "Escolher time do coração",
-      description: "Quer mesmo definir o time abaixo como seu favorito? As cores do site serão adaptadas a este time.",
-    },
-    switch: {
-      title: "Trocar de time do coração?",
-      description: "Então você é desses que fica trocando de time quando a fase não está boa? Tem certeza que quer trocar seu time do coração?",
-    },
-  };
+  // Frases engraçadas para quando o usuário troca de time
+  const funnyPhrases = [
+    "Tá trocando de time? Isso aí, a fidelidade durou quanto tempo mesmo? 😅",
+    "Então é assim que funciona? Time perdeu, já era? Torcedor moderno demais! 🤔",
+    "Seu time antigo vai sentir sua falta... ou não 😏",
+    "Muda de time como quem troca de camisa, né? Literalmente! 👕",
+    "O técnico do seu time antigo está chorando agora... 😢",
+    "Já pensou em ser agente? Você troca de time melhor que muito jogador! ⚽",
+    "Torcedor desde quando? Desde agora! 🆕",
+    "Pelo menos é sincero. Respeito! 💯",
+    "Seu time do coração vai virar seu time do 'lembrar com carinho'... 💔",
+    "Até a tatuagem você vai ter que trocar agora! 😂",
+  ];
 
-  const content = isSwitching ? messages.switch : messages.add;
+  const randomPhrase = funnyPhrases[Math.floor(Math.random() * funnyPhrases.length)];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[var(--team-primary)]">
-            {isSwitching ? <HeartCrack className="h-5 w-5" /> : <Heart className="h-5 w-5" />}
-            {content.title}
-          </DialogTitle>
-          <DialogDescription>
-            {content.description}
+      <DialogContent className="sm:max-w-lg border-border bg-card">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-[#F4AF23]/10">
+              <Heart className="h-5 w-5 text-[#F4AF23]" aria-hidden="true" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-foreground">
+              {isSwitching ? 'Trocar time do coração?' : 'Definir time favorito'}
+            </DialogTitle>
+          </div>
+          <DialogDescription className="text-muted-foreground leading-relaxed">
+            {isSwitching
+              ? 'Você está prestes a trocar seu time do coração. As cores do site serão atualizadas para refletir o novo time.'
+              : 'Ao definir um time como favorito, as cores do site serão personalizadas de acordo com as cores do time escolhido.'
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4">
-          {isSwitching && currentTeam && (
-            <div className="flex items-center justify-center mb-6">
-              <div className="flex items-center gap-3 bg-[#252525] py-2 px-3 rounded-full">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
-                  <img
-                    src={currentTeam.logo?.url || "/placeholder-logo.svg"}
-                    alt={currentTeam.name}
-                    width={32}
-                    height={32}
-                    className="object-contain w-full h-full"
-                    loading="lazy"
-                  />
+        <div className="py-6 space-y-6">
+          {/* Visualização da Troca */}
+          <div className="flex items-center justify-center gap-4">
+            {isSwitching && currentTeam && (
+              <>
+                {/* Time Atual */}
+                <div className="flex flex-col items-center gap-3 flex-1">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-muted ring-2 ring-border shadow-lg">
+                      <img
+                        src={currentTeam.logo?.url || "/placeholder-logo.svg"}
+                        alt={currentTeam.name}
+                        className="object-contain w-full h-full p-2"
+                        loading="lazy"
+                      />
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="absolute -top-2 -right-2 text-xs bg-muted text-muted-foreground"
+                    >
+                      Atual
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-medium text-foreground text-center">
+                    {currentTeam.name}
+                  </p>
                 </div>
-                <span className="text-sm text-gray-300 flex items-center gap-1.5">
-                  <HeartCrack className="h-4 w-4 text-red-400" />
-                  {currentTeam.name}
-                </span>
-              </div>
 
-              <div className="mx-3 text-gray-500">para</div>
-
-              <div className="flex items-center gap-3 bg-[#252525] py-2 px-3 rounded-full">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
-                  <img
-                    src={newTeam.logo?.url || "/placeholder-logo.svg"}
-                    alt={newTeam.name}
-                    width={32}
-                    height={32}
-                    className="object-contain w-full h-full"
-                    loading="lazy"
-                  />
+                {/* Seta */}
+                <div className="flex-shrink-0">
+                  <ArrowRight className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
                 </div>
-                <span className="text-sm text-gray-300 flex items-center gap-1.5">
-                  <Heart className="h-4 w-4 text-red-400" />
-                  {newTeam.name}
-                </span>
-              </div>
-            </div>
-          )}
 
-          {!isSwitching && (
-            <div className="flex items-center justify-center">
-              <div className="flex items-center gap-3 bg-[#252525] py-2 px-4 rounded-full">
-                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-black/30 ring-1 ring-white/10">
-                  <img
-                    src={newTeam.logo?.url || "/placeholder-logo.svg"}
-                    alt={newTeam.name}
-                    width={40}
-                    height={40}
-                    className="object-contain w-full h-full"
-                    loading="lazy"
-                  />
+                {/* Novo Time */}
+                <div className="flex flex-col items-center gap-3 flex-1">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#F4AF23]/10 ring-2 ring-[#F4AF23]/50 shadow-lg shadow-[#F4AF23]/20">
+                      <img
+                        src={newTeam.logo?.url || "/placeholder-logo.svg"}
+                        alt={newTeam.name}
+                        className="object-contain w-full h-full p-2"
+                        loading="lazy"
+                      />
+                    </div>
+                    <Badge
+                      variant="default"
+                      className="absolute -top-2 -right-2 text-xs bg-[#F4AF23] text-black font-semibold"
+                    >
+                      Novo
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-medium text-foreground text-center">
+                    {newTeam.name}
+                  </p>
                 </div>
-                <span className="text-white font-medium">{newTeam.name}</span>
-                <Star className="h-4 w-4 text-[var(--team-primary)]" />
-              </div>
-            </div>
-          )}
+              </>
+            )}
 
-          {isSwitching && (
-            <div className="mt-6 mb-2 text-sm text-amber-400 bg-amber-950/30 p-3 rounded-md border border-amber-800/30 flex items-start gap-2">
-              <Trophy className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <p>Torcedores de verdade acompanham seus times na vitória e na derrota. O time do coração é para vida toda!</p>
+            {!isSwitching && (
+              /* Apenas o Novo Time */
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#F4AF23]/10 ring-2 ring-[#F4AF23]/50 shadow-xl shadow-[#F4AF23]/20">
+                    <img
+                      src={newTeam.logo?.url || "/placeholder-logo.svg"}
+                      alt={newTeam.name}
+                      className="object-contain w-full h-full p-3"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-[#F4AF23] text-black font-semibold flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" aria-hidden="true" />
+                      Favorito
+                    </Badge>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-foreground mb-1">
+                    {newTeam.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Seu novo time do coração
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Informação */}
+          <div className={cn(
+            "flex items-start gap-3 p-4 rounded-lg border",
+            isSwitching
+              ? "bg-amber-500/5 border-amber-500/20"
+              : "bg-[#F4AF23]/5 border-[#F4AF23]/20"
+          )}>
+            <Info className={cn(
+              "w-5 h-5 flex-shrink-0 mt-0.5",
+              isSwitching ? "text-amber-500" : "text-[#F4AF23]"
+            )} aria-hidden="true" />
+            <div className="space-y-1 text-sm">
+              <p className="font-medium text-foreground">
+                {isSwitching ? randomPhrase : 'O que vai mudar?'}
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                {isSwitching
+                  ? 'A personalização do site será transferida para o novo time. Você pode mudar novamente quando quiser (óbvio, né?).'
+                  : 'As cores do site, destaques e elementos visuais serão personalizados com as cores do time escolhido.'
+                }
+              </p>
             </div>
-          )}
+          </div>
         </div>
 
-        <DialogFooter className="flex gap-2 sm:justify-between">
+        <DialogFooter className="gap-2 sm:gap-3">
           <Button
             type="button"
             variant="outline"
-            className="border-white/10 hover:bg-[#252525] hover:text-white"
             onClick={onCancel}
+            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
           <Button
             type="button"
-            className="bg-[var(--team-primary)] hover:bg-[var(--team-primary)]/80 text-black"
             onClick={onConfirm}
+            className="w-full sm:w-auto bg-[#F4AF23] hover:bg-[#F4AF23]/90 text-black font-semibold"
           >
-            {isSwitching ? 'Sim, trocar' : 'Definir como favorito'}
+            {isSwitching ? 'Confirmar troca' : 'Definir como favorito'}
           </Button>
         </DialogFooter>
       </DialogContent>
