@@ -9,7 +9,9 @@ import { Footer } from "@/components/layout/footer"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { Team, TeamStanding } from "@/types/kings-league"
-import NumberFlow from '@number-flow/react'
+import TextType from "@/components/text-type"
+import CurvedLoop from "@/components/curved-loop"
+import CountUp from "@/components/count-up"
 
 export default function HomePage() {
   const [animateHero, setAnimateHero] = useState(false)
@@ -17,6 +19,7 @@ export default function HomePage() {
   const [teamsRecord, setTeamsRecord] = useState<Record<string, Team>>({})
   const [standings, setStandings] = useState<TeamStanding[]>([])
   const [loading, setLoading] = useState(true)
+  const [simulationsCount, setSimulationsCount] = useState(Math.floor(Math.random() * 40000) + 10000)
   const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>({
     hero: false,
     features: false,
@@ -40,13 +43,14 @@ export default function HomePage() {
     )
   }
 
-  // Usando useRef para armazenar o valor fixo gerado apenas uma vez
-  const simulationsCount = useRef(Math.floor(Math.random() * 40000) + 10000);
+  // Efeito para incrementar as simulações a cada 2 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSimulationsCount(prev => prev + Math.floor(Math.random() * 10) + 1)
+    }, 2000)
 
-  // Função formatadora que usa o valor armazenado no ref
-  const generateSimulationsPerfomed = () => {
-    return simulationsCount.current
-  }
+    return () => clearInterval(interval)
+  }, [])
 
   // Efeito para animações baseadas em scroll com comportamento aprimorado
   useEffect(() => {
@@ -149,13 +153,20 @@ export default function HomePage() {
 
             {/* Main Headline */}
             <h1 id="hero-heading" className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
+              <span className="text-white">
                 Simule o Futuro
               </span>
               <br />
-              <span className="bg-gradient-to-r from-[var(--team-primary)] to-[var(--team-primary)]/60 bg-clip-text text-transparent">
-                Do Seu Time
-              </span>
+              <TextType
+                text={["Do Seu Time", "Da Kings League", "Da Temporada"]}
+                typingSpeed={100}
+                deletingSpeed={50}
+                pauseDuration={2000}
+                className="text-[var(--team-primary)] drop-shadow-[0_0_30px_var(--team-primary)]"
+                cursorCharacter="_"
+                cursorClassName="text-[var(--team-primary)]"
+                showCursor={true}
+              />
             </h1>
 
             {/* Subtitle */}
@@ -169,10 +180,11 @@ export default function HomePage() {
             <div className="flex items-center justify-center gap-6 mb-10 text-sm text-gray-400">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <NumberFlow
-                  value={generateSimulationsPerfomed()}
-                  defaultValue={0}
-                  prefix="+"
+                <span className="font-bold text-white">+</span>
+                <CountUp
+                  to={simulationsCount}
+                  duration={1.5}
+                  separator=","
                   className="font-bold text-white"
                 />
                 <span>simulações</span>
@@ -231,8 +243,20 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Divisória Curved Loop 1 */}
+      <div className="relative overflow-hidden">
+        <CurvedLoop
+          marqueeText="KINGS LEAGUE ✦ SIMULADOR 2025 ✦ "
+          speed={2}
+          curveAmount={0}
+          direction="right"
+          className="fill-var(--team-primary)]"
+          interactive={false}
+        />
+      </div>
+
       {/* Seção Recursos - Redesenhada */}
-      <section ref={featuresRef} className="py-16 md:py-24" id="recursos">
+      <section ref={featuresRef} className="py-4 md:py-8" id="recursos">
         <div className="container mx-auto px-4">
           <div className={`text-center mb-12 md:mb-16 transition-all duration-700 ${visibleSections.features ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <span className="inline-block px-4 py-1.5 bg-[var(--team-primary)]/10 text-[var(--team-primary)] text-sm font-semibold rounded-full mb-4 border border-[var(--team-primary)]/20">
@@ -367,8 +391,20 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Divisória Curved Loop 2 */}
+      <div className="relative overflow-hidde">
+        <CurvedLoop
+          marqueeText="CONHEÇA OS TIMES ✦ ESCOLHA SEU FAVORITO ✦ "
+          speed={2}
+          curveAmount={0}
+          direction="left"
+          className="fill-var(--team-primary)]"
+          interactive={false}
+        />
+      </div>
+
       {/* Seção de Times - Redesenhada */}
-      <section ref={teamsRef} className="py-16 md:py-24 bg-[#0a0a0a] relative overflow-hidden">
+      <section ref={teamsRef} className="py-4 md:py-8 bg-[#0a0a0a] relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[var(--team-primary)]/5 rounded-full blur-3xl" />
         </div>
@@ -448,8 +484,20 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Divisória Curved Loop 3 */}
+      <div className="relative overflow-hidden">
+        <CurvedLoop
+          marqueeText="SEJA O CAMPEÃO ✦ SIMULE AGORA ✦ "
+          speed={2}
+          curveAmount={0}
+          direction="right"
+          className="fill-var(--team-primary)"
+          interactive={false}
+        />
+      </div>
+
       {/* CTA Final - Redesenhado */}
-      <section ref={ctaRef} className="py-16 md:py-24 relative overflow-hidden">
+      <section ref={ctaRef} className="py-4 md:py-8 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[var(--team-primary)]/10 rounded-full blur-3xl" />
         </div>
@@ -503,7 +551,13 @@ export default function HomePage() {
             </div>
 
             <p className="mt-6 text-sm text-gray-500">
-              Junte-se a <NumberFlow value={generateSimulationsPerfomed()} prefix="+" className="font-bold text-[var(--team-primary)]" /> fãs que já simularam
+              Junte-se a <span className="font-bold text-[var(--team-primary)]">+</span>
+              <CountUp
+                to={simulationsCount}
+                duration={1.5}
+                separator=","
+                className="font-bold text-[var(--team-primary)]"
+              /> fãs que já simularam
             </p>
           </div>
         </div>
