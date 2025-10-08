@@ -24,33 +24,11 @@ export default function Teams() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Verifica se existe cache no localStorage e se ainda é válido (24 horas)
-        const cachedData = localStorage.getItem('@kl-simulador:teams-page-cache')
-        const cachedTimestamp = localStorage.getItem('@kl-simulador:teams-page-cache-timestamp')
-        const now = Date.now()
-        const CACHE_EXPIRY_TIME = 24 * 60 * 60 * 1000 // 24 horas em milissegundos
-
-        // Se o cache existir e ainda não tiver expirado
-        if (cachedData && cachedTimestamp && now - parseInt(cachedTimestamp) < CACHE_EXPIRY_TIME) {
-          try {
-            const parsedData = JSON.parse(cachedData)
-            setTeams(parsedData.teams)
-            setStandings(parsedData.standings)
-            setTeamDetails(parsedData.teamDetails)
-            setLoading(false)
-            return
-          } catch (parseError) {
-            console.warn('Erro ao analisar dados em cache:', parseError)
-          }
-        }
-
-        // Se não tiver cache ou o cache estiver expirado, busca dados novos
+        // Buscar dados da liga (já cacheados pela API do Next.js)
         const leagueData = await fetchLeagueData()
         if (leagueData?.teams) {
           setTeams(leagueData.teams)
           setStandings(leagueData.standings || [])
-
-          const teamDetailsMap: Record<string, TeamDetails> = {}
 
           // Buscar detalhes de cada time para obter os presidentes
           await Promise.all(
@@ -59,7 +37,6 @@ export default function Teams() {
                 const response = await fetch(`/api/team-details/${team.id}`)
                 if (response.ok) {
                   const teamDetail = await response.json()
-                  teamDetailsMap[team.id] = teamDetail
                   setTeamDetails(prev => ({
                     ...prev,
                     [team.id]: teamDetail
@@ -70,15 +47,6 @@ export default function Teams() {
               }
             })
           )
-
-          // Salvar no localStorage com timestamp atual
-          const dataToCache = {
-            teams: leagueData.teams,
-            standings: leagueData.standings || [],
-            teamDetails: teamDetailsMap
-          }
-          localStorage.setItem('@kl-simulador:teams-page-cache', JSON.stringify(dataToCache))
-          localStorage.setItem('@kl-simulador:teams-page-cache-timestamp', now.toString())
 
           setLoading(false)
         }
