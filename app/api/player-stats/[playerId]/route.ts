@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import type { PlayerStats } from "@/types/kings-league"
 
+const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+
 export async function GET(
   request: Request,
   { params }: { params: { playerId: string } }
@@ -9,7 +11,7 @@ export async function GET(
     const { playerId } = await params
 
     const statsResponse = await fetch(
-      `https://kingsleague.pro/api/v1/competition/players/${playerId}/season-data/33/stats`,
+      `https://kingsleague.pro/api/v1/competition/players/${playerId}/season-data/${SEASON_ID}/stats`,
       {
         headers: {
           referer: "https://kingsleague.pro/pt/brazil/teams",

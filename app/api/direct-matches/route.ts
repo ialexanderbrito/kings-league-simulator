@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
 
+const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+
 export async function GET() {
   try {
-    const response = await fetch("https://kingsleague.pro/api/v1/competition/seasons/33/match-center-data?lang=pt", {
+    const response = await fetch(`https://kingsleague.pro/api/v1/competition/seasons/${SEASON_ID}/match-center-data?lang=pt`, {
       headers: {
         referer: "https://kingsleague.pro/en/brazil/matches",
         "User-Agent":

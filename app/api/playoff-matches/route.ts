@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { PlayoffBracket, PlayoffMatch } from "@/types/kings-league";
 
+const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+
 // Simular um banco de dados com um chaveamento de playoffs inicial
 let playoffMatchesDB: PlayoffBracket | null = null;
 
@@ -88,7 +90,7 @@ function convertBracketToTurns(bracket: PlayoffBracket): any[] {
       return {
         id: parseInt(matchId || "0"),
         date: new Date().toISOString(), // Data placeholder
-        seasonId: 33,
+        seasonId: 35,
         phaseId: 76,
         groupId: 79,
         turnId: 361,
@@ -156,7 +158,7 @@ function convertBracketToTurns(bracket: PlayoffBracket): any[] {
       return {
         id: parseInt(matchId || "0"),
         date: new Date().toISOString(), // Data placeholder
-        seasonId: 33,
+        seasonId: 35,
         phaseId: 76,
         groupId: 79,
         turnId: 362,
@@ -228,7 +230,7 @@ function convertBracketToTurns(bracket: PlayoffBracket): any[] {
         {
           id: parseInt(matchId || "0"),
           date: new Date().toISOString(), // Data placeholder
-          seasonId: 33,
+          seasonId: 35,
           phaseId: 76,
           groupId: 79,
           turnId: 363,
@@ -415,7 +417,7 @@ export async function GET() {
     try {
       console.log("Buscando dados da API externa...");
       const externalApiResponse = await fetch(
-        "https://kingsleague.pro/api/v1/competition/seasons/33/match-center-data?lang=pt", 
+        `https://kingsleague.pro/api/v1/competition/seasons/${SEASON_ID}/match-center-data?lang=pt`, 
         {
           headers: {
             referer: "https://kingsleague.pro/en/brazil/matches",

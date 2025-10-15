@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+
 export async function GET(
   request: Request,
   { params }: { params: { teamId: string } }
@@ -24,7 +26,7 @@ export async function GET(
     const teamDetails = await teamDetailsResponse.json()
 
     const staffResponse = await fetch(
-      `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/33/staffs`,
+      `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/${SEASON_ID}/staffs`,
       {
         headers: {
           referer: "https://kingsleague.pro/pt/brazil/teams",
@@ -36,7 +38,7 @@ export async function GET(
     )
 
     const playersResponse = await fetch(
-      `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/33/players`,
+      `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/${SEASON_ID}/players`,
       {
         headers: {
           referer: "https://kingsleague.pro/pt/brazil/teams",

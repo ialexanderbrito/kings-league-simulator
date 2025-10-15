@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server"
 import type { LeagueData, Team, TeamStanding, Round } from "@/types/kings-league"
 
+const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+
 export async function GET() {
   try {
 
-    const seasonResponse = await fetch("https://kingsleague.pro/api/v1/competition/seasons/33", {
+    const seasonResponse = await fetch(`https://kingsleague.pro/api/v1/competition/seasons/${SEASON_ID}`, {
       headers: {
         referer: "https://kingsleague.pro/pt/brazil/classificacao",
         "User-Agent":
@@ -20,7 +22,7 @@ export async function GET() {
     const seasonData = await seasonResponse.json()
 
     const matchesResponse = await fetch(
-      "https://kingsleague.pro/api/v1/competition/seasons/33/match-center-data?lang=pt",
+      `https://kingsleague.pro/api/v1/competition/seasons/${SEASON_ID}/match-center-data?lang=pt`,
       {
         headers: {
           referer: "https://kingsleague.pro/en/brazil/matches",
