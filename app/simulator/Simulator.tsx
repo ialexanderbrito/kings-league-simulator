@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle, Trophy } from "lucide-react"
 import TeamCarousel from "@/components/team-carousel"
@@ -55,7 +55,14 @@ export default function SimulatorPage() {
       setTeams(teamsDict)
 
       setRounds(data.rounds)
-      setStandings(data.standings)
+      // Garante que standings seja sempre um array de TeamStanding
+      let parsedStandings: any[] = []
+      if (Array.isArray(data.standings)) {
+        parsedStandings = data.standings
+      } else if (data.standings && typeof data.standings === 'object') {
+        parsedStandings = Object.values(data.standings).flat()
+      }
+      setStandings(parsedStandings as any[])
 
       setLoading(false)
     } catch (err: any) {
@@ -72,12 +79,26 @@ export default function SimulatorPage() {
   const handleScoreUpdate = (
     roundId: number,
     matchId: number,
-    homeScore: number | null,
-    awayScore: number | null,
+    homeScore: string | number | null,
+    awayScore: string | number | null,
     homeShootoutScore?: number,
     awayShootoutScore?: number
   ) => {
     setPreviousStandings(standings)
+
+    const parseScore = (v: string | number | null) => {
+      if (v === null) return null
+      if (typeof v === 'string') {
+        const t = v.trim()
+        if (t === '') return null
+        const n = Number(t)
+        return Number.isNaN(n) ? null : n
+      }
+      return v
+    }
+
+    const hScore = parseScore(homeScore)
+    const aScore = parseScore(awayScore)
 
     const updatedRounds = rounds.map((round) => {
       if (round.id === roundId) {
@@ -91,12 +112,12 @@ export default function SimulatorPage() {
 
             // Tratamento especial para valores zero (considerados vazios no input)
             // Isso garante a persistência dos valores ao navegar entre páginas
-            if (homeScore !== null) {
-              updatedScores.homeScore = homeScore
+            if (hScore !== null) {
+              updatedScores.homeScore = hScore
             }
 
-            if (awayScore !== null) {
-              updatedScores.awayScore = awayScore
+            if (aScore !== null) {
+              updatedScores.awayScore = aScore
             }
 
             // Atualiza o placar de pênaltis se for definido
@@ -126,7 +147,15 @@ export default function SimulatorPage() {
 
     setRounds(updatedRounds)
 
-    const updatedStandings = calculateStandings(updatedRounds, teams, leagueData?.standings || [])
+    const updatedStandingsObj = calculateStandings(updatedRounds, teams, leagueData?.standings || [])
+    let updatedStandings = Object.values(updatedStandingsObj).flat()
+    // Deduplicar por id (mantendo a primeira ocorrência, que já foi ordenada por pontos)
+    const seenIds = new Set<string>()
+    updatedStandings = updatedStandings.filter((s) => {
+      if (seenIds.has(s.id)) return false
+      seenIds.add(s.id)
+      return true
+    })
     setStandings(updatedStandings)
 
     // Salvar dados simulados no localStorage para uso nos playoffs
@@ -139,6 +168,24 @@ export default function SimulatorPage() {
     setSelectedTeam(teamId)
     router.push(`/team/${teamId}`)
   }
+  const groupedStandings = useMemo(() => {
+    const groups: Record<string, any[]> = {}
+    standings.forEach((s: any) => {
+      const g = s.groupName || s.group || "A"
+      if (!groups[g]) groups[g] = []
+      groups[g].push(s)
+    })
+
+    // Ordenação estável: A primeiro, B por último, demais em ordem alfabética
+    const keys = Object.keys(groups)
+    const middle = keys.filter(k => k !== 'A' && k !== 'B').sort((a, b) => a.localeCompare(b))
+    const orderedKeys: string[] = []
+    if (keys.includes('A')) orderedKeys.push('A')
+    orderedKeys.push(...middle)
+    if (keys.includes('B')) orderedKeys.push('B')
+
+    return orderedKeys.map((groupName) => ({ groupName, standings: groups[groupName] }))
+  }, [standings])
 
   if (loading) {
     return <LoadingState />
@@ -185,7 +232,7 @@ export default function SimulatorPage() {
         <MainContent
           rounds={rounds}
           teams={teams}
-          standings={standings}
+          groupedStandings={groupedStandings}
           previousStandings={previousStandings}
           selectedTeam={selectedTeam}
           onTeamSelect={handleTeamSelect}
