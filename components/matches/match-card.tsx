@@ -64,6 +64,11 @@ export const MatchCard: FC<MatchCardProps> = ({
   const isHomeFavorite = favoriteTeam?.id === homeTeam.id;
   const isAwayFavorite = favoriteTeam?.id === awayTeam.id;
 
+  // Normalizar e determinar o grupo da partida
+  const rawGroupName = (match as any).groupName ?? (match as any).group ?? null;
+  const groupName = rawGroupName !== undefined && rawGroupName !== null ? String(rawGroupName) : null;
+  const isChallengerMatch = groupName?.toLowerCase() === 'challenger';
+
   let winner: 'home' | 'away' | null = null;
   if (homeScore !== null && awayScore !== null) {
     if (homeScore > awayScore) {
@@ -83,11 +88,13 @@ export const MatchCard: FC<MatchCardProps> = ({
         isFavoriteTeamMatch
           ? "bg-[var(--team-primary)]/5 border-[var(--team-primary)]/30 hover:border-[var(--team-primary)]/50 hover:bg-[var(--team-primary)]/10"
           : "bg-card border-border hover:border-border/80",
+        // destaque visual para partidas do Challenger
+        isChallengerMatch && "border-green-300/40 hover:border-green-300/60",
         isMatchEnded && "opacity-60"
       )}
       aria-label={`Partida: ${homeTeam.name} vs ${awayTeam.name}`}
     >
-      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] items-center gap-3 sm:gap-4 md:gap-6 w-full">
+      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)]  gap-3 sm:gap-4 md:gap-6 w-full items-end">
         {/* Time da casa */}
         <TeamDisplay
           team={homeTeam}
@@ -111,6 +118,30 @@ export const MatchCard: FC<MatchCardProps> = ({
               <span className="font-semibold">AO VIVO</span>
             </Badge>
           )}
+          {/* Badge especial para partidas Challenger */}
+          {isChallengerMatch && (
+            <Badge className="mb-1.5 bg-green-100 text-green-800 text-[10px] sm:text-xs py-1 px-2 h-auto flex items-center gap-1.5 shadow-sm">
+              <span className="font-semibold">CHALLENGER</span>
+            </Badge>
+          )}
+
+
+          {groupName && (() => {
+            // Normalizar nome do grupo para checar apenas A ou B
+            const normalized = String(groupName).trim().toUpperCase().replace(/^GRUPO\s*/i, '');
+            if (normalized === 'A' || normalized === 'B') {
+              return (
+                <div className="mb-1">
+                  <p className={cn(
+                    "text-[10px] sm:text-xs py-1 px-2 h-auto flex items-center gap-1.5 bg-[var(--team-primary)]/10 text-[var(--team-primary)]",
+                  )}>
+                    <span className="font-medium">{`Grupo ${normalized}`}</span>
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
           <time
             className="text-xs text-muted-foreground mb-2 text-center font-medium"
             dateTime={match.date}
