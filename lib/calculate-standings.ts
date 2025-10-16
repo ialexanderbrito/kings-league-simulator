@@ -4,170 +4,189 @@ export function calculateStandings(
   rounds: Round[],
   teams: Record<string, Team>,
   initialStandings: TeamStanding[],
-): TeamStanding[] {
-  // Inicializar classificação com todos os times
-  const standings: Record<string, TeamStanding> = {}
-
-  // Inicializar com dados da API
-  initialStandings.forEach((standing) => {
-    standings[standing.id] = {
-      ...standing,
-      // Resetar estatísticas que serão recalculadas
-      points: 0,
-      played: 0,
-      won: 0,
-      drawn: 0,
-      lost: 0,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      goalDifference: 0,
-    }
+): Record<string, TeamStanding[]> {
+  // Primeiro: agrupar partidas por grupo (mantemos para saber os grupos existentes)
+  const groupMatches: Record<string, Round[]> = {}
+  rounds.forEach((round) => {
+    round.matches.forEach((match) => {
+      const group = match.groupName || "Sem Grupo"
+      if (!groupMatches[group]) groupMatches[group] = []
+      let lastRound = groupMatches[group][groupMatches[group].length - 1]
+      if (!lastRound || lastRound.id !== round.id) {
+        lastRound = { ...round, matches: [] }
+        groupMatches[group].push(lastRound)
+      }
+      lastRound.matches.push(match)
+    })
   })
 
-  // Processar todas as partidas para calcular a classificação
+  // Construir estatísticas globais por time (acumular todas as partidas)
+  const globalStats: Record<string, TeamStanding> = {}
+
+  const ensureTeam = (id: string) => {
+    if (!globalStats[id]) {
+      const standing = initialStandings.find(s => s.id === id)
+      const team = teams[id]
+      const base = standing || ({} as TeamStanding)
+      globalStats[id] = {
+        id,
+        name: base.name || team?.name || `Time ${id}`,
+        shortName: base.shortName || team?.shortName || `T${id}`,
+        logo: base.logo || team?.logo,
+        points: 0,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+        rank: 0,
+        positionLegend: null,
+        groupName: (base as any).groupName || (base as any).group || undefined,
+      }
+    }
+  }
+
+  // Iterar por todas as partidas e acumular nas estatísticas globais
   rounds.forEach((round) => {
     round.matches.forEach((match) => {
       const { homeTeamId, awayTeamId } = match.participants
       const { homeScore, awayScore, homeScoreP, awayScoreP } = match.scores
+      if (homeScore === null || awayScore === null) return
 
-      // Pular partidas que não foram jogadas ou simuladas
-      if (homeScore === null || awayScore === null) {
-        return
-      }
+      ensureTeam(homeTeamId)
+      ensureTeam(awayTeamId)
 
-      // Garantir que os times existam na classificação
-      if (!standings[homeTeamId]) {
-        const team = teams[homeTeamId]
-        standings[homeTeamId] = {
-          id: homeTeamId,
-          name: team?.name || `Time ${homeTeamId}`,
-          shortName: team?.shortName || `T${homeTeamId}`,
-          logo: team?.logo,
-          points: 0,
-          played: 0,
-          won: 0,
-          drawn: 0,
-          lost: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-          goalDifference: 0,
-          positionLegend: null,
-        }
-      }
+      const home = globalStats[homeTeamId]
+      const away = globalStats[awayTeamId]
 
-      if (!standings[awayTeamId]) {
-        const team = teams[awayTeamId]
-        standings[awayTeamId] = {
-          id: awayTeamId,
-          name: team?.name || `Time ${awayTeamId}`,
-          shortName: team?.shortName || `T${awayTeamId}`,
-          logo: team?.logo,
-          points: 0,
-          played: 0,
-          won: 0,
-          drawn: 0,
-          lost: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-          goalDifference: 0,
-          positionLegend: null,
-        }
-      }
+      home.played += 1
+      away.played += 1
+      home.goalsFor += homeScore
+      home.goalsAgainst += awayScore
+      away.goalsFor += awayScore
+      away.goalsAgainst += homeScore
 
-      // Atualizar estatísticas do time da casa
-      standings[homeTeamId].played += 1
-      standings[homeTeamId].goalsFor += homeScore
-      standings[homeTeamId].goalsAgainst += awayScore
-
-      // Atualizar estatísticas do time visitante
-      standings[awayTeamId].played += 1
-      standings[awayTeamId].goalsFor += awayScore
-      standings[awayTeamId].goalsAgainst += homeScore
-
-      // Determinar o resultado da partida e atualizar pontos
       if (homeScore > awayScore) {
-        // Time da casa venceu no tempo normal
-        standings[homeTeamId].won += 1
-        standings[homeTeamId].points += 3
-        standings[awayTeamId].lost += 1
+        home.won += 1
+        home.points += 3
+        away.lost += 1
       } else if (homeScore < awayScore) {
-        // Time visitante venceu no tempo normal
-        standings[awayTeamId].won += 1
-        standings[awayTeamId].points += 3
-        standings[homeTeamId].lost += 1
+        away.won += 1
+        away.points += 3
+        home.lost += 1
       } else {
-        // Empate - verificar shootouts
+        // Empate -> checar pênaltis
         if (homeScoreP !== null && awayScoreP !== null) {
           if (homeScoreP > awayScoreP) {
-            // Time da casa venceu nos pênaltis
-            standings[homeTeamId].won += 1
-            standings[homeTeamId].points += 2 // 2 pontos para vitória nos pênaltis
-            standings[awayTeamId].lost += 1
-            standings[awayTeamId].points += 1 // 1 ponto por perder nos pênaltis
+            home.won += 1
+            home.points += 2
+            away.lost += 1
+            away.points += 1
           } else if (awayScoreP > homeScoreP) {
-            // Time visitante venceu nos pênaltis
-            standings[awayTeamId].won += 1
-            standings[awayTeamId].points += 2 // 2 pontos para vitória nos pênaltis
-            standings[homeTeamId].lost += 1
-            standings[homeTeamId].points += 1 // 1 ponto por perder nos pênaltis
+            away.won += 1
+            away.points += 2
+            home.lost += 1
+            home.points += 1
           } else {
-            // Empate nos pênaltis (não deve acontecer, mas por segurança)
-            standings[homeTeamId].drawn += 1
-            standings[homeTeamId].points += 1
-            standings[awayTeamId].drawn += 1
-            standings[awayTeamId].points += 1
+            home.drawn += 1
+            home.points += 1
+            away.drawn += 1
+            away.points += 1
           }
         } else {
-          // Empate sem shootouts definidos
-          standings[homeTeamId].drawn += 1
-          standings[homeTeamId].points += 1
-          standings[awayTeamId].drawn += 1
-          standings[awayTeamId].points += 1
+          home.drawn += 1
+          home.points += 1
+          away.drawn += 1
+          away.points += 1
         }
       }
     })
   })
 
-  // Calcular saldo de gols
-  Object.values(standings).forEach((team) => {
-    team.goalDifference = team.goalsFor - team.goalsAgainst
+  // Recomputa saldo de gols
+  Object.values(globalStats).forEach((t) => {
+    t.goalDifference = t.goalsFor - t.goalsAgainst
   })
 
-  // Converter para array e ordenar por pontos, saldo de gols, gols pró
-  const sortedStandings = Object.values(standings).sort((a, b) => {
-    // Ordenar por pontos (decrescente)
-    if (b.points !== a.points) {
-      return b.points - a.points
+  // Montar standings por grupo tomando os totais globais para cada time que pertence ao grupo
+  const standingsByGroup: Record<string, TeamStanding[]> = {}
+
+  Object.entries(groupMatches).forEach(([group, groupRounds]) => {
+    const teamIds = new Set<string>()
+    groupRounds.forEach((r) => r.matches.forEach((m) => {
+      teamIds.add(m.participants.homeTeamId)
+      teamIds.add(m.participants.awayTeamId)
+    }))
+    // também adicionar times que o initialStandings declara pertencer ao grupo
+    initialStandings.forEach((s) => {
+      const g = (s as any).groupName || (s as any).group || ''
+      if (String(g) === group) teamIds.add(s.id)
+    })
+
+    const list: TeamStanding[] = []
+    teamIds.forEach((id) => {
+      if (globalStats[id]) {
+        // usar uma cópia para evitar mutações inesperadas
+        list.push({ ...globalStats[id] })
+      } else {
+        // garantir que o time exista mesmo que não tenha jogado
+        const standing = initialStandings.find(s => s.id === id)
+        const team = teams[id]
+        const base = standing || ({} as TeamStanding)
+        list.push({
+          id,
+          name: base.name || team?.name || `Time ${id}`,
+          shortName: base.shortName || team?.shortName || `T${id}`,
+          logo: base.logo || team?.logo,
+          points: 0,
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          rank: 0,
+          positionLegend: null,
+          groupName: (base as any).groupName || (base as any).group || group,
+        })
+      }
+    })
+
+    const sorted = list.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference
+      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor
+      return a.name.localeCompare(b.name)
+    })
+
+    // remover duplicatas por id
+    const seen = new Set<string>()
+    const unique: TeamStanding[] = []
+    for (const t of sorted) {
+      if (!seen.has(t.id)) {
+        seen.add(t.id)
+        unique.push(t)
+      }
     }
 
-    // Se pontos forem iguais, ordenar por saldo de gols (decrescente)
-    if (b.goalDifference !== a.goalDifference) {
-      return b.goalDifference - a.goalDifference
-    }
-
-    // Se saldo de gols for igual, ordenar por gols pró (decrescente)
-    if (b.goalsFor !== a.goalsFor) {
-      return b.goalsFor - a.goalsFor
-    }
-
-    // Se tudo for igual, ordenar alfabeticamente pelo nome
-    return a.name.localeCompare(b.name)
+    standingsByGroup[group] = unique.map((team, index) => {
+      let positionLegend = null
+      if (index === 0) positionLegend = { color: "green", placement: "playoff:semifinal" }
+      else if (index >= 1 && index <= 6) positionLegend = { color: "yellow", placement: "playoff:quarters" }
+      return {
+        ...team,
+        positionLegend,
+      }
+    })
   })
 
-  // Atualizar legendas de posição com base na classificação
-  return sortedStandings.map((team, index) => {
-    let positionLegend = null
-    if (index === 0) {
-      // Primeiro colocado - semifinal
-      positionLegend = { color: "green", placement: "playoff:semifinal" }
-    } else if (index >= 1 && index <= 6) {
-      // 2º ao 7º - quartas de final
-      positionLegend = { color: "yellow", placement: "playoff:quarters" }
-    }
-
-    return {
-      ...team,
-      positionLegend,
-    }
+  // Adiciona rank
+  Object.keys(standingsByGroup).forEach((group) => {
+    standingsByGroup[group] = standingsByGroup[group].map((team, idx) => ({ ...team, rank: idx + 1 }))
   })
+
+  return standingsByGroup
 }
