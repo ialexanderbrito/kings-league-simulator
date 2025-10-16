@@ -47,8 +47,9 @@ export interface TeamStanding {
   goalsFor: number
   goalsAgainst: number
   goalDifference: number
-  positionLegend: string
   rank: number
+  groupName?: string
+  positionLegend?: { color: string; placement: string } | null
 }
 
 export interface Round {
@@ -80,6 +81,7 @@ export interface Match {
     homeScoreP: number | null
     awayScoreP: number | null
   }
+  groupName?: string
   metaInformation?: {
     youtube_url?: string
   }
@@ -107,7 +109,7 @@ export interface TeamDetails extends Team {
 
 export interface StaffMember {
   id: number
-  shortName: string
+    positionLegend?: { color: string; placement: string } | null
   firstName: string
   lastName: string
   middleName?: string | null
