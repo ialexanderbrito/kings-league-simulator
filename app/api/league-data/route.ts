@@ -70,6 +70,8 @@ export async function GET() {
                 awayScoreP: match.scores.awayScoreP,
               },
               metaInformation: match.metaInformation,
+              // Preserve o nome do grupo (ex: 'A', 'B', 'Challenger') se fornecido pela API
+              groupName: match.groupName ?? match.group?.name ?? null,
             }))
           : [],
       }))
@@ -88,38 +90,71 @@ export async function GET() {
       throw new Error("Grupos não encontrados nos dados da API da Kings League")
     }
 
-    const group = phase.groups[0]
+    // Agrega times e standings de todos os grupos da fase (A, B, Challenger, ...)
+    const teamsMap: Record<string, Team> = {}
+    const aggregatedStandings: TeamStanding[] = []
 
-    const teams: Team[] = group.teams.map((team: any) => {
-      return {
-        id: String(team.id),
-        name: team.name,
-        shortName: team.shortName,
-        completeName: team.completeName,
-        countryId: team.countryId,
-        firstColorHEX: team.firstColorHEX || "#cccccc",
-        secondColorHEX: team.secondColorHEX || "#333333",
-        logo: team.logo,
-        gender: team.gender,
+    phase.groups.forEach((grp: any) => {
+      const groupName = grp.name
+
+      // teams podem conter times repetidos entre grupos (ex: Challenger includes same teams), por isso usamos um mapa
+      grp.teams.forEach((team: any) => {
+        const id = String(team.id)
+        if (!teamsMap[id]) {
+          teamsMap[id] = {
+            id,
+            name: team.name,
+            shortName: team.shortName,
+            completeName: team.completeName,
+            countryId: team.countryId,
+            firstColorHEX: team.firstColorHEX || "#cccccc",
+            secondColorHEX: team.secondColorHEX || "#333333",
+            logo: team.logo,
+            gender: team.gender,
+          }
+        }
+      })
+
+      // standings podem estar ausentes (ex: Challenger), então verificamos
+      if (Array.isArray(grp.standings)) {
+        grp.standings.forEach((standing: any) => {
+          aggregatedStandings.push({
+            id: String(standing.team.id),
+            name: standing.team.name,
+            shortName: standing.team.shortName,
+            logo: standing.team.logo,
+            points: standing.points,
+            played: standing.gameTotal,
+            won: standing.gameWon,
+            drawn: standing.gameDraw,
+            lost: standing.gameLost,
+            goalsFor: standing.goalPro,
+            goalsAgainst: standing.goalAgainst,
+            goalDifference: standing.goalPro - standing.goalAgainst,
+            positionLegend: typeof standing.positionLegend === "string" ? { color: "", placement: standing.positionLegend } : standing.positionLegend ?? null,
+            rank: standing.rank,
+            groupName,
+          })
+        })
       }
     })
 
-    const standings: TeamStanding[] = group.standings.map((standing: any) => ({
-      id: String(standing.team.id),
-      name: standing.team.name,
-      shortName: standing.team.shortName,
-      logo: standing.team.logo,
-      points: standing.points,
-      played: standing.gameTotal,
-      won: standing.gameWon,
-      drawn: standing.gameDraw,
-      lost: standing.gameLost,
-      goalsFor: standing.goalPro,
-      goalsAgainst: standing.goalAgainst,
-      goalDifference: standing.goalPro - standing.goalAgainst,
-      positionLegend: standing.positionLegend,
-      rank: standing.rank,
-    }))
+    const teams: Team[] = Object.values(teamsMap)
+    // Consolidar aggregatedStandings por team id para evitar duplicatas entre grupos
+    const standingsMap: Record<string, TeamStanding> = {}
+    aggregatedStandings.forEach((st) => {
+      // Se já existir, preferimos manter a entrada que tiver pontos maior (ou a primeira)
+      const existing = standingsMap[st.id]
+      if (!existing) {
+        standingsMap[st.id] = st
+      } else {
+        // Se houver conflito, mantenha a que tiver mais pontos
+        if ((st.points ?? 0) > (existing.points ?? 0)) {
+          standingsMap[st.id] = st
+        }
+      }
+    })
+    const standings: TeamStanding[] = Object.values(standingsMap)
 
     const leagueData: LeagueData = {
       id: seasonData.id,
