@@ -125,21 +125,6 @@ export function FullTableSkeleton() {
                 </Table>
               </div>
             </div>
-
-            <div className="mt-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-2">
-                <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <Badge style={{ backgroundColor: "#22c55e" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-                    <span>Playoff: Semifinal</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Badge style={{ backgroundColor: "#F4AF23" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-                    <span>Playoff: Quartas</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
