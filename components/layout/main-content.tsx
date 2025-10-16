@@ -1,21 +1,20 @@
-import { useState, useEffect } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useEffect } from "react"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Info, TableIcon } from "lucide-react"
+import { TableIcon } from "lucide-react"
 import MatchesTable from "@/components/matches-table"
 import StandingsTable from "@/components/standings-table"
-import TeamInfo from "@/components/team-info"
 import { Team, Round, TeamStanding } from "@/types/kings-league"
 import { useRouter } from "next/navigation"
 
 interface MainContentProps {
   rounds: Round[]
   teams: Record<string, Team>
-  standings: TeamStanding[]
+  groupedStandings: Array<{ groupName: string; standings: TeamStanding[] }>
   previousStandings: TeamStanding[]
   selectedTeam: string | null
   onTeamSelect: (teamId: string) => void
-  onScoreUpdate: (roundId: number, matchId: number, homeScore: number | null, awayScore: number | null, homeShootoutScore?: number, awayShootoutScore?: number) => void
+  onScoreUpdate: (roundId: number, matchId: number, homeScore: string | number | null, awayScore: string | number | null, homeShootoutScore?: number, awayShootoutScore?: number) => void
   activeTab: 'matches' | 'team'
   setActiveTab: (tab: 'matches' | 'team') => void
 }
@@ -23,7 +22,7 @@ interface MainContentProps {
 export function MainContent({
   rounds,
   teams,
-  standings,
+  groupedStandings,
   previousStandings,
   selectedTeam,
   onTeamSelect,
@@ -49,10 +48,11 @@ export function MainContent({
     onTeamSelect(teamId)
   }
 
+
   return (
     <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'matches' | 'team')} className="w-full">
       <TabsContent value="matches" className="mt-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] xl:grid-cols-[1fr,420px] gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] xl:grid-cols-[1fr,500px] gap-4 lg:gap-6">
           <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={onScoreUpdate} />
 
           <div className="space-y-6">
@@ -67,7 +67,7 @@ export function MainContent({
               </CardHeader>
               <CardContent className="p-0">
                 <StandingsTable
-                  standings={standings}
+                  groupedStandings={groupedStandings}
                   onTeamSelect={handleTeamSelect}
                   previousStandings={previousStandings}
                 />
