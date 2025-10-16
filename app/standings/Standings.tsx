@@ -4,14 +4,10 @@ import { useEffect, useState, useRef } from "react"
 import { TeamStanding, Team, Round } from "@/types/kings-league"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowDown, ArrowUp, Heart, TableIcon, Download, InfoIcon } from "lucide-react"
+import StandingsTable from "@/components/standings-table"
+import { Heart, TableIcon, InfoIcon } from "lucide-react"
 import { useTeamTheme } from "@/contexts/team-theme-context"
-import { calculateStandings } from "@/lib/calculate-standings"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { FullTableSkeleton } from "@/components/skeletons/full-table-skeleton"
 import html2canvas from "html2canvas"
 import { Header } from "@/components/layout/header"
@@ -26,6 +22,7 @@ export default function StandingsPage() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [previousStandings, setPreviousStandings] = useState<TeamStanding[]>([])
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
+  const [groupedStandings, setGroupedStandings] = useState<Array<{ groupName: string; standings: TeamStanding[] }>>([]);
 
   // Carregar dados da liga
   useEffect(() => {
@@ -43,6 +40,70 @@ export default function StandingsPage() {
         setRounds(rounds)
         setTeams(teamsRecord)
         setStandings(standings)
+
+        // Agrupamento dos standings por grupo
+        // Forçamos ordem estável: Grupo A primeiro, Grupo B por último. Outros grupos no meio (ordenados).
+        const groups: Record<string, TeamStanding[]> = {};
+        standings.forEach((team) => {
+          const group = (team as any).groupName || (team as any).group || "A";
+          if (!groups[group]) groups[group] = [];
+          groups[group].push(team);
+        });
+
+        // Ordenar as chaves: A primeiro, B último, outros em ordem alfabética
+        const keys = Object.keys(groups);
+        const middle = keys.filter(k => k !== 'A' && k !== 'B').sort((a, b) => a.localeCompare(b));
+        const orderedKeys: string[] = [];
+        if (keys.includes('A')) orderedKeys.push('A');
+        orderedKeys.push(...middle);
+        if (keys.includes('B')) orderedKeys.push('B');
+
+        const grouped = orderedKeys.map((k) => ({ groupName: k, standings: groups[k] }));
+        setGroupedStandings(grouped);
+
+        // Calcular quantas vitórias cada grupo teve sobre times do Challenger
+        const challengerGroupName = 'Challenger'
+        const challengerTeamIds = new Set<string>()
+        // identificar times do grupo Challenger
+        groups[challengerGroupName]?.forEach((t) => challengerTeamIds.add(String((t as any).id)))
+
+        const winsByGroup: Record<string, number> = {}
+        rounds.forEach((round) => {
+          round.matches.forEach((match) => {
+            const gName = (match as any).groupName ?? (match as any).group ?? null
+            if (!gName) return
+            const groupName = String(gName)
+
+            const homeId = String(match.participants.homeTeamId)
+            const awayId = String(match.participants.awayTeamId)
+            const homeScore = match.scores.homeScore
+            const awayScore = match.scores.awayScore
+
+            // Partidas válidas e definidas
+            if (homeScore === null || awayScore === null) return
+
+            // Se um time do grupo enfrentou time do Challenger e venceu
+            if (challengerTeamIds.has(homeId) && !challengerTeamIds.has(awayId)) {
+              // away team pertence ao outro grupo
+              if (homeScore > awayScore) {
+                // vitória do time Challenger -> não conta para o outro grupo
+                return
+              } else if (awayScore > homeScore) {
+                // away venceu o time Challenger -> conta para o grupo do away
+                winsByGroup[groupName] = (winsByGroup[groupName] || 0) + 1
+              }
+            } else if (challengerTeamIds.has(awayId) && !challengerTeamIds.has(homeId)) {
+              if (awayScore > homeScore) {
+                // vitória do time Challenger -> não conta
+                return
+              } else if (homeScore > awayScore) {
+                // home venceu o time Challenger
+                winsByGroup[groupName] = (winsByGroup[groupName] || 0) + 1
+              }
+            }
+          })
+        })
+
       } catch (error) {
         console.error("Erro ao carregar dados:", error)
       } finally {
@@ -242,162 +303,19 @@ export default function StandingsPage() {
           </CardHeader>
           <CardContent>
             <div className="rounded-md overflow-hidden" ref={tableRef}>
+              {/* Renderizar StandingsTable agrupada */}
               <div className="overflow-x-auto">
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow className="border-b border-[#333] bg-[#121212]">
-                      <TableHead className="w-12 text-center text-xs text-gray-400 font-normal">P</TableHead>
-                      <TableHead className="w-8 px-0"></TableHead>
-                      <TableHead className="text-xs text-gray-400 font-normal">TIME</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">PTS</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">PJ</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">V</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">VP</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">DP</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">D</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">GP</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">GC</TableHead>
-                      <TableHead className="text-center text-xs text-gray-400 font-normal w-12">SG</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {standings.map((team, index) => {
-                      const positionStyle = getPositionStyle(team, index);
-                      const positionChange = getPositionChange(team, index);
-                      const isTeamFavorite = isFavoriteTeam(team.id);
-                      const { penaltyWins, penaltyLosses } = calculatePenaltyStats(team);
-                      const regularWins = calculateRegularWins(team, penaltyWins);
-
-                      return (
-                        <TableRow
-                          key={team.id}
-                          className={cn(
-                            "cursor-pointer transition-colors hover:bg-[#1f1f1f] border-b border-[#333]",
-                            isTeamFavorite && "bg-[var(--team-primary)]/10"
-                          )}
-                          onClick={() => handleTeamSelect(team.id)}
-                        >
-                          {/* Posição */}
-                          <TableCell className="font-medium text-center py-2">
-                            <div className="flex flex-col items-center justify-center">
-                              <div className="flex items-center mb-0.5">
-                                <Badge
-                                  className="w-6 h-6 flex items-center justify-center p-0 text-xs font-medium rounded-full"
-                                  style={positionStyle}
-                                >
-                                  {index + 1}
-                                </Badge>
-                              </div>
-                              {positionChange && (
-                                <div className="flex items-center">
-                                  {positionChange.direction === "up" ? (
-                                    <ArrowUp className="w-3 h-3 text-green-500" />
-                                  ) : (
-                                    <ArrowDown className="w-3 h-3 text-red-500" />
-                                  )}
-                                  <span className="text-[10px] text-gray-400">{positionChange.value}</span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-
-                          {/* Ícone favorito */}
-                          <TableCell className="py-2 w-8 px-1">
-                            {isTeamFavorite && (
-                              <div className="flex items-center justify-center">
-                                <Heart className="w-3 h-3 text-red-400" fill="currentColor" />
-                              </div>
-                            )}
-                          </TableCell>
-
-                          {/* Nome do time */}
-                          <TableCell className="py-2">
-                            <div className="team-container flex items-center gap-2 min-w-0">
-                              {team.logo && (
-                                <div className="team-logo w-6 h-6 flex-shrink-0 flex items-center justify-center">
-                                  <img
-                                    src={team.logo.url || "/placeholder.svg"}
-                                    alt={team.name}
-                                    width={24}
-                                    height={24}
-                                    className="object-contain"
-                                  />
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                <span
-                                  className="font-medium text-xs truncate"
-                                  title={team.name}
-                                >
-                                  {team.name}
-                                </span>
-                              </div>
-                            </div>
-                          </TableCell>
-
-                          {/* Pontos */}
-                          <TableCell className="text-center font-bold text-[var(--team-primary)] text-sm py-2 w-12">
-                            {team.points}
-                          </TableCell>
-
-                          {/* Partidas Jogadas */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {team.played}
-                          </TableCell>
-
-                          {/* Vitórias no tempo normal */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {regularWins}
-                          </TableCell>
-
-                          {/* Vitórias nos Pênaltis */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {penaltyWins}
-                          </TableCell>
-
-                          {/* Derrotas nos Pênaltis */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {penaltyLosses}
-                          </TableCell>
-
-                          {/* Derrotas */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {team.lost - penaltyLosses}
-                          </TableCell>
-
-                          {/* Gols Pró */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {team.goalsFor}
-                          </TableCell>
-
-                          {/* Gols Contra */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {team.goalsAgainst}
-                          </TableCell>
-
-                          {/* Saldo de Gols */}
-                          <TableCell className="text-center text-xs text-gray-300 py-2 w-12">
-                            {team.goalDifference}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <StandingsTable
+                  groupedStandings={groupedStandings}
+                  onTeamSelect={handleTeamSelect}
+                  previousStandings={previousStandings}
+                />
               </div>
             </div>
 
             <div className="mt-5">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-2">
                 <div className="text-xs text-gray-400 flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <Badge style={{ backgroundColor: "#4ade80" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-                    <span>Playoff: Semifinal</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Badge style={{ backgroundColor: "var(--team-primary)" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-                    <span>Playoff: Quartas</span>
-                  </div>
                   {favoriteTeam && (
                     <div className="flex items-center gap-1.5">
                       <Heart className="w-2.5 h-2.5 text-red-400 flex-shrink-0" fill="currentColor" />
