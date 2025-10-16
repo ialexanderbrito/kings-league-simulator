@@ -169,7 +169,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                     </svg>
                     <span>Times</span>
                   </Link>
-                  <Link
+                  {/* <Link
                     href="/playoffs"
                     className={cn(
                       "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
@@ -183,7 +183,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                     </svg>
                     <span>Playoffs</span>
-                  </Link>
+                  </Link> */}
                 </nav>
               )}
             </div>
@@ -312,7 +312,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                   <span>Times</span>
                 </Link>
 
-                <Link
+                {/* <Link
                   href="/playoffs"
                   className={cn(
                     "w-full py-2.5 px-3 flex items-center gap-3 text-sm rounded-lg transition-colors font-medium",
@@ -327,7 +327,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                   </svg>
                   <span>Playoffs</span>
-                </Link>
+                </Link> */}
               </div>
             </div>
 
