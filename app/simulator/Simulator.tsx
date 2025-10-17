@@ -72,9 +72,125 @@ export default function SimulatorPage() {
     }
   }
 
+
   useEffect(() => {
     loadData()
   }, [])
+
+  // Atualiza os placares das partidas com dados oficiais em tempo real
+  useEffect(() => {
+    const updateOfficialScores = async () => {
+      if (!rounds || rounds.length === 0) return;
+      // Coleta todos os matches
+      const allMatches = rounds.flatMap(r => r.matches || []);
+      // Busca placares oficiais para cada partida
+      const results = await Promise.all(
+        allMatches.map(async (match) => {
+          if (!match?.id) return null;
+          try {
+            const res = await fetch(`/api/official-matches?matchId=${match.id}`);
+            if (!res.ok) return null;
+            const json = await res.json();
+            if (!json || !json.id) return null;
+            // Extrai status e scores
+            let scores = {
+              homeScore: null,
+              awayScore: null,
+              homeScore1T: null,
+              awayScore1T: null,
+              homeScore2T: null,
+              awayScore2T: null,
+              homeScore3T: null,
+              awayScore3T: null,
+              homeScoreP: null,
+              awayScoreP: null,
+            };
+            if (json.score) {
+              scores.homeScore = json.score.home;
+              scores.awayScore = json.score.away;
+            } else if (json.scores) {
+              scores = { ...scores, ...json.scores };
+            }
+            if (json.periods && Array.isArray(json.periods)) {
+              json.periods.forEach((p: any, idx: number) => {
+                if (idx === 0) {
+                  scores.homeScore1T = p.home;
+                  scores.awayScore1T = p.away;
+                } else if (idx === 1) {
+                  scores.homeScore2T = p.home;
+                  scores.awayScore2T = p.away;
+                } else if (idx === 2) {
+                  scores.homeScore3T = p.home;
+                  scores.awayScore3T = p.away;
+                }
+              });
+            }
+            if (json.penalties) {
+              scores.homeScoreP = json.penalties.home;
+              scores.awayScoreP = json.penalties.away;
+            }
+            return {
+              id: match.id,
+              status: json.status || json.matchStatus || match.status,
+              scores,
+              metaInformation: json.metaInformation || match.metaInformation,
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+      const officialById = new Map();
+      results.forEach((m) => {
+        if (m && m.id) officialById.set(Number(m.id), m);
+      });
+      // Atualiza rounds com placares oficiais
+      const updatedRounds = rounds.map((round) => ({
+        ...round,
+        matches: Array.isArray(round.matches)
+          ? round.matches.map((match) => {
+            const official = officialById.get(Number(match.id));
+            if (official) {
+              return {
+                ...match,
+                status: official.status ?? match.status,
+                scores: {
+                  homeScore: official.scores?.homeScore ?? match.scores?.homeScore ?? null,
+                  awayScore: official.scores?.awayScore ?? match.scores?.awayScore ?? null,
+                  homeScore1T: official.scores?.homeScore1T ?? match.scores?.homeScore1T ?? null,
+                  awayScore1T: official.scores?.awayScore1T ?? match.scores?.awayScore1T ?? null,
+                  homeScore2T: official.scores?.homeScore2T ?? match.scores?.homeScore2T ?? null,
+                  awayScore2T: official.scores?.awayScore2T ?? match.scores?.awayScore2T ?? null,
+                  homeScore3T: official.scores?.homeScore3T ?? match.scores?.homeScore3T ?? null,
+                  awayScore3T: official.scores?.awayScore3T ?? match.scores?.awayScore3T ?? null,
+                  homeScoreP: official.scores?.homeScoreP ?? match.scores?.homeScoreP ?? null,
+                  awayScoreP: official.scores?.awayScoreP ?? match.scores?.awayScoreP ?? null,
+                },
+                metaInformation: official.metaInformation ?? match.metaInformation,
+              };
+            }
+            return match;
+          })
+          : [],
+      }));
+      setRounds(updatedRounds);
+      // Atualiza standings imediatamente
+      if (teams && Object.keys(teams).length > 0 && leagueData) {
+        const updatedStandingsObj = calculateStandings(updatedRounds, teams, leagueData.standings || []);
+        let updatedStandings = Object.values(updatedStandingsObj).flat();
+        // Deduplicar por id
+        const seenIds = new Set();
+        updatedStandings = updatedStandings.filter((s) => {
+          if (seenIds.has(s.id)) return false;
+          seenIds.add(s.id);
+          return true;
+        });
+        setStandings(updatedStandings);
+      }
+    };
+    updateOfficialScores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leagueData, teams]);
 
   const handleScoreUpdate = (
     roundId: number,
