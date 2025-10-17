@@ -11,18 +11,7 @@ const CACHE_EXPIRY_TIME = 12 * 60 * 60 * 1000
 
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
-    try {
-      const directResponse = await fetch("/api/direct-matches", {
-        next: { revalidate: 300 }
-      })
-
-      if (directResponse.ok) {
-        await directResponse.json()
-      } 
-    } catch (directError) {
-      console.error("Erro ao buscar dados diretos:", directError)
-    }
-
+    // Busca dados locais (estrutura base)
     const response = await fetch("/api/league-data", {
       next: { revalidate: 300 }
     })
@@ -46,8 +35,90 @@ export async function fetchLeagueData(): Promise<LeagueData> {
     if (!data.teams || !data.standings || !data.rounds) {
       throw new Error("Dados incompletos recebidos da API")
     }
-    
-    // Filtrando as rodadas para remover playoffs (Quartas-de-final, Semifinais e Final)
+
+    // Busca resultados atualizados de cada partida individualmente
+    let officialMatches: any[] = []
+    try {
+      // Coleta todos os ids de partidas das rodadas
+      const matchIds: number[] = []
+      if (data.rounds && Array.isArray(data.rounds)) {
+        data.rounds.forEach((round: any) => {
+          if (Array.isArray(round.matches)) {
+            round.matches.forEach((match: any) => {
+              if (match.id) matchIds.push(Number(match.id))
+            })
+          }
+        })
+      }
+      // Busca oficial de cada partida em paralelo
+      const results = await Promise.all(
+        matchIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/official-matches?matchId=${id}`, { next: { revalidate: 300 } })
+            if (res.ok) {
+              const json = await res.json()
+              // O endpoint retorna o objeto do jogo diretamente
+              if (json && json.id) {
+                // Extrai status e scores do objeto oficial
+                // O status pode estar em json.status ou json.matchStatus
+                // Os scores podem estar em json.score ou json.scores
+                let scores = {
+                  homeScore: null,
+                  awayScore: null,
+                  homeScore1T: null,
+                  awayScore1T: null,
+                  homeScore2T: null,
+                  awayScore2T: null,
+                  homeScore3T: null,
+                  awayScore3T: null,
+                  homeScoreP: null,
+                  awayScoreP: null,
+                }
+                // O placar principal geralmente está em json.score ou json.scores
+                if (json.score) {
+                  scores.homeScore = json.score.home;
+                  scores.awayScore = json.score.away;
+                } else if (json.scores) {
+                  scores = { ...scores, ...json.scores }
+                }
+                // Se houver períodos, tenta extrair os parciais
+                if (json.periods && Array.isArray(json.periods)) {
+                  json.periods.forEach((p: any, idx: number) => {
+                    if (idx === 0) {
+                      scores.homeScore1T = p.home;
+                      scores.awayScore1T = p.away;
+                    } else if (idx === 1) {
+                      scores.homeScore2T = p.home;
+                      scores.awayScore2T = p.away;
+                    } else if (idx === 2) {
+                      scores.homeScore3T = p.home;
+                      scores.awayScore3T = p.away;
+                    }
+                  })
+                }
+                // Penaltis
+                if (json.penalties) {
+                  scores.homeScoreP = json.penalties.home;
+                  scores.awayScoreP = json.penalties.away;
+                }
+                return {
+                  id: json.id,
+                  status: json.status || json.matchStatus || null,
+                  scores,
+                  metaInformation: json.metaInformation || null,
+                }
+              }
+            }
+          } catch {}
+          return null
+        })
+      )
+      officialMatches = results.filter(Boolean)
+    } catch (err) {
+      console.warn("Não foi possível buscar resultados oficiais Kings League:", err)
+    }
+
+    // Filtra rodadas para remover playoffs (Quartas, Semi, Final)
     if (data.rounds && Array.isArray(data.rounds)) {
       data.rounds = data.rounds.filter((round: any) => {
         const roundName = round.name?.toLowerCase() || '';
@@ -55,6 +126,42 @@ export async function fetchLeagueData(): Promise<LeagueData> {
                !roundName.includes('semi') && 
                !roundName.includes('final');
       });
+    }
+
+    // Mescla placares/status oficiais nas rodadas
+    if (officialMatches.length > 0 && data.rounds) {
+      const officialById = new Map<number, any>()
+      officialMatches.forEach((m: any) => {
+        officialById.set(Number(m.id), m)
+      })
+      data.rounds = data.rounds.map((round: any) => ({
+        ...round,
+        matches: Array.isArray(round.matches)
+          ? round.matches.map((match: any) => {
+              const official = officialById.get(Number(match.id))
+              if (official) {
+                return {
+                  ...match,
+                  status: official.status ?? match.status,
+                  scores: {
+                    homeScore: official.scores?.homeScore ?? match.scores?.homeScore ?? null,
+                    awayScore: official.scores?.awayScore ?? match.scores?.awayScore ?? null,
+                    homeScore1T: official.scores?.homeScore1T ?? match.scores?.homeScore1T ?? null,
+                    awayScore1T: official.scores?.awayScore1T ?? match.scores?.awayScore1T ?? null,
+                    homeScore2T: official.scores?.homeScore2T ?? match.scores?.homeScore2T ?? null,
+                    awayScore2T: official.scores?.awayScore2T ?? match.scores?.awayScore2T ?? null,
+                    homeScore3T: official.scores?.homeScore3T ?? match.scores?.homeScore3T ?? null,
+                    awayScore3T: official.scores?.awayScore3T ?? match.scores?.awayScore3T ?? null,
+                    homeScoreP: official.scores?.homeScoreP ?? match.scores?.homeScoreP ?? null,
+                    awayScoreP: official.scores?.awayScoreP ?? match.scores?.awayScoreP ?? null,
+                  },
+                  metaInformation: official.metaInformation ?? match.metaInformation,
+                }
+              }
+              return match
+            })
+          : []
+      }))
     }
 
     return data
