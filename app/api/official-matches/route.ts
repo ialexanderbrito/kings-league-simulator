@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const matchId = searchParams.get("matchId") || "1913"
     // competitionId fixo 17
-    const url = `https://kingsleague.pro/api/v1/competition/matches/${matchId}?live=false&competitionId=17`
+    const url = `https://kingsleague.pro/api/v1/competition/matches/${matchId}?live=true&competitionId=17`
     const res = await fetch(url, {
       headers: {
         "accept": "/",
