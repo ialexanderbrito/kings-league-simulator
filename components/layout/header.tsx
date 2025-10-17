@@ -126,50 +126,49 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
               </Link>
 
               {/* Navegação desktop */}
-              {!loading && (
-                <nav className="hidden lg:flex items-center gap-1 ml-2" aria-label="Navegação principal">
-                  <Link
-                    href="/simulator"
-                    className={cn(
-                      "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
-                      pathname === "/simulator"
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                    aria-current={pathname === "/simulator" ? "page" : undefined}
-                  >
-                    <Home className="w-4 h-4" />
-                    <span>Simulador</span>
-                  </Link>
-                  <Link
-                    href="/standings"
-                    className={cn(
-                      "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
-                      pathname === "/standings"
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                    aria-current={pathname === "/standings" ? "page" : undefined}
-                  >
-                    <Trophy className="w-4 h-4 text-[var(--team-primary)]" />
-                    <span>Classificação</span>
-                  </Link>
-                  <Link
-                    href="/teams"
-                    className={cn(
-                      "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
-                      pathname === "/teams"
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                    aria-current={pathname === "/teams" ? "page" : undefined}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span>Times</span>
-                  </Link>
-                  {/* <Link
+              <nav className="hidden lg:flex items-center gap-1 ml-2" aria-label="Navegação principal">
+                <Link
+                  href="/simulator"
+                  className={cn(
+                    "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
+                    pathname === "/simulator"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  aria-current={pathname === "/simulator" ? "page" : undefined}
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Simulador</span>
+                </Link>
+                <Link
+                  href="/standings"
+                  className={cn(
+                    "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
+                    pathname === "/standings"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  aria-current={pathname === "/standings" ? "page" : undefined}
+                >
+                  <Trophy className="w-4 h-4 text-[var(--team-primary)]" />
+                  <span>Classificação</span>
+                </Link>
+                <Link
+                  href="/teams"
+                  className={cn(
+                    "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
+                    pathname === "/teams"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  aria-current={pathname === "/teams" ? "page" : undefined}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>Times</span>
+                </Link>
+                {/* <Link
                     href="/playoffs"
                     className={cn(
                       "text-sm font-medium transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-muted",
@@ -184,8 +183,7 @@ export function Header({ loading, selectedTeam, teams, standings, onTeamSelect, 
                     </svg>
                     <span>Playoffs</span>
                   </Link> */}
-                </nav>
-              )}
+              </nav>
             </div>
 
             {!loading && (
@@ -567,7 +565,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-72 bg-card border-border shadow-xl" align="end" sideOffset={8}>
+        <DropdownMenuContent className="w-72 max-w-[90vw] bg-card border-border shadow-xl max-h-[70vh] overflow-auto" align="end" sideOffset={8}>
           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 flex items-center justify-between">
             <span>Escolha seu time</span>
             <span className="text-[10px] font-normal normal-case text-muted-foreground/60">
@@ -575,7 +573,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border" />
-          <div className="h-[62vh]  py-1">
+          <div className="py-1">
             {standings.map((team) => {
               const isFavorite = favoriteTeam?.id === team.id
               const isSelected = selectedTeam === team.id
