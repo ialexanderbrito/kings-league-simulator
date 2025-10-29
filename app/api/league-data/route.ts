@@ -165,7 +165,139 @@ export async function GET() {
       rounds,
     }
 
-    return new NextResponse(JSON.stringify(leagueData), {
+    // --- Merge server-side com dados oficiais (opcional, só para partidas sem placar ou em andamento)
+    try {
+      // coletar ids de partidas que precisam de atualização (placar ausente ou status ao vivo)
+      const matchIdsToFetch: number[] = []
+      rounds.forEach((round) => {
+        round.matches.forEach((match) => {
+          const home = match.scores?.homeScore
+          const away = match.scores?.awayScore
+          const status = (match.status || "").toString().toLowerCase()
+          if (home === null || away === null || status.includes("live") || status.includes("in_progress") || status.includes("ongoing")) {
+            if (match.id) matchIdsToFetch.push(Number(match.id))
+          }
+        })
+      })
+
+      // Função utilitária para processar em batches e evitar muitas conexões simultâneas
+      const chunk = <T,>(arr: T[], size: number) => {
+        const res: T[][] = []
+        for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size))
+        return res
+      }
+
+      if (matchIdsToFetch.length > 0) {
+        const officialById = new Map<number, any>()
+        const batches = chunk(matchIdsToFetch, 10) // 10 requests por batch
+        for (const batch of batches) {
+          // buscar o batch em paralelo, mas batches são sequenciais
+          const promises = batch.map((id) => {
+            const url = `https://kingsleague.pro/api/v1/competition/matches/${id}?live=true&competitionId=17`
+            return fetch(url, {
+              headers: {
+                referer: "https://kingsleague.pro/pt/brazil/jogos/",
+                "User-Agent":
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+              },
+              cache: "no-store",
+            })
+              .then((r) => (r.ok ? r.json() : null))
+              .then((json) => {
+                if (json && json.id) {
+                  // extrair scores similar ao client
+                  let scores = {
+                    homeScore: null,
+                    awayScore: null,
+                    homeScore1T: null,
+                    awayScore1T: null,
+                    homeScore2T: null,
+                    awayScore2T: null,
+                    homeScore3T: null,
+                    awayScore3T: null,
+                    homeScoreP: null,
+                    awayScoreP: null,
+                  }
+                  if (json.score) {
+                    scores.homeScore = json.score.home
+                    scores.awayScore = json.score.away
+                  } else if (json.scores) {
+                    scores = { ...scores, ...json.scores }
+                  }
+                  if (json.periods && Array.isArray(json.periods)) {
+                    json.periods.forEach((p: any, idx: number) => {
+                      if (idx === 0) {
+                        scores.homeScore1T = p.home
+                        scores.awayScore1T = p.away
+                      } else if (idx === 1) {
+                        scores.homeScore2T = p.home
+                        scores.awayScore2T = p.away
+                      } else if (idx === 2) {
+                        scores.homeScore3T = p.home
+                        scores.awayScore3T = p.away
+                      }
+                    })
+                  }
+                  if (json.penalties) {
+                    scores.homeScoreP = json.penalties.home
+                    scores.awayScoreP = json.penalties.away
+                  }
+
+                  officialById.set(Number(json.id), {
+                    id: json.id,
+                    status: json.status || json.matchStatus || null,
+                    scores,
+                    metaInformation: json.metaInformation || null,
+                  })
+                }
+                return null
+              })
+              .catch(() => null)
+          })
+
+          await Promise.all(promises)
+          // pequena pausa entre batches para diminuir pressão no upstream (opcional)
+          await new Promise((res) => setTimeout(res, 120))
+        }
+
+        // Merge nos rounds
+        if (officialById.size > 0) {
+          rounds = rounds.map((round) => ({
+            ...round,
+            matches: Array.isArray(round.matches)
+              ? round.matches.map((match: any) => {
+                  const official = officialById.get(Number(match.id))
+                  if (official) {
+                    return {
+                      ...match,
+                      status: official.status ?? match.status,
+                      scores: {
+                        homeScore: official.scores?.homeScore ?? match.scores?.homeScore ?? null,
+                        awayScore: official.scores?.awayScore ?? match.scores?.awayScore ?? null,
+                        homeScore1T: official.scores?.homeScore1T ?? match.scores?.homeScore1T ?? null,
+                        awayScore1T: official.scores?.awayScore1T ?? match.scores?.awayScore1T ?? null,
+                        homeScore2T: official.scores?.homeScore2T ?? match.scores?.homeScore2T ?? null,
+                        awayScore2T: official.scores?.awayScore2T ?? match.scores?.awayScore2T ?? null,
+                        homeScore3T: official.scores?.homeScore3T ?? match.scores?.homeScore3T ?? null,
+                        awayScore3T: official.scores?.awayScore3T ?? match.scores?.awayScore3T ?? null,
+                        homeScoreP: official.scores?.homeScoreP ?? match.scores?.homeScoreP ?? null,
+                        awayScoreP: official.scores?.awayScoreP ?? match.scores?.awayScoreP ?? null,
+                      },
+                      metaInformation: official.metaInformation ?? match.metaInformation,
+                    }
+                  }
+                  return match
+                })
+              : []
+          }))
+        }
+      }
+    } catch (err) {
+      // falha ao buscar dados oficiais não deve quebrar o endpoint principal
+      console.warn("Não foi possível buscar/mesclar dados oficiais no servidor:", err)
+    }
+
+    return new NextResponse(JSON.stringify({ ...leagueData, rounds }), {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, OPTIONS",
