@@ -36,87 +36,11 @@ export async function fetchLeagueData(): Promise<LeagueData> {
       throw new Error("Dados incompletos recebidos da API")
     }
 
-    // Busca resultados atualizados de cada partida individualmente
-    let officialMatches: any[] = []
-    try {
-      // Coleta todos os ids de partidas das rodadas
-      const matchIds: number[] = []
-      if (data.rounds && Array.isArray(data.rounds)) {
-        data.rounds.forEach((round: any) => {
-          if (Array.isArray(round.matches)) {
-            round.matches.forEach((match: any) => {
-              if (match.id) matchIds.push(Number(match.id))
-            })
-          }
-        })
-      }
-      // Busca oficial de cada partida em paralelo
-      const results = await Promise.all(
-        matchIds.map(async (id) => {
-          try {
-            const res = await fetch(`/api/official-matches?matchId=${id}`, { next: { revalidate: 300 } })
-            if (res.ok) {
-              const json = await res.json()
-              // O endpoint retorna o objeto do jogo diretamente
-              if (json && json.id) {
-                // Extrai status e scores do objeto oficial
-                // O status pode estar em json.status ou json.matchStatus
-                // Os scores podem estar em json.score ou json.scores
-                let scores = {
-                  homeScore: null,
-                  awayScore: null,
-                  homeScore1T: null,
-                  awayScore1T: null,
-                  homeScore2T: null,
-                  awayScore2T: null,
-                  homeScore3T: null,
-                  awayScore3T: null,
-                  homeScoreP: null,
-                  awayScoreP: null,
-                }
-                // O placar principal geralmente está em json.score ou json.scores
-                if (json.score) {
-                  scores.homeScore = json.score.home;
-                  scores.awayScore = json.score.away;
-                } else if (json.scores) {
-                  scores = { ...scores, ...json.scores }
-                }
-                // Se houver períodos, tenta extrair os parciais
-                if (json.periods && Array.isArray(json.periods)) {
-                  json.periods.forEach((p: any, idx: number) => {
-                    if (idx === 0) {
-                      scores.homeScore1T = p.home;
-                      scores.awayScore1T = p.away;
-                    } else if (idx === 1) {
-                      scores.homeScore2T = p.home;
-                      scores.awayScore2T = p.away;
-                    } else if (idx === 2) {
-                      scores.homeScore3T = p.home;
-                      scores.awayScore3T = p.away;
-                    }
-                  })
-                }
-                // Penaltis
-                if (json.penalties) {
-                  scores.homeScoreP = json.penalties.home;
-                  scores.awayScoreP = json.penalties.away;
-                }
-                return {
-                  id: json.id,
-                  status: json.status || json.matchStatus || null,
-                  scores,
-                  metaInformation: json.metaInformation || null,
-                }
-              }
-            }
-          } catch {}
-          return null
-        })
-      )
-      officialMatches = results.filter(Boolean)
-    } catch (err) {
-      console.warn("Não foi possível buscar resultados oficiais Kings League:", err)
-    }
+    // Observação: antigamente o cliente solicitava detalhes oficiais de cada partida individualmente
+    // (muitos fetches paralelos). Para reduzir número de requisições do cliente, o endpoint
+    // `/api/league-data` agora tenta mesclar dados oficiais server-side quando necessário.
+    // Aqui no cliente, vamos confiar no servidor e não disparar N requests por partida.
+    const officialMatches: any[] = []
 
     // Filtra rodadas para remover playoffs (Quartas, Semi, Final)
     if (data.rounds && Array.isArray(data.rounds)) {
