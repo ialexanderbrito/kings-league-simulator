@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { TeamStanding, Team, Round } from "@/types/kings-league"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import StandingsTable from "@/components/standings-table"
+import FullStandingsTable from "@/components/full-standings-table"
 import { Heart, TableIcon, InfoIcon } from "lucide-react"
 import { useTeamTheme } from "@/contexts/team-theme-context"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
@@ -22,7 +22,10 @@ export default function StandingsPage() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [previousStandings, setPreviousStandings] = useState<TeamStanding[]>([])
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
-  const [groupedStandings, setGroupedStandings] = useState<Array<{ groupName: string; standings: TeamStanding[] }>>([]);
+  // groupedStandings agora contém objetos preparados com estatísticas adicionais (penaltyWins, penaltyLosses, regularWins, scPoints)
+  const [groupedStandings, setGroupedStandings] = useState<Array<{ groupName: string; standings: any[] }>>([]);
+  const [winnerGroupName, setWinnerGroupName] = useState<string | undefined>(undefined);
+  const [winsByGroupState, setWinsByGroupState] = useState<Record<string, number>>({});
 
   // Carregar dados da liga
   useEffect(() => {
@@ -58,8 +61,153 @@ export default function StandingsPage() {
         orderedKeys.push(...middle);
         if (keys.includes('B')) orderedKeys.push('B');
 
-        const grouped = orderedKeys.map((k) => ({ groupName: k, standings: groups[k] }));
+        // Prepara um mapa de grupo por teamId para calcular SC (desafio)
+        const teamToGroup: Record<string, string> = {}
+        Object.entries(groups).forEach(([gName, teamsArr]) => {
+          teamsArr.forEach(t => teamToGroup[String((t as any).id)] = gName)
+        })
+
+        // Calcular stats extras (penaltis, scWins/scLosses/scPending) por time baseando-se nas rounds (resultados)
+        const extraStats: Record<string, { penaltyWins: number; penaltyLosses: number; regularWins: number; scPoints: number; scWins: number; scLosses: number; scPending: number }> = {}
+        Object.values(groups).flat().forEach((t) => {
+          extraStats[String((t as any).id)] = { penaltyWins: 0, penaltyLosses: 0, regularWins: 0, scPoints: 0, scWins: 0, scLosses: 0, scPending: 0 }
+        })
+
+        rounds.forEach((round) => {
+          round.matches.forEach((match) => {
+            const homeId = String(match.participants.homeTeamId)
+            const awayId = String(match.participants.awayTeamId)
+            const homeScore = match.scores.homeScore
+            const awayScore = match.scores.awayScore
+            const homeScoreP = match.scores.homeScoreP
+            const awayScoreP = match.scores.awayScoreP
+
+            if (homeScore === null || awayScore === null) {
+              // partida não disputada ou pendente
+              // se for entre grupos diferentes, marcar pending
+              const homeGroup = teamToGroup[homeId]
+              const awayGroup = teamToGroup[awayId]
+              if (homeGroup && awayGroup && homeGroup !== awayGroup) {
+                if (extraStats[homeId]) extraStats[homeId].scPending++
+                if (extraStats[awayId]) extraStats[awayId].scPending++
+              }
+              return
+            }
+
+            // Normal win
+            if (homeScore !== awayScore) {
+              if (homeScore > awayScore) {
+                // home wins in regular
+                if (extraStats[homeId]) extraStats[homeId].regularWins++
+                // away gets nothing for regular
+              } else {
+                if (extraStats[awayId]) extraStats[awayId].regularWins++
+              }
+            } else {
+              // Draw -> penalties
+              if (homeScoreP === null || awayScoreP === null) return
+              if (homeScoreP > awayScoreP) {
+                if (extraStats[homeId]) extraStats[homeId].penaltyWins++
+                if (extraStats[awayId]) extraStats[awayId].penaltyLosses++
+              } else if (awayScoreP > homeScoreP) {
+                if (extraStats[awayId]) extraStats[awayId].penaltyWins++
+                if (extraStats[homeId]) extraStats[homeId].penaltyLosses++
+              }
+            }
+
+            // Calcular SC: pontos ganhos contra time de outro grupo
+            const homeGroup = teamToGroup[homeId]
+            const awayGroup = teamToGroup[awayId]
+            if (homeGroup && awayGroup && homeGroup !== awayGroup) {
+              // avaliar quem ganhou e atribuir pontos conforme sistema
+              if (homeScore !== awayScore) {
+                if (homeScore > awayScore) {
+                  if (extraStats[homeId]) {
+                    extraStats[homeId].scPoints += 3
+                    extraStats[homeId].scWins++
+                  }
+                  if (extraStats[awayId]) {
+                    extraStats[awayId].scLosses++
+                  }
+                } else {
+                  if (extraStats[awayId]) {
+                    extraStats[awayId].scPoints += 3
+                    extraStats[awayId].scWins++
+                  }
+                  if (extraStats[homeId]) {
+                    extraStats[homeId].scLosses++
+                  }
+                }
+              } else {
+                // penalties
+                if (homeScoreP === null || awayScoreP === null) return
+                if (homeScoreP > awayScoreP) {
+                  if (extraStats[homeId]) {
+                    extraStats[homeId].scPoints += 2
+                    extraStats[homeId].scWins++
+                  }
+                  if (extraStats[awayId]) {
+                    extraStats[awayId].scPoints += 1
+                    extraStats[awayId].scLosses++
+                  }
+                } else if (awayScoreP > homeScoreP) {
+                  if (extraStats[awayId]) {
+                    extraStats[awayId].scPoints += 2
+                    extraStats[awayId].scWins++
+                  }
+                  if (extraStats[homeId]) {
+                    extraStats[homeId].scPoints += 1
+                    extraStats[homeId].scLosses++
+                  }
+                }
+              }
+            }
+          })
+        })
+
+        // Merge dos stats extras nos objetos de standing e ordenar cada grupo corretamente
+        const grouped = orderedKeys.map((k) => {
+          const arr = (groups[k] || []).map((t) => {
+            const id = String((t as any).id)
+            const extras = extraStats[id] || { penaltyWins: 0, penaltyLosses: 0, regularWins: 0, scPoints: 0, scWins: 0, scLosses: 0, scPending: 0 }
+            return {
+              ...t,
+              penaltyWins: extras.penaltyWins,
+              penaltyLosses: extras.penaltyLosses,
+              regularWins: extras.regularWins || (t.won - (extras.penaltyWins || 0)),
+              scPoints: extras.scPoints || 0,
+              scWins: extras.scWins || 0,
+              scLosses: extras.scLosses || 0,
+              scPending: extras.scPending || 0,
+            }
+          })
+
+          // Ordenação estável: pontos desc, goalDifference desc, goalsFor desc, won desc
+          arr.sort((a: any, b: any) => {
+            if (b.points !== a.points) return b.points - a.points
+            const gdA = a.goalDifference ?? (a.goalsFor - a.goalsAgainst)
+            const gdB = b.goalDifference ?? (b.goalsFor - b.goalsAgainst)
+            if (gdB !== gdA) return gdB - gdA
+            if ((b.goalsFor ?? 0) !== (a.goalsFor ?? 0)) return (b.goalsFor ?? 0) - (a.goalsFor ?? 0)
+            return (b.won ?? 0) - (a.won ?? 0)
+          })
+
+          return { groupName: k, standings: arr }
+        })
+
         setGroupedStandings(grouped);
+
+        // Identificar vencedor do Challenger (se existir) e em qual grupo esse time aparece
+        const challengerGroup = grouped.find(g => g.groupName === 'Challenger')
+        const challengerWinnerId = challengerGroup?.standings?.[0]?.id
+        let winnerGroupName: string | undefined = undefined
+        if (challengerWinnerId) {
+          const found = grouped.find(g => g.groupName !== 'Challenger' && g.standings.some(s => String((s as any).id) === String(challengerWinnerId)))
+          winnerGroupName = found?.groupName
+        }
+
+        // Guardar winnerGroupName no state caso queira usar (opcional)
+        // Se precisar usar em outro lugar, podemos setar em state; por enquanto passaremos como prop ao componente
 
         // Calcular quantas vitórias cada grupo teve sobre times do Challenger
         const challengerGroupName = 'Challenger'
@@ -70,10 +218,6 @@ export default function StandingsPage() {
         const winsByGroup: Record<string, number> = {}
         rounds.forEach((round) => {
           round.matches.forEach((match) => {
-            const gName = (match as any).groupName ?? (match as any).group ?? null
-            if (!gName) return
-            const groupName = String(gName)
-
             const homeId = String(match.participants.homeTeamId)
             const awayId = String(match.participants.awayTeamId)
             const homeScore = match.scores.homeScore
@@ -84,25 +228,41 @@ export default function StandingsPage() {
 
             // Se um time do grupo enfrentou time do Challenger e venceu
             if (challengerTeamIds.has(homeId) && !challengerTeamIds.has(awayId)) {
-              // away team pertence ao outro grupo
+              // away team pertence ao outro grupo -> obter grupo via teamToGroup (fallback para match.groupName se necessário)
+              const otherGroup = teamToGroup[awayId] ?? (String((match as any).groupName ?? (match as any).group ?? ""))
+              if (!otherGroup) return
+
               if (homeScore > awayScore) {
                 // vitória do time Challenger -> não conta para o outro grupo
                 return
               } else if (awayScore > homeScore) {
                 // away venceu o time Challenger -> conta para o grupo do away
-                winsByGroup[groupName] = (winsByGroup[groupName] || 0) + 1
+                winsByGroup[otherGroup] = (winsByGroup[otherGroup] || 0) + 1
               }
             } else if (challengerTeamIds.has(awayId) && !challengerTeamIds.has(homeId)) {
+              const otherGroup = teamToGroup[homeId] ?? (String((match as any).groupName ?? (match as any).group ?? ""))
+              if (!otherGroup) return
+
               if (awayScore > homeScore) {
                 // vitória do time Challenger -> não conta
                 return
               } else if (homeScore > awayScore) {
                 // home venceu o time Challenger
-                winsByGroup[groupName] = (winsByGroup[groupName] || 0) + 1
+                winsByGroup[otherGroup] = (winsByGroup[otherGroup] || 0) + 1
               }
             }
           })
         })
+
+        // Determinar qual grupo teve mais vitórias sobre o Challenger (se houver)
+        setWinsByGroupState(winsByGroup)
+        let computedWinnerGroup: string | undefined = undefined
+        const entries = Object.entries(winsByGroup)
+        if (entries.length > 0) {
+          entries.sort((a, b) => b[1] - a[1])
+          if (entries[0][1] > 0) computedWinnerGroup = entries[0][0]
+        }
+        setWinnerGroupName(computedWinnerGroup)
 
       } catch (error) {
         console.error("Erro ao carregar dados:", error)
@@ -251,7 +411,7 @@ export default function StandingsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#121212] text-white">
+      <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
         <Header
           loading={true}
           selectedTeam={null}
@@ -267,7 +427,7 @@ export default function StandingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#121212] text-white">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
       <Header
         loading={false}
         selectedTeam={selectedTeam}
@@ -284,17 +444,9 @@ export default function StandingsPage() {
               Tabela detalhada da Kings League com estatísticas completas de todos os times.
             </p>
           </div>
-          {/* <Button
-            variant="outline"
-            className="text-sm gap-2 border-[#333] hover:bg-[#1f1f1f] text-gray-300"
-            onClick={downloadStandings}
-          >
-            <Download className="w-4 h-4" />
-            Baixar Classificação
-          </Button> */}
         </div>
 
-        <Card className="bg-[#1a1a1a] border-[#333] text-white mb-8">
+        <Card className="bg-[#1a1a1a]/50 border-gray-800 text-white mb-8">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center gap-2">
               <TableIcon className="w-5 h-5 text-[var(--team-primary)]" />
@@ -305,10 +457,13 @@ export default function StandingsPage() {
             <div className="rounded-md overflow-hidden" ref={tableRef}>
               {/* Renderizar StandingsTable agrupada */}
               <div className="overflow-x-auto">
-                <StandingsTable
+                <FullStandingsTable
                   groupedStandings={groupedStandings}
                   onTeamSelect={handleTeamSelect}
                   previousStandings={previousStandings}
+                  // passar grupo vencedor do Challenger (calculado a partir das vitórias sobre o Challenger)
+                  winnerGroupName={winnerGroupName}
+                  winsByGroup={winsByGroupState}
                 />
               </div>
             </div>
@@ -328,7 +483,7 @@ export default function StandingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#1a1a1a] border-[#333] text-white">
+        <Card className="bg-[#1a1a1a]/50 border-gray-800 text-white">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center gap-2">
               <InfoIcon className="w-5 h-5 text-[var(--team-primary)]" />
@@ -341,8 +496,20 @@ export default function StandingsPage() {
                 <p className="text-sm font-medium text-[var(--team-primary)]">Posição</p>
                 <ul className="space-y-1 text-sm text-gray-300">
                   <li className="flex items-center gap-2">
-                    <span className="text-xs">P</span>
-                    <span>Posição</span>
+                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#22c55e" }}></span>
+                    <span>1º — Semifinal</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#F4AF23" }}></span>
+                    <span>2º e 3º — Quartas</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#fb923c" }}></span>
+                    <span>4º — Quartas</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#6b7280" }}></span>
+                    <span>5º — Eliminado</span>
                   </li>
                 </ul>
               </div>
@@ -427,12 +594,53 @@ export default function StandingsPage() {
                 <p className="text-sm font-medium text-[var(--team-primary)]">Playoffs</p>
                 <ul className="space-y-1 text-sm text-gray-300">
                   <li className="flex items-center gap-2">
-                    <Badge style={{ backgroundColor: "#4ade80" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-                    <span>Semifinal (1º colocado)</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span>
+                    <span>1º — Semifinal (se o grupo for ganhador do Challenger)</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Badge style={{ backgroundColor: "var(--team-primary)" }} className="w-2.5 h-2.5 p-0 rounded-full shadow-sm"></Badge>
-                    <span>Quartas de Final (2º ao 7º)</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block"></span>
+                    <span>2º e 3º — Quartas</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>
+                    <span>4º — Quartas (se o grupo for ganhador do Challenger), caso contrário 4º Lugar</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-[var(--team-primary)]">Desafio (SC)</p>
+                <ul className="space-y-1 text-sm text-gray-300">
+                  <li className="flex items-center gap-2">
+                    <span className="text-xs">SC</span>
+                    <span>Pontos obtidos em partidas contra times de outro grupo (soma: 3 / 2 / 1 / 0 conforme resultado)</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-[var(--team-primary)]">Legenda SC</p>
+                <ul className="space-y-1 text-sm text-gray-300">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span>
+                    <span>Vitória no desafio (mais vitórias que derrotas)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>
+                    <span>Derrota no desafio (mais derrotas que vitórias)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-gray-500 inline-block"></span>
+                    <span>Pendente / empate no desempenho do desafio</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-[var(--team-primary)]">Posição</p>
+                <ul className="space-y-1 text-sm text-gray-300">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#6b7280" }}></span>
+                    <span>Coluna P agora neutra (cinza). Use a coluna SC para ver o desempenho no desafio entre grupos.</span>
                   </li>
                 </ul>
               </div>
