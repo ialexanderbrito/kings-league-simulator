@@ -175,7 +175,7 @@ export function updatePlayoffBracket(
     newWinnerId = match.homeTeamId;
   } else if (awayScore > homeScore) {
     newWinnerId = match.awayTeamId;
-  } else if (homeScoreP !== null && awayScoreP !== null) {
+  } else if (homeScoreP !== null && homeScoreP !== undefined && awayScoreP !== null && awayScoreP !== undefined) {
     // Desempate nos pênaltis
     if (homeScoreP > awayScoreP) {
       newWinnerId = match.homeTeamId;
@@ -216,9 +216,25 @@ export function updatePlayoffBracket(
             if (qfNumber === 1) {
               nextMatch.awayTeamId = newWinnerId; // Vencedor de QF1 vai para a posição away da SF1
             } else if (qfNumber === 2) {
-              nextMatch.homeTeamId = newWinnerId; // Vencedor de QF2 vai para a posição home da SF2
+              // QF2 e QF3 vão para SF2, então colocar em qualquer slot vazio
+              const sf2Match = newBracket.semifinals.find(m => m.id === 'sf2');
+              if (sf2Match) {
+                if (sf2Match.homeTeamId === null) {
+                  sf2Match.homeTeamId = newWinnerId;
+                } else if (sf2Match.awayTeamId === null) {
+                  sf2Match.awayTeamId = newWinnerId;
+                }
+              }
             } else if (qfNumber === 3) {
-              nextMatch.awayTeamId = newWinnerId; // Vencedor de QF3 vai para a posição away da SF2
+              // QF3 também vai para SF2
+              const sf2Match = newBracket.semifinals.find(m => m.id === 'sf2');
+              if (sf2Match) {
+                if (sf2Match.homeTeamId === null) {
+                  sf2Match.homeTeamId = newWinnerId;
+                } else if (sf2Match.awayTeamId === null) {
+                  sf2Match.awayTeamId = newWinnerId;
+                }
+              }
             }
           } else if (match.stage === 'semifinal') {
             const sfNumber = parseInt(matchId.replace('sf', ''));
@@ -231,31 +247,40 @@ export function updatePlayoffBracket(
         }
       }
       
-      // Se os times mudaram, resetar o placar da próxima partida
+      // IMPORTANTE: NÃO limpar os placares da próxima partida
+      // Isso permite que o usuário simule as semifinais e finais independentemente
+      // Os placares são preservados para permitir edição múltiplas vezes
+      // Apenas os times são atualizados quando o vencedor muda
+      
+      // Se um dos times foi substituído, apenas resetar o vencedor (não os scores)
       if (previousWinnerId !== newWinnerId) {
-        nextMatch.homeScore = null;
-        nextMatch.awayScore = null;
-        nextMatch.homeScoreP = null;
-        nextMatch.awayScoreP = null;
         nextMatch.winnerId = null;
         
-        // Se a próxima partida também tiver uma próxima partida, atualizar recursivamente
-        if (nextMatch.nextMatchId) {
-          const nextWinnerId = nextMatch.winnerId;
+        // Atualizar recursivamente a final se necessário
+        if (nextMatch.nextMatchId === 'final' && newBracket.final) {
           const finalMatch = newBracket.final;
           
-          if (finalMatch.homeTeamId === nextWinnerId) {
-            finalMatch.homeTeamId = null;
-          } else if (finalMatch.awayTeamId === nextWinnerId) {
-            finalMatch.awayTeamId = null;
+          // Se o vencedor anterior está na final, remover
+          if (finalMatch.homeTeamId === previousWinnerId || finalMatch.awayTeamId === previousWinnerId) {
+            if (finalMatch.homeTeamId === previousWinnerId) {
+              finalMatch.homeTeamId = null;
+            }
+            if (finalMatch.awayTeamId === previousWinnerId) {
+              finalMatch.awayTeamId = null;
+            }
+            
+            // Se há um novo vencedor, colocar na final
+            if (newWinnerId) {
+              if (finalMatch.homeTeamId === null) {
+                finalMatch.homeTeamId = newWinnerId;
+              } else if (finalMatch.awayTeamId === null) {
+                finalMatch.awayTeamId = newWinnerId;
+              }
+            }
+            
+            // Resetar apenas o vencedor da final, preservando os scores
+            finalMatch.winnerId = null;
           }
-          
-          // Resetar o placar e o vencedor da final
-          finalMatch.homeScore = null;
-          finalMatch.awayScore = null;
-          finalMatch.homeScoreP = null;
-          finalMatch.awayScoreP = null;
-          finalMatch.winnerId = null;
         }
       }
     }
