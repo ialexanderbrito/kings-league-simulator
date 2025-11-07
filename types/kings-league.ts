@@ -7,6 +7,7 @@ export interface LeagueData {
   teams: Team[]
   standings: TeamStanding[]
   rounds: Round[]
+  playoffs?: any[]
 }
 
 export interface Team {
