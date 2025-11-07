@@ -6,11 +6,18 @@ const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
 export async function GET() {
   try {
 
-    const seasonResponse = await fetch(`https://kingsleague.pro/api/v1/competition/seasons/${SEASON_ID}`, {
+    const seasonResponse = await fetch(`https://kingsleague.pro/api/v1/competition/seasons/${SEASON_ID}?lang=pt`, {
       headers: {
-        referer: "https://kingsleague.pro/pt/brazil/classificacao",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "accept": "*/*",
+        "accept-language": "pt-BR,pt-PT;q=0.9,pt;q=0.8",
+        "referer": "https://kingsleague.pro/pt/brazil/classificacao",
+        "sec-ch-ua": "\"Chromium\";v=\"142\", \"Microsoft Edge\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
       },
       next: { revalidate: 300 },
     })
@@ -84,11 +91,17 @@ export async function GET() {
       throw new Error("Estrutura de dados da API da Kings League inválida")
     }
 
-    const phase = seasonData.phases[0]
+    // Encontrar a fase "Group stage" para pegar times e standings
+    const groupStagePhase = seasonData.phases.find((p: any) => p.name === "Group stage")
+    
+    // Encontrar a fase "Playoffs" para pegar os turnos dos playoffs
+    const playoffsPhase = seasonData.phases.find((p: any) => p.name === "Playoffs")
 
-    if (!phase.groups || !phase.groups.length) {
-      throw new Error("Grupos não encontrados nos dados da API da Kings League")
+    if (!groupStagePhase || !groupStagePhase.groups || !groupStagePhase.groups.length) {
+      throw new Error("Fase de grupos não encontrada nos dados da API da Kings League")
     }
+
+    const phase = groupStagePhase
 
     // Agrega times e standings de todos os grupos da fase (A, B, Challenger, ...)
     const teamsMap: Record<string, Team> = {}
@@ -163,6 +176,15 @@ export async function GET() {
       teams,
       standings,
       rounds,
+    }
+
+    // Extrair turnos dos playoffs se disponível
+    let playoffsTurns: any[] = []
+    if (playoffsPhase && playoffsPhase.groups && playoffsPhase.groups.length > 0) {
+      const playoffsGroup = playoffsPhase.groups[0]
+      if (playoffsGroup.turns && Array.isArray(playoffsGroup.turns)) {
+        playoffsTurns = playoffsGroup.turns
+      }
     }
 
     // --- Merge server-side com dados oficiais (opcional, só para partidas sem placar ou em andamento)
@@ -297,7 +319,7 @@ export async function GET() {
       console.warn("Não foi possível buscar/mesclar dados oficiais no servidor:", err)
     }
 
-    return new NextResponse(JSON.stringify({ ...leagueData, rounds }), {
+    return new NextResponse(JSON.stringify({ ...leagueData, rounds, playoffs: playoffsTurns }), {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, OPTIONS",
