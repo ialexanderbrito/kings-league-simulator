@@ -22,7 +22,7 @@ import {
 } from "@/lib/simulated-data-manager"
 
 // Função auxiliar para converter o formato de turnos da API para o formato bracket
-const convertTurnsToBracket = (turnsData: any[]): PlayoffBracket => {
+const convertTurnsToBracket = (turnsData: any[], teamsRecord: Record<string, Team>): PlayoffBracket => {
   // Inicializar um bracket vazio
   const bracket: PlayoffBracket = {
     quarterfinals: [],
@@ -34,69 +34,83 @@ const convertTurnsToBracket = (turnsData: any[]): PlayoffBracket => {
 
   // Processar cada turno
   for (const turn of turnsData) {
-    const turnName = turn.turnName.toLowerCase();
+    const turnName = turn.name ? turn.name.toLowerCase() : turn.turnName?.toLowerCase() || "";
 
     // Processar quartas de final
     if (turnName.includes("quartas") || turnName.includes("quarter")) {
-      bracket.quarterfinals = turn.matches.map((match: any) => {
-        return {
-          id: `qf${match.id % 10}`, // Extrair último dígito do ID
-          stage: "quarterfinal",
-          matchNumber: match.id % 10, // Extrair último dígito do ID
-          order: match.id % 10,
-          homeTeamId: match.participants.homeTeamId?.toString() || null,
-          awayTeamId: match.participants.awayTeamId?.toString() || null,
-          homeScore: match.scores.homeScore,
-          awayScore: match.scores.awayScore,
-          homeScoreP: match.scores.homeScoreP,
-          awayScoreP: match.scores.awayScoreP,
-          winnerId: determineWinner(match),
-          nextMatchId: `sf${Math.ceil((match.id % 10) / 2)}`, // Calcular próximo matchId
-          youtubeUrl: match.metaInformation?.youtube_url
-        };
-      });
+      bracket.quarterfinals = turn.matches
+        .filter((match: any) => {
+          // Filtrar apenas matches com times válidos
+          const homeTeamId = match.participants.homeTeamId?.toString();
+          const awayTeamId = match.participants.awayTeamId?.toString();
+          return homeTeamId && awayTeamId && teamsRecord[homeTeamId] && teamsRecord[awayTeamId];
+        })
+        .map((match: any, index: number) => {
+          return {
+            id: `qf${index + 1}`,
+            stage: "quarterfinal",
+            matchNumber: index + 1,
+            order: index + 1,
+            homeTeamId: match.participants.homeTeamId?.toString() || null,
+            awayTeamId: match.participants.awayTeamId?.toString() || null,
+            homeScore: match.scores.homeScore,
+            awayScore: match.scores.awayScore,
+            homeScoreP: match.scores.homeScoreP,
+            awayScoreP: match.scores.awayScoreP,
+            winnerId: determineWinner(match),
+            nextMatchId: `sf${Math.ceil((index + 1) / 2)}`,
+            youtubeUrl: match.metaInformation?.youtube_url
+          };
+        });
     }
 
     // Processar semifinais
     else if (turnName.includes("semi")) {
-      bracket.semifinals = turn.matches.map((match: any) => {
-        return {
-          id: `sf${match.id % 10}`, // Extrair último dígito do ID
-          stage: "semifinal",
-          matchNumber: match.id % 10, // Extrair último dígito do ID
-          order: match.id % 10,
-          homeTeamId: match.participants.homeTeamId?.toString() || null,
-          awayTeamId: match.participants.awayTeamId?.toString() || null,
-          homeScore: match.scores.homeScore,
-          awayScore: match.scores.awayScore,
-          homeScoreP: match.scores.homeScoreP,
-          awayScoreP: match.scores.awayScoreP,
-          winnerId: determineWinner(match),
-          nextMatchId: "final",
-          youtubeUrl: match.metaInformation?.youtube_url
-        };
-      });
+      bracket.semifinals = turn.matches
+        .map((match: any, index: number) => {
+          const homeTeamId = match.participants.homeTeamId?.toString();
+          const awayTeamId = match.participants.awayTeamId?.toString();
+
+          return {
+            id: `sf${index + 1}`,
+            stage: "semifinal",
+            matchNumber: index + 1,
+            order: index + 1,
+            homeTeamId: homeTeamId || null,
+            awayTeamId: awayTeamId || null,
+            homeScore: match.scores.homeScore,
+            awayScore: match.scores.awayScore,
+            homeScoreP: match.scores.homeScoreP,
+            awayScoreP: match.scores.awayScoreP,
+            winnerId: determineWinner(match),
+            nextMatchId: "final",
+            youtubeUrl: match.metaInformation?.youtube_url
+          };
+        });
     }
 
     // Processar final
     else if (turnName.includes("final")) {
       if (turn.matches.length > 0) {
-        const finalMatch = turn.matches[0];
-        bracket.final = {
-          id: "final",
-          stage: "final",
-          matchNumber: 1,
-          order: 1,
-          homeTeamId: finalMatch.participants.homeTeamId?.toString() || null,
-          awayTeamId: finalMatch.participants.awayTeamId?.toString() || null,
-          homeScore: finalMatch.scores.homeScore,
-          awayScore: finalMatch.scores.awayScore,
-          homeScoreP: finalMatch.scores.homeScoreP,
-          awayScoreP: finalMatch.scores.awayScoreP,
-          winnerId: determineWinner(finalMatch),
-          nextMatchId: null,
-          youtubeUrl: finalMatch.metaInformation?.youtube_url
-        };
+        const finalMatch = turn.matches[0]; // Pegar a primeira (e geralmente única) partida da final
+
+        if (finalMatch) {
+          bracket.final = {
+            id: "final",
+            stage: "final",
+            matchNumber: 1,
+            order: 1,
+            homeTeamId: finalMatch.participants.homeTeamId?.toString() || null,
+            awayTeamId: finalMatch.participants.awayTeamId?.toString() || null,
+            homeScore: finalMatch.scores.homeScore,
+            awayScore: finalMatch.scores.awayScore,
+            homeScoreP: finalMatch.scores.homeScoreP,
+            awayScoreP: finalMatch.scores.awayScoreP,
+            winnerId: determineWinner(finalMatch),
+            nextMatchId: null,
+            youtubeUrl: finalMatch.metaInformation?.youtube_url
+          };
+        }
       }
     }
   }
@@ -147,48 +161,26 @@ export default function PlayoffsPage() {
         setLoading(true)
         setError(null)
 
-        // Primeiro, tentar obter resultados ao vivo dos playoffs da API
-        try {
-          const livePlayoffsResponse = await fetch('/api/playoff-matches', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            cache: 'no-store',
-            next: { revalidate: 60 }, // Revalidar a cada 1 minuto
-          });
+        // Buscar dados da liga (que agora inclui playoffs)
+        const data = await fetchLeagueData();
 
-          if (livePlayoffsResponse.ok) {
-            const livePlayoffsData = await livePlayoffsResponse.json();
+        // Converter o array de times para um objeto Record para facilitar acesso
+        const teamsRecord: Record<string, Team> = {};
+        data.teams.forEach(team => {
+          teamsRecord[team.id] = team;
+        });
 
-            if (livePlayoffsData) {
-              console.log("Usando resultados ao vivo dos playoffs");
-              setLiveResultsAvailable(true);
+        setTeams(teamsRecord);
+        setStandings(data.standings);
 
-              // Precisamos ainda buscar os dados dos times e classificação
-              const data = await fetchLeagueData();
-
-              // Converter o array de times para um objeto Record para facilitar acesso
-              const teamsRecord: Record<string, Team> = {};
-              data.teams.forEach(team => {
-                teamsRecord[team.id] = team;
-              });
-
-              setTeams(teamsRecord);
-              setStandings(data.standings);
-
-              // Converter o formato de turnos para o formato bracket
-              const bracketData = convertTurnsToBracket(livePlayoffsData);
-
-              // Usar o chaveamento com resultados ao vivo
-              setBracket(bracketData);
-              setLoading(false);
-              return;
-            }
-          }
-        } catch (liveError) {
-          console.error("Erro ao buscar resultados ao vivo:", liveError);
-          // Continuar com o fluxo normal se falhar a busca dos resultados ao vivo
+        // Se temos dados de playoffs da API, usar eles
+        if (data.playoffs && Array.isArray(data.playoffs) && data.playoffs.length > 0) {
+          console.log("Usando playoffs da API");
+          setLiveResultsAvailable(true);
+          const bracketData = convertTurnsToBracket(data.playoffs, teamsRecord);
+          setBracket(bracketData);
+          setLoading(false);
+          return;
         }
 
         // Verificar se existem dados simulados
@@ -207,8 +199,7 @@ export default function PlayoffsPage() {
           if (simulatedStandings) {
             setStandings(simulatedStandings);
           } else {
-            // Se não, buscar standings da API
-            const data = await fetchLeagueData();
+            // Se não, usar standings da API que já temos
             setStandings(data.standings);
           }
 
@@ -244,24 +235,12 @@ export default function PlayoffsPage() {
           return;
         }
 
-        // Se não tiver dados simulados, buscar da API normalmente
-        const data = await fetchLeagueData();
-
-        // Verificar se temos times suficientes para os playoffs
+        // Se não tiver dados simulados, gerar playoffs a partir da classificação
         if (data.standings.length < 7) {
           setError("É necessário ter pelo menos 7 times na classificação para simular os playoffs");
           setLoading(false);
           return;
         }
-
-        // Converter o array de times para um objeto Record para facilitar acesso
-        const teamsRecord: Record<string, Team> = {};
-        data.teams.forEach(team => {
-          teamsRecord[team.id] = team;
-        });
-
-        setTeams(teamsRecord);
-        setStandings(data.standings);
 
         // Gerar o chaveamento dos playoffs com base na classificação
         const playoffBracket = generatePlayoffBracket(data.standings, teamsRecord);
