@@ -46,6 +46,12 @@ const convertTurnsToBracket = (turnsData: any[], teamsRecord: Record<string, Tea
           return homeTeamId && awayTeamId && teamsRecord[homeTeamId] && teamsRecord[awayTeamId];
         })
         .map((match: any, index: number) => {
+          // Determinar o nextMatchId correto:
+          // QF1 (index 0) → sf1
+          // QF2 (index 1) → sf2
+          // QF3 (index 2) → sf2
+          const nextMatchId = index === 0 ? 'sf1' : 'sf2';
+
           return {
             id: `qf${index + 1}`,
             stage: "quarterfinal",
@@ -58,7 +64,7 @@ const convertTurnsToBracket = (turnsData: any[], teamsRecord: Record<string, Tea
             homeScoreP: match.scores.homeScoreP,
             awayScoreP: match.scores.awayScoreP,
             winnerId: determineWinner(match),
-            nextMatchId: `sf${Math.ceil((index + 1) / 2)}`,
+            nextMatchId: nextMatchId,
             youtubeUrl: match.metaInformation?.youtube_url
           };
         });
