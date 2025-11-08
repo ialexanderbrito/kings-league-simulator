@@ -194,55 +194,60 @@ export function updatePlayoffBracket(
       (nextMatchId === 'final' ? newBracket.final : undefined);
     
     if (nextMatch) {
-      // Remover o time anterior da próxima partida
-      if (nextMatch.homeTeamId === previousWinnerId) {
+      // Determinar qual posição específica deve ser atualizada baseado na partida de origem
+      let targetPosition: 'home' | 'away' | null = null;
+      
+      if (match.stage === 'quarterfinal') {
+        const qfNumber = parseInt(matchId.replace('qf', ''));
+        if (qfNumber === 1) {
+          targetPosition = 'away'; // QF1 → SF1 away
+        } else if (qfNumber === 2) {
+          targetPosition = 'home'; // QF2 → SF2 home
+        } else if (qfNumber === 3) {
+          targetPosition = 'away'; // QF3 → SF2 away
+        }
+      } else if (match.stage === 'semifinal') {
+        const sfNumber = parseInt(matchId.replace('sf', ''));
+        if (sfNumber === 1) {
+          targetPosition = 'home'; // SF1 → Final home
+        } else if (sfNumber === 2) {
+          targetPosition = 'away'; // SF2 → Final away
+        }
+      }
+      
+      // Remover o vencedor anterior APENAS da posição específica
+      if (targetPosition === 'home' && nextMatch.homeTeamId === previousWinnerId) {
         nextMatch.homeTeamId = null;
-      } else if (nextMatch.awayTeamId === previousWinnerId) {
+      } else if (targetPosition === 'away' && nextMatch.awayTeamId === previousWinnerId) {
         nextMatch.awayTeamId = null;
       }
       
       // Adicionar o novo vencedor na próxima partida, se houver
       if (newWinnerId) {
-        // Verificar se há algum slot vazio
-        if (nextMatch.homeTeamId === null) {
-          nextMatch.homeTeamId = newWinnerId;
-        } else if (nextMatch.awayTeamId === null) {
-          nextMatch.awayTeamId = newWinnerId;
-        } else {
-          // Se não houver slot vazio, o vencedor substituirá o que veio do mesmo jogo
-          // Isso geralmente não deve acontecer, mas é uma precaução
-          if (match.stage === 'quarterfinal') {
-            const qfNumber = parseInt(matchId.replace('qf', ''));
-            if (qfNumber === 1) {
-              nextMatch.awayTeamId = newWinnerId; // Vencedor de QF1 vai para a posição away da SF1
-            } else if (qfNumber === 2) {
-              // QF2 e QF3 vão para SF2, então colocar em qualquer slot vazio
-              const sf2Match = newBracket.semifinals.find(m => m.id === 'sf2');
-              if (sf2Match) {
-                if (sf2Match.homeTeamId === null) {
-                  sf2Match.homeTeamId = newWinnerId;
-                } else if (sf2Match.awayTeamId === null) {
-                  sf2Match.awayTeamId = newWinnerId;
-                }
-              }
-            } else if (qfNumber === 3) {
-              // QF3 também vai para SF2
-              const sf2Match = newBracket.semifinals.find(m => m.id === 'sf2');
-              if (sf2Match) {
-                if (sf2Match.homeTeamId === null) {
-                  sf2Match.homeTeamId = newWinnerId;
-                } else if (sf2Match.awayTeamId === null) {
-                  sf2Match.awayTeamId = newWinnerId;
-                }
-              }
-            }
-          } else if (match.stage === 'semifinal') {
-            const sfNumber = parseInt(matchId.replace('sf', ''));
-            if (sfNumber === 1) {
-              nextMatch.homeTeamId = newWinnerId; // Vencedor de SF1 vai para a posição home da Final
-            } else if (sfNumber === 2) {
-              nextMatch.awayTeamId = newWinnerId; // Vencedor de SF2 vai para a posição away da Final
-            }
+        // Determinar a posição correta baseado na partida de origem (sem remover times já posicionados)
+        if (match.stage === 'quarterfinal') {
+          const qfNumber = parseInt(matchId.replace('qf', ''));
+          
+          if (qfNumber === 1) {
+            // Vencedor de QF1 vai para SF1 awayTeamId (enfrenta o 1º colocado que está em homeTeamId)
+            // Apenas atualizar a posição away, SEM TOCAR no homeTeamId
+            nextMatch.awayTeamId = newWinnerId;
+          } else if (qfNumber === 2) {
+            // Vencedor de QF2 vai para SF2 homeTeamId
+            nextMatch.homeTeamId = newWinnerId;
+          } else if (qfNumber === 3) {
+            // Vencedor de QF3 vai para SF2 awayTeamId
+            nextMatch.awayTeamId = newWinnerId;
+          }
+        } else if (match.stage === 'semifinal') {
+          const sfNumber = parseInt(matchId.replace('sf', ''));
+          
+          if (sfNumber === 1) {
+            // Vencedor de SF1 vai para Final homeTeamId
+            nextMatch.homeTeamId = newWinnerId;
+          } else if (sfNumber === 2) {
+            // Vencedor de SF2 vai para Final awayTeamId
+            nextMatch.awayTeamId = newWinnerId;
           }
         }
       }
