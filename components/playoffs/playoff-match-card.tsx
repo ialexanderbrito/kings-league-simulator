@@ -119,14 +119,14 @@ export function PlayoffMatchCard({
                 variant="outline"
                 size="icon"
                 className={cn(
-                  "w-9 h-9 sm:w-11 sm:h-11 rounded-full transition-all duration-300 border-2 flex-shrink-0",
+                  "w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300 border-2 flex-shrink-0",
                   isHomeWinner
                     ? "bg-green-500 border-green-600 hover:bg-green-600 text-white shadow-lg shadow-green-500/40 scale-110"
                     : "border-border hover:border-[var(--team-primary)] hover:bg-accent hover:scale-105"
                 )}
                 aria-label={`Selecionar ${homeTeam.name} como vencedor`}
               >
-                {isHomeWinner && <Check className="w-4 h-4 sm:w-5 sm:h-5 font-bold" strokeWidth={3} />}
+                {isHomeWinner && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 font-bold" strokeWidth={3} />}
               </Button>
 
               <span className="text-xs sm:text-sm text-muted-foreground font-bold">VS</span>
@@ -137,14 +137,14 @@ export function PlayoffMatchCard({
                 variant="outline"
                 size="icon"
                 className={cn(
-                  "w-9 h-9 sm:w-11 sm:h-11 rounded-full transition-all duration-300 border-2 flex-shrink-0",
+                  "w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300 border-2 flex-shrink-0",
                   isAwayWinner
                     ? "bg-green-500 border-green-600 hover:bg-green-600 text-white shadow-lg shadow-green-500/40 scale-110"
                     : "border-border hover:border-[var(--team-primary)] hover:bg-accent hover:scale-105"
                 )}
                 aria-label={`Selecionar ${awayTeam.name} como vencedor`}
               >
-                {isAwayWinner && <Check className="w-4 h-4 sm:w-5 sm:h-5 font-bold" strokeWidth={3} />}
+                {isAwayWinner && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 font-bold" strokeWidth={3} />}
               </Button>
             </div>
           ) : (
