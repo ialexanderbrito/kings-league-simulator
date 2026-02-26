@@ -71,7 +71,8 @@ export default function FullStandingsTable(props: StandingsTableProps) {
     if (positionInGroup === 1) {
       return { label: 'Semifinal', bg: '#22c55e', color: 'white' }
     }
-    if (positionInGroup === 2 || positionInGroup === 3) {
+    // Positions 2 through 7 -> Quartas
+    if (positionInGroup >= 2 && positionInGroup <= 7) {
       return { label: 'Quartas', bg: '#F4AF23', color: '#000' }
     }
     if (positionInGroup === 4) {
@@ -222,15 +223,11 @@ export default function FullStandingsTable(props: StandingsTableProps) {
         <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#22c55e" }}></span>
-            <span>1º — Semifinal</span>
+            <span>Semi</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#F4AF23" }}></span>
-            <span>2º e 3º — Quartas</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#fb923c" }}></span>
-            <span>4º — Quartas (se o grupo for o vencedor do Challenger), caso contrário 4º Lugar</span>
+            <span>Quartas</span>
           </div>
         </div>
       </div>

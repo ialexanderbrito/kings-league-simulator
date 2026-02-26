@@ -1,9 +1,9 @@
 "use client"
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { TeamStanding } from "@/types/kings-league"
 import { useTeamTheme } from "@/contexts/team-theme-context"
 import { cn } from "@/lib/utils"
+import { ChevronUp, ChevronDown, Star } from "lucide-react"
 
 interface GroupedStandings {
   groupName: string;
@@ -37,7 +37,6 @@ export default function StandingsTable(props: StandingsTableProps) {
   ) => {
     if (!previousStandings || previousStandings.length === 0) return null;
 
-    // Agrupa previousStandings por grupo para comparar posições dentro do mesmo grupo
     const prevGroups: Record<string, TeamStanding[]> = {};
     previousStandings.forEach((t) => {
       const g = (t as any).groupName || (t as any).group || "A";
@@ -60,22 +59,19 @@ export default function StandingsTable(props: StandingsTableProps) {
     };
   };
 
-  // Retorna a cor e rótulo para a posição com base nas regras
-  const getPositionBadge = (groupName: string, positionInGroup: number) => {
-    // Regras:
-    // 1º lugar -> Semifinal (verde)
-    // 2º e 3º -> Quartas (amarelo)
-    // 4º lugar -> cor laranja (indicado pelo usuário)
+  // Retorna a cor para a posição com base nas regras
+  // 1º -> Semifinal (verde)
+  // 2º ao 7º -> Quartas (amarelo)
+  // 4º -> manter destaque laranja quando aplicável
+  const getPositionStyle = (groupName: string, positionInGroup: number) => {
     if (positionInGroup === 1) {
-      return { label: 'Semifinal', bg: '#22c55e', color: 'white' }
+      return { bg: 'bg-emerald-500', text: 'text-white' }
     }
-    if (positionInGroup === 2 || positionInGroup === 3) {
-      return { label: 'Quartas', bg: '#F4AF23', color: '#000' }
+    if (positionInGroup >= 2 && positionInGroup <= 7) {
+      return { bg: 'bg-[#F4AF23]', text: 'text-black' }
     }
     if (positionInGroup === 4) {
-      // 4º fica com cor laranja sempre, mas só tem a legenda de Quartas se o grupo for o vencedor do Challenger
-      if (groupName === winnerGroupName) return { label: 'Quartas', bg: '#fb923c', color: 'white' }
-      return { label: '4º Lugar', bg: '#fb923c', color: 'white' }
+      return { bg: 'bg-orange-500', text: 'text-white' }
     }
     return null
   }
@@ -86,122 +82,155 @@ export default function StandingsTable(props: StandingsTableProps) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {groupedStandings.map((group) => {
+        const isChallenger = group.groupName === 'Challenger';
 
         return (
-          <div key={group.groupName}>
-            <div className="flex items-center justify-between mb-2 px-4">
-              <span className="text-lg font-bold text-[var(--team-primary)]">Grupo {group.groupName}</span>
-
+          <div key={group.groupName} className="space-y-2">
+            {/* Group Header */}
+            <div className={cn(
+              "flex items-center gap-2 px-3 py-2",
+              isChallenger && "border-l-2 border-emerald-500"
+            )}>
+              <span className="text-sm font-semibold text-white">
+                Grupo {group.groupName}
+              </span>
+              {isChallenger && (
+                <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                  Challenger
+                </span>
+              )}
             </div>
-            <div className={`bg-card rounded-lg ${group.groupName === 'Challenger' ? 'border-2 border-green-500' : ''}`}>
-              <div className="w-full overflow-x-hidden">
-                <Table className="w-full text-sm">
-                  <TableHeader>
-                    <TableRow className="border-b border-border bg-transparent">
-                      <TableHead className="w-12 text-center text-xs text-muted-foreground font-normal py-3">P</TableHead>
-                      <TableHead className="w-8 px-0"></TableHead>
-                      <TableHead className="text-xs text-muted-foreground font-normal py-3">TIME</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-16 py-3">PTS</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden sm:table-cell">J</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden sm:table-cell">SG</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {group.standings.map((team, index) => {
-                      // Mostrar posição dentro do grupo (1..N)
-                      const positionInGroup = index + 1;
-                      const positionChange = getPositionChange(team, index, previousStandings, group.groupName);
-                      return (
-                        <TableRow
-                          key={team.id}
-                          className={cn(
-                            "cursor-pointer transition-colors hover:bg-muted/50 border-b border-border",
-                            isFavoriteTeam(team.id) && "bg-[var(--team-primary)]/10"
+
+            {/* Table */}
+            <div className="overflow-hidden">
+              {/* Header Row */}
+              <div className="grid grid-cols-[32px_1fr_40px_32px_32px] sm:grid-cols-[40px_1fr_48px_40px_40px] gap-1 px-3 py-2 text-[10px] sm:text-xs text-gray-500 font-medium border-b border-white/5">
+                <div className="text-center">#</div>
+                <div>Time</div>
+                <div className="text-center">Pts</div>
+                <div className="text-center hidden xs:block">J</div>
+                <div className="text-center hidden xs:block">SG</div>
+              </div>
+
+              {/* Team Rows */}
+              <div className="divide-y divide-white/5">
+                {group.standings.map((team, index) => {
+                  const positionInGroup = index + 1;
+                  const positionChange = getPositionChange(team, index, previousStandings, group.groupName);
+                  const posStyle = getPositionStyle(group.groupName, positionInGroup);
+                  const isFavorite = isFavoriteTeam(team.id);
+
+                  return (
+                    <div
+                      key={team.id}
+                      onClick={() => onTeamSelect(team.id)}
+                      className={cn(
+                        "grid grid-cols-[32px_1fr_40px_32px_32px] sm:grid-cols-[40px_1fr_48px_40px_40px] gap-1 px-3 py-2.5 items-center",
+                        "cursor-pointer transition-all duration-200",
+                        "hover:bg-white/5",
+                        isFavorite && "bg-[var(--team-primary)]/5 border-l-2 border-[var(--team-primary)]"
+                      )}
+                    >
+                      {/* Position */}
+                      <div className="flex items-center justify-center">
+                        {posStyle ? (
+                          <div className={cn(
+                            "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                            posStyle.bg, posStyle.text
+                          )}>
+                            {positionInGroup}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500 font-medium">{positionInGroup}</span>
+                        )}
+                      </div>
+
+                      {/* Team Info */}
+                      <div className="flex items-center gap-2 min-w-0">
+                        {team.logo && (
+                          <img
+                            src={typeof team.logo === 'string' ? team.logo : team.logo.url}
+                            alt={team.name}
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-contain flex-shrink-0 bg-white/5"
+                          />
+                        )}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={cn(
+                            "text-xs sm:text-sm font-medium truncate",
+                            isFavorite ? "text-[var(--team-primary)]" : "text-white"
+                          )}>
+                            {team.name}
+                          </span>
+                          {isFavorite && (
+                            <Star className="w-3 h-3 text-[#F4AF23] fill-[#F4AF23] flex-shrink-0" />
                           )}
-                          onClick={() => onTeamSelect(team.id)}
-                        >
-                          {(() => {
-                            const badge = getPositionBadge(group.groupName, positionInGroup)
-                            return (
-                              <TableCell className="text-center font-medium py-2 w-12">
-                                {badge ? (
-                                  <div
-                                    style={{ backgroundColor: badge.bg, color: badge.color }}
-                                    className="mx-auto w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
-                                  >
-                                    {positionInGroup}
-                                  </div>
-                                ) : (
-                                  <span className="mx-auto text-xs">{positionInGroup}</span>
-                                )}
-                              </TableCell>
-                            )
-                          })()}
-                          <TableCell className="w-8 px-0">
-                            {isFavoriteTeam(team.id) && (
-                              <span title="Favorito" className="text-yellow-400">★</span>
-                            )}
-                            {positionChange && (
-                              <span
-                                className={positionChange.direction === "up" ? "bg-green-600 text-white" : "bg-red-600 text-white"}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  width: 20,
-                                  height: 20,
-                                  borderRadius: 9999,
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {positionChange.direction === "up" ? '▲' : '▼'}{positionChange.value}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <div className="flex items-center gap-2 min-w-0 max-w-[180px] sm:max-w-full">
-                              {team.logo && (
-                                <img src={typeof team.logo === 'string' ? team.logo : team.logo.url} alt={team.name} className="h-6 w-6 rounded-full flex-shrink-0 team-logo" />
+                          {positionChange && (
+                            <span className={cn(
+                              "flex items-center text-[10px] font-semibold flex-shrink-0",
+                              positionChange.direction === "up" ? "text-emerald-400" : "text-red-400"
+                            )}>
+                              {positionChange.direction === "up" ? (
+                                <ChevronUp className="w-3 h-3" />
+                              ) : (
+                                <ChevronDown className="w-3 h-3" />
                               )}
-                              <div className="truncate team-container">
-                                <span>{team.name}</span>
+                              {positionChange.value}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                              </div>
-                            </div>
-                          </TableCell>
+                      {/* Points */}
+                      <div className="text-center">
+                        <span className="text-sm sm:text-base font-bold text-[#F4AF23]">
+                          {team.points}
+                        </span>
+                      </div>
 
+                      {/* Games Played */}
+                      <div className="text-center hidden xs:block">
+                        <span className="text-xs text-gray-400">
+                          {team.played ?? 0}
+                        </span>
+                      </div>
 
-                          <TableCell className="text-center font-bold text-[#F4AF23] text-sm py-2 w-16">{team.points}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-12">{team.played ?? 0}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-12">{team.goalDifference ?? (team.goalsFor - team.goalsAgainst)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                      {/* Goal Difference */}
+                      <div className="text-center hidden xs:block">
+                        <span className={cn(
+                          "text-xs font-medium",
+                          (team.goalDifference ?? (team.goalsFor - team.goalsAgainst)) > 0
+                            ? "text-emerald-400"
+                            : (team.goalDifference ?? (team.goalsFor - team.goalsAgainst)) < 0
+                              ? "text-red-400"
+                              : "text-gray-400"
+                        )}>
+                          {(team.goalDifference ?? (team.goalsFor - team.goalsAgainst)) > 0 ? '+' : ''}
+                          {team.goalDifference ?? (team.goalsFor - team.goalsAgainst)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         )
       })}
 
-      <div className="flex items-center justify-between gap-4 px-2 py-2">
-        <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2">
+      {/* Legend - Simplified */}
+      <div className="px-3 py-3 border-t border-white/5">
+        <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-xs text-gray-500">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#22c55e" }}></span>
-            <span>1º — Semifinal (somente se for o grupo vencedor do Challenger)</span>
+            <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <span>Semi</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#F4AF23" }}></span>
-            <span>2º e 3º — Quartas</span>
+            <span className="w-3 h-3 rounded-full bg-[#F4AF23]"></span>
+            <span>Quartas</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#fb923c" }}></span>
-            <span>4º — Quartas (se o grupo for o vencedor do Challenger), caso contrário 4º Lugar</span>
-          </div>
+
         </div>
       </div>
     </div>
