@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle, Trophy } from "lucide-react"
 import TeamCarousel from "@/components/team-carousel"
@@ -16,8 +16,6 @@ import { LoadingState } from "@/components/ui/loading-state"
 import { ErrorState } from "@/components/ui/error-state"
 import { SchemaMarkup } from "@/components/schema-markup"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 
 export default function SimulatorPage() {
   const [leagueData, setLeagueData] = useState<LeagueData | null>(null)
@@ -77,120 +75,160 @@ export default function SimulatorPage() {
     loadData()
   }, [])
 
-  // Atualiza os placares das partidas com dados oficiais em tempo real
+  // Refs para evitar stale closures no intervalo
+  const roundsRef = useRef(rounds);
+  const teamsRef = useRef(teams);
+  const leagueDataRef = useRef(leagueData);
+
   useEffect(() => {
-    const updateOfficialScores = async () => {
-      if (!rounds || rounds.length === 0) return;
-      // Coleta todos os matches
-      const allMatches = rounds.flatMap(r => r.matches || []);
-      // Busca placares oficiais para cada partida
-      const results = await Promise.all(
-        allMatches.map(async (match) => {
-          if (!match?.id) return null;
-          try {
-            const res = await fetch(`/api/official-matches?matchId=${match.id}`);
-            if (!res.ok) return null;
-            const json = await res.json();
-            if (!json || !json.id) return null;
-            // Extrai status e scores
-            let scores = {
-              homeScore: null,
-              awayScore: null,
-              homeScore1T: null,
-              awayScore1T: null,
-              homeScore2T: null,
-              awayScore2T: null,
-              homeScore3T: null,
-              awayScore3T: null,
-              homeScoreP: null,
-              awayScoreP: null,
-            };
-            if (json.score) {
-              scores.homeScore = json.score.home;
-              scores.awayScore = json.score.away;
-            } else if (json.scores) {
-              scores = { ...scores, ...json.scores };
-            }
-            if (json.periods && Array.isArray(json.periods)) {
-              json.periods.forEach((p: any, idx: number) => {
-                if (idx === 0) {
-                  scores.homeScore1T = p.home;
-                  scores.awayScore1T = p.away;
-                } else if (idx === 1) {
-                  scores.homeScore2T = p.home;
-                  scores.awayScore2T = p.away;
-                } else if (idx === 2) {
-                  scores.homeScore3T = p.home;
-                  scores.awayScore3T = p.away;
-                }
-              });
-            }
-            if (json.penalties) {
-              scores.homeScoreP = json.penalties.home;
-              scores.awayScoreP = json.penalties.away;
-            }
-            return {
-              id: match.id,
-              status: json.status || json.matchStatus || match.status,
-              scores,
-              metaInformation: json.metaInformation || match.metaInformation,
-            };
-          } catch {
-            return null;
+    roundsRef.current = rounds;
+    teamsRef.current = teams;
+    leagueDataRef.current = leagueData;
+  }, [rounds, teams, leagueData]);
+
+  // Atualiza placares apenas de partidas AO VIVO em tempo real (polling a cada 30s)
+  const updateLiveMatches = useCallback(async () => {
+    const currentRounds = roundsRef.current;
+    const currentTeams = teamsRef.current;
+    const currentLeagueData = leagueDataRef.current;
+
+    if (!currentRounds || currentRounds.length === 0) return;
+
+    // Identifica apenas partidas ao vivo
+    const liveMatches = currentRounds.flatMap(r => r.matches || []).filter(match => {
+      const status = (match.status || "").toString().toLowerCase();
+      return status.includes("inplay") || status.includes("live") || status.includes("in_progress");
+    });
+
+    if (liveMatches.length === 0) return;
+
+    // Busca dados apenas das partidas ao vivo
+    const results = await Promise.all(
+      liveMatches.map(async (match) => {
+        if (!match?.id) return null;
+        try {
+          const res = await fetch(`/api/official-matches?matchId=${match.id}`);
+          if (!res.ok) return null;
+          const json = await res.json();
+          if (!json || !json.id) return null;
+
+          let scores = {
+            homeScore: null as number | null,
+            awayScore: null as number | null,
+            homeScore1T: null as number | null,
+            awayScore1T: null as number | null,
+            homeScore2T: null as number | null,
+            awayScore2T: null as number | null,
+            homeScore3T: null as number | null,
+            awayScore3T: null as number | null,
+            homeScoreP: null as number | null,
+            awayScoreP: null as number | null,
+          };
+
+          if (json.score) {
+            scores.homeScore = json.score.home;
+            scores.awayScore = json.score.away;
+          } else if (json.scores) {
+            scores = { ...scores, ...json.scores };
           }
+
+          if (json.periods && Array.isArray(json.periods)) {
+            json.periods.forEach((p: any, idx: number) => {
+              if (idx === 0) {
+                scores.homeScore1T = p.home;
+                scores.awayScore1T = p.away;
+              } else if (idx === 1) {
+                scores.homeScore2T = p.home;
+                scores.awayScore2T = p.away;
+              } else if (idx === 2) {
+                scores.homeScore3T = p.home;
+                scores.awayScore3T = p.away;
+              }
+            });
+          }
+
+          if (json.penalties) {
+            scores.homeScoreP = json.penalties.home;
+            scores.awayScoreP = json.penalties.away;
+          }
+
+          return {
+            id: match.id,
+            status: json.status || json.matchStatus || match.status,
+            scores,
+            metaInformation: json.metaInformation || match.metaInformation,
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    const officialById = new Map<number, typeof results[0]>();
+    results.forEach((m) => {
+      if (m && m.id) officialById.set(Number(m.id), m);
+    });
+
+    if (officialById.size === 0) return;
+
+    // Atualiza apenas as partidas ao vivo nos rounds
+    const updatedRounds = currentRounds.map((round) => ({
+      ...round,
+      matches: Array.isArray(round.matches)
+        ? round.matches.map((match) => {
+          const official = officialById.get(Number(match.id));
+          if (official) {
+            return {
+              ...match,
+              status: official.status ?? match.status,
+              scores: {
+                homeScore: official.scores?.homeScore ?? match.scores?.homeScore ?? null,
+                awayScore: official.scores?.awayScore ?? match.scores?.awayScore ?? null,
+                homeScore1T: official.scores?.homeScore1T ?? match.scores?.homeScore1T ?? null,
+                awayScore1T: official.scores?.awayScore1T ?? match.scores?.awayScore1T ?? null,
+                homeScore2T: official.scores?.homeScore2T ?? match.scores?.homeScore2T ?? null,
+                awayScore2T: official.scores?.awayScore2T ?? match.scores?.awayScore2T ?? null,
+                homeScore3T: official.scores?.homeScore3T ?? match.scores?.homeScore3T ?? null,
+                awayScore3T: official.scores?.awayScore3T ?? match.scores?.awayScore3T ?? null,
+                homeScoreP: official.scores?.homeScoreP ?? match.scores?.homeScoreP ?? null,
+                awayScoreP: official.scores?.awayScoreP ?? match.scores?.awayScoreP ?? null,
+              },
+              metaInformation: official.metaInformation ?? match.metaInformation,
+            };
+          }
+          return match;
         })
-      );
-      const officialById = new Map();
-      results.forEach((m) => {
-        if (m && m.id) officialById.set(Number(m.id), m);
+        : [],
+    }));
+
+    setRounds(updatedRounds);
+
+    // Atualiza standings se necessário
+    if (currentTeams && Object.keys(currentTeams).length > 0 && currentLeagueData) {
+      const updatedStandingsObj = calculateStandings(updatedRounds, currentTeams, currentLeagueData.standings || []);
+      let updatedStandings = Object.values(updatedStandingsObj).flat();
+      const seenIds = new Set<string>();
+      updatedStandings = updatedStandings.filter((s) => {
+        if (seenIds.has(s.id)) return false;
+        seenIds.add(s.id);
+        return true;
       });
-      // Atualiza rounds com placares oficiais
-      const updatedRounds = rounds.map((round) => ({
-        ...round,
-        matches: Array.isArray(round.matches)
-          ? round.matches.map((match) => {
-            const official = officialById.get(Number(match.id));
-            if (official) {
-              return {
-                ...match,
-                status: official.status ?? match.status,
-                scores: {
-                  homeScore: official.scores?.homeScore ?? match.scores?.homeScore ?? null,
-                  awayScore: official.scores?.awayScore ?? match.scores?.awayScore ?? null,
-                  homeScore1T: official.scores?.homeScore1T ?? match.scores?.homeScore1T ?? null,
-                  awayScore1T: official.scores?.awayScore1T ?? match.scores?.awayScore1T ?? null,
-                  homeScore2T: official.scores?.homeScore2T ?? match.scores?.homeScore2T ?? null,
-                  awayScore2T: official.scores?.awayScore2T ?? match.scores?.awayScore2T ?? null,
-                  homeScore3T: official.scores?.homeScore3T ?? match.scores?.homeScore3T ?? null,
-                  awayScore3T: official.scores?.awayScore3T ?? match.scores?.awayScore3T ?? null,
-                  homeScoreP: official.scores?.homeScoreP ?? match.scores?.homeScoreP ?? null,
-                  awayScoreP: official.scores?.awayScoreP ?? match.scores?.awayScoreP ?? null,
-                },
-                metaInformation: official.metaInformation ?? match.metaInformation,
-              };
-            }
-            return match;
-          })
-          : [],
-      }));
-      setRounds(updatedRounds);
-      // Atualiza standings imediatamente
-      if (teams && Object.keys(teams).length > 0 && leagueData) {
-        const updatedStandingsObj = calculateStandings(updatedRounds, teams, leagueData.standings || []);
-        let updatedStandings = Object.values(updatedStandingsObj).flat();
-        // Deduplicar por id
-        const seenIds = new Set();
-        updatedStandings = updatedStandings.filter((s) => {
-          if (seenIds.has(s.id)) return false;
-          seenIds.add(s.id);
-          return true;
-        });
-        setStandings(updatedStandings);
-      }
-    };
-    updateOfficialScores();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leagueData, teams]);
+      setStandings(updatedStandings);
+    }
+  }, []);
+
+  // Polling a cada 30 segundos para partidas ao vivo
+  useEffect(() => {
+    if (!leagueData || rounds.length === 0) return;
+
+    // Executa imediatamente
+    updateLiveMatches();
+
+    // Polling a cada 30 segundos
+    const interval = setInterval(updateLiveMatches, 30000);
+
+    return () => clearInterval(interval);
+  }, [leagueData, updateLiveMatches, rounds.length]);
 
   const handleScoreUpdate = (
     roundId: number,
@@ -282,7 +320,6 @@ export default function SimulatorPage() {
 
   const handleTeamSelect = (teamId: string) => {
     setSelectedTeam(teamId)
-    router.push(`/team/${teamId}`)
   }
   const groupedStandings = useMemo(() => {
     const groups: Record<string, any[]> = {}
@@ -300,11 +337,61 @@ export default function SimulatorPage() {
     orderedKeys.push(...middle)
     if (keys.includes('B')) orderedKeys.push('B')
 
+    // Sort each group's standings to match full table ordering: points desc, goalDifference desc, goalsFor desc, won desc
+    orderedKeys.forEach((k) => {
+      const arr = groups[k] || []
+      arr.sort((a: any, b: any) => {
+        if ((b.points ?? 0) !== (a.points ?? 0)) return (b.points ?? 0) - (a.points ?? 0)
+        const gdA = a.goalDifference ?? ((a.goalsFor ?? 0) - (a.goalsAgainst ?? 0))
+        const gdB = b.goalDifference ?? ((b.goalsFor ?? 0) - (b.goalsAgainst ?? 0))
+        if (gdB !== gdA) return gdB - gdA
+        if ((b.goalsFor ?? 0) !== (a.goalsFor ?? 0)) return (b.goalsFor ?? 0) - (a.goalsFor ?? 0)
+        return (b.won ?? 0) - (a.won ?? 0)
+      })
+      groups[k] = arr
+    })
+
     return orderedKeys.map((groupName) => ({ groupName, standings: groups[groupName] }))
   }, [standings])
 
+
   if (loading) {
     return <LoadingState />
+  }
+
+  // Handle empty league data (no teams, rounds, or standings)
+  const isEmptyLeagueData = leagueData?.rounds.length === 0 || leagueData?.standings.length === 0
+
+  if (isEmptyLeagueData) {
+    return (
+      <main className="bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] min-h-screen text-white">
+        <Header
+          loading={loading}
+          selectedTeam={selectedTeam}
+          onTeamSelect={handleTeamSelect}
+          setActiveTab={setActiveTab}
+        />
+        <div className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="w-full max-w-lg rounded-3xl bg-gradient-to-br from-[#18120a] via-[#1a1a1a] to-[#23201a] border border-[#F4AF23]/30 shadow-xl p-8 flex flex-col items-center gap-4 mt-12 mb-8 animate-fade-in">
+            <div className="flex flex-col items-center gap-2">
+              <span className="inline-flex items-center justify-center rounded-full bg-[#F4AF23]/10 border border-[#F4AF23]/30 p-4 mb-2">
+                <AlertTriangle className="h-8 w-8 text-[#F4AF23]" />
+              </span>
+              <h2 className="text-2xl font-bold text-[#F4AF23] tracking-tight text-center">Dados em atualização</h2>
+            </div>
+            <p className="text-base text-white/90 text-center max-w-md">
+              Os dados da <span className="font-semibold text-[#F4AF23]">Kings League Brazil</span> ainda não estão disponíveis para este split ou temporada.<br />
+              <span className="block mt-3 text-white/70 text-sm">As informações exibidas aqui são fornecidas diretamente pela Kings League. Não armazenamos nada localmente, então a disponibilidade depende exclusivamente da atualização da base oficial da Kings League.</span>
+            </p>
+            <div className="w-full flex flex-col items-center mt-2">
+              <span className="inline-block px-4 py-2 rounded-full bg-[#F4AF23]/10 border border-[#F4AF23]/20 text-[#F4AF23] text-sm font-medium tracking-wide mb-2">Aguarde novidades em breve!</span>
+              <span className="text-xs text-white/40">Última atualização: {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
   }
 
   if (error) {
@@ -316,8 +403,6 @@ export default function SimulatorPage() {
       <Header
         loading={loading}
         selectedTeam={selectedTeam}
-        teams={teams}
-        standings={standings}
         onTeamSelect={handleTeamSelect}
         setActiveTab={setActiveTab}
       />
@@ -356,7 +441,6 @@ export default function SimulatorPage() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
-
       </div>
       <Footer />
 
