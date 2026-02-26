@@ -274,130 +274,6 @@ export default function StandingsPage() {
     loadData()
   }, [])
 
-  // Função para exportar a tabela como imagem
-  const downloadStandings = async () => {
-    if (!tableRef.current) return
-
-    const element = tableRef.current
-
-    // Clonando para manipulação
-    const clone = element.cloneNode(true) as HTMLElement
-    clone.style.backgroundColor = '#121212'
-    clone.style.padding = '16px'
-    clone.style.width = '900px' // Maior para tabela completa
-    clone.style.borderRadius = '12px'
-    clone.style.position = 'fixed'
-    clone.style.left = '-9999px'
-    clone.style.top = '0'
-    document.body.appendChild(clone)
-
-    try {
-      const canvas = await html2canvas(clone, {
-        backgroundColor: '#121212',
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        onclone: (clonedDoc) => {
-          // Ajustando estilos no clone
-          const rows = clonedDoc.querySelectorAll('tr')
-          rows.forEach(row => {
-            const cells = row.querySelectorAll('td, th')
-            cells.forEach(cell => {
-              if (cell instanceof HTMLElement) {
-                cell.style.padding = '8px 6px'
-                cell.style.verticalAlign = 'middle'
-                cell.style.whiteSpace = 'normal'
-                cell.style.height = '48px'
-                cell.style.lineHeight = '1'
-              }
-            })
-          })
-        }
-      })
-
-      // Converter para URL e fazer download
-      const url = canvas.toDataURL('image/png')
-      const link = document.createElement('a')
-      link.download = 'kings-league-classificacao-completa.png'
-      link.href = url
-      link.click()
-    } finally {
-      document.body.removeChild(clone)
-    }
-  }
-
-  // Verificar se o time atual é o time favorito do usuário
-  const isFavoriteTeam = (teamId: string) => {
-    return favoriteTeam?.id === teamId
-  }
-
-  // Função para determinar a cor de fundo baseada na posição
-  const getPositionStyle = (standing: TeamStanding, index: number) => {
-    if (index === 0) {
-      // Primeiro colocado - semifinal
-      return { backgroundColor: "#4ade80", color: "white" }
-    } else if (index >= 1 && index <= 6) {
-      // 2º ao 7º - quartas de final
-      return { backgroundColor: "var(--team-primary)", color: "black" }
-    }
-    return {}
-  }
-
-  // Função para determinar a mudança de posição
-  const getPositionChange = (team: TeamStanding, currentIndex: number) => {
-    if (!previousStandings || previousStandings.length === 0) return null
-
-    const previousIndex = previousStandings.findIndex((t) => t.id === team.id)
-    if (previousIndex === -1) return null
-
-    const change = previousIndex - currentIndex
-    if (change === 0) return null
-
-    return {
-      value: Math.abs(change),
-      direction: change > 0 ? "up" : "down",
-    }
-  }
-
-  // Calcular vitórias e derrotas nos pênaltis
-  const calculatePenaltyStats = (team: TeamStanding) => {
-    let penaltyWins = 0;
-    let penaltyLosses = 0;
-
-    rounds.forEach((round) => {
-      round.matches.forEach((match) => {
-        const { homeTeamId, awayTeamId } = match.participants;
-        const { homeScore, awayScore, homeScoreP, awayScoreP } = match.scores;
-
-        if (homeScore === null || awayScore === null) return;
-        if (homeScore !== awayScore) return; // Só considerar jogos que foram para pênaltis
-        if (homeScoreP === null || awayScoreP === null) return;
-
-        if (homeTeamId === team.id) {
-          if (homeScoreP > awayScoreP) {
-            penaltyWins++;
-          } else {
-            penaltyLosses++;
-          }
-        } else if (awayTeamId === team.id) {
-          if (awayScoreP > homeScoreP) {
-            penaltyWins++;
-          } else {
-            penaltyLosses++;
-          }
-        }
-      });
-    });
-
-    return { penaltyWins, penaltyLosses };
-  };
-
-  // Calcular o número de vitórias regulares (no tempo normal, sem pênaltis)
-  const calculateRegularWins = (team: TeamStanding, penaltyWins: number) => {
-    return team.won - penaltyWins;
-  };
-
   // Handler para seleção de time
   const handleTeamSelect = (teamId: string) => {
     setSelectedTeam(teamId)
@@ -409,14 +285,13 @@ export default function StandingsPage() {
     // Não faz nada nesta página, mas é necessário para o Header
   }
 
+
   if (loading) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
         <Header
           loading={true}
           selectedTeam={null}
-          teams={{}}
-          standings={[]}
           onTeamSelect={() => { }}
           setActiveTab={() => { }}
         />
@@ -426,13 +301,46 @@ export default function StandingsPage() {
     )
   }
 
+  // Alerta visual para dados vazios (sem standings, rounds ou teams)
+  const isEmptyLeagueData = standings.length === 0 || rounds.length === 0 || Object.keys(teams).length === 0
+
+  if (isEmptyLeagueData) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
+        <Header
+          loading={false}
+          selectedTeam={selectedTeam}
+          onTeamSelect={handleTeamSelect}
+          setActiveTab={handleSetActiveTab}
+        />
+        <div className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="w-full max-w-lg rounded-3xl bg-gradient-to-br from-[#18120a] via-[#1a1a1a] to-[#23201a] border border-[#F4AF23]/30 shadow-xl p-8 flex flex-col items-center gap-4 mt-12 mb-8 animate-fade-in">
+            <div className="flex flex-col items-center gap-2">
+              <span className="inline-flex items-center justify-center rounded-full bg-[#F4AF23]/10 border border-[#F4AF23]/30 p-4 mb-2">
+                <svg className="h-8 w-8 text-[#F4AF23]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 5c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </span>
+              <h2 className="text-2xl font-bold text-[#F4AF23] tracking-tight text-center">Dados em atualização</h2>
+            </div>
+            <p className="text-base text-white/90 text-center max-w-md">
+              Os dados da <span className="font-semibold text-[#F4AF23]">Kings League Brazil</span> ainda não estão disponíveis para este split ou temporada.<br />
+              <span className="block mt-3 text-white/70 text-sm">As informações exibidas aqui são fornecidas diretamente pela Kings League. Não armazenamos nada localmente, então a disponibilidade depende exclusivamente da atualização da base oficial da Kings League.</span>
+            </p>
+            <div className="w-full flex flex-col items-center mt-2">
+              <span className="inline-block px-4 py-2 rounded-full bg-[#F4AF23]/10 border border-[#F4AF23]/20 text-[#F4AF23] text-sm font-medium tracking-wide mb-2">Aguarde novidades em breve!</span>
+              <span className="text-xs text-white/40">Última atualização: {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
       <Header
         loading={false}
         selectedTeam={selectedTeam}
-        teams={teams}
-        standings={standings}
         onTeamSelect={handleTeamSelect}
         setActiveTab={handleSetActiveTab}
       />
