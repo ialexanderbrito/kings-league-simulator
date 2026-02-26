@@ -43,20 +43,16 @@ export const DateGroup: FC<DateGroupProps> = ({
 }) => {
   return (
     <div className="space-y-3">
-      <div
-        className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-muted/30 border-l-4 border-[var(--team-primary)]"
-        role="heading"
-        aria-level={3}
-      >
-        <div className="p-1.5 rounded-md bg-[var(--team-primary)]/10">
-          <DateIcon className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
-        </div>
-        <span className="text-sm font-semibold text-foreground">
+      {/* Date Header */}
+      <div className="flex items-center gap-2 px-1">
+        <DateIcon className="w-4 h-4 text-[#F4AF23]" aria-hidden="true" />
+        <span className="text-sm font-medium text-gray-300">
           {DateFormatter.getWeekdayName(date)}, {DateFormatter.formatDateDisplay(date)}
         </span>
       </div>
 
-      <div className="space-y-3">
+      {/* Matches */}
+      <div className="space-y-2">
         {matches.map((match) => {
           const matchKey = `${round.id}-${match.id}`;
           const currentScores = scores[matchKey] || {

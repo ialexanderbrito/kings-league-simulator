@@ -18,7 +18,6 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
   disabled = false
 }) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    // Se for Backspace ou Delete e há apenas um caractere, limpa o campo
     if ((e.key === "Backspace" || e.key === "Delete") && currentValue.length === 1) {
       onScoreChange("", true);
     }
@@ -33,12 +32,12 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
       value={value}
       placeholder="0"
       className={cn(
-        "w-9 h-9 sm:w-10 sm:h-10 text-center rounded-lg text-sm sm:text-base font-semibold",
-        "bg-muted border-2 border-border text-foreground placeholder:text-muted-foreground",
+        "w-10 h-10 sm:w-11 sm:h-11 text-center rounded-lg text-base font-bold",
+        "bg-white/5 border border-white/10 text-white placeholder:text-gray-600",
         "transition-all duration-200",
-        "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)] focus:ring-offset-2 focus:ring-offset-background focus:border-[var(--team-primary)]",
-        "hover:border-border/80",
-        disabled ? "cursor-not-allowed opacity-60" : "hover:bg-accent"
+        "focus:outline-none focus:ring-2 focus:ring-[#F4AF23]/50 focus:border-[#F4AF23]/50",
+        "hover:border-white/20 hover:bg-white/10",
+        disabled ? "cursor-not-allowed opacity-50" : ""
       )}
       onKeyDown={handleKeyDown}
       onChange={(e) => {
