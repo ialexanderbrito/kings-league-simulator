@@ -42,7 +42,7 @@ export function calculateStandings(
         goalsAgainst: 0,
         goalDifference: 0,
         rank: 0,
-        positionLegend: null,
+        positionLegend: (base as any).positionLegend ?? null,
         groupName: (base as any).groupName || (base as any).group || undefined,
       }
     }
@@ -140,6 +140,7 @@ export function calculateStandings(
           name: base.name || team?.name || `Time ${id}`,
           shortName: base.shortName || team?.shortName || `T${id}`,
           logo: base.logo || team?.logo,
+          // Use only metadata from initialStandings when the team has no computed stats
           points: 0,
           played: 0,
           won: 0,
@@ -149,17 +150,31 @@ export function calculateStandings(
           goalsAgainst: 0,
           goalDifference: 0,
           rank: 0,
-          positionLegend: null,
+          positionLegend: (base as any).positionLegend ?? null,
           groupName: (base as any).groupName || (base as any).group || group,
         })
       }
     })
 
     const sorted = list.sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points
-      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference
-      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor
-      return a.name.localeCompare(b.name)
+      // Tiebreakers (in order): points, wins, goal difference, goals for, name
+      const aPoints = Number(a.points || 0)
+      const bPoints = Number(b.points || 0)
+      if (bPoints !== aPoints) return bPoints - aPoints
+
+      const aWon = Number(a.won || 0)
+      const bWon = Number(b.won || 0)
+      if (bWon !== aWon) return bWon - aWon
+
+      const aGD = Number(a.goalDifference || 0)
+      const bGD = Number(b.goalDifference || 0)
+      if (bGD !== aGD) return bGD - aGD
+
+      const aGF = Number(a.goalsFor || 0)
+      const bGF = Number(b.goalsFor || 0)
+      if (bGF !== aGF) return bGF - aGF
+
+      return (a.name || '').localeCompare(b.name || '')
     })
 
     // remover duplicatas por id
