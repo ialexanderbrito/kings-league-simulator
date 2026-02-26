@@ -92,11 +92,20 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
+  			},
+  			'blink-cursor': {
+  				'0%, 100%': {
+  					opacity: '1'
+  				},
+  				'50%': {
+  					opacity: '0'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'blink-cursor': 'blink-cursor 0.75s step-end infinite'
   		}
   	}
   },
