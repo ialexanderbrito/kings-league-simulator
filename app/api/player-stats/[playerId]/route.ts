@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server"
-import type { PlayerStats } from "@/types/kings-league"
-
-const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+import {
+  kingsLeagueApi,
+  createSuccessResponse,
+  createErrorResponse,
+  createOptionsHandler,
+} from "@/lib/api"
 
 export async function GET(
   request: Request,
@@ -10,58 +12,67 @@ export async function GET(
   try {
     const { playerId } = await params
 
-    const statsResponse = await fetch(
-      `https://kingsleague.pro/api/v1/competition/players/${playerId}/season-data/${SEASON_ID}/stats`,
-      {
-        headers: {
-          referer: "https://kingsleague.pro/pt/brazil/teams",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-        // Revalidar a cada 12 horas (43200 segundos)
-        next: { revalidate: 43200 }, 
-      }
-    )
-
-    if (!statsResponse.ok) {
-      throw new Error(`Falha ao buscar estatísticas do jogador: ${statsResponse.status} ${statsResponse.statusText}`)
+    if (!playerId) {
+      return createErrorResponse(
+        "ID do jogador é obrigatório",
+        new Error("playerId não fornecido"),
+        { status: 400 }
+      )
     }
 
-    const playerStats = await statsResponse.json()
+    const playerStats = await kingsLeagueApi.getPlayerStats(playerId)
 
-    return new NextResponse(JSON.stringify(playerStats), {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=21600, s-maxage=43200", // 6 horas para cliente, 12 horas para CDN
-      },
-    })
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        error: "Falha ao carregar estatísticas do jogador",
-        message: error.message,
-      },
-      {
-        status: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
+    // Suporte para payload compacto via ?compact=true
+    const url = new URL(request.url)
+    const compact = url.searchParams.get("compact") === "true"
+    // fields can be a comma-separated list like ?fields=GOL,ASS-V,TIR
+    const fieldsParam = url.searchParams.get("fields")
+
+    if (compact) {
+      // Default important metrics
+      const defaultCodes = ["GOL", "ASS-V", "TIR", "TIR-S", "DRB", "PAS-R", "PG"]
+      const requestedCodes = fieldsParam ? fieldsParam.split(",").map(s => s.trim().toUpperCase()).filter(Boolean) : defaultCodes
+      const importantCodes = new Set(requestedCodes)
+
+      const compactRankings = (playerStats as any).rankings
+        ? (playerStats as any).rankings
+            .filter((r: any) => importantCodes.has((r.parameter?.code || "").toString().toUpperCase()))
+            .map((r: any) => ({
+              // keep original shape expected by client: { parameter: { code, name }, total }
+              parameter: { code: r.parameter?.code, name: r.parameter?.name },
+              total: r.total,
+            }))
+        : undefined
+
+      const compacted = {
+        // basic player info if present
+        id: (playerStats as any).id,
+        shortName: (playerStats as any).shortName,
+        role: (playerStats as any).role,
+        countryId: (playerStats as any).countryId,
+        birthDate: (playerStats as any).birthDate,
+        height: (playerStats as any).height,
+        image: (playerStats as any).image?.url ? { url: (playerStats as any).image.url } : undefined,
+        // aggregated fields
+        matchesPlayed: (playerStats as any).matchesPlayed,
+        goalsScored: (playerStats as any).goalsScored,
+        assists: (playerStats as any).assists,
+        yellowCards: (playerStats as any).yellowCards,
+        redCards: (playerStats as any).redCards,
+        mvps: (playerStats as any).mvps,
+        // reduced rankings
+        rankings: compactRankings,
+        // echo requested fields for client visibility
+        _requestedFields: Array.from(importantCodes),
       }
-    )
+
+      return createSuccessResponse(compacted, { cache: "DAILY" })
+    }
+
+    return createSuccessResponse(playerStats, { cache: "DAILY" })
+  } catch (error) {
+    return createErrorResponse("Falha ao carregar estatísticas do jogador", error)
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  })
-}
+export const OPTIONS = createOptionsHandler()

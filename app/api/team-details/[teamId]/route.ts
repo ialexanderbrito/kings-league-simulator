@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server"
-
-const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+import {
+  kingsLeagueApi,
+  createSuccessResponse,
+  createErrorResponse,
+  createOptionsHandler,
+  type KingsLeaguePlayer,
+} from "@/lib/api"
 
 export async function GET(
   request: Request,
@@ -9,115 +13,54 @@ export async function GET(
   try {
     const { teamId } = await params
 
-    const teamDetailsResponse = await fetch(`https://kingsleague.pro/api/v1/competition/teams/${teamId}`, {
-      headers: {
-        referer: "https://kingsleague.pro/pt/brazil/teams",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      },
-      // Revalidar a cada 12 horas (43200 segundos)
-      next: { revalidate: 43200 }, 
-    })
-
-    if (!teamDetailsResponse.ok) {
-      throw new Error(`Falha ao buscar detalhes do time: ${teamDetailsResponse.status} ${teamDetailsResponse.statusText}`)
+    if (!teamId) {
+      return createErrorResponse(
+        "ID do time é obrigatório",
+        new Error("teamId não fornecido"),
+        { status: 400 }
+      )
     }
 
-    const teamDetails = await teamDetailsResponse.json()
+    // Busca dados em paralelo para melhor performance
+    const [teamDetails, staffResponse, playersResponse] = await Promise.allSettled([
+      kingsLeagueApi.getTeamDetails(teamId),
+      kingsLeagueApi.getTeamStaff(teamId),
+      kingsLeagueApi.getTeamPlayers(teamId),
+    ])
 
-    const staffResponse = await fetch(
-      `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/${SEASON_ID}/staffs`,
-      {
-        headers: {
-          referer: "https://kingsleague.pro/pt/brazil/teams",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-        next: { revalidate: 43200 },
-      }
-    )
-
-    const playersResponse = await fetch(
-      `https://kingsleague.pro/api/v1/competition/teams/${teamId}/season-data/${SEASON_ID}/players`,
-      {
-        headers: {
-          referer: "https://kingsleague.pro/pt/brazil/teams",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-        next: { revalidate: 43200 },
-      }
-    )
-
-    let staffData = { staffs: [] };
-    if (staffResponse.ok) {
-      try {
-        staffData = await staffResponse.json();
-      } catch (error) {
-        console.error("Erro ao processar dados do staff:", error);
-      }
+    // Extrai dados do time (obrigatório)
+    if (teamDetails.status === "rejected") {
+      throw teamDetails.reason
     }
 
-    let playersData = [];
-    if (playersResponse.ok) {
-      try {
-        playersData = await playersResponse.json();
-        
-        if (!Array.isArray(playersData)) {
-          playersData = [];
-        }
-        
-        playersData = playersData.map(player => ({
-          ...player,
-          role: player.role || 'midfielder', 
-          height: player.height || 175, 
-          stats: null, 
-          metaInformation: player.metaInformation || {} 
-        }));
-      } catch (error) {
-        console.error("Erro ao processar dados dos jogadores:", error);
-      }
+    // Extrai staff (opcional)
+    let staffData: { staffs: unknown[] } = { staffs: [] }
+    if (staffResponse.status === "fulfilled") {
+      staffData = staffResponse.value
+    }
+
+    // Extrai jogadores (opcional) com normalização
+    let playersData: KingsLeaguePlayer[] = []
+    if (playersResponse.status === "fulfilled" && Array.isArray(playersResponse.value)) {
+      playersData = playersResponse.value.map((player) => ({
+        ...player,
+        role: player.role || "midfielder",
+        height: player.height || 175,
+        stats: null,
+        metaInformation: player.metaInformation || {},
+      }))
     }
 
     const response = {
-      ...teamDetails,
+      ...teamDetails.value,
       staff: staffData.staffs || [],
-      players: playersData || [],
+      players: playersData,
     }
 
-    return new NextResponse(JSON.stringify(response), {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=21600, s-maxage=43200", // 6 horas para cliente, 12 horas para CDN
-      },
-    })
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        error: "Falha ao carregar detalhes do time",
-        message: error.message,
-      },
-      {
-        status: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      }
-    )
+    return createSuccessResponse(response, { cache: "LONG" })
+  } catch (error) {
+    return createErrorResponse("Falha ao carregar detalhes do time", error)
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  })
-}
+export const OPTIONS = createOptionsHandler()

@@ -1,27 +1,30 @@
-import { NextResponse } from "next/server"
-
-export const revalidate = 300
+import {
+  kingsLeagueApi,
+  createSuccessResponse,
+  createErrorResponse,
+  createOptionsHandler,
+} from "@/lib/api"
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const matchId = searchParams.get("matchId") || "1913"
-    // competitionId fixo 17
-    const url = `https://kingsleague.pro/api/v1/competition/matches/${matchId}?live=true&competitionId=17`
-    const res = await fetch(url, {
-      headers: {
-        "accept": "/",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "referer": "https://kingsleague.pro/pt/brazil/jogos/"
-      },
-      cache: "no-store"
-    })
-    if (!res.ok) {
-      return NextResponse.json({ error: "Erro ao buscar dados oficiais", status: res.status }, { status: res.status })
+    const matchId = searchParams.get("matchId")
+
+    if (!matchId) {
+      return createErrorResponse(
+        "Parâmetro 'matchId' é obrigatório",
+        new Error("matchId não fornecido"),
+        { status: 400 }
+      )
     }
-    const data = await res.json()
-    return NextResponse.json(data)
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Erro desconhecido" }, { status: 500 })
+
+    const data = await kingsLeagueApi.getMatchDetails(matchId)
+
+    // Retorna sem cache pois são dados em tempo real
+    return createSuccessResponse(data)
+  } catch (error) {
+    return createErrorResponse("Erro ao buscar dados oficiais da partida", error)
   }
 }
+
+export const OPTIONS = createOptionsHandler()
