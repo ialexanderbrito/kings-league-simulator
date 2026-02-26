@@ -110,7 +110,8 @@ export interface TeamDetails extends Team {
 
 export interface StaffMember {
   id: number
-    positionLegend?: { color: string; placement: string } | null
+  positionLegend?: { color: string; placement: string } | null
+  shortName: string
   firstName: string
   lastName: string
   middleName?: string | null
