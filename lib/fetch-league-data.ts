@@ -32,14 +32,30 @@ export async function fetchLeagueData(): Promise<LeagueData> {
       throw new Error(data.error)
     }
 
+    // Busca times da rota interna protegida
+    const teamsResp = await fetch("/api/teams", { next: { revalidate: 300 } })
+    if (!teamsResp.ok) {
+      throw new Error("Falha ao buscar times da API interna")
+    }
+    const remoteTeams = await teamsResp.json()
+    // Normaliza para o shape local Team (id como string)
+    data.teams = (remoteTeams || []).map((t: any) => ({
+      id: String(t.id),
+      name: t.name,
+      shortName: t.shortName,
+      completeName: t.completeName,
+      countryId: t.countryId,
+      firstColorHEX: t.firstColorHEX,
+      secondColorHEX: t.secondColorHEX,
+      logo: t.logo || { url: "/placeholder-logo.svg" },
+      gender: t.gender,
+      metaInformation: t.metaInformation,
+    }))
+
     if (!data.teams || !data.standings || !data.rounds) {
       throw new Error("Dados incompletos recebidos da API")
     }
 
-    // Observação: antigamente o cliente solicitava detalhes oficiais de cada partida individualmente
-    // (muitos fetches paralelos). Para reduzir número de requisições do cliente, o endpoint
-    // `/api/league-data` agora tenta mesclar dados oficiais server-side quando necessário.
-    // Aqui no cliente, vamos confiar no servidor e não disparar N requests por partida.
     const officialMatches: any[] = []
 
     // Filtra rodadas para remover playoffs (Quartas, Semi, Final)
@@ -147,7 +163,10 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
       return cachedData.data
     }
     
-    const response = await fetch(`/api/player-stats/${playerId}`)
+    // Request compact payload (server supports ?compact=true and ?fields=...)
+    // We only need a few codes to compute aggregated stats client-side
+    const fields = encodeURIComponent('PG,GOL,ASS-V,CRT-G,CRT-R,MVP')
+    const response = await fetch(`/api/player-stats/${playerId}?compact=true&fields=${fields}`)
     
     if (!response.ok) {
       return {
