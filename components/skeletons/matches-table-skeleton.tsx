@@ -7,21 +7,35 @@ export function MatchesTableSkeleton() {
   return (
     <Card className="bg-card border-border shadow-lg">
       <CardHeader className="border-b border-border pb-2">
-        <div className="flex items-center gap-2 text-[var(--team-primary)]">
-          <Calendar className="w-5 h-5" />
-          <span className="text-lg font-medium text-foreground">Calendário e Resultados</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[var(--team-primary)]">
+            <Calendar className="w-5 h-5" />
+            <div>
+              <span className="text-lg font-medium text-foreground">Partidas</span>
+              <p className="text-muted-foreground text-sm mt-1">Simule os resultados</p>
+            </div>
+          </div>
+
+          {/* Playoffs button skeleton (desktop) */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Skeleton className="h-8 w-20 rounded-full" />
+          </div>
         </div>
-        <p className="text-muted-foreground text-sm mt-1">Acompanhe as partidas e simule resultados</p>
       </CardHeader>
       <CardContent className="p-0">
         <div className="p-4">
           <ScrollArea className="w-full pb-1">
-            <div className="flex space-x-1 px-1 min-w-max pb-1">
-              {Array(11).fill(0).map((_, i) => (
+            <div className="flex space-x-1 px-1 min-w-max pb-1 items-center">
+              {Array(9).fill(0).map((_, i) => (
                 <div key={i} className="flex-none">
                   <Skeleton className={`h-7 w-16 rounded-full ${i === 0 ? "bg-[var(--team-primary)]" : "bg-muted"}`} />
                 </div>
               ))}
+
+              {/* Playoffs button skeleton (mobile) */}
+              <div className="sm:hidden flex-none pl-2">
+                <Skeleton className="h-9 w-28 rounded-full" />
+              </div>
             </div>
             <ScrollBar
               orientation="horizontal"

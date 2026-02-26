@@ -6,19 +6,18 @@ import { TableIcon } from "lucide-react"
 
 export function FullTableSkeleton() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
       <div className="container mx-auto py-8 px-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <div>
-            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-10 w-72 mb-2" />
             <Skeleton className="h-4 w-96" />
           </div>
-          <Skeleton className="h-10 w-40" />
         </div>
 
-        <Card className="bg-card border-border shadow-lg mb-8">
+        <Card className="bg-[#1a1a1a]/50 border-gray-800 text-white mb-8">
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl flex items-center gap-2 text-foreground">
+            <CardTitle className="text-xl flex items-center gap-2">
               <TableIcon className="w-5 h-5 text-[var(--team-primary)]" />
               <Skeleton className="h-6 w-40" />
             </CardTitle>
@@ -128,9 +127,11 @@ export function FullTableSkeleton() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border shadow-lg">
+        <Card className="bg-[#1a1a1a]/50 border-gray-800 text-white">
           <CardHeader className="pb-3">
-            <Skeleton className="h-6 w-32" />
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Skeleton className="h-6 w-32" />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

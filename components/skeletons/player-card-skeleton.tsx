@@ -1,79 +1,72 @@
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function PlayerCardSkeleton() {
-  // Simulamos um card médio/padrão
-  const cardStyle = {
-    borderColor: "var(--border)",
-    headerBg: "bg-gradient-to-r from-muted to-muted/80",
-    ratingBg: "bg-muted",
-    ratingText: "text-foreground",
-    imageBg: "bg-gradient-to-b from-muted/30 to-muted/20"
-  }
-
   return (
-    <div className="group relative h-full w-72" style={{ minHeight: '420px' }}>
-      <div
-        className="h-full rounded-lg overflow-hidden border transition-all duration-300 shadow-lg"
-        style={{ borderColor: cardStyle.borderColor, borderWidth: "2px" }}
-      >
-        <div className={`p-3 ${cardStyle.headerBg}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${cardStyle.ratingBg} ${cardStyle.ratingText} font-bold text-xl`}>
-                <Skeleton className="h-6 w-6" />
-              </div>
-              <div>
-                <Skeleton className="h-4 w-24 mb-1" />
-                <div className="flex items-center gap-1.5">
-                  <Skeleton className="h-4 w-8 rounded-sm" />
-                  <Skeleton className="h-3 w-6" />
-                </div>
-              </div>
-            </div>
+    <div className="w-full">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a]">
+        {/* Header */}
+        <div className="p-3 pb-0">
+          <div className="flex items-start gap-3">
+            {/* Rating */}
+            <Skeleton className="w-12 h-12 rounded-xl" />
 
-            <Skeleton className="w-10 h-4 rounded-full" />
-          </div>
-        </div>
-
-        <div className={`relative h-48 ${cardStyle.imageBg} flex items-center justify-center`}>
-          <Skeleton className="h-40 w-32" />
-        </div>
-
-        <div className="p-3 bg-card">
-          <div className="flex justify-end mb-2">
-            <Skeleton className="h-6 w-24 rounded" />
-          </div>
-
-          <div className="mb-3 pb-3 border-b border-border">
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div>
-                <div className="text-muted-foreground">Idade</div>
-                <Skeleton className="h-3 w-10 mt-1" />
+            {/* Info */}
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-6" />
               </div>
-              <div>
-                <div className="text-muted-foreground">Altura</div>
-                <Skeleton className="h-3 w-12 mt-1" />
-              </div>
-              <div>
-                <div className="text-muted-foreground">Posição</div>
-                <Skeleton className="h-3 w-14 mt-1" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-10 rounded-md" />
+                <Skeleton className="h-4 w-12 rounded-md" />
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Simulando atributos ou estatísticas */}
-          <div className="space-y-2">
-            {Array(5).fill(0).map((_, i) => (
-              <div key={i} className="mb-1 last:mb-0">
-                <div className="flex justify-between text-xs text-foreground mb-0.5">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-3 w-6" />
-                </div>
-                <div className="h-1.5 w-full bg-black/30 rounded-full overflow-hidden">
-                  <Skeleton className="h-full rounded-full" style={{ width: `${60 + Math.random() * 30}%` }} />
-                </div>
+        {/* Player Image Area */}
+        <div className="relative h-36 flex items-end justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10" />
+          <Skeleton className="h-28 w-24 rounded-lg" />
+        </div>
+
+        {/* Info Bar */}
+        <div className="px-3 py-2 border-t border-white/5 bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="space-y-1">
+              <Skeleton className="h-2 w-8" />
+              <Skeleton className="h-3 w-6" />
+            </div>
+            <div className="w-px h-6 bg-white/10" />
+            <div className="space-y-1">
+              <Skeleton className="h-2 w-10" />
+              <Skeleton className="h-3 w-10" />
+            </div>
+            <div className="w-px h-6 bg-white/10" />
+            <div className="space-y-1">
+              <Skeleton className="h-2 w-12" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="px-3 py-2 border-t border-white/5">
+          <div className="grid grid-cols-4 gap-2">
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="text-center space-y-1">
+                <Skeleton className="h-5 w-6 mx-auto" />
+                <Skeleton className="h-2 w-10 mx-auto" />
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Attributes Toggle */}
+        <div className="border-t border-white/5">
+          <div className="px-3 py-2 flex items-center justify-between">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-4" />
           </div>
         </div>
       </div>
