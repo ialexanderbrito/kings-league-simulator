@@ -1,12 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Button } from "@/components/ui/button"
 import { Marquee } from "@/components/ui/marquee"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/types/kings-league"
 import { useEffect, useState } from "react"
-import { useIsMobile } from "@/hooks/use-mobile"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
 
@@ -18,25 +16,14 @@ interface TeamCarouselProps {
 }
 
 function TeamCarouselSkeleton() {
-  const isMobile = useIsMobile()
-
   return (
-    <div className="w-full mx-auto">
-      <div className="w-full mx-auto relative px-4 sm:px-6">
-        <div className="flex gap-3 sm:gap-4 overflow-hidden">
-          {Array(10).fill(0).map((_, i) => (
-            <div
-              key={i}
-              className="flex-shrink-0 w-[90px] sm:w-[100px] animate-pulse"
-            >
-              <div className="flex flex-col items-center gap-2">
-                <div className="rounded-xl w-full aspect-square flex items-center justify-center p-3 bg-muted/50 border border-border/50">
-                  <Skeleton className="w-16 h-16 sm:w-[70px] sm:h-[70px] rounded-lg" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="w-full">
+      <div className="flex gap-3 overflow-hidden py-2">
+        {Array(12).fill(0).map((_, i) => (
+          <div key={i} className="flex-shrink-0">
+            <Skeleton className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/5" />
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -59,7 +46,7 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
     } else {
       const timer = setTimeout(() => {
         setIsLoading(false)
-      }, 500)
+      }, 300)
       return () => clearTimeout(timer)
     }
   }, [teams, loading, mounted])
@@ -74,62 +61,76 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
   }
 
   return (
-    <div className={cn("w-full mx-auto", className)}>
+    <div className={cn("w-full", className)}>
       <Marquee
         pauseOnHover
         repeat={2}
-        className="w-full mx-auto relative px-4 sm:px-6 [--duration:60s]"
+        className="w-full [--duration:50s] py-2"
         role="region"
-        aria-label="Carrossel de times"
+        aria-label="Times da Kings League"
       >
         {teams.map((team) => (
-          <div key={team.id} className="px-2 sm:px-3">
-            <Button
-              variant="ghost"
-              onClick={() => handleTeamClick(team.id)}
-              aria-label={`Ver detalhes do time ${team.name}`}
-              className={cn(
-                "group relative rounded-xl w-[90px] h-[90px] sm:w-[100px] sm:h-[100px]",
-                "flex flex-col items-center justify-center p-3",
-                "transition-all duration-300 ease-out",
-                "bg-card hover:bg-accent border border-border/50 hover:border-border",
-                "hover:scale-105 hover:shadow-lg hover:shadow-[var(--team-primary)]/10",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)] focus:ring-offset-2 focus:ring-offset-background",
-                "active:scale-95"
-              )}
+          <button
+            key={team.id}
+            onClick={() => handleTeamClick(team.id)}
+            aria-label={`Ver detalhes do time ${team.name}`}
+            className={cn(
+              "group relative mx-1.5 sm:mx-2",
+              "w-14 h-14 sm:w-16 sm:h-16",
+              "rounded-xl overflow-hidden",
+              "bg-[#111111] border border-white/5",
+              "hover:border-white/20 hover:bg-[#1a1a1a]",
+              "transition-all duration-300 ease-out",
+              "hover:scale-110 hover:-translate-y-1",
+              "focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]",
+              "active:scale-95"
+            )}
+          >
+            {/* Glow effect on hover */}
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
               style={{
-                background: `linear-gradient(135deg, ${team.firstColorHEX}10, ${team.secondColorHEX}15)`
+                boxShadow: `0 0 20px ${team.firstColorHEX}30, inset 0 0 15px ${team.firstColorHEX}10`
               }}
-            >
-              <div className="relative flex items-center justify-center w-full h-full">
-                {team.logo && (
-                  <img
-                    src={team.logo.url}
-                    alt={`Logo do ${team.name}`}
-                    width={70}
-                    height={70}
-                    className={cn(
-                      "object-contain w-auto h-auto max-w-[85%] max-h-[85%]",
-                      "transition-transform duration-300 group-hover:scale-110"
-                    )}
-                    loading="lazy"
-                  />
-                )}
+            />
 
-                {/* Indicador visual sutil ao hover */}
-                <div
-                  className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{
-                    background: `radial-gradient(circle at center, ${team.firstColorHEX}15, transparent 70%)`
-                  }}
-                  aria-hidden="true"
+            {/* Gradient border on hover */}
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
+              style={{
+                background: `linear-gradient(135deg, ${team.firstColorHEX}20, ${team.secondColorHEX}20)`
+              }}
+            />
+
+            {/* Logo */}
+            <div className="relative w-full h-full flex items-center justify-center p-2">
+              {team.logo && (
+                <img
+                  src={team.logo.url}
+                  alt=""
+                  className={cn(
+                    "w-full h-full object-contain",
+                    "transition-transform duration-300",
+                    "group-hover:scale-110"
+                  )}
+                  loading="lazy"
                 />
-              </div>
+              )}
+            </div>
 
-              {/* Tooltip com nome do time */}
-              <span className="sr-only">{team.name}</span>
-            </Button>
-          </div>
+            {/* Tooltip */}
+            <div className={cn(
+              "absolute -bottom-8 left-1/2 -translate-x-1/2",
+              "px-2 py-1 rounded-md",
+              "bg-[#1a1a1a] border border-white/10",
+              "text-[10px] text-white font-medium whitespace-nowrap",
+              "opacity-0 group-hover:opacity-100",
+              "transition-all duration-200 pointer-events-none",
+              "translate-y-1 group-hover:translate-y-0"
+            )}>
+              {team.shortName || team.name}
+            </div>
+          </button>
         ))}
       </Marquee>
     </div>
