@@ -1,17 +1,21 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { Player } from "@/types/kings-league"
 import { calculateAge, cn } from "@/lib/utils"
-import { Trophy, TrendingUp, Award } from "lucide-react"
+import { Trophy, TrendingUp, Award, Star, Zap, Shield, Target, ChevronDown, ChevronUp, Sparkles } from "lucide-react"
 
 interface PlayerCardProps {
   player: Player
 }
 
 export function PlayerCard({ player }: PlayerCardProps) {
-  const [showStats, setShowStats] = useState(true)
-  const [isHovered, setIsHovered] = useState(false)
+  const [showAttributes, setShowAttributes] = useState(false)
+  const [imageSrc, setImageSrc] = useState<string>(player.image?.url || '/kl-player-placeholder.webp')
 
   const isWildcard = player.category === "wildcard" || player?.metaInformation?.status === "Wildcard"
+
+  useEffect(() => {
+    setImageSrc(player.image?.url || '/kl-player-placeholder.webp')
+  }, [player.image?.url])
 
   const roleMap = {
     goalkeeper: "Goleiro",
@@ -27,11 +31,11 @@ export function PlayerCard({ player }: PlayerCardProps) {
     forward: "ATA",
   }
 
-  const roleColor = {
-    goalkeeper: "#FFC107",
-    defender: "#2196F3",
-    midfielder: "#4CAF50",
-    forward: "#F44336",
+  const roleConfig = {
+    goalkeeper: { color: "#F59E0B", bg: "bg-amber-500/20", text: "text-amber-400", icon: Shield },
+    defender: { color: "#3B82F6", bg: "bg-blue-500/20", text: "text-blue-400", icon: Shield },
+    midfielder: { color: "#22C55E", bg: "bg-green-500/20", text: "text-green-400", icon: Zap },
+    forward: { color: "#EF4444", bg: "bg-red-500/20", text: "text-red-400", icon: Target },
   }
 
   const age = player.birthDate ? calculateAge(player.birthDate) : null
@@ -66,367 +70,288 @@ export function PlayerCard({ player }: PlayerCardProps) {
   const getCardStyle = () => {
     if (isWildcard) {
       return {
-        borderColor: '#F4AF23',
-        cardBg: "from-amber-950/40 via-amber-900/30 to-black/50",
-        ratingBg: "bg-gradient-to-br from-amber-400 to-amber-600",
-        ratingText: "text-black",
-        categoryBadge: "bg-gradient-to-r from-amber-400 to-amber-600 text-black",
-        accentColor: "#F4AF23",
-        glowColor: "rgba(244, 175, 35, 0.4)",
-        tier: "wildcard"
+        border: "border-amber-500/50",
+        glow: "shadow-amber-500/20",
+        accent: "text-amber-400",
+        accentBg: "bg-amber-500/20",
+        gradient: "from-amber-500/10 via-amber-600/5 to-transparent",
+        tier: "Wild Card",
+        tierBg: "bg-gradient-to-r from-amber-500 to-amber-600",
+        tierText: "text-black"
       }
     }
 
     if (playerRating && playerRating >= 78) {
       return {
-        borderColor: "#3D6EB9",
-        cardBg: "from-blue-950/40 via-blue-900/30 to-black/50",
-        ratingBg: "bg-gradient-to-br from-blue-500 to-blue-700",
-        ratingText: "text-white",
-        categoryBadge: "bg-gradient-to-r from-blue-500 to-blue-700 text-white",
-        accentColor: "#3D6EB9",
-        glowColor: "rgba(61, 110, 185, 0.3)",
-        tier: "elite"
+        border: "border-blue-500/50",
+        glow: "shadow-blue-500/20",
+        accent: "text-blue-400",
+        accentBg: "bg-blue-500/20",
+        gradient: "from-blue-500/10 via-blue-600/5 to-transparent",
+        tier: "Elite",
+        tierBg: "bg-gradient-to-r from-blue-500 to-blue-600",
+        tierText: "text-white"
       }
     }
     if (playerRating && playerRating >= 74) {
       return {
-        borderColor: "#D53121",
-        cardBg: "from-red-950/40 via-red-900/30 to-black/50",
-        ratingBg: "bg-gradient-to-br from-red-500 to-red-700",
-        ratingText: "text-white",
-        categoryBadge: "bg-gradient-to-r from-red-500 to-red-700 text-white",
-        accentColor: "#D53121",
-        glowColor: "rgba(213, 49, 33, 0.3)",
-        tier: "rare"
+        border: "border-red-500/50",
+        glow: "shadow-red-500/20",
+        accent: "text-red-400",
+        accentBg: "bg-red-500/20",
+        gradient: "from-red-500/10 via-red-600/5 to-transparent",
+        tier: "Raro",
+        tierBg: "bg-gradient-to-r from-red-500 to-red-600",
+        tierText: "text-white"
       }
     }
     if (playerRating && playerRating >= 70) {
       return {
-        borderColor: "#10694D",
-        cardBg: "from-green-950/40 via-green-900/30 to-black/50",
-        ratingBg: "bg-gradient-to-br from-green-600 to-green-800",
-        ratingText: "text-white",
-        categoryBadge: "bg-gradient-to-r from-green-600 to-green-800 text-white",
-        accentColor: "#10694D",
-        glowColor: "rgba(16, 105, 77, 0.3)",
-        tier: "uncommon"
+        border: "border-green-500/50",
+        glow: "shadow-green-500/20",
+        accent: "text-green-400",
+        accentBg: "bg-green-500/20",
+        gradient: "from-green-500/10 via-green-600/5 to-transparent",
+        tier: "Comum",
+        tierBg: "bg-gradient-to-r from-green-500 to-green-600",
+        tierText: "text-white"
       }
     }
 
     return {
-      borderColor: "#444",
-      cardBg: "from-zinc-900/40 via-zinc-800/30 to-black/50",
-      ratingBg: "bg-gradient-to-br from-zinc-600 to-zinc-800",
-      ratingText: "text-white",
-      categoryBadge: "bg-gradient-to-r from-zinc-600 to-zinc-800 text-white",
-      accentColor: "#666",
-      glowColor: "rgba(100, 100, 100, 0.2)",
-      tier: "common"
+      border: "border-zinc-500/50",
+      glow: "shadow-zinc-500/20",
+      accent: "text-zinc-400",
+      accentBg: "bg-zinc-500/20",
+      gradient: "from-zinc-500/10 via-zinc-600/5 to-transparent",
+      tier: "Básico",
+      tierBg: "bg-gradient-to-r from-zinc-500 to-zinc-600",
+      tierText: "text-white"
     }
   }
 
   const cardStyle = getCardStyle()
+  const roleStyle = roleConfig[player.role]
+  const RoleIcon = roleStyle.icon
 
+  const getAttrValue = (attr: string | undefined): number => {
+    return parseInt(attr || '70')
+  }
 
-  const renderAttributeBars = () => {
-    if (!player.metaInformation) return null
+  const getBarColor = (value: number): string => {
+    if (value >= 85) return 'bg-emerald-500'
+    if (value >= 75) return 'bg-lime-500'
+    if (value >= 65) return 'bg-yellow-500'
+    return 'bg-orange-500'
+  }
 
-    const getAttrValue = (attr: string | undefined): number => {
-      return parseInt(attr || '70')
-    }
-
-    const getBarColor = (value: number): string => {
-      if (value >= 90) return 'bg-emerald-500'
-      if (value >= 80) return 'bg-lime-500'
-      if (value >= 70) return 'bg-yellow-500'
-      if (value >= 60) return 'bg-orange-500'
-      return 'bg-red-500'
-    }
-
-    const getBarGlow = (value: number): string => {
-      if (value >= 90) return 'shadow-[0_0_10px_rgba(16,185,129,0.5)]'
-      if (value >= 80) return 'shadow-[0_0_8px_rgba(132,204,22,0.4)]'
-      if (value >= 70) return 'shadow-[0_0_6px_rgba(234,179,8,0.3)]'
-      return ''
-    }
-
-    const renderAttributeBar = (label: string, value: number) => (
-      <div className="group/attr">
-        <div className="flex justify-between items-center text-xs mb-1.5">
-          <span className="text-gray-300 font-medium tracking-wide">{label}</span>
-          <span className={cn(
-            "font-bold px-2 py-0.5 rounded-md text-xs min-w-[2.5rem] text-center transition-all",
-            value >= 85 ? "bg-emerald-500/20 text-emerald-400" :
-              value >= 75 ? "bg-lime-500/20 text-lime-400" :
-                value >= 65 ? "bg-yellow-500/20 text-yellow-400" :
-                  "bg-gray-500/20 text-gray-400"
-          )}>{value}</span>
-        </div>
-        <div className="relative h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/10">
-          <div
-            className={cn(
-              "h-full rounded-full transition-all duration-500 ease-out",
-              getBarColor(value),
-              getBarGlow(value)
-            )}
-            style={{ width: `${value}%` }}
-          >
-            <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
-          </div>
-        </div>
+  const renderAttributeBar = (label: string, value: number) => (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] text-gray-400 uppercase tracking-wide">{label}</span>
+        <span className={cn(
+          "text-xs font-bold",
+          value >= 80 ? "text-emerald-400" : value >= 70 ? "text-lime-400" : "text-yellow-400"
+        )}>{value}</span>
       </div>
-    )
+      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+        <div
+          className={cn("h-full rounded-full transition-all duration-500", getBarColor(value))}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  )
+
+  const renderAttributes = () => {
+    if (!player.metaInformation) return null
 
     if (player.role === 'goalkeeper') {
       return (
-        <div className="space-y-3">
-          {renderAttributeBar('Reflexos', getAttrValue(player.metaInformation.reflexes))}
-          {renderAttributeBar('Defesa', getAttrValue(player.metaInformation.diving))}
-          {renderAttributeBar('Mãos', getAttrValue(player.metaInformation.handling))}
-          {renderAttributeBar('Posicionamento', getAttrValue(player.metaInformation.anticipation))}
-        </div>
-      )
-    } else {
-      return (
-        <div className="space-y-3">
-          {renderAttributeBar('Físico', getAttrValue(player.metaInformation.physical))}
-          {renderAttributeBar('Técnica', getAttrValue(player.metaInformation.skills))}
-          {renderAttributeBar('Passe', getAttrValue(player.metaInformation.passing))}
-          {renderAttributeBar('Finalização', getAttrValue(player.metaInformation.shooting))}
-          {player.role !== 'forward' && renderAttributeBar('Defesa', getAttrValue(player.metaInformation.defence))}
-          {player.role === 'forward' && renderAttributeBar('Duelos', getAttrValue(player.metaInformation.duels))}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          {renderAttributeBar('REF', getAttrValue(player.metaInformation.reflexes))}
+          {renderAttributeBar('DEF', getAttrValue(player.metaInformation.diving))}
+          {renderAttributeBar('MÃO', getAttrValue(player.metaInformation.handling))}
+          {renderAttributeBar('POS', getAttrValue(player.metaInformation.anticipation))}
         </div>
       )
     }
-  }
-
-
-  const renderGameStats = () => {
-    const gameStats = player.stats
-
-    if (!gameStats) {
-      return (
-        <div className="text-center py-6 text-gray-500 text-sm">
-          Estatísticas não disponíveis
-        </div>
-      )
-    }
-
-    const games = gameStats.matchesPlayed || 0
-    const goals = gameStats.goalsScored || 0
-    const assists = gameStats.assists || 0
-    const yellowCards = gameStats.yellowCards || 0
-    const redCards = gameStats.redCards || 0
-    const mvps = gameStats.mvps || 0
-
-    const statItem = (value: number, label: string, icon?: React.ReactNode) => (
-      <div className="flex flex-col items-center gap-1 group/stat">
-        <div className={cn(
-          "text-xl font-bold transition-all",
-          value > 0 ? "text-white" : "text-gray-600"
-        )}>
-          {value}
-        </div>
-        <div className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{label}</div>
-        {icon && <div className="opacity-0 group-hover/stat:opacity-100 transition-opacity">{icon}</div>}
-      </div>
-    )
-
     return (
-      <div className="space-y-3">
-        <div className="grid grid-cols-3 gap-4">
-          {statItem(games, "Jogos")}
-          {statItem(goals, "Gols")}
-          {statItem(assists, "Assists")}
-        </div>
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-        <div className="grid grid-cols-3 gap-4">
-          {statItem(yellowCards, "Amarelos")}
-          {statItem(redCards, "Vermelhos")}
-          {statItem(mvps, "MVP")}
-        </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        {renderAttributeBar('FÍS', getAttrValue(player.metaInformation.physical))}
+        {renderAttributeBar('TÉC', getAttrValue(player.metaInformation.skills))}
+        {renderAttributeBar('PAS', getAttrValue(player.metaInformation.passing))}
+        {renderAttributeBar('FIN', getAttrValue(player.metaInformation.shooting))}
+        {renderAttributeBar('DEF', getAttrValue(player.metaInformation.defence))}
+        {renderAttributeBar('DUE', getAttrValue(player.metaInformation.duels))}
       </div>
     )
   }
+
+  const gameStats = player.stats
+  const games = gameStats?.matchesPlayed || 0
+  const goals = gameStats?.goalsScored || 0
+  const assists = gameStats?.assists || 0
+  const mvps = gameStats?.mvps || 0
 
   return (
     <article
-      className="group relative h-full w-full max-w-[280px] mx-auto"
-      style={{ minHeight: '440px' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      aria-label={`Cartão do jogador ${player.shortName}`}
+      className="group relative w-full"
+      aria-label={`Card do jogador ${player.shortName}`}
     >
-      {/* Card Container com efeito de profundidade */}
-      <div
-        className={cn(
-          "relative h-full rounded-xl overflow-hidden border-2 transition-all duration-500",
-          "shadow-2xl backdrop-blur-sm",
-          isHovered && "transform scale-105 -translate-y-2"
-        )}
-        style={{
-          borderColor: cardStyle.borderColor,
-          boxShadow: isHovered ? `0 20px 40px ${cardStyle.glowColor}, 0 0 20px ${cardStyle.glowColor}` : undefined
-        }}
-      >
-        {/* Background gradient */}
-        <div
-          className={cn(
-            "absolute inset-0 bg-gradient-to-b",
-            cardStyle.cardBg
-          )}
-          style={{
-            backgroundImage: `
-              radial-gradient(circle at 20% 80%, ${cardStyle.glowColor} 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, ${cardStyle.glowColor} 0%, transparent 50%)
-            `
-          }}
-        />
+      <div className={cn(
+        "relative overflow-hidden rounded-2xl border transition-all duration-300",
+        "bg-[#0a0a0a] hover:scale-[1.02]",
+        cardStyle.border,
+        "hover:shadow-xl",
+        cardStyle.glow
+      )}>
+        {/* Background Gradient */}
+        <div className={cn(
+          "absolute inset-0 bg-gradient-to-br opacity-50",
+          cardStyle.gradient
+        )} />
 
-        {/* Wildcard shimmer effect */}
+        {/* Wildcard Shimmer */}
         {isWildcard && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-            <div
-              className={cn(
-                "absolute -inset-full w-[60%] h-[200%] opacity-0 transition-opacity duration-300",
-                isHovered && "opacity-100"
-              )}
-              style={{
-                background: "linear-gradient(225deg, transparent, rgba(255,255,255,0.5) 30%, transparent 60%)",
-                transform: "rotate(30deg)",
-                animation: isHovered ? "diagonal-shine 1.7s ease-in-out infinite" : "none",
-                top: "-200%",
-                left: "-100%"
-              }}
-            />
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -inset-full w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/10 to-transparent transform -skew-x-12 group-hover:animate-shimmer" />
           </div>
         )}
 
-        {/* Card Content */}
-        <div className="relative z-20 h-full flex flex-col">
-          {/* Header */}
-          <div className="p-4 pb-3">
-            <div className="flex items-start justify-between gap-3">
-              {/* Rating Badge */}
+        {/* Content */}
+        <div className="relative z-10">
+          {/* Header com Rating e Info */}
+          <div className="p-3 pb-0">
+            <div className="flex items-start gap-3">
+              {/* Rating */}
               <div className={cn(
-                "flex items-center justify-center w-14 h-14 rounded-lg font-black text-2xl shadow-lg relative overflow-hidden",
-                cardStyle.ratingBg,
-                cardStyle.ratingText
+                "w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl",
+                cardStyle.accentBg,
+                cardStyle.accent
               )}>
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-                <span className="relative z-10 drop-shadow-md">
-                  {isWildcard ? "★" : playerRating}
-                </span>
+                {isWildcard ? <Star className="w-6 h-6" /> : playerRating}
               </div>
 
-              {/* Player Info */}
+              {/* Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-black text-lg text-white truncate mb-1 drop-shadow-lg">
-                  {player.shortName}
-                </h3>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className="text-[10px] font-black px-2 py-1 rounded-md shadow-md uppercase tracking-wider"
-                    style={{ backgroundColor: roleColor[player.role] }}
-                  >
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-bold text-white text-sm truncate">
+                    {player.shortName}
+                  </h3>
+                  <span className="text-xs text-gray-500 font-medium">#{player.jersey}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-[10px] font-bold px-2 py-0.5 rounded-md uppercase",
+                    roleStyle.bg,
+                    roleStyle.text
+                  )}>
                     {roleAbbr[player.role]}
                   </span>
-                  <span className="text-xs text-white/80 font-bold">#{player.jersey}</span>
+                  <span className={cn(
+                    "text-[9px] font-bold px-2 py-0.5 rounded-md",
+                    cardStyle.tierBg,
+                    cardStyle.tierText
+                  )}>
+                    {isWildcard && <Sparkles className="w-2.5 h-2.5 inline mr-1" />}
+                    {cardStyle.tier}
+                  </span>
                 </div>
               </div>
-
-              {/* Category Badge */}
-              {player.category && (
-                <div className={cn(
-                  "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-lg",
-                  cardStyle.categoryBadge
-                )}>
-                  {isWildcard ? "★ WC" : "DFT"}
-                </div>
-              )}
             </div>
           </div>
 
           {/* Player Image */}
-          <div className="relative flex-1 flex items-end justify-center px-4 pb-2 overflow-hidden">
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `radial-gradient(ellipse at bottom, ${cardStyle.glowColor} 0%, transparent 70%)`
+          <div className="relative h-36 flex items-end justify-center overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10" />
+            <img
+              src={imageSrc}
+              alt={player.shortName}
+              className="relative z-20 h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              onError={() => {
+                if (imageSrc !== '/kl-player-placeholder.webp') setImageSrc('/kl-player-placeholder.webp')
               }}
             />
-            {player.image?.url ? (
-              <img
-                src={player.image.url}
-                alt={player.shortName}
-                className={cn(
-                  "relative z-10 w-full h-44 object-contain transition-all duration-500",
-                  isHovered && "scale-110 filter drop-shadow-2xl"
-                )}
-                loading="lazy"
-              />
-            ) : (
-              <img
-                src="/kl-player-placeholder.webp"
-                alt={`${player.shortName} placeholder`}
-                className="relative z-10 w-full h-44 object-contain opacity-60"
-                loading="lazy"
-              />
-            )}
-
-            {/* Geometric patterns */}
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent"></div>
           </div>
 
-          {/* Stats Section */}
-          <div className="relative bg-black/60 backdrop-blur-md border-t border-white/10 p-4">
-            {/* Info Bar */}
-            <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
-              <div className="flex items-center gap-3 text-xs">
-                <div className="flex flex-col">
-                  <span className="text-gray-400 text-[9px] uppercase tracking-wider">Idade</span>
-                  <span className="text-white font-bold">{age || '–'}</span>
+          {/* Info Bar */}
+          <div className="px-3 py-2 border-t border-white/5 bg-white/[0.02]">
+            <div className="flex items-center justify-between text-[10px]">
+              <div className="flex items-center gap-3">
+                <div>
+                  <span className="text-gray-500 block">Idade</span>
+                  <span className="text-white font-semibold">{age || '–'}</span>
                 </div>
-                <div className="w-px h-6 bg-white/20"></div>
-                <div className="flex flex-col">
-                  <span className="text-gray-400 text-[9px] uppercase tracking-wider">Altura</span>
-                  <span className="text-white font-bold">{player.height}cm</span>
+                <div className="w-px h-6 bg-white/10" />
+                <div>
+                  <span className="text-gray-500 block">Altura</span>
+                  <span className="text-white font-semibold">{player.height}cm</span>
                 </div>
-                <div className="w-px h-6 bg-white/20"></div>
-                <div className="flex flex-col">
-                  <span className="text-gray-400 text-[9px] uppercase tracking-wider">Posição</span>
-                  <span className="text-white font-bold text-[10px]">{roleMap[player.role]}</span>
+                <div className="w-px h-6 bg-white/10" />
+                <div>
+                  <span className="text-gray-500 block">Posição</span>
+                  <span className="text-white font-semibold">{roleMap[player.role]}</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Toggle Button */}
-            {!isWildcard && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowStats(!showStats)
-                }}
-                className={cn(
-                  "w-full mb-3 text-[10px] px-3 py-2 rounded-lg font-bold uppercase tracking-wider",
-                  "bg-white/10 hover:bg-white/20 text-white/90 hover:text-white",
-                  "border border-white/20 hover:border-white/40",
-                  "transition-all duration-200 backdrop-blur-sm"
-                )}
-                aria-label={showStats ? "Mostrar atributos" : "Mostrar estatísticas"}
-              >
-                {showStats ? "Ver Atributos" : "Ver Estatísticas"}
-              </button>
-            )}
-
-            {/* Content */}
-            <div className="min-h-[140px]">
-              {isWildcard ? renderGameStats() : (showStats ? renderGameStats() : renderAttributeBars())}
+          {/* Stats Grid */}
+          <div className="px-3 py-2 border-t border-white/5">
+            <div className="grid grid-cols-4 gap-2">
+              <StatItem value={games} label="Jogos" />
+              <StatItem value={goals} label="Gols" highlight={goals > 0} />
+              <StatItem value={assists} label="Assist" highlight={assists > 0} />
+              <StatItem value={mvps} label="MVP" highlight={mvps > 0} />
             </div>
           </div>
+
+          {/* Attributes Section */}
+          {!isWildcard && player.metaInformation && (
+            <div className="border-t border-white/5">
+              <button
+                onClick={() => setShowAttributes(!showAttributes)}
+                className="w-full px-3 py-2 flex items-center justify-between text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <span className="font-medium">Atributos</span>
+                {showAttributes ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+
+              {showAttributes && (
+                <div className="px-3 pb-3 animate-in slide-in-from-top-2 duration-200">
+                  {renderAttributes()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Wildcard Notice */}
+          {isWildcard && (
+            <div className="px-3 py-2 border-t border-white/5">
+              <p className="text-[10px] text-gray-500 text-center">
+                <Sparkles className="w-3 h-3 inline mr-1 text-amber-500" />
+                Atributos não disponíveis para Wild Cards
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </article>
+  )
+}
+
+function StatItem({ value, label, highlight, icon }: { value: number; label: string; highlight?: boolean; icon?: React.ReactNode }) {
+  return (
+    <div className="text-center">
+      <div className={cn(
+        "text-base font-bold",
+        highlight ? "text-white" : "text-gray-500"
+      )}>
+        {icon && value > 0 ? icon : value}
+      </div>
+      <div className="text-[9px] text-gray-500 uppercase tracking-wide">{label}</div>
+    </div>
   )
 }
