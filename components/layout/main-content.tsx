@@ -1,6 +1,5 @@
 import { useEffect } from "react"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TableIcon } from "lucide-react"
 import MatchesTable from "@/components/matches-table"
 import StandingsTable from "@/components/standings-table"
@@ -39,12 +38,7 @@ export function MainContent({
   }, [selectedTeam, setActiveTab])
 
   const handleTeamSelect = (teamId: string) => {
-    // Apenas redirecione para a página do time sem alterar a aba
-    // O componente da página específica lidará com a exibição correta
     router.push(`/team/${teamId}`)
-
-    // Chamamos onTeamSelect depois porque pode ser usado para outras finalidades
-    // como rastreamento ou outras ações necessárias
     onTeamSelect(teamId)
   }
 
@@ -52,32 +46,37 @@ export function MainContent({
   return (
     <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'matches' | 'team')} className="w-full">
       <TabsContent value="matches" className="mt-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] xl:grid-cols-[1fr,500px] gap-4 lg:gap-6">
-          <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={onScoreUpdate} />
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] xl:grid-cols-[1fr,500px] gap-6">
+          {/* Matches Section */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#111111] border border-white/5">
+            <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={onScoreUpdate} />
+          </div>
 
-          <div className="space-y-6">
-            <Card className="bg-card border-border shadow-lg overflow-hidden lg:sticky lg:top-6">
-              <CardHeader className="py-3 px-4 border-b border-border bg-muted/50">
-                <CardTitle className="text-lg flex items-center gap-2.5 text-foreground">
-                  <div className="p-1.5 rounded-md bg-[var(--team-primary)]/10">
-                    <TableIcon className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
+          {/* Standings Section */}
+          <div className="lg:sticky lg:top-6 h-fit">
+            <div className="rounded-2xl bg-[#111111] border border-white/5 overflow-hidden">
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-[#F4AF23]/10 border border-[#F4AF23]/20">
+                    <TableIcon className="w-4 h-4 text-[#F4AF23]" aria-hidden="true" />
                   </div>
-                  <span className="font-bold">Classificação</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                  <span className="text-base font-semibold text-white">Classificação</span>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-0">
                 <StandingsTable
                   groupedStandings={groupedStandings}
                   onTeamSelect={handleTeamSelect}
                   previousStandings={previousStandings}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </TabsContent>
-
-
     </Tabs>
   )
 }
