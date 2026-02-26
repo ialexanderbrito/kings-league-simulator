@@ -76,16 +76,14 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
   // Renderizando o estado de carregamento com o componente específico para time
   if (loading) {
     return (
-      <main className="bg-card min-h-screen text-white">
+      <main className="bg-[#030303] min-h-screen text-white">
         <Header
           loading={true}
           selectedTeam={null}
-          teams={{}}
-          standings={[]}
           onTeamSelect={() => { }}
           setActiveTab={() => { }}
         />
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-8">
           <TeamLoading />
         </div>
         <Footer />
@@ -99,17 +97,15 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
   }
 
   return (
-    <main className="bg-card min-h-screen text-white">
+    <main className="bg-[#030303] min-h-screen text-white">
       <Header
         loading={false}
         selectedTeam={team.id}
-        teams={teams}
-        standings={standings}
         onTeamSelect={handleTeamSelect}
         setActiveTab={setActiveTab}
       />
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-8">
         <TeamInfo
           team={team}
           rounds={rounds}
