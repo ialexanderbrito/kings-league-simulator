@@ -51,12 +51,13 @@ export function PlayoffMatchCard({
   return (
     <article
       className={cn(
-        "rounded-xl p-3 sm:p-4 border transition-all duration-200",
-        "hover:shadow-lg hover:scale-[1.02]",
+        "rounded-xl p-3 sm:p-4 border transition-colors duration-200",
+        // removed hover zoom/scale
         isFavoriteTeamMatch
           ? "bg-[var(--team-primary)]/5 border-[var(--team-primary)]/30 hover:border-[var(--team-primary)]/50 hover:bg-[var(--team-primary)]/10 shadow-md"
-          : "bg-card border-border hover:border-border/80",
-        hasWinner && "ring-2 ring-green-500/20"
+          : "bg-card border-border",
+        // removed green ring when selected
+        hasWinner && ""
       )}
       aria-label={homeTeam && awayTeam ? `Partida: ${homeTeam.name} vs ${awayTeam.name}` : "Partida dos playoffs"}
     >
@@ -113,38 +114,39 @@ export function PlayoffMatchCard({
           {/* Seletores circulares de vencedor */}
           {homeTeam && awayTeam ? (
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Botão Time da Casa */}
+              {/* Botão Time da Casa (tamanho reduzido) */}
               <Button
                 onClick={() => onWinnerSelect(match.id, selectedWinner === "home" ? null : "home")}
                 variant="outline"
                 size="icon"
                 className={cn(
-                  "w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300 border-2 flex-shrink-0",
+                  // smaller circular button and project yellow when selected
+                  "w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
                   isHomeWinner
-                    ? "bg-green-500 border-green-600 hover:bg-green-600 text-white shadow-lg shadow-green-500/40 scale-110"
-                    : "border-border hover:border-[var(--team-primary)] hover:bg-accent hover:scale-105"
+                    ? "bg-[#F4AF23] border-[#F4AF23] text-black"
+                    : "border-border hover:border-[var(--team-primary)]"
                 )}
                 aria-label={`Selecionar ${homeTeam.name} como vencedor`}
               >
-                {isHomeWinner && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 font-bold" strokeWidth={3} />}
+                {isHomeWinner && <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 font-bold" strokeWidth={3} />}
               </Button>
 
               <span className="text-xs sm:text-sm text-muted-foreground font-bold">VS</span>
 
-              {/* Botão Time Visitante */}
+              {/* Botão Time Visitante (tamanho reduzido) */}
               <Button
                 onClick={() => onWinnerSelect(match.id, selectedWinner === "away" ? null : "away")}
                 variant="outline"
                 size="icon"
                 className={cn(
-                  "w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300 border-2 flex-shrink-0",
+                  "w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
                   isAwayWinner
-                    ? "bg-green-500 border-green-600 hover:bg-green-600 text-white shadow-lg shadow-green-500/40 scale-110"
-                    : "border-border hover:border-[var(--team-primary)] hover:bg-accent hover:scale-105"
+                    ? "bg-[#F4AF23] border-[#F4AF23] text-black"
+                    : "border-border hover:border-[var(--team-primary)]"
                 )}
                 aria-label={`Selecionar ${awayTeam.name} como vencedor`}
               >
-                {isAwayWinner && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 font-bold" strokeWidth={3} />}
+                {isAwayWinner && <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 font-bold" strokeWidth={3} />}
               </Button>
             </div>
           ) : (
