@@ -1,3 +1,5 @@
+"use client"
+
 import { useRef, useEffect, useState, useMemo, useId, FC, PointerEvent } from 'react';
 
 interface CurvedLoopProps {
@@ -27,6 +29,7 @@ const CurvedLoop: FC<CurvedLoopProps> = ({
   const pathRef = useRef<SVGPathElement | null>(null);
   const [spacing, setSpacing] = useState(0);
   const [offset, setOffset] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const uid = useId();
   const pathId = `curve-${uid}`;
   const pathD = `M-100,40 Q500,${40 + curveAmount} 1540,40`;
@@ -44,9 +47,32 @@ const CurvedLoop: FC<CurvedLoopProps> = ({
     : text;
   const ready = spacing > 0;
 
+  // Detectar tamanho da tela para ajustar velocidade
   useEffect(() => {
-    if (measureRef.current) setSpacing(measureRef.current.getComputedTextLength());
-  }, [text, className]);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Velocidade adaptativa baseada no tamanho da tela
+  const adaptiveSpeed = useMemo(() => {
+    if (isMobile) return speed * 0.5; // 50% mais lento no mobile
+    return speed;
+  }, [speed, isMobile]);
+
+  // Tamanho de fonte responsivo - maior no mobile para compensar a escala do viewBox
+  const fontSize = isMobile ? 48 : 32;
+
+  useEffect(() => {
+    // Pequeno delay para garantir que o fontSize foi aplicado no DOM
+    const timer = setTimeout(() => {
+      if (measureRef.current) setSpacing(measureRef.current.getComputedTextLength());
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [text, className, isMobile]);
 
   useEffect(() => {
     if (!spacing) return;
@@ -62,7 +88,7 @@ const CurvedLoop: FC<CurvedLoopProps> = ({
     let frame = 0;
     const step = () => {
       if (!dragRef.current && textPathRef.current) {
-        const delta = dirRef.current === 'right' ? speed : -speed;
+        const delta = dirRef.current === 'right' ? adaptiveSpeed : -adaptiveSpeed;
         const currentOffset = parseFloat(textPathRef.current.getAttribute('startOffset') || '0');
         let newOffset = currentOffset + delta;
         const wrapPoint = spacing;
@@ -75,7 +101,7 @@ const CurvedLoop: FC<CurvedLoopProps> = ({
     };
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
-  }, [spacing, speed, ready]);
+  }, [spacing, adaptiveSpeed, ready]);
 
   const onPointerDown = (e: PointerEvent) => {
     if (!interactive) return;
@@ -134,7 +160,7 @@ const CurvedLoop: FC<CurvedLoopProps> = ({
 
   return (
     <div
-      className="w-full flex items-center justify-center py-2"
+      className="w-full flex items-center justify-center py-6 md:py-8"
       style={{ visibility: ready ? 'visible' : 'hidden', cursor: cursorStyle }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -142,17 +168,40 @@ const CurvedLoop: FC<CurvedLoopProps> = ({
       onPointerLeave={endDrag}
     >
       <svg
-        className="select-none w-full overflow-visible block aspect-[100/12] text-[0.875rem] md:text-[1rem] lg:text-[1.125rem] font-semibold uppercase leading-none tracking-wider"
+        className="select-none w-full overflow-visible block"
         viewBox="0 0 1440 120"
+        preserveAspectRatio="xMidYMid meet"
+        style={{ minHeight: isMobile ? '50px' : '70px' }}
       >
-        <text ref={measureRef} xmlSpace="preserve" style={{ visibility: 'hidden', opacity: 0, pointerEvents: 'none' }}>
+        <text
+          ref={measureRef}
+          xmlSpace="preserve"
+          style={{
+            visibility: 'hidden',
+            opacity: 0,
+            pointerEvents: 'none',
+            fontSize: `${fontSize}px`,
+            fontWeight: 700,
+            letterSpacing: '0.1em'
+          }}
+        >
           {text}
         </text>
         <defs>
           <path ref={pathRef} id={pathId} d={pathD} fill="none" stroke="transparent" />
         </defs>
         {ready && (
-          <text xmlSpace="preserve" style={{ fill: fillColor, opacity }}>
+          <text
+            xmlSpace="preserve"
+            style={{
+              fill: fillColor,
+              opacity,
+              fontSize: `${fontSize}px`,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase'
+            }}
+          >
             <textPath ref={textPathRef} href={`#${pathId}`} startOffset={offset + 'px'} xmlSpace="preserve">
               {totalText}
             </textPath>
