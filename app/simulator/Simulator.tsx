@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertTriangle, Trophy } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
 import TeamCarousel from "@/components/team-carousel"
 import DisclaimerNotice from "@/components/disclaimer-notice"
+import { EmptyLeagueState } from "@/components/empty-league-state"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import { calculateStandings } from "@/lib/calculate-standings"
 import { saveSimulatedStandings, saveSimulatedRounds, saveSimulatedTeams } from "@/lib/simulated-data-manager"
@@ -371,23 +372,8 @@ export default function SimulatorPage() {
           onTeamSelect={handleTeamSelect}
           setActiveTab={setActiveTab}
         />
-        <div className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="w-full max-w-lg rounded-3xl bg-gradient-to-br from-[#18120a] via-[#1a1a1a] to-[#23201a] border border-[#F4AF23]/30 shadow-xl p-8 flex flex-col items-center gap-4 mt-12 mb-8 animate-fade-in">
-            <div className="flex flex-col items-center gap-2">
-              <span className="inline-flex items-center justify-center rounded-full bg-[#F4AF23]/10 border border-[#F4AF23]/30 p-4 mb-2">
-                <AlertTriangle className="h-8 w-8 text-[#F4AF23]" />
-              </span>
-              <h2 className="text-2xl font-bold text-[#F4AF23] tracking-tight text-center">Dados em atualização</h2>
-            </div>
-            <p className="text-base text-white/90 text-center max-w-md">
-              Os dados da <span className="font-semibold text-[#F4AF23]">Kings League Brazil</span> ainda não estão disponíveis para este split ou temporada.<br />
-              <span className="block mt-3 text-white/70 text-sm">As informações exibidas aqui são fornecidas diretamente pela Kings League. Não armazenamos nada localmente, então a disponibilidade depende exclusivamente da atualização da base oficial da Kings League.</span>
-            </p>
-            <div className="w-full flex flex-col items-center mt-2">
-              <span className="inline-block px-4 py-2 rounded-full bg-[#F4AF23]/10 border border-[#F4AF23]/20 text-[#F4AF23] text-sm font-medium tracking-wide mb-2">Aguarde novidades em breve!</span>
-              <span className="text-xs text-white/40">Última atualização: {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-            </div>
-          </div>
+        <div className="container mx-auto px-4">
+          <EmptyLeagueState />
         </div>
         <Footer />
       </main>
