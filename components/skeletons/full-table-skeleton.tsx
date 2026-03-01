@@ -1,157 +1,120 @@
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { TableIcon } from "lucide-react"
 
 export function FullTableSkeleton() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-          <div>
-            <Skeleton className="h-10 w-72 mb-2" />
-            <Skeleton className="h-4 w-96" />
+    <div className="space-y-8">
+      {/* Simulates 2 groups */}
+      {Array(2).fill(0).map((_, groupIndex) => (
+        <div key={groupIndex}>
+          <div className="flex items-center justify-between mb-2 px-4">
+            <Skeleton className="h-6 w-24" />
+          </div>
+          <div className="bg-card rounded-lg">
+            <div className="w-full overflow-x-hidden">
+              <Table className="w-full text-sm">
+                <TableHeader>
+                  <TableRow className="border-b border-border bg-transparent">
+                    <TableHead className="w-12 text-center text-xs text-muted-foreground font-normal py-3">P</TableHead>
+                    <TableHead className="w-8 px-0"></TableHead>
+                    <TableHead className="text-xs text-muted-foreground font-normal py-3">TIME</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-16 py-3">PTS</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden sm:table-cell">J</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3">V</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3 hidden sm:table-cell">VP</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3 hidden sm:table-cell">DP</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3">D</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GP</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GC</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">SG</TableHead>
+                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3">SC</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Array(6).fill(0).map((_, index) => (
+                    <TableRow
+                      key={index}
+                      className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border"
+                    >
+                      {/* Position */}
+                      <TableCell className="text-center font-medium py-2 w-12">
+                        {index === 0 ? (
+                          <Skeleton className="mx-auto w-6 h-6 rounded-full bg-emerald-500/20" />
+                        ) : index < 7 ? (
+                          <Skeleton className="mx-auto w-6 h-6 rounded-full bg-[#F4AF23]/20" />
+                        ) : (
+                          <Skeleton className="mx-auto w-4 h-4" />
+                        )}
+                      </TableCell>
+
+                      {/* Favorite icon column */}
+                      <TableCell className="w-8 px-0"></TableCell>
+
+                      {/* Team name */}
+                      <TableCell className="py-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
+                          <Skeleton className="h-4 w-24 sm:w-32" />
+                        </div>
+                      </TableCell>
+
+                      {/* Points */}
+                      <TableCell className="text-center py-2 w-16">
+                        <Skeleton className="h-4 w-6 mx-auto bg-[#F4AF23]/20" />
+                      </TableCell>
+
+                      {/* Games Played - hidden sm */}
+                      <TableCell className="text-center py-2 w-12 hidden sm:table-cell">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* Wins */}
+                      <TableCell className="text-center py-2 w-10">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* Penalty Wins - hidden sm */}
+                      <TableCell className="text-center py-2 w-10 hidden sm:table-cell">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* Penalty Losses - hidden sm */}
+                      <TableCell className="text-center py-2 w-10 hidden sm:table-cell">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* Losses */}
+                      <TableCell className="text-center py-2 w-10">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* Goals For - hidden md */}
+                      <TableCell className="text-center py-2 w-12 hidden md:table-cell">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* Goals Against - hidden md */}
+                      <TableCell className="text-center py-2 w-12 hidden md:table-cell">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* Goal Difference - hidden md */}
+                      <TableCell className="text-center py-2 w-12 hidden md:table-cell">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+
+                      {/* SC (Super Challenge) */}
+                      <TableCell className="text-center py-2 w-12">
+                        <Skeleton className="h-3 w-4 mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
-
-        <Card className="bg-[#1a1a1a]/50 border-gray-800 text-white mb-8">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <TableIcon className="w-5 h-5 text-[var(--team-primary)]" />
-              <Skeleton className="h-6 w-40" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow className="border-b border-border bg-muted/30">
-                      <TableHead className="w-12 text-center text-xs text-muted-foreground font-normal">P</TableHead>
-                      <TableHead className="w-8 px-0"></TableHead>
-                      <TableHead className="text-xs text-muted-foreground font-normal">TIME</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">PTS</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">PJ</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">V</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">VP</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">DP</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">D</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">GP</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">GC</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12">SG</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Array(12).fill(0).map((_, index) => (
-                      <TableRow
-                        key={index}
-                        className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border"
-                      >
-                        {/* Posição */}
-                        <TableCell className="font-medium text-center py-2">
-                          <div className="flex flex-col items-center justify-center">
-                            <div className="flex items-center mb-0.5">
-                              <Badge
-                                className="w-6 h-6 flex items-center justify-center p-0 text-xs font-medium rounded-full"
-                                style={index === 0 ? { backgroundColor: "#4ade80", color: "white" } :
-                                  index >= 1 && index <= 6 ? { backgroundColor: "#F4AF23", color: "black" } : {}}
-                              >
-                                <Skeleton className="h-3 w-3 bg-gray-500" />
-                              </Badge>
-                            </div>
-                          </div>
-                        </TableCell>
-
-                        {/* Ícone favorito */}
-                        <TableCell className="py-2 w-8 px-1"></TableCell>
-
-                        {/* Nome do time */}
-                        <TableCell className="py-2">
-                          <div className="team-container flex items-center gap-2 min-w-0">
-                            <Skeleton className="w-6 h-6 rounded-full" />
-                            <Skeleton className="h-4 w-24 sm:w-36" />
-                          </div>
-                        </TableCell>
-
-                        {/* Pontos */}
-                        <TableCell className="text-center font-bold text-[var(--team-primary)] text-sm py-2 w-12">
-                          <Skeleton className="h-4 w-4 mx-auto" />
-                        </TableCell>
-
-                        {/* Partidas Jogadas */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-
-                        {/* Vitórias no tempo normal */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-
-                        {/* Vitórias nos Pênaltis */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-
-                        {/* Derrotas nos Pênaltis */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-
-                        {/* Derrotas */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-
-                        {/* Gols Pró */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-
-                        {/* Gols Contra */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-
-                        {/* Saldo de Gols */}
-                        <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                          <Skeleton className="h-3 w-3 mx-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#1a1a1a]/50 border-gray-800 text-white">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Skeleton className="h-6 w-32" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {Array(6).fill(0).map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <Skeleton className="h-5 w-24" />
-                  <div className="space-y-2">
-                    {Array(3).fill(0).map((_, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <Skeleton className="h-3 w-3" />
-                        <Skeleton className="h-3 w-full" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+      ))}
+    </div>
   )
 }
