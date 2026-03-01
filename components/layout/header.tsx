@@ -368,7 +368,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                   <span>Times</span>
                   <span className="text-gray-600">{standingsToUse.length}</span>
                 </h2>
-                <div className="space-y-1 max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
+                <div className="space-y-1 max-h-[calc(100vh-320px)] overflow-y-auto scrollbar-minimal">
                   {standingsToUse.map((team) => {
                     const isFavorite = favoriteTeam?.id === team.id
                     const isSelected = selectedTeam === team.id
@@ -629,7 +629,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/5" />
-          <div className="py-1 max-h-[50vh] overflow-y-auto">
+          <div className="py-1 max-h-[50vh] overflow-y-auto scrollbar-minimal">
             {standings.map((team) => {
               const isFavorite = favoriteTeam?.id === team.id
               const isSelected = selectedTeam === team.id
