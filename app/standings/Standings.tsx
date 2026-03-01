@@ -288,14 +288,27 @@ export default function StandingsPage() {
 
   if (loading) {
     return (
+
       <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
         <Header
-          loading={true}
-          selectedTeam={null}
-          onTeamSelect={() => { }}
-          setActiveTab={() => { }}
+          loading={false}
+          selectedTeam={selectedTeam}
+          onTeamSelect={handleTeamSelect}
+          setActiveTab={handleSetActiveTab}
         />
-        <FullTableSkeleton />
+        <div className="container mx-auto py-8 px-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-[var(--team-primary)] mb-2">Classificação Completa</h1>
+              <p className="text-gray-400 max-w-2xl">
+                Tabela detalhada da Kings League com estatísticas completas de todos os times.
+              </p>
+            </div>
+          </div>
+
+          <FullTableSkeleton />
+
+        </div>
         <Footer />
       </main>
     )
@@ -304,7 +317,7 @@ export default function StandingsPage() {
   // Alerta visual para dados vazios (sem standings, rounds ou teams)
   const isEmptyLeagueData = standings.length === 0 || rounds.length === 0 || Object.keys(teams).length === 0
 
-  if (isEmptyLeagueData) {
+  if (!isEmptyLeagueData) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] text-white">
         <Header
