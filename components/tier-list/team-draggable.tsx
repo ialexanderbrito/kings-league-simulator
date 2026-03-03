@@ -19,11 +19,10 @@ export function TeamDraggable({ team, isDragging = false }: TeamDraggableProps) 
     id: team.id,
   })
 
-  const style = transform
-    ? {
-      transform: CSS.Translate.toString(transform),
-    }
-    : undefined
+  const style = {
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    touchAction: 'none' as const,
+  }
 
   return (
     <div

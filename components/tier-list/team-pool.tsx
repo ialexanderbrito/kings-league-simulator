@@ -4,7 +4,7 @@ import { Team } from "@/types/kings-league"
 import { useDroppable } from "@dnd-kit/core"
 import { TeamDraggable } from "./team-draggable"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users } from "lucide-react"
+import { Users, CheckCircle2 } from "lucide-react"
 
 interface TeamPoolProps {
   teams: Team[]
@@ -15,8 +15,33 @@ export function TeamPool({ teams }: TeamPoolProps) {
     id: 'unassigned',
   })
 
+  const isEmpty = teams.length === 0
+
+  // Versão minimizada quando não há times
+  if (isEmpty) {
+    return (
+      <Card className="bg-[#1a1a1a] border-white/10 shadow-lg shadow-black/20">
+        <CardHeader className="py-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2 text-white">
+              <Users className="w-4 h-4 text-[var(--team-primary,#F4AF23)]" />
+              Times Disponíveis
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              <span className="text-green-400 text-xs font-medium">
+                Todos organizados! 🎉
+              </span>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  // Versão completa quando há times
   return (
-    <Card className="bg-[#1a1a1a]/50 border-white/10 mb-8">
+    <Card className="bg-[#1a1a1a] border-white/10 shadow-lg shadow-black/20">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl flex items-center gap-2 text-white">
@@ -40,22 +65,11 @@ export function TeamPool({ teams }: TeamPoolProps) {
             }
           `}
         >
-          {teams.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[120px] gap-2">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                <span className="text-2xl">🎉</span>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Todos os times foram organizados!
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-              {teams.map((team) => (
-                <TeamDraggable key={team.id} team={team} />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+            {teams.map((team) => (
+              <TeamDraggable key={team.id} team={team} />
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
