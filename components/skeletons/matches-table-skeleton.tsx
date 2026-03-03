@@ -8,8 +8,8 @@ export function MatchesTableSkeleton() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#F4AF23]/10 border border-[#F4AF23]/20">
-            <Calendar className="w-5 h-5 text-[#F4AF23]" />
+          <div className="p-2.5 rounded-xl bg-[var(--team-primary]/10 border border-[var(--team-primary]/20">
+            <Calendar className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" />
           </div>
           <div>
             <span className="text-lg font-semibold text-white">Partidas</span>
@@ -19,7 +19,7 @@ export function MatchesTableSkeleton() {
 
         {/* Playoffs button skeleton (desktop) */}
         <div className="hidden sm:flex">
-          <Skeleton className="h-9 w-24 rounded-full bg-[#F4AF23]/20" />
+          <Skeleton className="h-9 w-24 rounded-full bg-[var(--team-primary]/20" />
         </div>
       </div>
 
@@ -31,7 +31,7 @@ export function MatchesTableSkeleton() {
               {Array(9).fill(0).map((_, i) => (
                 <div key={i} className="flex-none">
                   <Skeleton
-                    className={`h-8 w-16 rounded-full ${i === 0 ? "bg-[#F4AF23]/30" : ""}`}
+                    className={`h-8 w-16 rounded-full ${i === 0 ? "bg-[var(--team-primary]/30" : ""}`}
                   />
                 </div>
               ))}
@@ -45,7 +45,7 @@ export function MatchesTableSkeleton() {
 
         {/* Playoffs button skeleton (mobile) */}
         <div className="sm:hidden">
-          <Skeleton className="h-10 w-full rounded-full bg-[#F4AF23]/20" />
+          <Skeleton className="h-10 w-full rounded-full bg-[var(--team-primary]/20" />
         </div>
       </div>
 
@@ -55,7 +55,7 @@ export function MatchesTableSkeleton() {
         <div className="space-y-3">
           {/* Date Header */}
           <div className="flex items-center gap-2 px-1">
-            <Skeleton className="w-4 h-4 rounded bg-[#F4AF23]/30" />
+            <Skeleton className="w-4 h-4 rounded bg-[var(--team-primary]/30" />
             <Skeleton className="h-3.5 w-36" />
           </div>
 
@@ -106,7 +106,7 @@ export function MatchesTableSkeleton() {
         <div className="space-y-3">
           {/* Date Header */}
           <div className="flex items-center gap-2 px-1">
-            <Skeleton className="w-4 h-4 rounded bg-[#F4AF23]/30" />
+            <Skeleton className="w-4 h-4 rounded bg-[var(--team-primary]/30" />
             <Skeleton className="h-3.5 w-32" />
           </div>
 

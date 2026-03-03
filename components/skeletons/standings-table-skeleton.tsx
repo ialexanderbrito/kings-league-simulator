@@ -42,7 +42,7 @@ export function StandingsTableSkeleton() {
                     {index === 0 ? (
                       <Skeleton className="w-6 h-6 rounded-full bg-emerald-500/20" />
                     ) : index < 7 ? (
-                      <Skeleton className="w-6 h-6 rounded-full bg-[#F4AF23]/20" />
+                      <Skeleton className="w-6 h-6 rounded-full bg-[var(--team-primary]/20" />
                     ) : (
                       <Skeleton className="w-4 h-4" />
                     )}
@@ -56,7 +56,7 @@ export function StandingsTableSkeleton() {
 
                   {/* Points */}
                   <div className="text-center">
-                    <Skeleton className="h-4 w-5 mx-auto bg-[#F4AF23]/20" />
+                    <Skeleton className="h-4 w-5 mx-auto bg-[var(--team-primary]/20" />
                   </div>
 
                   {/* Games Played */}
@@ -83,7 +83,7 @@ export function StandingsTableSkeleton() {
             <Skeleton className="h-2 w-8" />
           </div>
           <div className="flex items-center gap-1.5">
-            <Skeleton className="w-3 h-3 rounded-full bg-[#F4AF23]/30" />
+            <Skeleton className="w-3 h-3 rounded-full bg-[var(--team-primary]/30" />
             <Skeleton className="h-2 w-12" />
           </div>
         </div>

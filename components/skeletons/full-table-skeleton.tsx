@@ -27,7 +27,6 @@ export function FullTableSkeleton() {
                     <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GP</TableHead>
                     <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GC</TableHead>
                     <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">SG</TableHead>
-                    <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3">SC</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -41,7 +40,7 @@ export function FullTableSkeleton() {
                         {index === 0 ? (
                           <Skeleton className="mx-auto w-6 h-6 rounded-full bg-emerald-500/20" />
                         ) : index < 7 ? (
-                          <Skeleton className="mx-auto w-6 h-6 rounded-full bg-[#F4AF23]/20" />
+                          <Skeleton className="mx-auto w-6 h-6 rounded-full bg-[var(--team-primary]/20" />
                         ) : (
                           <Skeleton className="mx-auto w-4 h-4" />
                         )}
@@ -60,7 +59,7 @@ export function FullTableSkeleton() {
 
                       {/* Points */}
                       <TableCell className="text-center py-2 w-16">
-                        <Skeleton className="h-4 w-6 mx-auto bg-[#F4AF23]/20" />
+                        <Skeleton className="h-4 w-6 mx-auto bg-[var(--team-primary]/20" />
                       </TableCell>
 
                       {/* Games Played - hidden sm */}
@@ -100,11 +99,6 @@ export function FullTableSkeleton() {
 
                       {/* Goal Difference - hidden md */}
                       <TableCell className="text-center py-2 w-12 hidden md:table-cell">
-                        <Skeleton className="h-3 w-4 mx-auto" />
-                      </TableCell>
-
-                      {/* SC (Super Challenge) */}
-                      <TableCell className="text-center py-2 w-12">
                         <Skeleton className="h-3 w-4 mx-auto" />
                       </TableCell>
                     </TableRow>
