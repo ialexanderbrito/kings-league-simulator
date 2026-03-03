@@ -155,7 +155,7 @@ export default function RootLayout({
         <meta name="google-adsense-account" content="ca-pub-4240296013936173" />
         <link rel="apple-touch-startup-image" href="/splash.png" />
       </head>
-      <body className={`${inter.className} min-h-screen antialiased`}>
+      <body className={`${inter.className} min-h-screen antialiased`} suppressHydrationWarning>
         <Script
           id="adsbygoogle-init"
           strategy="afterInteractive"
