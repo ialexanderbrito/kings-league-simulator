@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X, Share2, Trophy, Heart, ChevronDown, Home, Shield, Sparkles, Users, ChevronRight, ListOrdered } from "lucide-react"
+import { Menu, X, Share2, Trophy, Heart, ChevronDown, Home, Shield, Sparkles, Users, ChevronRight, ListOrdered, Download, Image } from "lucide-react"
 import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import Link from "next/link"
@@ -15,6 +15,7 @@ import { useTeamTheme } from "@/contexts/team-theme-context"
 import { useToast } from "@/hooks/use-toast"
 import { FavoriteTeamModal } from "@/components/favorite-team-modal"
 import { RemoveFavoriteTeamModal } from "@/components/remove-favorite-team-modal"
+import { useSimulationCapture } from "@/hooks/use-simulation-capture"
 
 interface HeaderProps {
   loading: boolean
@@ -251,6 +252,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                 {/* Right Section */}
                 {!loading && (
                   <div className="flex items-center gap-2">
+                    <DownloadSimulationButton />
                     <ShareButton />
                     <TeamSelector
                       selectedTeam={selectedTeam}
@@ -418,6 +420,65 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
         </aside>
       </div>
     </>
+  )
+}
+
+function DownloadSimulationButton() {
+  const { captureAndDownload, isCapturing } = useSimulationCapture()
+  const { toast } = useToast()
+  const pathname = usePathname()
+
+  // Mostrar apenas na rota /simulator
+  if (pathname !== '/simulator') {
+    return null
+  }
+
+  const handleDownloadSimulation = async () => {
+    const success = await captureAndDownload('simulation-content', {
+      filename: `kings-league-simulacao-${new Date().toISOString().split('T')[0]}.png`,
+      quality: 1,
+      format: 'png'
+    })
+
+    if (success) {
+      toast({
+        title: "Simulação salva! 🎉",
+        description: "Sua simulação foi baixada com sucesso. Compartilhe com seus amigos!",
+        variant: "default",
+      })
+    } else {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a simulação. Tente novamente.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  return (
+    <button
+      onClick={handleDownloadSimulation}
+      disabled={isCapturing}
+      className={cn(
+        "flex items-center gap-2 px-3 sm:px-4 h-10 rounded-xl transition-all duration-200",
+        "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20",
+        "text-gray-300 hover:text-white font-medium text-sm",
+        isCapturing && "opacity-50 cursor-not-allowed"
+      )}
+      aria-label="Baixar simulação como imagem"
+    >
+      {isCapturing ? (
+        <>
+          <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+          <span className="hidden sm:inline">Gerando...</span>
+        </>
+      ) : (
+        <>
+          <Download className="w-4 h-4" />
+          <span className="hidden sm:inline">Baixar simulação</span>
+        </>
+      )}
+    </button>
   )
 }
 
