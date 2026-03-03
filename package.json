@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
     "@number-flow/react": "^0.5.10",
     "@phosphor-icons/react": "^2.1.10",
@@ -39,6 +42,7 @@
     "@radix-ui/react-toggle": "^1.1.1",
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@zumer/snapdom": "^2.0.2",
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -49,6 +53,7 @@
     "html2canvas": "^1.4.1",
     "input-otp": "1.4.2",
     "lucide-react": "^0.575.0",
+    "lz-string": "^1.5.0",
     "motion": "^12.34.3",
     "next": "16.1.6",
     "next-themes": "^0.4.6",
@@ -59,6 +64,7 @@
     "react-resizable-panels": "^4.6.5",
     "recharts": "3.7.0",
     "redis": "^5.11.0",
+    "snapdom": "^0.1.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
