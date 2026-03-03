@@ -16,7 +16,7 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -43,15 +43,15 @@ export default function TierList() {
 
   // Configurar sensores para drag and drop
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 8,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 100,
-        tolerance: 8,
+        delay: 200,
+        tolerance: 5,
       },
     })
   )
@@ -340,34 +340,58 @@ export default function TierList() {
 
   // Compartilhar via URL
   const handleShare = async () => {
-    if (!tierListData) return
+    if (!tierListData) {
+      toast.error('Nenhuma tier list para compartilhar')
+      return
+    }
+
+    toast.loading('Gerando link otimizado...', { id: 'share' })
 
     try {
       const encoded = encodeTierListToURL(tierListData)
+      if (!encoded) {
+        toast.error('Erro ao gerar link', { id: 'share' })
+        return
+      }
+
       const url = `${window.location.origin}${window.location.pathname}#data=${encoded}`
 
+      // Informar sobre o tamanho do link (útil para redes sociais)
+      const linkSize = url.length
+      console.log(`📊 Link otimizado gerado: ${linkSize} caracteres`)
+
       // Tentar usar Web Share API se disponível (mobile)
-      if (navigator.share) {
+      if (typeof navigator !== 'undefined' && navigator.share) {
         try {
           await navigator.share({
             title: 'Minha Tier List Kings League',
             text: 'Confira minha tier list da Kings League!',
             url: url,
           })
-          toast.success('Compartilhado com sucesso!')
+          toast.success('Compartilhado!', { id: 'share' })
           return
-        } catch (shareError) {
-          // Se o usuário cancelar ou não suportar, tentar clipboard
-          console.log('Web Share cancelado ou não suportado, usando clipboard')
+        } catch (shareError: unknown) {
+          // Se o usuário cancelar, não mostrar erro
+          if (shareError instanceof Error && shareError.name === 'AbortError') {
+            toast.dismiss('share')
+            return
+          }
+          // Continua para tentar clipboard
         }
       }
 
       // Fallback: copiar para clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
         await navigator.clipboard.writeText(url)
-        toast.success('Link copiado para a área de transferência!')
-      } else {
-        // Fallback para navegadores antigos
+
+        // Mensagem de sucesso com informação sobre tamanho
+        const sizeInfo = linkSize > 280
+          ? ' (Link longo, considere usar um encurtador)'
+          : ' ✓ Ideal para redes sociais!'
+
+        toast.success(`Link copiado!${sizeInfo}`, { id: 'share' })
+      } catch {
+        // Fallback para navegadores antigos ou contextos inseguros
         const textArea = document.createElement('textarea')
         textArea.value = url
         textArea.style.position = 'fixed'
@@ -378,17 +402,21 @@ export default function TierList() {
         textArea.select()
 
         try {
-          document.execCommand('copy')
-          toast.success('Link copiado para a área de transferência!')
+          const successful = document.execCommand('copy')
+          if (successful) {
+            toast.success('Link copiado!', { id: 'share' })
+          } else {
+            toast.info('Copie o link manualmente', { id: 'share', description: url.substring(0, 50) + '...' })
+          }
         } catch {
-          toast.error('Não foi possível copiar o link. URL: ' + url)
+          toast.info('Copie o link manualmente', { id: 'share', description: url.substring(0, 50) + '...' })
         }
 
         document.body.removeChild(textArea)
       }
     } catch (error) {
       console.error('Erro ao compartilhar:', error)
-      toast.error('Erro ao gerar link de compartilhamento.')
+      toast.error('Erro ao gerar link', { id: 'share' })
     }
   }
 
@@ -458,7 +486,6 @@ export default function TierList() {
           onReset={handleReset}
           onDownload={handleDownload}
           onShare={handleShare}
-          canShare={true}
         />
 
         {/* Tier List */}
@@ -468,6 +495,13 @@ export default function TierList() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
+          {/* Pool de times não atribuídos - FIXO NO TOPO */}
+          <div className="sticky top-0 z-40 pb-6 pt-1 bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-transparent">
+            <TeamPool
+              teams={tierListData.unassigned.map(id => getTeamById(id)).filter(Boolean) as Team[]}
+            />
+          </div>
+
           <div ref={tierListRef} className="space-y-4 mb-8">
             {tierListData.tiers.map((tier) => (
               <TierRow
@@ -481,11 +515,6 @@ export default function TierList() {
               />
             ))}
           </div>
-
-          {/* Pool de times não atribuídos */}
-          <TeamPool
-            teams={tierListData.unassigned.map(id => getTeamById(id)).filter(Boolean) as Team[]}
-          />
 
           {/* Drag Overlay */}
           <DragOverlay>
