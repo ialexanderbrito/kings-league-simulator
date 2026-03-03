@@ -10,7 +10,6 @@ import { useTeamTheme } from "@/contexts/team-theme-context"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import { FullTableSkeleton } from "@/components/skeletons/full-table-skeleton"
 import { EmptyLeagueState } from "@/components/empty-league-state"
-import html2canvas from "html2canvas"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 
