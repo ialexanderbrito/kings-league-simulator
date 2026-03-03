@@ -153,7 +153,7 @@ export default function StandingsTable(props: StandingsTableProps) {
                           <img
                             src={getProxyImageUrl(typeof team.logo === 'string' ? team.logo : team.logo.url)}
                             alt={team.name}
-                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-contain flex-shrink-0 bg-white/5"
+                            className="w-6 h-6 sm:w-7 sm:h-7 object-contain flex-shrink-0"
                             crossOrigin="anonymous"
                           />
                         )}
