@@ -62,8 +62,8 @@ export function MainContent({
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-white/5">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-[#F4AF23]/10 border border-[#F4AF23]/20">
-                      <TableIcon className="w-4 h-4 text-[#F4AF23]" aria-hidden="true" />
+                    <div className="p-2 rounded-xl bg-[var(--team-primary]/10 border border-[var(--team-primary]/20">
+                      <TableIcon className="w-4 h-4 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
                     </div>
                     <span className="text-base font-semibold text-white">Classificação</span>
                   </div>

@@ -171,7 +171,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
               : "bg-[#0a0a0a]/80 backdrop-blur-md border-white/5"
           )}>
             {/* Gradient accent line */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--team-primary)]/50 to-transparent" />
 
             <div className="px-4 py-3">
               <div className="flex items-center justify-between gap-4">
@@ -200,7 +200,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                     aria-label="Ir para página inicial"
                   >
                     <div className="relative">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute -inset-1 bg-[var(--team-primary)]/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <div className="relative w-9 h-9 flex items-center justify-center">
                         <KingsLeagueLogo
                           width={32}
@@ -211,7 +211,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                     </div>
                     <div className="hidden sm:block">
                       <h1 className="text-base font-bold text-white leading-tight flex items-center gap-1">
-                        <span className="text-orange-400">Kings</span>
+                        <span className="text-[var(--team-primary)]">Kings</span>
                         <span>League</span>
                       </h1>
                       <p className="text-[10px] text-gray-500 font-medium">Simulador 2026</p>
@@ -237,11 +237,11 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                         >
                           <Icon className={cn(
                             "w-4 h-4 transition-colors",
-                            isActive ? "text-orange-400" : "text-gray-500"
+                            isActive ? "text-[var(--team-primary)]" : "text-gray-500"
                           )} />
                           <span>{item.label}</span>
                           {isActive && (
-                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full" />
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[var(--team-primary)] rounded-full" />
                           )}
                         </Link>
                       )
@@ -306,7 +306,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
               </div>
               <div>
                 <h1 className="text-sm font-bold text-white flex items-center gap-1">
-                  <span className="text-orange-400">Kings</span>
+                  <span className="text-[var(--team-primary)]">Kings</span>
                   <span>League</span>
                 </h1>
                 <p className="text-[10px] text-gray-500">Simulador 2026</p>
@@ -348,11 +348,11 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                       >
                         <div className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                          isActive ? "bg-orange-500/20" : "bg-white/5"
+                          isActive ? "bg-[var(--team-primary)]/20" : "bg-white/5"
                         )}>
                           <Icon className={cn(
                             "w-4 h-4",
-                            isActive ? "text-orange-400" : "text-gray-500"
+                            isActive ? "text-[var(--team-primary)]" : "text-gray-500"
                           )} />
                         </div>
                         <span className="text-sm font-medium">{item.label}</span>
@@ -389,7 +389,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                       >
                         <div className={cn(
                           "w-8 h-8 rounded-lg overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0",
-                          isFavorite && "ring-2 ring-orange-500/50"
+                          isFavorite && "ring-2 ring-[var(--team-primary)]/50"
                         )}>
                           <img
                             src={getProxyImageUrl(team.logo?.url)}
@@ -401,7 +401,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                         </div>
                         <span className="text-sm font-medium truncate flex-1 text-left">{team.name}</span>
                         {isFavorite && (
-                          <Heart className="w-4 h-4 text-orange-400 flex-shrink-0" fill="currentColor" />
+                          <Heart className="w-4 h-4 text-[var(--team-primary)] flex-shrink-0" fill="currentColor" />
                         )}
                       </button>
                     )
@@ -414,7 +414,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-white/5">
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5">
-              <Sparkles className="w-4 h-4 text-orange-400" />
+              <Sparkles className="w-4 h-4 text-[var(--team-primary)]" />
               <span className="text-xs text-gray-400">Feito por fãs, para fãs</span>
             </div>
           </div>
@@ -529,7 +529,7 @@ function ShareButton() {
             name: "Copiar link",
             action: "copy",
             icon: "link",
-            color: "hover:bg-orange-500/10 hover:text-orange-400"
+            color: "hover:bg-[var(--team-primary)]/10 hover:text-[var(--team-primary)]"
           }
         ].map((item) => (
           <DropdownMenuItem
@@ -637,7 +637,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
             className={cn(
               "flex items-center gap-2 px-3 h-10 rounded-xl transition-all duration-200",
               "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20",
-              favoriteTeam && "border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10"
+              favoriteTeam && "border-[var(--team-primary)]/30 bg-[var(--team-primary)]/5 hover:bg-[var(--team-primary)]/10"
             )}
             aria-label={favoriteTeam ? `Time selecionado: ${favoriteTeam.name}` : selectedTeam ? `Time selecionado: ${teams[selectedTeam]?.name ?? 'Selecionar time'}` : "Selecionar time"}
           >
@@ -655,7 +655,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                 <span className="text-sm font-medium text-white hidden sm:inline max-w-[80px] truncate">
                   {favoriteTeam.shortName || favoriteTeam.name}
                 </span>
-                <Heart className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" fill="currentColor" />
+                <Heart className="w-3.5 h-3.5 text-[var(--team-primary)] flex-shrink-0" fill="currentColor" />
               </>
             ) : selectedTeam ? (
               <>
@@ -675,7 +675,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
               </>
             ) : (
               <>
-                <Shield className="w-4 h-4 text-orange-400" />
+                <Shield className="w-4 h-4 text-[var(--team-primary)]" />
                 <span className="text-sm text-gray-400 hidden sm:inline">Times</span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </>
@@ -706,13 +706,13 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                   className={cn(
                     "cursor-pointer flex items-center gap-3 py-2.5 px-3 mx-1 my-0.5 rounded-xl transition-all group",
                     isSelected && "bg-white/5",
-                    isFavorite && "bg-orange-500/5"
+                    isFavorite && "bg-[var(--team-primary)]/5"
                   )}
                   onClick={() => handleTeamSelect(team.id)}
                 >
                   <div className={cn(
                     "w-9 h-9 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0 transition-all",
-                    isFavorite && "ring-2 ring-orange-500/50"
+                    isFavorite && "ring-2 ring-[var(--team-primary)]/50"
                   )}>
                     <img
                       src={getProxyImageUrl(teamObj?.logo?.url)}
@@ -725,7 +725,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                   <div className="flex-1 min-w-0">
                     <p className={cn(
                       "text-sm font-medium truncate",
-                      isFavorite ? "text-orange-400" : "text-gray-300"
+                      isFavorite ? "text-[var(--team-primary)]" : "text-gray-300"
                     )}>
                       {teamObj?.name || team.name}
                     </p>
@@ -738,7 +738,7 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                     className={cn(
                       "w-8 h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0",
                       "hover:bg-white/10",
-                      isFavorite ? "text-orange-400" : "text-gray-600 hover:text-gray-400"
+                      isFavorite ? "text-[var(--team-primary)]" : "text-gray-600 hover:text-gray-400"
                     )}
                     onClick={(e) => {
                       if (!teamObj) return
