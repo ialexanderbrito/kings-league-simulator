@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ButtonTop } from "@/components/ui/button-top"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import type { Team, TeamDetails } from "@/types/kings-league"
-import { cn } from "@/lib/utils"
+import { cn, getProxyImageUrl } from "@/lib/utils"
 import { Users, Crown, ChevronRight, Sparkles, Shield, User } from "lucide-react"
 
 export default function Teams() {
@@ -209,10 +209,11 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
             style={{ width: '72px', height: '72px' }}
           >
             <img
-              src={team.logo?.url || "/placeholder-logo.svg"}
+              src={getProxyImageUrl(team.logo?.url)}
               alt=""
               className="w-full h-full object-contain p-2.5"
               loading="lazy"
+              crossOrigin="anonymous"
             />
           </div>
           <div className="flex-1 min-w-0">

@@ -3,7 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { TeamStanding } from "@/types/kings-league"
 import { useTeamTheme } from "@/contexts/team-theme-context"
-import { cn } from "@/lib/utils"
+import { cn, getProxyImageUrl } from "@/lib/utils"
 
 interface DisplayStanding extends TeamStanding {
   penaltyWins?: number
@@ -171,7 +171,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                           <TableCell className="py-2">
                             <div className="flex items-center gap-2 min-w-0 max-w-[180px] sm:max-w-full">
                               {team.logo && (
-                                <img src={typeof team.logo === 'string' ? team.logo : team.logo.url} alt={team.name} className="h-6 w-6 rounded-full flex-shrink-0 team-logo" />
+                                <img src={getProxyImageUrl(typeof team.logo === 'string' ? team.logo : team.logo.url)} alt={team.name} className="h-6 w-6 rounded-full flex-shrink-0 team-logo" crossOrigin="anonymous" />
                               )}
                               <div className="truncate team-container">
                                 <span>{team.name}</span>

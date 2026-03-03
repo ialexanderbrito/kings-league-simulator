@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { HeartOff, AlertTriangle, Undo2 } from 'lucide-react';
+import { getProxyImageUrl } from '@/lib/utils';
 
 interface RemoveFavoriteTeamModalProps {
   open: boolean;
@@ -67,10 +68,11 @@ export function RemoveFavoriteTeamModal({
             <div className="relative">
               <div className="w-24 h-24 rounded-2xl overflow-hidden bg-muted ring-2 ring-border shadow-xl relative">
                 <img
-                  src={team.logo?.url || "/placeholder-logo.svg"}
+                  src={getProxyImageUrl(team.logo?.url)}
                   alt={team.name}
                   className="object-contain w-full h-full p-3"
                   loading="lazy"
+                  crossOrigin="anonymous"
                 />
                 {/* Overlay de remoção */}
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">

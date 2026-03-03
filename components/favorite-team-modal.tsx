@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Sparkles, ArrowRight, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getProxyImageUrl } from '@/lib/utils';
 
 interface FavoriteTeamModalProps {
   open: boolean;
@@ -71,10 +71,11 @@ export function FavoriteTeamModal({
                   <div className="relative">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden bg-muted ring-2 ring-border shadow-lg">
                       <img
-                        src={currentTeam.logo?.url || "/placeholder-logo.svg"}
+                        src={getProxyImageUrl(currentTeam.logo?.url)}
                         alt={currentTeam.name}
                         className="object-contain w-full h-full p-2"
                         loading="lazy"
+                        crossOrigin="anonymous"
                       />
                     </div>
                     <Badge
@@ -99,10 +100,11 @@ export function FavoriteTeamModal({
                   <div className="relative">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#F4AF23]/10 ring-2 ring-[#F4AF23]/50 shadow-lg shadow-[#F4AF23]/20">
                       <img
-                        src={newTeam.logo?.url || "/placeholder-logo.svg"}
+                        src={getProxyImageUrl(newTeam.logo?.url)}
                         alt={newTeam.name}
                         className="object-contain w-full h-full p-2"
                         loading="lazy"
+                        crossOrigin="anonymous"
                       />
                     </div>
                     <Badge
@@ -125,10 +127,11 @@ export function FavoriteTeamModal({
                 <div className="relative">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#F4AF23]/10 ring-2 ring-[#F4AF23]/50 shadow-xl shadow-[#F4AF23]/20">
                     <img
-                      src={newTeam.logo?.url || "/placeholder-logo.svg"}
+                      src={getProxyImageUrl(newTeam.logo?.url)}
                       alt={newTeam.name}
                       className="object-contain w-full h-full p-3"
                       loading="lazy"
+                      crossOrigin="anonymous"
                     />
                   </div>
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">

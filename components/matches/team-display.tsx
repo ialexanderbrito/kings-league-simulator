@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { cn } from "@/lib/utils";
+import { cn, getProxyImageUrl } from "@/lib/utils";
 import { Team } from "@/types/kings-league";
 import { Heart } from "lucide-react";
 
@@ -47,12 +47,13 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
           </div>
           <div className="w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0 rounded-lg bg-white/5 p-1.5 border border-white/10">
             <img
-              src={team.logo?.url || "/placeholder.svg"}
+              src={getProxyImageUrl(team.logo?.url)}
               alt={`Logo do ${team.name}`}
               width={48}
               height={48}
               className="object-contain w-full h-full"
               loading="lazy"
+              crossOrigin="anonymous"
             />
           </div>
         </>
@@ -60,12 +61,13 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
         <>
           <div className="w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0 rounded-lg bg-white/5 p-1.5 border border-white/10">
             <img
-              src={team.logo?.url || "/placeholder.svg"}
+              src={getProxyImageUrl(team.logo?.url)}
               alt={`Logo do ${team.name}`}
               width={48}
               height={48}
               className="object-contain w-full h-full"
               loading="lazy"
+              crossOrigin="anonymous"
             />
           </div>
           <div className="flex-1 text-left overflow-hidden">

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Instagram, TwitchIcon, Youtube, User } from "lucide-react"
 import type { Team, TeamDetails } from "@/types/kings-league"
+import { getProxyImageUrl } from "@/lib/utils"
 
 interface TeamHeaderProps {
   team: Team
@@ -51,10 +52,11 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
             <div className="w-16 h-16 sm:w-20 sm:h-20 relative">
               {teamDetails?.logo ? (
                 <img
-                  src={teamDetails.logo.url || "/placeholder.svg"}
+                  src={getProxyImageUrl(teamDetails.logo.url)}
                   alt={`Logo do ${team.name}`}
                   className="w-full h-full object-contain"
                   loading="eager"
+                  crossOrigin="anonymous"
                 />
               ) : (
                 <Skeleton className="w-full h-full rounded-lg" />

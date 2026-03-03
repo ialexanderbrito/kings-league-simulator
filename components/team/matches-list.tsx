@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Trophy, Clock, Youtube, Calendar, CheckCircle2, Timer, Swords, TrendingUp, ChevronRight } from "lucide-react"
 import { Team } from "@/types/kings-league"
 import { useTeamTheme } from "@/contexts/team-theme-context"
-import { cn } from "@/lib/utils"
+import { cn, getProxyImageUrl } from "@/lib/utils"
 
 interface MatchesListProps {
   teamId: string
@@ -215,10 +215,11 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                               isHomeTeamFavorite && "ring-2 ring-orange-500"
                             )}>
                               <img
-                                src={teams[match.participants.homeTeamId].logo?.url || "/placeholder.svg"}
+                                src={getProxyImageUrl(teams[match.participants.homeTeamId].logo?.url)}
                                 alt={teams[match.participants.homeTeamId].name}
                                 className="w-10 h-10 object-contain"
                                 loading="lazy"
+                                crossOrigin="anonymous"
                               />
                             </div>
                             <div className="min-w-0">
@@ -258,10 +259,11 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                               isAwayTeamFavorite && "ring-2 ring-orange-500"
                             )}>
                               <img
-                                src={teams[match.participants.awayTeamId].logo?.url || "/placeholder.svg"}
+                                src={getProxyImageUrl(teams[match.participants.awayTeamId].logo?.url)}
                                 alt={teams[match.participants.awayTeamId].name}
                                 className="w-10 h-10 object-contain"
                                 loading="lazy"
+                                crossOrigin="anonymous"
                               />
                             </div>
                           </div>
@@ -377,10 +379,11 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                               isLeftTeamFavorite && "ring-2 ring-orange-500"
                             )}>
                               <img
-                                src={teams[leftTeamId].logo?.url || "/placeholder.svg"}
+                                src={getProxyImageUrl(teams[leftTeamId].logo?.url)}
                                 alt={teams[leftTeamId].name}
                                 className="w-10 h-10 object-contain"
                                 loading="lazy"
+                                crossOrigin="anonymous"
                               />
                             </div>
                             <div className="min-w-0">
@@ -435,10 +438,11 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                               isRightTeamFavorite && "ring-2 ring-orange-500"
                             )}>
                               <img
-                                src={teams[rightTeamId].logo?.url || "/placeholder.svg"}
+                                src={getProxyImageUrl(teams[rightTeamId].logo?.url)}
                                 alt={teams[rightTeamId].name}
                                 className="w-10 h-10 object-contain"
                                 loading="lazy"
+                                crossOrigin="anonymous"
                               />
                             </div>
                           </div>

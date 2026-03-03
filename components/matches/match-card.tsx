@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { Radio, Star, Trophy } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getProxyImageUrl } from "@/lib/utils";
 import { Round, Team } from "@/types/kings-league";
 import { MatchScoreInput } from "./match-score-input";
 import { ShootoutSelector } from "./shootout-selector";
@@ -110,9 +110,10 @@ export const MatchCard: FC<MatchCardProps> = ({
                   : "bg-white/5 group-hover:bg-white/[0.07]"
               )}>
                 <img
-                  src={homeTeam.logo?.url || "/placeholder.svg"}
+                  src={getProxyImageUrl(homeTeam.logo?.url)}
                   alt={homeTeam.name}
                   className="w-full h-full object-contain"
+                  crossOrigin="anonymous"
                 />
               </div>
               {isHomeFavorite && (
@@ -207,9 +208,10 @@ export const MatchCard: FC<MatchCardProps> = ({
                   : "bg-white/5 group-hover:bg-white/[0.07]"
               )}>
                 <img
-                  src={awayTeam.logo?.url || "/placeholder.svg"}
+                  src={getProxyImageUrl(awayTeam.logo?.url)}
                   alt={awayTeam.name}
                   className="w-full h-full object-contain"
+                  crossOrigin="anonymous"
                 />
               </div>
               {isAwayFavorite && (

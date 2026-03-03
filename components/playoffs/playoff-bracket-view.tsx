@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
 import { useTeamTheme } from "@/contexts/team-theme-context";
 import { Trophy, ChevronRight, ChevronLeft, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getProxyImageUrl } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 
@@ -69,10 +69,11 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate }: PlayoffB
             <span className="text-xs text-yellow-700 font-medium uppercase ml-2">Campeão</span>
           </div>
           <img
-            src={champion.logo?.url || "/placeholder.svg"}
+            src={getProxyImageUrl(champion.logo?.url)}
             alt={`Logo ${champion.name}`}
             className="w-20 h-20 mt-2 rounded-full border-4 border-yellow-400 bg-white object-contain shadow-lg"
             loading="lazy"
+            crossOrigin="anonymous"
           />
         </div>
       )}

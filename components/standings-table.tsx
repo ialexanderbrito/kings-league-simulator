@@ -2,7 +2,7 @@
 
 import type { TeamStanding } from "@/types/kings-league"
 import { useTeamTheme } from "@/contexts/team-theme-context"
-import { cn } from "@/lib/utils"
+import { cn, getProxyImageUrl } from "@/lib/utils"
 import { ChevronUp, ChevronDown, Star } from "lucide-react"
 
 interface GroupedStandings {
@@ -151,9 +151,10 @@ export default function StandingsTable(props: StandingsTableProps) {
                       <div className="flex items-center gap-2 min-w-0">
                         {team.logo && (
                           <img
-                            src={typeof team.logo === 'string' ? team.logo : team.logo.url}
+                            src={getProxyImageUrl(typeof team.logo === 'string' ? team.logo : team.logo.url)}
                             alt={team.name}
                             className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-contain flex-shrink-0 bg-white/5"
+                            crossOrigin="anonymous"
                           />
                         )}
                         <div className="flex items-center gap-1.5 min-w-0">

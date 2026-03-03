@@ -6,7 +6,7 @@ import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { cn, getProxyImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -392,10 +392,11 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                           isFavorite && "ring-2 ring-orange-500/50"
                         )}>
                           <img
-                            src={team.logo?.url || "/placeholder-logo.svg"}
+                            src={getProxyImageUrl(team.logo?.url)}
                             alt=""
                             className="w-6 h-6 object-contain"
                             loading="lazy"
+                            crossOrigin="anonymous"
                           />
                         </div>
                         <span className="text-sm font-medium truncate flex-1 text-left">{team.name}</span>
@@ -644,10 +645,11 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
               <>
                 <div className="w-6 h-6 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
                   <img
-                    src={favoriteTeam.logo?.url || "/placeholder-logo.svg"}
+                    src={getProxyImageUrl(favoriteTeam.logo?.url)}
                     alt=""
                     className="w-5 h-5 object-contain"
                     loading="lazy"
+                    crossOrigin="anonymous"
                   />
                 </div>
                 <span className="text-sm font-medium text-white hidden sm:inline max-w-[80px] truncate">
@@ -659,10 +661,11 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
               <>
                 <div className="w-6 h-6 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
                   <img
-                    src={teams[selectedTeam]?.logo?.url || "/placeholder-logo.svg"}
+                    src={getProxyImageUrl(teams[selectedTeam]?.logo?.url)}
                     alt=""
                     className="w-5 h-5 object-contain"
                     loading="lazy"
+                    crossOrigin="anonymous"
                   />
                 </div>
                 <span className="text-sm font-medium text-gray-300 hidden sm:inline max-w-[80px] truncate">
@@ -712,10 +715,11 @@ function TeamSelector({ selectedTeam, teams, standings, onTeamSelect, favoriteTe
                     isFavorite && "ring-2 ring-orange-500/50"
                   )}>
                     <img
-                      src={teamObj?.logo?.url || "/placeholder-logo.svg"}
+                      src={getProxyImageUrl(teamObj?.logo?.url)}
                       alt=""
                       className="w-7 h-7 object-contain"
                       loading="lazy"
+                      crossOrigin="anonymous"
                     />
                   </div>
                   <div className="flex-1 min-w-0">

@@ -11,6 +11,7 @@ import { fetchTeamDetails } from "@/lib/fetch-league-data"
 import { MatchesList } from "@/components/team/matches-list"
 import { TeamRoster } from "@/components/team/team-roster"
 import type { Team, Round, TeamDetails } from "@/types/kings-league"
+import { getProxyImageUrl } from "@/lib/utils"
 
 interface TeamInfoProps {
   team: Team
@@ -150,9 +151,10 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
                   <Skeleton className="w-full h-full rounded-2xl" />
                 ) : teamDetails?.logo?.url ? (
                   <img
-                    src={teamDetails.logo.url}
+                    src={getProxyImageUrl(teamDetails.logo.url)}
                     alt={`Logo do ${team.name}`}
                     className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105"
+                    crossOrigin="anonymous"
                   />
                 ) : (
                   <div

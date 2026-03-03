@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Marquee } from "@/components/ui/marquee"
-import { cn } from "@/lib/utils"
+import { cn, getProxyImageUrl } from "@/lib/utils"
 import type { Team } from "@/types/kings-league"
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -106,7 +106,7 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
             <div className="relative w-full h-full flex items-center justify-center p-2">
               {team.logo && (
                 <img
-                  src={team.logo.url}
+                  src={getProxyImageUrl(team.logo.url)}
                   alt=""
                   className={cn(
                     "w-full h-full object-contain",
@@ -114,6 +114,7 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
                     "group-hover:scale-110"
                   )}
                   loading="lazy"
+                  crossOrigin="anonymous"
                 />
               )}
             </div>
