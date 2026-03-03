@@ -28,10 +28,10 @@ export default function NotFound() {
           <CardContent className="p-8 sm:p-12 text-center">
             {/* Código de Erro */}
             <div className="mb-6 animate-in zoom-in duration-500 delay-100">
-              <h1 className="text-8xl sm:text-9xl font-black mb-2 bg-gradient-to-r from-[#F4AF23] via-[#f59e0b] to-[#F4AF23] bg-clip-text text-transparent animate-pulse-slow">
+              <h1 className="text-8xl sm:text-9xl font-black mb-2 bg-gradient-to-r from-[var(--team-primary,#F4AF23)] via-[#f59e0b] to-[var(--team-primary,#F4AF23)] bg-clip-text text-transparent animate-pulse-slow">
                 404
               </h1>
-              <div className="h-1 w-24 mx-auto bg-gradient-to-r from-transparent via-[#F4AF23] to-transparent rounded-full" />
+              <div className="h-1 w-24 mx-auto bg-gradient-to-r from-transparent via-[var(--team-primary,#F4AF23)] to-transparent rounded-full" />
             </div>
 
             {/* Título */}
@@ -50,7 +50,7 @@ export default function NotFound() {
               <Button
                 asChild
                 size="lg"
-                className="bg-gradient-to-r from-[#F4AF23] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[#F4AF23] text-black font-semibold shadow-lg hover:shadow-[#F4AF23]/50 transition-all duration-300 hover:scale-105"
+                className="bg-gradient-to-r from-[var(--team-primary,#F4AF23)] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[var(--team-primary,#F4AF23)] text-black font-semibold shadow-lg hover:shadow-[var(--team-primary]/50 transition-all duration-300 hover:scale-105"
               >
                 <Link href="/" className="flex items-center gap-2">
                   <Home className="w-5 h-5" aria-hidden="true" />
@@ -62,7 +62,7 @@ export default function NotFound() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[#F4AF23]/50 transition-all duration-300 hover:scale-105"
+                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[var(--team-primary]/50 transition-all duration-300 hover:scale-105"
               >
                 <Link href="/standings" className="flex items-center gap-2">
                   <Table className="w-5 h-5" aria-hidden="true" />
@@ -74,7 +74,7 @@ export default function NotFound() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[#F4AF23]/50 transition-all duration-300 hover:scale-105"
+                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[var(--team-primary]/50 transition-all duration-300 hover:scale-105"
               >
                 <Link href="/simulator" className="flex items-center gap-2">
                   <Trophy className="w-5 h-5" aria-hidden="true" />
@@ -89,21 +89,21 @@ export default function NotFound() {
               <div className="flex flex-wrap justify-center gap-4 text-sm">
                 <Link
                   href="/teams"
-                  className="text-gray-400 hover:text-[#F4AF23] transition-colors duration-200 hover:underline"
+                  className="text-gray-400 hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-200 hover:underline"
                 >
                   Times
                 </Link>
                 <span className="text-gray-600">•</span>
                 <Link
                   href="/playoffs"
-                  className="text-gray-400 hover:text-[#F4AF23] transition-colors duration-200 hover:underline"
+                  className="text-gray-400 hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-200 hover:underline"
                 >
                   Playoffs
                 </Link>
                 <span className="text-gray-600">•</span>
                 <Link
                   href="/"
-                  className="text-gray-400 hover:text-[#F4AF23] transition-colors duration-200 hover:underline"
+                  className="text-gray-400 hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-200 hover:underline"
                 >
                   Início
                 </Link>
