@@ -54,15 +54,15 @@ export function ErrorState({ error, debugInfo, onRetry }: ErrorStateProps) {
             {/* Sugestões */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 animate-in fade-in duration-700 delay-400">
               <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1a1a]/50 border border-[#333]/30">
-                <Wifi className="w-5 h-5 text-[#F4AF23]" aria-hidden="true" />
+                <Wifi className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
                 <span className="text-xs text-gray-500 text-center">Verifique sua conexão</span>
               </div>
               <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1a1a]/50 border border-[#333]/30">
-                <RefreshCw className="w-5 h-5 text-[#F4AF23]" aria-hidden="true" />
+                <RefreshCw className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
                 <span className="text-xs text-gray-500 text-center">Recarregue a página</span>
               </div>
               <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1a1a]/50 border border-[#333]/30">
-                <Clock className="w-5 h-5 text-[#F4AF23]" aria-hidden="true" />
+                <Clock className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
                 <span className="text-xs text-gray-500 text-center">Aguarde e tente novamente</span>
               </div>
             </div>
@@ -72,7 +72,7 @@ export function ErrorState({ error, debugInfo, onRetry }: ErrorStateProps) {
               <Button
                 onClick={onRetry}
                 size="lg"
-                className="bg-gradient-to-r from-[#F4AF23] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[#F4AF23] text-black font-semibold shadow-lg hover:shadow-[#F4AF23]/50 transition-all duration-300 hover:scale-105"
+                className="bg-gradient-to-r from-[var(--team-primary,#F4AF23)] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[var(--team-primary,#F4AF23)] text-black font-semibold shadow-lg hover:shadow-[rgb(var(--team-primary-rgb),0.5)] transition-all duration-300 hover:scale-105"
               >
                 <RefreshCw className="w-5 h-5 mr-2" aria-hidden="true" />
                 Tentar novamente
@@ -82,7 +82,7 @@ export function ErrorState({ error, debugInfo, onRetry }: ErrorStateProps) {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[#F4AF23]/50 transition-all duration-300 hover:scale-105"
+                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[rgb(var(--team-primary-rgb),0.5)] transition-all duration-300 hover:scale-105"
               >
                 <Link href="/" className="flex items-center gap-2">
                   <Home className="w-5 h-5" aria-hidden="true" />
@@ -114,7 +114,7 @@ export function ErrorState({ error, debugInfo, onRetry }: ErrorStateProps) {
                   href="https://github.com/ialexanderbrito/kings-league-simulator/issues"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#F4AF23] hover:text-[#f59e0b] underline transition-colors duration-200"
+                  className="text-[var(--team-primary,#F4AF23)] hover:text-[#f59e0b] underline transition-colors duration-200"
                 >
                   Reporte o erro
                 </a>
