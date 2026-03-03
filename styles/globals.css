@@ -394,3 +394,21 @@ body {
     --sidebar-ring: 240 4.9% 83.9%;
   }
 }
+
+/* Modo de captura para html2canvas - oculta elementos interativos */
+.capture-mode input[type="color"] {
+  opacity: 0 !important;
+}
+
+.capture-mode button {
+  display: none !important;
+}
+
+.capture-mode .capture-hide {
+  display: none !important;
+}
+
+/* Mostrar apenas o quadrado de cor no modo captura */
+.capture-mode .tier-color-display {
+  display: block !important;
+}
