@@ -68,7 +68,7 @@ export default function StandingsTable(props: StandingsTableProps) {
       return { bg: 'bg-emerald-500', text: 'text-white' }
     }
     if (positionInGroup >= 2 && positionInGroup <= 7) {
-      return { bg: 'bg-[#F4AF23]', text: 'text-black' }
+      return { bg: 'bg-[var(--team-primary,#F4AF23)]', text: 'text-black' }
     }
     if (positionInGroup === 4) {
       return { bg: 'bg-orange-500', text: 'text-white' }
@@ -165,7 +165,7 @@ export default function StandingsTable(props: StandingsTableProps) {
                             {team.name}
                           </span>
                           {isFavorite && (
-                            <Star className="w-3 h-3 text-[#F4AF23] fill-[#F4AF23] flex-shrink-0" />
+                            <Star className="w-3 h-3 text-[var(--team-primary,#F4AF23)] fill-[var(--team-primary,#F4AF23)] flex-shrink-0" />
                           )}
                           {positionChange && (
                             <span className={cn(
@@ -185,7 +185,7 @@ export default function StandingsTable(props: StandingsTableProps) {
 
                       {/* Points */}
                       <div className="text-center">
-                        <span className="text-sm sm:text-base font-bold text-[#F4AF23]">
+                        <span className="text-sm sm:text-base font-bold text-[var(--team-primary,#F4AF23)]">
                           {team.points}
                         </span>
                       </div>
@@ -228,7 +228,7 @@ export default function StandingsTable(props: StandingsTableProps) {
             <span>Semi</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-[#F4AF23]"></span>
+            <span className="w-3 h-3 rounded-full bg-[var(--team-primary,#F4AF23)]"></span>
             <span>Quartas</span>
           </div>
 
@@ -237,3 +237,4 @@ export default function StandingsTable(props: StandingsTableProps) {
     </div>
   );
 }
+

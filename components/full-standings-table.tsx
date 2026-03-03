@@ -4,15 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { TeamStanding } from "@/types/kings-league"
 import { useTeamTheme } from "@/contexts/team-theme-context"
 import { cn, getProxyImageUrl } from "@/lib/utils"
+import { Heart } from "lucide-react"
 
 interface DisplayStanding extends TeamStanding {
   penaltyWins?: number
   penaltyLosses?: number
   regularWins?: number
-  scPoints?: number // pontos ganhos contra times de outro grupo (desafio)
-  scWins?: number
-  scLosses?: number
-  scPending?: number
 }
 
 interface GroupedStandings {
@@ -33,7 +30,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
   const { favoriteTeam } = useTeamTheme();
 
   const isFavoriteTeam = (teamId: string) => {
-    return favoriteTeam?.id === teamId;
+    return String(favoriteTeam?.id) === String(teamId);
   };
 
   const getPositionChange = (
@@ -73,7 +70,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
     }
     // Positions 2 through 7 -> Quartas
     if (positionInGroup >= 2 && positionInGroup <= 7) {
-      return { label: 'Quartas', bg: '#F4AF23', color: '#000' }
+      return { label: 'Quartas', bg: 'var(--team-primary)', color: '#000' }
     }
     if (positionInGroup === 4) {
       if (groupName === winnerGroupName) return { label: 'Quartas', bg: '#fb923c', color: 'white' }
@@ -110,7 +107,6 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                       <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GP</TableHead>
                       <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GC</TableHead>
                       <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">SG</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3">SC</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -147,7 +143,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
 
                           <TableCell className="w-8 px-0">
                             {isFavoriteTeam(team.id) && (
-                              <span title="Favorito" className="text-yellow-400">★</span>
+                              <Heart className="w-4 h-4 text-[var(--team-primary)]" fill="currentColor" />
                             )}
                             {positionChange && (
                               <span
@@ -179,7 +175,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                             </div>
                           </TableCell>
 
-                          <TableCell className="text-center font-bold text-[#F4AF23] text-sm py-2 w-16">{team.points}</TableCell>
+                          <TableCell className="text-center font-bold text-[var(--team-primary,var(--team-primary))] text-sm py-2 w-16">{team.points}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-12">{team.played ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 w-10">{team.regularWins ?? (team.won - (team.penaltyWins ?? 0))}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-10">{team.penaltyWins ?? 0}</TableCell>
@@ -188,26 +184,6 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalsFor ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalsAgainst ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalDifference ?? (team.goalsFor - team.goalsAgainst)}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 w-12">
-                            {(() => {
-                              const scWins = (team as any).scWins ?? 0
-                              const scLosses = (team as any).scLosses ?? 0
-                              const scPending = (team as any).scPending ?? 0
-
-                              const label = `SC: ${scWins}V / ${scLosses}D${scPending ? ` / ${scPending} Pendente` : ''}`
-
-                              if (scPending > 0 && scWins === scLosses) {
-                                return <span title={label} className="px-2 py-0.5 rounded-full bg-gray-500 text-white text-xs">Pendente</span>
-                              }
-                              if (scWins > scLosses) {
-                                return <span title={label} className="px-2 py-0.5 rounded-full bg-green-600 text-white text-xs">Vitória</span>
-                              }
-                              if (scLosses > scWins) {
-                                return <span title={label} className="px-2 py-0.5 rounded-full bg-red-600 text-white text-xs">Derrota</span>
-                              }
-                              return <span title={label} className="px-2 py-0.5 rounded-full bg-gray-500 text-white text-xs">—</span>
-                            })()}
-                          </TableCell>
                         </TableRow>
                       )
                     })}
@@ -226,7 +202,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
             <span>Semi</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#F4AF23" }}></span>
+            <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "var(--team-primary)" }}></span>
             <span>Quartas</span>
           </div>
         </div>
@@ -234,3 +210,4 @@ export default function FullStandingsTable(props: StandingsTableProps) {
     </div>
   );
 }
+

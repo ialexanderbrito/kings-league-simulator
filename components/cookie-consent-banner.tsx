@@ -90,8 +90,8 @@ export function CookieConsentBanner() {
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 {/* Ícone */}
                 <div className="flex-shrink-0 hidden sm:flex items-start">
-                  <div className="p-3 rounded-xl bg-[#F4AF23]/10">
-                    <Cookie className="w-6 h-6 text-[#F4AF23]" aria-hidden="true" />
+                  <div className="p-3 rounded-xl bg-[var(--team-primary]/10">
+                    <Cookie className="w-6 h-6 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
                   </div>
                 </div>
 
@@ -99,7 +99,7 @@ export function CookieConsentBanner() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2 sm:hidden">
-                      <Cookie className="w-5 h-5 text-[#F4AF23] flex-shrink-0" aria-hidden="true" />
+                      <Cookie className="w-5 h-5 text-[var(--team-primary,#F4AF23)] flex-shrink-0" aria-hidden="true" />
                       <h2
                         id="cookie-banner-title"
                         className="text-base sm:text-lg font-bold text-foreground"
@@ -147,7 +147,7 @@ export function CookieConsentBanner() {
                   <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 text-xs sm:text-sm">
                     <Link
                       href="/politica-de-privacidade"
-                      className="flex items-center gap-1.5 text-[#F4AF23] hover:text-[#F4AF23]/80 transition-colors group"
+                      className="flex items-center gap-1.5 text-[var(--team-primary,#F4AF23)] hover:text-[var(--team-primary,#F4AF23)]/80 transition-colors group"
                     >
                       <Shield className="w-3.5 h-3.5" aria-hidden="true" />
                       <span className="underline-offset-2 group-hover:underline">
@@ -159,7 +159,7 @@ export function CookieConsentBanner() {
 
                     <Link
                       href="/termos-de-uso"
-                      className="flex items-center gap-1.5 text-[#F4AF23] hover:text-[#F4AF23]/80 transition-colors group"
+                      className="flex items-center gap-1.5 text-[var(--team-primary,#F4AF23)] hover:text-[var(--team-primary,#F4AF23)]/80 transition-colors group"
                     >
                       <FileText className="w-3.5 h-3.5" aria-hidden="true" />
                       <span className="underline-offset-2 group-hover:underline">
@@ -181,7 +181,7 @@ export function CookieConsentBanner() {
                     <Button
                       size="sm"
                       onClick={handleAccept}
-                      className="w-full sm:w-auto bg-[#F4AF23] hover:bg-[#F4AF23]/90 text-black font-semibold text-sm"
+                      className="w-full sm:w-auto bg-[var(--team-primary] hover:bg-[var(--team-primary]/90 text-black font-semibold text-sm"
                     >
                       Aceitar e Continuar
                     </Button>
@@ -195,3 +195,4 @@ export function CookieConsentBanner() {
     </>
   )
 }
+
