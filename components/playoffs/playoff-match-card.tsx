@@ -123,7 +123,7 @@ export function PlayoffMatchCard({
                   // smaller circular button and project yellow when selected
                   "w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
                   isHomeWinner
-                    ? "bg-[#F4AF23] border-[#F4AF23] text-black"
+                    ? "bg-[var(--team-primary] border-[var(--team-primary] text-black"
                     : "border-border hover:border-[var(--team-primary)]"
                 )}
                 aria-label={`Selecionar ${homeTeam.name} como vencedor`}
@@ -141,7 +141,7 @@ export function PlayoffMatchCard({
                 className={cn(
                   "w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
                   isAwayWinner
-                    ? "bg-[#F4AF23] border-[#F4AF23] text-black"
+                    ? "bg-[var(--team-primary] border-[var(--team-primary] text-black"
                     : "border-border hover:border-[var(--team-primary)]"
                 )}
                 aria-label={`Selecionar ${awayTeam.name} como vencedor`}
@@ -205,3 +205,4 @@ export function PlayoffMatchCard({
     </article>
   );
 }
+
