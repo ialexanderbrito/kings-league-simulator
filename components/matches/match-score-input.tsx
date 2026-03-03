@@ -35,7 +35,7 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
         "w-10 h-10 sm:w-11 sm:h-11 text-center rounded-lg text-base font-bold",
         "bg-white/5 border border-white/10 text-white placeholder:text-gray-600",
         "transition-all duration-200",
-        "focus:outline-none focus:ring-2 focus:ring-[#F4AF23]/50 focus:border-[#F4AF23]/50",
+        "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary]/50 focus:border-[var(--team-primary]/50",
         "hover:border-white/20 hover:bg-white/10",
         disabled ? "cursor-not-allowed opacity-50" : ""
       )}

@@ -106,7 +106,7 @@ export const MatchCard: FC<MatchCardProps> = ({
               <div className={cn(
                 "w-12 h-12 sm:w-14 sm:h-14 rounded-xl p-2 transition-all duration-300",
                 winner === 'home'
-                  ? "bg-[#F4AF23]/10 ring-2 ring-[#F4AF23]/30"
+                  ? "bg-[var(--team-primary]/10 ring-2 ring-[var(--team-primary]/30"
                   : "bg-white/5 group-hover:bg-white/[0.07]"
               )}>
                 <img
@@ -117,17 +117,17 @@ export const MatchCard: FC<MatchCardProps> = ({
                 />
               </div>
               {isHomeFavorite && (
-                <Star className="absolute -top-1 -right-1 w-4 h-4 text-[#F4AF23] fill-[#F4AF23]" />
+                <Star className="absolute -top-1 -right-1 w-4 h-4 text-[var(--team-primary,#F4AF23)] fill-[var(--team-primary,#F4AF23)]" />
               )}
               {winner === 'home' && (
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
-                  <Trophy className="w-3.5 h-3.5 text-[#F4AF23]" />
+                  <Trophy className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" />
                 </div>
               )}
             </div>
             <span className={cn(
               "text-xs sm:text-sm font-semibold text-center transition-colors",
-              winner === 'home' ? "text-[#F4AF23]" : "text-white"
+              winner === 'home' ? "text-[var(--team-primary,#F4AF23)]" : "text-white"
             )}>
               {homeTeam.shortName}
             </span>
@@ -141,7 +141,7 @@ export const MatchCard: FC<MatchCardProps> = ({
                   <span className={cn(
                     "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-lg sm:text-xl font-bold transition-all",
                     winner === 'home'
-                      ? "bg-[#F4AF23]/20 text-[#F4AF23]"
+                      ? "bg-[var(--team-primary]/20 text-[var(--team-primary,#F4AF23)]"
                       : "bg-white/5 text-white"
                   )}>
                     {homeScore}
@@ -150,7 +150,7 @@ export const MatchCard: FC<MatchCardProps> = ({
                   <span className={cn(
                     "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-lg sm:text-xl font-bold transition-all",
                     winner === 'away'
-                      ? "bg-[#F4AF23]/20 text-[#F4AF23]"
+                      ? "bg-[var(--team-primary]/20 text-[var(--team-primary,#F4AF23)]"
                       : "bg-white/5 text-white"
                   )}>
                     {awayScore}
@@ -204,7 +204,7 @@ export const MatchCard: FC<MatchCardProps> = ({
               <div className={cn(
                 "w-12 h-12 sm:w-14 sm:h-14 rounded-xl p-2 transition-all duration-300",
                 winner === 'away'
-                  ? "bg-[#F4AF23]/10 ring-2 ring-[#F4AF23]/30"
+                  ? "bg-[var(--team-primary]/10 ring-2 ring-[var(--team-primary]/30"
                   : "bg-white/5 group-hover:bg-white/[0.07]"
               )}>
                 <img
@@ -215,17 +215,17 @@ export const MatchCard: FC<MatchCardProps> = ({
                 />
               </div>
               {isAwayFavorite && (
-                <Star className="absolute -top-1 -right-1 w-4 h-4 text-[#F4AF23] fill-[#F4AF23]" />
+                <Star className="absolute -top-1 -right-1 w-4 h-4 text-[var(--team-primary,#F4AF23)] fill-[var(--team-primary,#F4AF23)]" />
               )}
               {winner === 'away' && (
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
-                  <Trophy className="w-3.5 h-3.5 text-[#F4AF23]" />
+                  <Trophy className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" />
                 </div>
               )}
             </div>
             <span className={cn(
               "text-xs sm:text-sm font-semibold text-center transition-colors",
-              winner === 'away' ? "text-[#F4AF23]" : "text-white"
+              winner === 'away' ? "text-[var(--team-primary,#F4AF23)]" : "text-white"
             )}>
               {awayTeam.shortName}
             </span>
@@ -235,3 +235,4 @@ export const MatchCard: FC<MatchCardProps> = ({
     </div>
   );
 };
+

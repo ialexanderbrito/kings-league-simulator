@@ -45,7 +45,7 @@ export const DateGroup: FC<DateGroupProps> = ({
     <div className="space-y-3">
       {/* Date Header */}
       <div className="flex items-center gap-2 px-1">
-        <DateIcon className="w-4 h-4 text-[#F4AF23]" aria-hidden="true" />
+        <DateIcon className="w-4 h-4 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
         <span className="text-sm font-medium text-gray-300">
           {DateFormatter.getWeekdayName(date)}, {DateFormatter.formatDateDisplay(date)}
         </span>

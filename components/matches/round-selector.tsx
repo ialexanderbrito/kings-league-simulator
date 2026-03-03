@@ -51,10 +51,11 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
                 "text-sm font-medium rounded-xl whitespace-nowrap",
                 "transition-all duration-200",
                 isSelected
-                  ? "bg-[#F4AF23] text-black"
+                  ? "text-black"
                   : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5 hover:border-white/10",
                 roundComplete && !isSelected && "text-gray-500"
               )}
+              style={isSelected ? { backgroundColor: "var(--team-primary)" } : {}}
             >
               <span>{roundNumber}</span>
               {roundComplete && (
@@ -73,7 +74,7 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
       <ScrollBar
         orientation="horizontal"
         className="h-1.5 bg-white/5 rounded-full"
-        thumbClassName="bg-[#F4AF23]/50 hover:bg-[#F4AF23]/70 rounded-full transition-colors"
+        thumbClassName="rounded-full transition-colors bg-[color-mix(in_srgb,var(--team-primary)_50%,transparent)] hover:bg-[color-mix(in_srgb,var(--team-primary)_70%,transparent)]"
       />
     </ScrollArea >
   );
