@@ -214,3 +214,20 @@ export interface PlayoffBracket {
   semifinals: PlayoffMatch[];
   final: PlayoffMatch | undefined;
 }
+
+// Tipos para Tier List
+export interface TierItem {
+  id: string;
+  name: string;
+  color: string;
+  teams: string[]; // Array de team IDs
+}
+
+export interface TierListData {
+  tiers: TierItem[];
+  unassigned: string[]; // Team IDs não atribuídos
+}
+
+export interface TierListState extends TierListData {
+  timestamp: number;
+}
