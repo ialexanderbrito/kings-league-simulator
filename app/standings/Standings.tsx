@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useRef } from "react"
 import { TeamStanding, Team, Round } from "@/types/kings-league"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import FullStandingsTable from "@/components/full-standings-table"
-import { Heart, TableIcon, InfoIcon } from "lucide-react"
+import { Heart, TableIcon } from "lucide-react"
 import { useTeamTheme } from "@/contexts/team-theme-context"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import { FullTableSkeleton } from "@/components/skeletons/full-table-skeleton"
@@ -379,176 +378,11 @@ export default function StandingsPage() {
                 <div className="text-xs text-gray-400 flex flex-wrap items-center gap-x-4 gap-y-2">
                   {favoriteTeam && (
                     <div className="flex items-center gap-1.5">
-                      <Heart className="w-2.5 h-2.5 text-red-400 flex-shrink-0" fill="currentColor" />
+                      <Heart className="w-2.5 h-2.5 text-[var(--team-primary)] flex-shrink-0" fill="currentColor" />
                       <span>Seu time do coração</span>
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#1a1a1a]/50 border-gray-800 text-white">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <InfoIcon className="w-5 h-5 text-[var(--team-primary)]" />
-              Legenda
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Posição</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#22c55e" }}></span>
-                    <span>1º — Semifinal</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#F4AF23" }}></span>
-                    <span>2º e 3º — Quartas</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#fb923c" }}></span>
-                    <span>4º — Quartas</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#6b7280" }}></span>
-                    <span>5º — Eliminado</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Pontuação</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">PTS</span>
-                    <span>Pontos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">PJ</span>
-                    <span>Partidas Jogadas</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Resultados</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">V</span>
-                    <span>Vitórias (tempo normal)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">VP</span>
-                    <span>Vitórias nos Pênaltis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">DP</span>
-                    <span>Derrotas nos Pênaltis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">D</span>
-                    <span>Derrotas (tempo normal)</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Gols</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">GP</span>
-                    <span>Gols Pró</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">GC</span>
-                    <span>Gols Contra</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">SG</span>
-                    <span>Saldo de Gols</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Sistema de Pontos</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">3 pts</span>
-                    <span>Vitória no tempo normal</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">2 pts</span>
-                    <span>Vitória nos pênaltis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">1 pt</span>
-                    <span>Derrota nos pênaltis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">0 pt</span>
-                    <span>Derrota no tempo normal</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Playoffs</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span>
-                    <span>1º — Semifinal (se o grupo for ganhador do Challenger)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block"></span>
-                    <span>2º e 3º — Quartas</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>
-                    <span>4º — Quartas (se o grupo for ganhador do Challenger), caso contrário 4º Lugar</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Desafio (SC)</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="text-xs">SC</span>
-                    <span>Pontos obtidos em partidas contra times de outro grupo (soma: 3 / 2 / 1 / 0 conforme resultado)</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Legenda SC</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span>
-                    <span>Vitória no desafio (mais vitórias que derrotas)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>
-                    <span>Derrota no desafio (mais derrotas que vitórias)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-gray-500 inline-block"></span>
-                    <span>Pendente / empate no desempenho do desafio</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--team-primary)]">Posição</p>
-                <ul className="space-y-1 text-sm text-gray-300">
-                  <li className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "#6b7280" }}></span>
-                    <span>Coluna P agora neutra (cinza). Use a coluna SC para ver o desempenho no desafio entre grupos.</span>
-                  </li>
-                </ul>
               </div>
             </div>
           </CardContent>
