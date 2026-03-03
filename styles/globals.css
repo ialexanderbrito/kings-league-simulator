@@ -10,6 +10,7 @@ body {
   /* Variáveis para as cores do time favorito */
   --team-primary: #F4AF23; /* Cor amarela padrão */
   --team-secondary: #333333; /* Cor secundária padrão */
+  --team-primary-rgb: 244, 175, 35; /* RGB da cor amarela padrão (para usar em rgba) */
 }
 
 @layer utilities {

@@ -91,15 +91,26 @@ export function TeamThemeProvider({ children }: { children: React.ReactNode }) {
         setPrimaryColor(primary);
         setSecondaryColor(team.secondColorHEX);
 
-        // Aplicar as cores como variáveis CSS
+        // Aplicar as cores como variáveis CSS (incluindo RGB)
         document.documentElement.style.setProperty('--team-primary', primary);
         document.documentElement.style.setProperty('--team-secondary', team.secondColorHEX);
+
+        // Aplicar RGB para opacidades dinâmicas
+        const primaryRgb = hexToRgb(primary);
+        if (primaryRgb) {
+          document.documentElement.style.setProperty('--team-primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
+        }
       } catch (error) {
         // Restaurar para as cores padrão
         setPrimaryColor(defaultColors.primaryColor);
         setSecondaryColor(defaultColors.secondaryColor);
         document.documentElement.style.setProperty('--team-primary', defaultColors.primaryColor);
         document.documentElement.style.setProperty('--team-secondary', defaultColors.secondaryColor);
+
+        const defaultRgb = hexToRgb(defaultColors.primaryColor);
+        if (defaultRgb) {
+          document.documentElement.style.setProperty('--team-primary-rgb', `${defaultRgb.r}, ${defaultRgb.g}, ${defaultRgb.b}`);
+        }
       }
     }
   }, []);
@@ -116,9 +127,15 @@ export function TeamThemeProvider({ children }: { children: React.ReactNode }) {
       setPrimaryColor(primary);
       setSecondaryColor(favoriteTeam.secondColorHEX);
 
-      // Aplicar as cores como variáveis CSS
+      // Aplicar as cores como variáveis CSS (incluindo RGB)
       document.documentElement.style.setProperty('--team-primary', primary);
       document.documentElement.style.setProperty('--team-secondary', favoriteTeam.secondColorHEX);
+
+      // Aplicar RGB para opacidades dinâmicas
+      const primaryRgb = hexToRgb(primary);
+      if (primaryRgb) {
+        document.documentElement.style.setProperty('--team-primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
+      }
     } else {
       localStorage.removeItem('@kl-simulador:favoriteTeam');
 
@@ -127,6 +144,11 @@ export function TeamThemeProvider({ children }: { children: React.ReactNode }) {
       setSecondaryColor(defaultColors.secondaryColor);
       document.documentElement.style.setProperty('--team-primary', defaultColors.primaryColor);
       document.documentElement.style.setProperty('--team-secondary', defaultColors.secondaryColor);
+
+      const defaultRgb = hexToRgb(defaultColors.primaryColor);
+      if (defaultRgb) {
+        document.documentElement.style.setProperty('--team-primary-rgb', `${defaultRgb.r}, ${defaultRgb.g}, ${defaultRgb.b}`);
+      }
     }
   }, [favoriteTeam, mounted]);
 
