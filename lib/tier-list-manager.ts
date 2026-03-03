@@ -84,14 +84,70 @@ export function hasSavedTierList(): boolean {
   return !!localStorage.getItem(TIER_LIST_KEY);
 }
 
+// Mapa de cores comuns para códigos curtos (economia de bytes)
+const COLOR_MAP: Record<string, string> = {
+  '#FFD700': '1', // Dourado
+  '#C0C0C0': '2', // Prata
+  '#CD7F32': '3', // Bronze
+  '#4CAF50': '4', // Verde
+  '#F44336': '5', // Vermelho
+  '#9C27B0': '6', // Roxo
+  '#2196F3': '7', // Azul
+  '#FF9800': '8', // Laranja
+  '#00BCD4': '9', // Ciano
+  '#E91E63': 'A', // Rosa
+  '#795548': 'B', // Marrom
+  '#607D8B': 'C', // Cinza-azulado
+};
+
+const COLOR_MAP_REVERSE: Record<string, string> = Object.entries(COLOR_MAP).reduce(
+  (acc, [hex, code]) => ({ ...acc, [code]: hex }),
+  {}
+);
+
 /**
  * Codifica a tier list para uma string comprimida para URL
+ * Usa formato ultra-otimizado para máxima compactação
  */
 export function encodeTierListToURL(data: TierListData): string {
   try {
-    const jsonString = JSON.stringify(data);
-    const compressed = LZString.compressToEncodedURIComponent(jsonString);
-    return compressed;
+    // Validação dos dados de entrada
+    if (!data || !data.tiers || !Array.isArray(data.tiers)) {
+      console.error('Dados inválidos: tiers não é um array', data);
+      return '';
+    }
+    if (!data.unassigned || !Array.isArray(data.unassigned)) {
+      console.error('Dados inválidos: unassigned não é um array', data);
+      return '';
+    }
+
+    // Formato ultra-compacto: 
+    // tiers: [[nome,cor,[times]], ...]
+    // unassigned: [times]
+    // Apenas o necessário, sem IDs de tier (reconstruídos no decode)
+    const optimized = [
+      data.tiers.map(t => [
+        t.name, 
+        COLOR_MAP[t.color] || t.color, // Usa código curto se disponível
+        (t.teams || [])
+          .filter(id => id && typeof id === 'string') // Garante que é string
+          .map(id => String(id).replace('team-', '')) // Remove prefixo repetitivo
+      ]),
+      data.unassigned
+        .filter(id => id && typeof id === 'string') // Garante que é string
+        .map(id => String(id).replace('team-', ''))
+    ];
+    
+    const jsonString = JSON.stringify(optimized);
+    
+    // Usa Base64 que é mais compacto que EncodedURIComponent
+    const compressed = LZString.compressToBase64(jsonString);
+    
+    // Torna URL-safe substituindo caracteres problemáticos
+    return compressed
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, ''); // Remove padding
   } catch (error) {
     console.error('Erro ao codificar tier list:', error);
     return '';
@@ -103,12 +159,61 @@ export function encodeTierListToURL(data: TierListData): string {
  */
 export function decodeTierListFromURL(hash: string): TierListData | null {
   try {
-    const decompressed = LZString.decompressFromEncodedURIComponent(hash);
-    if (!decompressed) return null;
+    // Reverte a conversão URL-safe
+    let compressed = hash
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
     
-    const data = JSON.parse(decompressed) as TierListData;
+    // Adiciona padding se necessário
+    while (compressed.length % 4) {
+      compressed += '=';
+    }
     
-    // Validação básica
+    const decompressed = LZString.decompressFromBase64(compressed);
+    if (!decompressed) {
+      // Fallback para formato antigo
+      const oldDecompressed = LZString.decompressFromEncodedURIComponent(hash);
+      if (!oldDecompressed) return null;
+      
+      const oldData = JSON.parse(oldDecompressed) as TierListData;
+      if (!oldData.tiers || !Array.isArray(oldData.tiers)) return null;
+      if (!oldData.unassigned || !Array.isArray(oldData.unassigned)) return null;
+      return oldData;
+    }
+    
+    const parsed = JSON.parse(decompressed);
+    
+    // Formato otimizado
+    if (Array.isArray(parsed) && parsed.length === 2) {
+      const [tiersData, unassigned] = parsed;
+      
+      if (!Array.isArray(tiersData) || !Array.isArray(unassigned)) return null;
+      
+      const tiers = tiersData.map((tierData, index) => ({
+        id: `tier-${index + 1}`,
+        name: tierData[0],
+        color: COLOR_MAP_REVERSE[tierData[1]] || tierData[1], // Restaura cor
+        teams: (tierData[2] || [])
+          .filter((id: string) => id && typeof id === 'string') // Garante que é string
+          .map((id: string) => {
+            const idStr = String(id);
+            return idStr.startsWith('team-') ? idStr : `team-${idStr}`; // Restaura prefixo se necessário
+          })
+      }));
+      
+      return { 
+        tiers, 
+        unassigned: (unassigned || [])
+          .filter(id => id && typeof id === 'string') // Garante que é string
+          .map(id => {
+            const idStr = String(id);
+            return idStr.startsWith('team-') ? idStr : `team-${idStr}`; // Restaura prefixo se necessário
+          })
+      };
+    }
+    
+    // Fallback para formato antigo (compatibilidade)
+    const data = parsed as TierListData;
     if (!data.tiers || !Array.isArray(data.tiers)) return null;
     if (!data.unassigned || !Array.isArray(data.unassigned)) return null;
     
