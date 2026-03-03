@@ -10,6 +10,8 @@ import {
   encodeTierListToURL,
   decodeTierListFromURL,
   createNewTier,
+  moveTierUp,
+  moveTierDown,
 } from "@/lib/tier-list-manager"
 import {
   DndContext,
@@ -240,6 +242,20 @@ export default function TierList() {
       ...tierListData,
       tiers: newTiers
     })
+  }
+
+  // Mover tier para cima
+  const handleMoveTierUp = (tierId: string) => {
+    if (!tierListData) return
+    const newData = moveTierUp(tierListData, tierId)
+    setTierListData(newData)
+  }
+
+  // Mover tier para baixo
+  const handleMoveTierDown = (tierId: string) => {
+    if (!tierListData) return
+    const newData = moveTierDown(tierListData, tierId)
+    setTierListData(newData)
   }
 
   // Resetar tier list
@@ -503,7 +519,7 @@ export default function TierList() {
           </div>
 
           <div ref={tierListRef} className="space-y-4 mb-8">
-            {tierListData.tiers.map((tier) => (
+            {tierListData.tiers.map((tier, index) => (
               <TierRow
                 key={tier.id}
                 tier={tier}
@@ -511,7 +527,11 @@ export default function TierList() {
                 onUpdateName={handleUpdateTierName}
                 onUpdateColor={handleUpdateTierColor}
                 onRemove={handleRemoveTier}
+                onMoveUp={handleMoveTierUp}
+                onMoveDown={handleMoveTierDown}
                 canRemove={tierListData.tiers.length > 1}
+                canMoveUp={index > 0}
+                canMoveDown={index < tierListData.tiers.length - 1}
               />
             ))}
           </div>

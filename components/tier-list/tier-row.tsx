@@ -6,7 +6,7 @@ import { useDroppable } from "@dnd-kit/core"
 import { TeamDraggable } from "./team-draggable"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Trash2 } from "lucide-react"
+import { Trash2, ChevronUp, ChevronDown } from "lucide-react"
 
 interface TierRowProps {
   tier: TierItem
@@ -14,7 +14,11 @@ interface TierRowProps {
   onUpdateName: (tierId: string, newName: string) => void
   onUpdateColor: (tierId: string, newColor: string) => void
   onRemove: (tierId: string) => void
+  onMoveUp: (tierId: string) => void
+  onMoveDown: (tierId: string) => void
   canRemove: boolean
+  canMoveUp: boolean
+  canMoveDown: boolean
 }
 
 export function TierRow({
@@ -23,7 +27,11 @@ export function TierRow({
   onUpdateName,
   onUpdateColor,
   onRemove,
-  canRemove
+  onMoveUp,
+  onMoveDown,
+  canRemove,
+  canMoveUp,
+  canMoveDown
 }: TierRowProps) {
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(tier.name)
@@ -124,6 +132,30 @@ export function TierRow({
           </div>
 
           <div className="flex items-center gap-2 capture-hide">
+            {/* Botões de mover */}
+            <div className="flex flex-col gap-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onMoveUp(tier.id)}
+                disabled={!canMoveUp}
+                className="text-gray-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20 transition-all h-6 w-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Mover para cima"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onMoveDown(tier.id)}
+                disabled={!canMoveDown}
+                className="text-gray-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20 transition-all h-6 w-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Mover para baixo"
+              >
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </div>
+
             {/* Contador de times */}
             <span className="text-gray-400 text-xs sm:text-sm bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
               {teams.length} {teams.length === 1 ? 'time' : 'times'}

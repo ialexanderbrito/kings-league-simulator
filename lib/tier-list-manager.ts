@@ -289,3 +289,35 @@ export function moveTeam(
   
   return newData;
 }
+
+/**
+ * Move uma tier para cima na lista
+ */
+export function moveTierUp(data: TierListData, tierId: string): TierListData {
+  const newData = JSON.parse(JSON.stringify(data)) as TierListData;
+  const index = newData.tiers.findIndex(t => t.id === tierId);
+  
+  // Se já está no topo ou não encontrou, retorna sem alterações
+  if (index <= 0) return data;
+  
+  // Troca de posição com o item anterior
+  [newData.tiers[index - 1], newData.tiers[index]] = [newData.tiers[index], newData.tiers[index - 1]];
+  
+  return newData;
+}
+
+/**
+ * Move uma tier para baixo na lista
+ */
+export function moveTierDown(data: TierListData, tierId: string): TierListData {
+  const newData = JSON.parse(JSON.stringify(data)) as TierListData;
+  const index = newData.tiers.findIndex(t => t.id === tierId);
+  
+  // Se já está no final ou não encontrou, retorna sem alterações
+  if (index === -1 || index >= newData.tiers.length - 1) return data;
+  
+  // Troca de posição com o próximo item
+  [newData.tiers[index], newData.tiers[index + 1]] = [newData.tiers[index + 1], newData.tiers[index]];
+  
+  return newData;
+}
