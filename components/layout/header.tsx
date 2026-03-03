@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X, Share2, Trophy, Heart, ChevronDown, Home, Shield, Sparkles, Users, ChevronRight } from "lucide-react"
+import { Menu, X, Share2, Trophy, Heart, ChevronDown, Home, Shield, Sparkles, Users, ChevronRight, ListOrdered } from "lucide-react"
 import { Link as LinkIcon } from "lucide-react"
 import { XLogo, FacebookLogo, WhatsappLogo } from '@phosphor-icons/react'
 import Link from "next/link"
@@ -96,6 +96,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
     { href: "/simulator", label: "Simulador", icon: Home },
     { href: "/standings", label: "Classificação", icon: Trophy },
     { href: "/teams", label: "Times", icon: Users },
+    { href: "/tier-list", label: "Tier List", icon: ListOrdered },
   ]
 
   // Fallback: se o app não passou `teams` ou `standings`, buscar da rota /api/teams
