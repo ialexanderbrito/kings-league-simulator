@@ -1,5 +1,9 @@
 export class DateFormatter {
   static formatMatchDate(dateString: string): string {
+    if (!dateString || dateString.trim() === '') {
+      return "Horário não definido";
+    }
+
     if (typeof window === 'undefined') {
       return dateString;
     }
@@ -18,6 +22,10 @@ export class DateFormatter {
   }
 
   static formatDateForGrouping(dateString: string): string {
+    if (!dateString || dateString.trim() === '') {
+      return 'Data não definida';
+    }
+
     if (typeof window === 'undefined') {
       return dateString.split('T')[0];
     }
@@ -31,6 +39,10 @@ export class DateFormatter {
   }
 
   static formatDateDisplay(dateString: string): string {
+    if (!dateString || dateString.trim() === '') {
+      return "Data ainda não foram definidas";
+    }
+
     if (typeof window === 'undefined') {
       return dateString;
     }
@@ -50,6 +62,10 @@ export class DateFormatter {
   }
 
   static getWeekdayName(dateString: string): string {
+    if (!dateString || dateString.trim() === '') {
+      return "";
+    }
+
     if (typeof window === 'undefined') {
       return "";
     }
