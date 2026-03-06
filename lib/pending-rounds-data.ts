@@ -20,12 +20,12 @@ const ROUND_2: Round = {
   id: 548,
   name: 'Rodada 2',
   ended: false,
-  startDate: '',
+  startDate: '2026-03-16T20:00:00.000Z',
   finishDate: '',
   matches: [
     {
       id: 5001,
-      date: '',
+      date: '2026-03-16T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['DesimpaiN'],
@@ -46,7 +46,7 @@ const ROUND_2: Round = {
     },
     {
       id: 5002,
-      date: '',
+      date: '2026-03-16T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Fluxo FC'],
@@ -67,7 +67,7 @@ const ROUND_2: Round = {
     },
     {
       id: 5003,
-      date: '',
+      date: '2026-03-16T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Podpah Funkbol Clube'],
@@ -88,7 +88,7 @@ const ROUND_2: Round = {
     },
     {
       id: 5004,
-      date: '',
+      date: '2026-03-16T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Capim FC'],
@@ -109,7 +109,7 @@ const ROUND_2: Round = {
     },
     {
       id: 5005,
-      date: '',
+      date: '2026-03-16T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Dendele'],
@@ -138,12 +138,12 @@ const ROUND_3: Round = {
   id: 549,
   name: 'Rodada 3',
   ended: false,
-  startDate: '',
+  startDate: '2026-03-23T20:00:00.000Z',
   finishDate: '',
   matches: [
     {
       id: 5006,
-      date: '',
+      date: '2026-03-23T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['G3X'],
@@ -164,7 +164,7 @@ const ROUND_3: Round = {
     },
     {
       id: 5007,
-      date: '',
+      date: '2026-03-23T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Nyvelados'],
@@ -185,7 +185,7 @@ const ROUND_3: Round = {
     },
     {
       id: 5008,
-      date: '',
+      date: '2026-03-23T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Fluxo FC'],
@@ -206,7 +206,7 @@ const ROUND_3: Round = {
     },
     {
       id: 5009,
-      date: '',
+      date: '2026-03-23T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Furia FC'],
@@ -227,7 +227,7 @@ const ROUND_3: Round = {
     },
     {
       id: 5010,
-      date: '',
+      date: '2026-03-23T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Capim FC'],
@@ -256,12 +256,12 @@ const ROUND_4: Round = {
   id: 550,
   name: 'Rodada 4',
   ended: false,
-  startDate: '',
+  startDate: '2026-03-30T20:00:00.000Z',
   finishDate: '',
   matches: [
     {
       id: 5011,
-      date: '',
+      date: '2026-03-30T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['DesimpaiN'],
@@ -282,7 +282,7 @@ const ROUND_4: Round = {
     },
     {
       id: 5012,
-      date: '',
+      date: '2026-03-30T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Podpah Funkbol Clube'],
@@ -303,7 +303,7 @@ const ROUND_4: Round = {
     },
     {
       id: 5013,
-      date: '',
+      date: '2026-03-30T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Dendele'],
@@ -324,7 +324,7 @@ const ROUND_4: Round = {
     },
     {
       id: 5014,
-      date: '',
+      date: '2026-03-30T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['Fluxo FC'],
@@ -345,7 +345,7 @@ const ROUND_4: Round = {
     },
     {
       id: 5015,
-      date: '',
+      date: '2026-03-30T20:00:00.000Z',
       status: 'not_started',
       participants: {
         homeTeamId: TEAM_NAME_TO_ID['G3X'],
