@@ -61,6 +61,11 @@ export function Footer() {
                     Classificação
                   </Link>
                 </li>
+                <li>
+                  <Link href="/tier-list" className="text-gray-400 hover:text-white transition-colors">
+                    Tier List
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>
