@@ -20,8 +20,7 @@ interface MatchCardProps {
     roundId: number,
     matchId: number,
     team: "home" | "away",
-    value: string,
-    isBackspace?: boolean
+    value: string
   ) => void;
   onShootoutWinnerSelect: (
     roundId: number,
@@ -106,7 +105,7 @@ export const MatchCard: FC<MatchCardProps> = ({
               <div className={cn(
                 "w-12 h-12 sm:w-14 sm:h-14 rounded-xl p-2 transition-all duration-300",
                 winner === 'home'
-                  ? "bg-[var(--team-primary]/10 ring-2 ring-[var(--team-primary]/30"
+                  ? "bg-[rgba(var(--team-primary-rgb,244,175,35),0.1)] ring-2 ring-[rgba(var(--team-primary-rgb,244,175,35),0.3)]"
                   : "bg-white/5 group-hover:bg-white/[0.07]"
               )}>
                 <img
@@ -141,7 +140,7 @@ export const MatchCard: FC<MatchCardProps> = ({
                   <span className={cn(
                     "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-lg sm:text-xl font-bold transition-all",
                     winner === 'home'
-                      ? "bg-[var(--team-primary]/20 text-[var(--team-primary,#F4AF23)]"
+                      ? "bg-[rgba(var(--team-primary-rgb,244,175,35),0.2)] text-[var(--team-primary,#F4AF23)]"
                       : "bg-white/5 text-white"
                   )}>
                     {homeScore}
@@ -150,7 +149,7 @@ export const MatchCard: FC<MatchCardProps> = ({
                   <span className={cn(
                     "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-lg sm:text-xl font-bold transition-all",
                     winner === 'away'
-                      ? "bg-[var(--team-primary]/20 text-[var(--team-primary,#F4AF23)]"
+                      ? "bg-[rgba(var(--team-primary-rgb,244,175,35),0.2)] text-[var(--team-primary,#F4AF23)]"
                       : "bg-white/5 text-white"
                   )}>
                     {awayScore}
@@ -167,19 +166,17 @@ export const MatchCard: FC<MatchCardProps> = ({
                 <div className="flex items-center gap-1.5">
                   <MatchScoreInput
                     value={currentScores.home}
-                    onScoreChange={(value, isBackspace) => {
-                      onScoreChange(round.id, match.id, "home", value, isBackspace);
+                    onScoreChange={(value) => {
+                      onScoreChange(round.id, match.id, "home", value);
                     }}
-                    currentValue={currentScores.home}
                     teamName={homeTeam.name}
                   />
                   <span className="text-gray-600 font-medium">×</span>
                   <MatchScoreInput
                     value={currentScores.away}
-                    onScoreChange={(value, isBackspace) => {
-                      onScoreChange(round.id, match.id, "away", value, isBackspace);
+                    onScoreChange={(value) => {
+                      onScoreChange(round.id, match.id, "away", value);
                     }}
-                    currentValue={currentScores.away}
                     teamName={awayTeam.name}
                   />
                 </div>
@@ -204,7 +201,7 @@ export const MatchCard: FC<MatchCardProps> = ({
               <div className={cn(
                 "w-12 h-12 sm:w-14 sm:h-14 rounded-xl p-2 transition-all duration-300",
                 winner === 'away'
-                  ? "bg-[var(--team-primary]/10 ring-2 ring-[var(--team-primary]/30"
+                  ? "bg-[rgba(var(--team-primary-rgb,244,175,35),0.1)] ring-2 ring-[rgba(var(--team-primary-rgb,244,175,35),0.3)]"
                   : "bg-white/5 group-hover:bg-white/[0.07]"
               )}>
                 <img

@@ -1,11 +1,9 @@
-import { FC, KeyboardEvent, useState } from "react";
+import { FC, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface MatchScoreInputProps {
   value: string;
-  onScoreChange: (value: string, isBackspace?: boolean) => void;
-  onBackspace?: () => void;
-  currentValue: string;
+  onScoreChange: (value: string) => void;
   teamName: string;
   disabled?: boolean;
 }
@@ -13,17 +11,10 @@ interface MatchScoreInputProps {
 export const MatchScoreInput: FC<MatchScoreInputProps> = ({
   value,
   onScoreChange,
-  currentValue,
   teamName,
   disabled = false
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === "Backspace" || e.key === "Delete") && currentValue.length === 1) {
-      onScoreChange("", true);
-    }
-  };
 
   return (
     <input
@@ -44,14 +35,13 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
         "hover:border-white/20 hover:bg-white/10",
         disabled ? "cursor-not-allowed opacity-50" : ""
       )}
-      onKeyDown={handleKeyDown}
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
       onChange={(e) => {
         if (disabled) return;
-        const value = e.target.value.replace(/[^0-9]/g, "");
-        if (value.length <= 2) {
-          onScoreChange(value);
+        const numericValue = e.target.value.replace(/[^0-9]/g, "");
+        if (numericValue.length <= 2) {
+          onScoreChange(numericValue);
         }
       }}
       aria-label={`Placar do ${teamName}`}

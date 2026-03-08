@@ -26,7 +26,7 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
       <button
         className={cn(
           "w-6 h-6 rounded-full border transition-all duration-200 flex items-center justify-center",
-          "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary]/50",
+          "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50",
           selectedWinner === "home"
             ? "bg-emerald-500 border-emerald-400 shadow-md shadow-emerald-500/30"
             : "bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30",
@@ -51,7 +51,7 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
       <button
         className={cn(
           "w-6 h-6 rounded-full border transition-all duration-200 flex items-center justify-center",
-          "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary]/50",
+          "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50",
           selectedWinner === "away"
             ? "bg-emerald-500 border-emerald-400 shadow-md shadow-emerald-500/30"
             : "bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30",

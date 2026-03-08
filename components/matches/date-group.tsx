@@ -19,8 +19,7 @@ interface DateGroupProps {
     roundId: number,
     matchId: number,
     team: "home" | "away",
-    value: string,
-    isBackspace?: boolean
+    value: string
   ) => void;
   onShootoutWinnerSelect: (
     roundId: number,
