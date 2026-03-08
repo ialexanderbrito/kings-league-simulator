@@ -154,20 +154,9 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
     roundId: number,
     matchId: number,
     team: "home" | "away",
-    value: string,
-    isBackspace?: boolean
+    value: string
   ) => {
     const matchKey = `${roundId}-${matchId}`
-
-    if (isBackspace) {
-      setScores((prev) => ({
-        ...prev,
-        [matchKey]: { ...(prev[matchKey] ?? { home: "", away: "", shootoutWinner: null }), [team]: "" },
-      }))
-
-      onScoreUpdate(roundId, matchId, team === "home" ? "" : null, team === "away" ? "" : null)
-      return
-    }
 
     setScores((prev) => {
       const currentMatch = prev[matchKey] ?? { home: "", away: "", shootoutWinner: null }
@@ -181,7 +170,7 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
       return updated
     })
 
-    const score = value === "" ? null : Number(value)
+    const score = value === "" ? "" : Number(value)
     onScoreUpdate(roundId, matchId, team === "home" ? score : null, team === "away" ? score : null)
   }
 
@@ -223,8 +212,8 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
             className={cn(
               "hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full",
               "bg-[var(--team-primary,#F4AF23)] text-black",
-              "transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:shadow-[var(--team-primary]/25",
-              "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary]/50"
+              "transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:shadow-[var(--team-primary)]/25",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50"
             )}
           >
             <span>Playoffs</span>
@@ -246,8 +235,8 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
             className={cn(
               "sm:hidden flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-full",
               "bg-[var(--team-primary,#F4AF23)] text-black",
-              "transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:shadow-[var(--team-primary]/25",
-              "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary]/50"
+              "transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:shadow-[var(--team-primary)]/25",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50"
             )}
           >
             <span>Ver Playoffs</span>

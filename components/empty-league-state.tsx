@@ -28,7 +28,7 @@ export function EmptyLeagueState({
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] px-4">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center rounded-full bg-[var(--team-primary]/10 border border-[var(--team-primary]/30 p-3 mb-4">
+          <div className="inline-flex items-center justify-center rounded-full bg-[var(--team-primary)]/10 border border-[var(--team-primary)]/30 p-3 mb-4">
             <AlertTriangle className="h-6 w-6 text-[var(--team-primary,#F4AF23)]" />
           </div>
           <h2 className="text-xl font-bold text-[var(--team-primary,#F4AF23)] mb-2">{title}</h2>
@@ -55,7 +55,7 @@ export function EmptyLeagueState({
         <CardContent className="pt-8">
           {/* Icon */}
           <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center justify-center rounded-full bg-[var(--team-primary]/10 border border-[var(--team-primary]/30 p-4">
+            <div className="inline-flex items-center justify-center rounded-full bg-[var(--team-primary)]/10 border border-[var(--team-primary)]/30 p-4">
               <AlertTriangle className="h-8 w-8 text-[var(--team-primary,#F4AF23)]" />
             </div>
           </div>
@@ -72,7 +72,7 @@ export function EmptyLeagueState({
 
           {/* CTA Badge */}
           <div className="flex flex-col items-center gap-3">
-            <span className="inline-block px-4 py-2 rounded-full bg-[var(--team-primary]/10 border border-[var(--team-primary]/20 text-[var(--team-primary,#F4AF23)] text-sm font-medium tracking-wide">
+            <span className="inline-block px-4 py-2 rounded-full bg-[var(--team-primary)]/10 border border-[var(--team-primary)]/20 text-[var(--team-primary,#F4AF23)] text-sm font-medium tracking-wide">
               Verifique novamente em breve
             </span>
 

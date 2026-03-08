@@ -90,7 +90,7 @@ export function CookieConsentBanner() {
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 {/* Ícone */}
                 <div className="flex-shrink-0 hidden sm:flex items-start">
-                  <div className="p-3 rounded-xl bg-[var(--team-primary]/10">
+                  <div className="p-3 rounded-xl bg-[var(--team-primary)]/10">
                     <Cookie className="w-6 h-6 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
                   </div>
                 </div>
