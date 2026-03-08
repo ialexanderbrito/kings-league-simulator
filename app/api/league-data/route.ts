@@ -15,8 +15,6 @@ import {
   type KingsLeagueGroup,
   type KingsLeagueGroupTeam,
 } from "@/lib/api"
-import { getPendingRounds } from "@/lib/pending-rounds-data"
-
 // Tipos auxiliares para dados internos
 interface ApiStanding {
   team: {
@@ -295,40 +293,6 @@ function getMatchIdsNeedingUpdate(rounds: Round[]): number[] {
   return matchIds
 }
 
-/**
- * Mescla rodadas pendentes locais com as rodadas da API oficial.
- * 
- * Estratégia:
- * 1. Se a rodada existe na API oficial, mantém a rodada oficial
- * 2. Se a rodada não existe na API oficial, adiciona a rodada local
- * 3. Quando a API for atualizada, os dados oficiais substituem automaticamente os locais
- */
-function mergePendingRounds(officialRounds: Round[]): Round[] {
-  const pendingRounds = getPendingRounds()
-  
-  // Cria um mapa das rodadas oficiais por ID para fácil lookup
-  const officialRoundsMap = new Map<number, Round>()
-  officialRounds.forEach(round => {
-    officialRoundsMap.set(round.id, round)
-  })
-  
-  // Mescla as rodadas: oficiais primeiro, depois adiciona as pendentes que não existem na API
-  const mergedRounds: Round[] = [...officialRounds]
-  
-  pendingRounds.forEach(pendingRound => {
-    if (!officialRoundsMap.has(pendingRound.id)) {
-      // Rodada não existe na API oficial, adiciona a versão local
-      mergedRounds.push(pendingRound)
-    }
-    // Se a rodada já existe na API oficial, ignora a versão local
-  })
-  
-  // Ordena as rodadas por ID
-  mergedRounds.sort((a, b) => a.id - b.id)
-  
-  return mergedRounds
-}
-
 export async function GET() {
   try {
     // Busca dados da temporada e partidas em paralelo
@@ -344,9 +308,6 @@ export async function GET() {
 
     // Transforma rodadas (aceita matchesData vazio/undefined)
     let rounds: Round[] = Array.isArray(matchesData) ? matchesData.map(transformRound) : []
-
-    // Mescla rodadas pendentes (que não estão na API oficial ainda)
-    rounds = mergePendingRounds(rounds)
 
     // Valida estrutura da temporada — se a API ainda não tiver fases, não abortamos o endpoint
     if (!seasonData?.phases?.length) {
