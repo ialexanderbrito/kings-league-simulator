@@ -181,7 +181,7 @@ export function CookieConsentBanner() {
                     <Button
                       size="sm"
                       onClick={handleAccept}
-                      className="w-full sm:w-auto bg-[var(--team-primary] hover:bg-[var(--team-primary]/90 text-black font-semibold text-sm"
+                      className="w-full sm:w-auto bg-[var(--team-primary)] hover:bg-[var(--team-primary)]/90 text-black font-semibold text-sm"
                     >
                       Aceitar e Continuar
                     </Button>
