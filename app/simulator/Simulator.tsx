@@ -265,13 +265,11 @@ export default function SimulatorPage() {
 
             const updatedScores = { ...match.scores }
 
-            // Tratamento especial para valores zero (considerados vazios no input)
-            // Isso garante a persistência dos valores ao navegar entre páginas
-            if (hScore !== null) {
+            if (homeScore !== null && homeScore !== undefined) {
               updatedScores.homeScore = hScore
             }
 
-            if (aScore !== null) {
+            if (awayScore !== null && awayScore !== undefined) {
               updatedScores.awayScore = aScore
             }
 
