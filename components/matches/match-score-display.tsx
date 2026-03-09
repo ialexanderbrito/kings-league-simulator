@@ -45,9 +45,9 @@ export const MatchScoreDisplay: FC<MatchScoreDisplayProps> = ({
       {homeScorePenalty !== null && awayScorePenalty !== null && (
         <div
           className="flex items-center mt-2 px-2.5 py-1 rounded-md bg-white/5 border border-white/10"
-          aria-label="Resultado dos pênaltis"
+          aria-label="Resultado do Shootout"
         >
-          <span className="text-xs text-gray-500 font-medium mr-1.5">Pên:</span>
+          <span className="text-xs text-gray-500 font-medium mr-1.5">SO:</span>
           <span className={cn(
             "text-xs font-semibold",
             homeScorePenalty > awayScorePenalty ? "text-emerald-400" : "text-gray-500"

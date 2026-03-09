@@ -99,7 +99,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
     if (homeScore !== awayScore) {
       return (isHome && homeScore > awayScore) || (!isHome && awayScore > homeScore);
     }
-    // Empate - verificar pênaltis
+    // Empate - verificar Shootout
     if (homeScoreP !== undefined && homeScoreP !== null && awayScoreP !== undefined && awayScoreP !== null) {
       return (isHome && homeScoreP > awayScoreP) || (!isHome && awayScoreP > homeScoreP);
     }
@@ -313,10 +313,10 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                   if (homeScore === awayScore) {
                     if (hasPenalties) {
                       if ((isHome && homePenaltyWin) || (!isHome && awayPenaltyWin)) {
-                        result = 'Vitória (pen)';
+                        result = 'Vitória (SO)';
                         resultStyle = { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/30' };
                       } else {
-                        result = 'Derrota (pen)';
+                        result = 'Derrota (SO)';
                         resultStyle = { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30' };
                       }
                     } else {
@@ -411,7 +411,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                             </div>
                             {hasPenalties && (
                               <div className="mt-1.5 flex items-center gap-1.5">
-                                <span className="text-[10px] text-gray-500">Pênaltis:</span>
+                                <span className="text-[10px] text-gray-500">Shootout:</span>
                                 <span className="text-xs font-bold text-white tabular-nums">{homeScoreP} - {awayScoreP}</span>
                               </div>
                             )}

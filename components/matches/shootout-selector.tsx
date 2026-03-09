@@ -21,7 +21,7 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
     <div
       className="flex gap-2 items-center px-3 py-2 rounded-lg bg-white/5 border border-white/10"
       role="group"
-      aria-label="Seletor de vencedor nos pênaltis"
+      aria-label="Seletor de vencedor no Shootout"
     >
       <button
         className={cn(
@@ -34,9 +34,9 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
         )}
         onClick={() => !disabled && onWinnerSelect(selectedWinner === "home" ? null : "home")}
         disabled={disabled}
-        aria-label={`${homeTeamShortName} vence nos pênaltis`}
+        aria-label={`${homeTeamShortName} vence no Shootout`}
         aria-pressed={selectedWinner === "home"}
-        title={`${homeTeamShortName} vence nos pênaltis`}
+        title={`${homeTeamShortName} vence no Shootout`}
       >
         {selectedWinner === "home" && (
           <Check className="w-4 h-4 text-white" aria-hidden="true" />
@@ -45,7 +45,7 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
 
       <div className="flex items-center gap-1.5 px-1.5">
         <Trophy className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-        <span className="text-xs font-medium text-gray-400">Pênaltis</span>
+        <span className="text-xs font-medium text-gray-400">Shootout</span>
       </div>
 
       <button
@@ -59,9 +59,9 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
         )}
         onClick={() => !disabled && onWinnerSelect(selectedWinner === "away" ? null : "away")}
         disabled={disabled}
-        aria-label={`${awayTeamShortName} vence nos pênaltis`}
+        aria-label={`${awayTeamShortName} vence no Shootout`}
         aria-pressed={selectedWinner === "away"}
-        title={`${awayTeamShortName} vence nos pênaltis`}
+        title={`${awayTeamShortName} vence no Shootout`}
       >
         {selectedWinner === "away" && (
           <Check className="w-4 h-4 text-white" aria-hidden="true" />

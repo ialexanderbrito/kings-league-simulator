@@ -147,7 +147,7 @@ function determineWinner(match: KingsLeagueMatch): string | null {
     return match.participants.awayTeamId?.toString() || null
   }
 
-  // Em caso de empate, verificar pênaltis
+  // Em caso de empate, verificar Shootout
   if (homeScoreP !== null && awayScoreP !== null) {
     if (homeScoreP > awayScoreP) {
       return match.participants.homeTeamId?.toString() || null

@@ -176,7 +176,7 @@ export function updatePlayoffBracket(
   } else if (awayScore > homeScore) {
     newWinnerId = match.awayTeamId;
   } else if (homeScoreP !== null && homeScoreP !== undefined && awayScoreP !== null && awayScoreP !== undefined) {
-    // Desempate nos pênaltis
+    // Desempate no Shootout
     if (homeScoreP > awayScoreP) {
       newWinnerId = match.homeTeamId;
     } else if (awayScoreP > homeScoreP) {

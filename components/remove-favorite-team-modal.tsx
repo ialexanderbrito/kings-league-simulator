@@ -29,7 +29,7 @@ export function RemoveFavoriteTeamModal({
     "Seu presidente vai ficar decepcionado...",
     "As copas já estão garantidas e você quer sair?",
     "Desistindo na primeira dificuldade?",
-    "Quem ama não desiste na primeira disputa de pênaltis!",
+    "Quem ama não desiste no primeiro Shootout!",
     "É sério mesmo? Nem a pré-temporada terminou...",
     "Até logo, torcedor! Foi bom enquanto durou.",
     "O mascote do time vai sentir sua falta...",

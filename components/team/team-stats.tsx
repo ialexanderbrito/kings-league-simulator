@@ -49,14 +49,14 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
       // Derrota no tempo normal
       losses += 1
     } else {
-      // Empate no tempo normal - decidir nos pênaltis
+      // Empate no tempo normal - decidir no Shootout
       if (teamPenaltyScore !== null && teamPenaltyScore !== undefined &&
         opponentPenaltyScore !== null && opponentPenaltyScore !== undefined) {
         if (teamPenaltyScore > opponentPenaltyScore) {
-          // Vitória nos pênaltis
+          // Vitória no Shootout
           penaltyWins += 1
         } else if (teamPenaltyScore < opponentPenaltyScore) {
-          // Derrota nos pênaltis
+          // Derrota no Shootout
           penaltyLosses += 1
         }
       }
@@ -129,7 +129,7 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
         </CardContent>
       </Card>
 
-      {/* Card de Pênaltis */}
+      {/* Card de Shootout */}
       <Card className="bg-card border-border overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
@@ -137,26 +137,26 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
               <Shield className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
             </div>
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Pênaltis
+              Shootout
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pb-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-foreground" aria-label={`${totalPenalties} decisões nos pênaltis`}>
+              <div className="text-2xl font-bold text-foreground" aria-label={`${totalPenalties} decisões no Shootout`}>
                 {totalPenalties}
               </div>
               <div className="text-xs text-muted-foreground">Total</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-green-500" aria-label={`${penaltyWins} vitórias nos pênaltis`}>
+              <div className="text-2xl font-bold text-green-500" aria-label={`${penaltyWins} vitórias no Shootout`}>
                 {penaltyWins}
               </div>
               <div className="text-xs text-muted-foreground">Vitórias</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-red-500" aria-label={`${penaltyLosses} derrotas nos pênaltis`}>
+              <div className="text-2xl font-bold text-red-500" aria-label={`${penaltyLosses} derrotas no Shootout`}>
                 {penaltyLosses}
               </div>
               <div className="text-xs text-muted-foreground">Derrotas</div>

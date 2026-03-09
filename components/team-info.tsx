@@ -296,7 +296,7 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
           ]}
         />
         <DetailStatCard
-          title="Pênaltis"
+          title="Shootout"
           icon={Shield}
           color={team.firstColorHEX}
           loading={loading}

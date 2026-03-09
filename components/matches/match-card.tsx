@@ -157,7 +157,7 @@ export const MatchCard: FC<MatchCardProps> = ({
                 </div>
                 {match.scores.homeScoreP !== null && match.scores.awayScoreP !== null && (
                   <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
-                    Pên: {match.scores.homeScoreP} - {match.scores.awayScoreP}
+                    SO: {match.scores.homeScoreP} - {match.scores.awayScoreP}
                   </span>
                 )}
               </>
