@@ -77,18 +77,16 @@ export function calculateStandings(
         away.points += 3
         home.lost += 1
       } else {
-        // Empate -> checar pênaltis
+        // Empate -> checar Shootout
         if (homeScoreP !== null && awayScoreP !== null) {
           if (homeScoreP > awayScoreP) {
             home.won += 1
-            home.points += 2
+            home.points += 1
             away.lost += 1
-            away.points += 1
           } else if (awayScoreP > homeScoreP) {
             away.won += 1
-            away.points += 2
+            away.points += 1
             home.lost += 1
-            home.points += 1
           } else {
             home.drawn += 1
             home.points += 1

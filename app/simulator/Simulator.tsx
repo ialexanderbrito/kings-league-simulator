@@ -273,7 +273,7 @@ export default function SimulatorPage() {
               updatedScores.awayScore = aScore
             }
 
-            // Atualiza o placar de pênaltis se for definido
+            // Atualiza o placar de Shootout se for definido
             if (homeShootoutScore !== undefined) {
               updatedScores.homeScoreP = homeShootoutScore
             }

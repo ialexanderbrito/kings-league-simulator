@@ -66,7 +66,7 @@ export default function StandingsPage() {
           teamsArr.forEach(t => teamToGroup[String((t as any).id)] = gName)
         })
 
-        // Calcular stats extras (penaltis, scWins/scLosses/scPending) por time baseando-se nas rounds (resultados)
+        // Calcular stats extras (shootout, scWins/scLosses/scPending) por time baseando-se nas rounds (resultados)
         const extraStats: Record<string, { penaltyWins: number; penaltyLosses: number; regularWins: number; scPoints: number; scWins: number; scLosses: number; scPending: number }> = {}
         Object.values(groups).flat().forEach((t) => {
           extraStats[String((t as any).id)] = { penaltyWins: 0, penaltyLosses: 0, regularWins: 0, scPoints: 0, scWins: 0, scLosses: 0, scPending: 0 }
@@ -103,7 +103,7 @@ export default function StandingsPage() {
                 if (extraStats[awayId]) extraStats[awayId].regularWins++
               }
             } else {
-              // Draw -> penalties
+              // Draw -> shootout
               if (homeScoreP === null || awayScoreP === null) return
               if (homeScoreP > awayScoreP) {
                 if (extraStats[homeId]) extraStats[homeId].penaltyWins++
@@ -138,24 +138,22 @@ export default function StandingsPage() {
                   }
                 }
               } else {
-                // penalties
+                // shootout
                 if (homeScoreP === null || awayScoreP === null) return
                 if (homeScoreP > awayScoreP) {
                   if (extraStats[homeId]) {
-                    extraStats[homeId].scPoints += 2
+                    extraStats[homeId].scPoints += 1
                     extraStats[homeId].scWins++
                   }
                   if (extraStats[awayId]) {
-                    extraStats[awayId].scPoints += 1
                     extraStats[awayId].scLosses++
                   }
                 } else if (awayScoreP > homeScoreP) {
                   if (extraStats[awayId]) {
-                    extraStats[awayId].scPoints += 2
+                    extraStats[awayId].scPoints += 1
                     extraStats[awayId].scWins++
                   }
                   if (extraStats[homeId]) {
-                    extraStats[homeId].scPoints += 1
                     extraStats[homeId].scLosses++
                   }
                 }
