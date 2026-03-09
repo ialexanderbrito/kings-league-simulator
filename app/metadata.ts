@@ -1,19 +1,19 @@
-import { Metadata } from 'next'
+﻿import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Kings League Brasil 2025 | Simulador Completo + Tabela Atualizada + Estatísticas',
-  description: '⚽ O MELHOR simulador da Kings League Brasil 2025! Simule partidas em tempo real, acompanhe a classificação atualizada automaticamente, veja estatísticas completas de todos os jogadores e times, chaveamento dos playoffs e preveja quem será o campeão da temporada. 100% GRÁTIS com dados oficiais!',
+  title: 'Kings League Brasil 2026 | Simulador Completo + Tabela Atualizada + Estatísticas',
+  description: '⚽ O MELHOR simulador da Kings League Brasil 2026! Simule partidas em tempo real, acompanhe a classificação atualizada automaticamente, veja estatísticas completas de todos os jogadores e times, chaveamento dos playoffs e preveja quem será o campeão da temporada. 100% GRÁTIS com dados oficiais!',
   keywords: [
     // Principais termos de busca
     'Kings League Brasil', 'Kings League simulador', 'simulador Kings League Brasil', 
-    'Kings League 2025', 'Kings League Brasil 2025',
+    'Kings League 2026', 'Kings League Brasil 2026',
     // Tabela e classificação
     'tabela Kings League', 'tabela Kings League Brasil', 'classificação Kings League', 
     'classificação Kings League atualizada', 'pontos Kings League', 'ranking Kings League',
-    'tabela de classificação Kings League 2025',
+    'tabela de classificação Kings League 2026',
     // Times
     'times da Kings League', 'times da Kings League Brasil', 'equipes Kings League',
-    'melhores times Kings League', 'times Kings League 2025',
+    'melhores times Kings League', 'times Kings League 2026',
     // Jogos e partidas
     'jogos da Kings League', 'jogos Kings League hoje', 'partidas Kings League',
     'resultados Kings League', 'placar Kings League', 'Kings League ao vivo',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     'playoffs Kings League', 'chaveamento Kings League', 'mata-mata Kings League',
     'final Kings League', 'quartas de final Kings League', 'semifinal Kings League',
     // Previsões
-    'quem vai ganhar Kings League', 'campeão Kings League 2025', 
+    'quem vai ganhar Kings League', 'campeão Kings League 2026', 
     'palpites Kings League', 'prognósticos Kings League', 'previsão Kings League',
     // Estatísticas
     'estatísticas Kings League', 'artilharia Kings League', 'artilheiros Kings League',
@@ -38,14 +38,14 @@ export const metadata: Metadata = {
     'Ibai Llanos futebol', 'Gaules Kings League', 'Cellbit Kings League'
   ],
   openGraph: {
-    title: 'Kings League Brasil 2025 ⚽ | Simulador Oficial + Tabela + Estatísticas',
+    title: 'Kings League Brasil 2026 ⚽ | Simulador Oficial + Tabela + Estatísticas',
     description: '🏆 SIMULADOR COMPLETO da Kings League Brasil! Simule partidas, veja a tabela atualizada, estatísticas de jogadores, chaveamento dos playoffs e descubra quem será o campeão. Totalmente GRÁTIS com dados oficiais!',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Kings League Brasil 2025 - Simulador Oficial com Tabela e Estatísticas em Tempo Real',
+        alt: 'Kings League Brasil 2026 - Simulador Oficial com Tabela e Estatísticas em Tempo Real',
       },
     ],
     locale: 'pt_BR',
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kings League Brasil 2025 ⚽ | Simulador + Tabela + Stats',
+    title: 'Kings League Brasil 2026 ⚽ | Simulador + Tabela + Stats',
     description: '🏆 O simulador MAIS COMPLETO da Kings League Brasil! Simule partidas, tabela atualizada e estatísticas. 100% GRÁTIS!',
     images: ['/og-image-x.png'],
     creator: '@ialexanderbrito',
