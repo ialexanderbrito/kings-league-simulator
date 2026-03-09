@@ -95,18 +95,17 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                 <Table className="w-full text-sm">
                   <TableHeader>
                     <TableRow className="border-b border-border bg-transparent">
-                      <TableHead className="w-12 text-center text-xs text-muted-foreground font-normal py-3">P</TableHead>
+                      <TableHead className="w-12 text-center text-xs text-muted-foreground font-normal py-3" title="Posição">P</TableHead>
                       <TableHead className="w-8 px-0"></TableHead>
                       <TableHead className="text-xs text-muted-foreground font-normal py-3">TIME</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-16 py-3">PTS</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden sm:table-cell">J</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3">V</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3 hidden sm:table-cell">VP</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3 hidden sm:table-cell">DP</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3">D</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GP</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GC</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">SG</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-16 py-3" title="Pontos">PTS</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden sm:table-cell" title="Partidas Jogadas">PJ</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3" title="Vitórias no Match Ball (tempo regulamentar)">VMB</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3 hidden sm:table-cell" title="Vitórias no Shootout (empate no tempo regulamentar)">VSO</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3" title="Derrotas">D</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell" title="Gols Pró (marcados)">GP</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell" title="Gols Contra (sofridos)">GC</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell" title="Saldo de Gols">SG</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -179,7 +178,6 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                           <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-12">{team.played ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 w-10">{team.regularWins ?? (team.won - (team.penaltyWins ?? 0))}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-10">{team.penaltyWins ?? 0}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-10">{team.penaltyLosses ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 w-10">{team.lost ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalsFor ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalsAgainst ?? 0}</TableCell>
@@ -205,6 +203,31 @@ export default function FullStandingsTable(props: StandingsTableProps) {
             <span className="w-2.5 h-2.5 p-0 rounded-full shadow-sm" style={{ backgroundColor: "var(--team-primary)" }}></span>
             <span>Quartas</span>
           </div>
+
+          {favoriteTeam && (
+            <div className="flex items-center gap-1.5">
+              <Heart className="w-2.5 h-2.5 text-[var(--team-primary)] flex-shrink-0" fill="currentColor" />
+              <span>Seu time do coração</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-card rounded-lg px-4 py-3">
+        <p className="text-xs font-semibold text-muted-foreground mb-2">Legenda da Tabela</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+          <span><strong className="text-foreground">PTS</strong> – Pontos</span>
+          <span><strong className="text-foreground">PJ</strong> – Partidas Jogadas</span>
+          <span><strong className="text-foreground">VMB</strong> – Vitórias no Match Ball</span>
+          <span><strong className="text-foreground">VSO</strong> – Vitórias no Shootout</span>
+          <span><strong className="text-foreground">D</strong> – Derrotas</span>
+          <span><strong className="text-foreground">GP</strong> – Gols Pró</span>
+          <span><strong className="text-foreground">GC</strong> – Gols Contra</span>
+          <span><strong className="text-foreground">SG</strong> – Saldo de Gols</span>
+        </div>
+        <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
+          <p><strong className="text-foreground">Match Ball</strong> – Vitória no tempo regulamentar (3 pontos)</p>
+          <p><strong className="text-foreground">Shootout</strong> – Quando o jogo empata, o vencedor do Shootout ganha 1 ponto</p>
         </div>
       </div>
     </div>
