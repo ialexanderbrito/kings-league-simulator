@@ -13,22 +13,40 @@ import {
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/hooks/use-toast"
+import { Globe, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export const LEAGUES = [
-  { id: "espanha", name: "Espanha" },
-  { id: "americas", name: "Americas" },
-  { id: "italia", name: "Itália" },
-  { id: "franca", name: "França" },
-  { id: "alemanha", name: "Alemanha" },
-  { id: "nenhum", name: "Nenhum, apenas o Brasil" },
+  { id: "espanha", name: "Espanha", flag: "ES" },
+  { id: "italia", name: "Itália", flag: "IT" },
+  { id: "mexico", name: "México", flag: "MX" },
+  { id: "alemanha", name: "Alemanha", flag: "DE" },
+  { id: "franca", name: "França (Ainda não iniciada)", flag: "FR" },
+  { id: "mena", name: "MENA (Ainda não iniciada)", flag: "MENA" },
+  { id: "todas", name: "Todas as ligas", flag: "ALL" },
+  { id: "apenas-brasil", name: "Apenas Brasil", flag: "BR" },
 ]
 
-const MODAL_SHOWN_KEY = "@kl-simulator:leagues-suggestion-modal-shown"
-const VOTE_SUBMITTED_KEY = "@kl-simulator:league-suggestion-submitted"
+function CountryFlag({ code }: { code: string }) {
+  if (code === "MENA" || code === "ALL") {
+    return (
+      <div className="w-6 h-4 rounded-[3px] bg-emerald-800 flex items-center justify-center flex-shrink-0">
+        <Globe className="w-3 h-3 text-emerald-300" />
+      </div>
+    )
+  }
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
+      alt={code}
+      className="w-6 h-4 rounded-[3px] object-cover flex-shrink-0"
+      loading="lazy"
+    />
+  )
+}
 
-// Datas da pesquisa
-const SURVEY_START_DATE = new Date('2025-05-04T00:00:00')
-const SURVEY_END_DATE = new Date('2025-06-04T23:59:59')
+const MODAL_SHOWN_KEY = "@kl-simulator:leagues-poll-v2-shown"
+const VOTE_SUBMITTED_KEY = "@kl-simulator:leagues-poll-v2-submitted"
 
 export function LeaguesSuggestionModal() {
   const [open, setOpen] = useState(false)
@@ -37,17 +55,19 @@ export function LeaguesSuggestionModal() {
   const pathname = usePathname()
 
   useEffect(() => {
-    const isRelevantRoute = pathname === "/simulator" || pathname === "/playoffs"
+    const isRelevantRoute = pathname === "/simulator" || pathname === "/tier-list"
     const modalPreviouslyShown = localStorage.getItem(MODAL_SHOWN_KEY) === "true"
     const alreadyVoted = localStorage.getItem(VOTE_SUBMITTED_KEY) === "true"
 
-    const currentDate = new Date()
-    const isSurveyActive = currentDate >= SURVEY_START_DATE && currentDate <= SURVEY_END_DATE
+    const now = new Date()
+    const start = new Date('2026-03-09T00:00:00-03:00')
+    const end = new Date('2026-03-30T23:59:59-03:00')
+    const isSurveyActive = now >= start && now <= end
 
     if (isRelevantRoute && !modalPreviouslyShown && !alreadyVoted && isSurveyActive) {
       const timer = setTimeout(() => {
         setOpen(true)
-      }, 1000)
+      }, 1500)
 
       return () => clearTimeout(timer)
     }
@@ -80,27 +100,23 @@ export function LeaguesSuggestionModal() {
         throw new Error(errorData.message || 'Erro ao enviar sugestão');
       }
 
-      // Salva que o voto foi submetido antes de qualquer outra operação
       localStorage.setItem(VOTE_SUBMITTED_KEY, "true");
       localStorage.setItem(MODAL_SHOWN_KEY, "true");
 
-      // Pequeno delay antes de fechar o modal
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Fecha o modal antes de mostrar o toast
       setOpen(false);
 
       toast({
-        title: "Obrigado pela sua sugestão!",
+        title: "Obrigado pelo seu voto!",
         description: "Sua preferência por " + LEAGUES.find(l => l.id === selectedLeague)?.name + " foi registrada com sucesso.",
       });
     } catch (error) {
       toast({
-        title: "Erro ao enviar sugestão",
+        title: "Erro ao enviar voto",
         description: "Não foi possível registrar sua preferência. Tente novamente mais tarde.",
         variant: "destructive",
       });
-      // Fecha o modal mesmo em caso de erro
       setOpen(false);
       localStorage.setItem(MODAL_SHOWN_KEY, "true");
     } finally {
@@ -110,44 +126,83 @@ export function LeaguesSuggestionModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[425px] bg-[#0a0a0a] border-white/10 text-white">
-        <DialogHeader>
-          <DialogTitle className="text-[var(--team-primary)]">Sugestão de nova liga</DialogTitle>
-          <DialogDescription className="text-gray-300">
-            Gostaríamos de saber qual outra liga você gostaria de ver no nosso simulador.
-            Selecione uma liga de sua preferência:
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[400px] max-h-[90dvh] overflow-y-auto bg-[#0a0a0a] border-white/10 text-white p-0">
+        {/* Header compacto */}
+        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
+          <div className="p-2 rounded-lg bg-[var(--team-primary)]/10">
+            <Globe className="w-5 h-5 text-[var(--team-primary)]" />
+          </div>
+          <DialogHeader className="space-y-0.5 text-left flex-1">
+            <DialogTitle className="text-base font-bold text-white">
+              Simulador de outras ligas?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500">
+              Queremos saber sua opinião!
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="py-4">
-          <RadioGroup value={selectedLeague || ''} onValueChange={setSelectedLeague} className="space-y-4">
+        <p className="text-[13px] text-gray-400 leading-relaxed px-5">
+          Você gostaria que tivéssemos suporte para outras ligas ou prefere que foquemos apenas no Brasil?
+        </p>
+
+        {/* Opções */}
+        <div className="px-5 py-3">
+          <RadioGroup value={selectedLeague || ''} onValueChange={setSelectedLeague} className="space-y-1.5">
             {LEAGUES.map(league => (
-              <div key={league.id} className="flex items-center space-x-3">
+              <label
+                key={league.id}
+                htmlFor={league.id}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all duration-150",
+                  selectedLeague === league.id
+                    ? "border-[var(--team-primary)]/40 bg-[var(--team-primary)]/10"
+                    : "border-white/5 hover:border-white/10 hover:bg-white/[0.03]"
+                )}
+              >
                 <RadioGroupItem
                   id={league.id}
                   value={league.id}
-                  className="border-[#333] text-[var(--team-primary)] focus:ring-[var(--team-primary)]"
+                  className="border-white/20 text-[var(--team-primary)] data-[state=checked]:border-[var(--team-primary)] flex-shrink-0"
                 />
-                <label
-                  htmlFor={league.id}
-                  className="text-sm font-medium text-gray-200 leading-none cursor-pointer hover:text-white"
-                >
+                <CountryFlag code={league.flag} />
+                <span className="text-sm text-gray-200">
                   {league.name}
-                </label>
-              </div>
+                </span>
+              </label>
             ))}
           </RadioGroup>
         </div>
 
-        <DialogFooter>
+        {/* Botões */}
+        <div className="flex items-center justify-end gap-2 px-5 pb-5 pt-1">
           <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setOpen(false)
+              localStorage.setItem(MODAL_SHOWN_KEY, "true")
+            }}
+            className="text-gray-500 hover:text-white hover:bg-white/5 text-xs"
+          >
+            Pular
+          </Button>
+          <Button
+            size="sm"
             onClick={handleSubmit}
             disabled={isSubmitting || !selectedLeague}
-            className="bg-[var(--team-primary)] text-black hover:bg-[var(--team-primary)]/90"
+            className="bg-[var(--team-primary)] text-black hover:bg-[var(--team-primary)]/90 font-semibold gap-1.5 text-xs"
           >
-            {isSubmitting ? "Enviando..." : "Enviar sugestão"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              "Enviar voto"
+            )}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )
