@@ -226,7 +226,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
           <span><strong className="text-foreground">SG</strong> – Saldo de Gols</span>
         </div>
         <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
-          <p><strong className="text-foreground">Match Ball</strong> – Vitória no tempo regulamentar (3 pontos)</p>
+          <p><strong className="text-foreground">Match Ball</strong> – Vitória no tempo regulamentar (1 ponto)</p>
           <p><strong className="text-foreground">Shootout</strong> – Quando o jogo empata, o vencedor do Shootout ganha 1 ponto</p>
         </div>
       </div>
