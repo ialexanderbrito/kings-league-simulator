@@ -70,11 +70,11 @@ export function calculateStandings(
 
       if (homeScore > awayScore) {
         home.won += 1
-        home.points += 3
+        home.points += 1
         away.lost += 1
       } else if (homeScore < awayScore) {
         away.won += 1
-        away.points += 3
+        away.points += 1
         home.lost += 1
       } else {
         // Empate -> checar Shootout
