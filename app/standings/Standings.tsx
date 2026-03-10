@@ -122,7 +122,7 @@ export default function StandingsPage() {
               if (homeScore !== awayScore) {
                 if (homeScore > awayScore) {
                   if (extraStats[homeId]) {
-                    extraStats[homeId].scPoints += 3
+                    extraStats[homeId].scPoints += 1
                     extraStats[homeId].scWins++
                   }
                   if (extraStats[awayId]) {
@@ -130,7 +130,7 @@ export default function StandingsPage() {
                   }
                 } else {
                   if (extraStats[awayId]) {
-                    extraStats[awayId].scPoints += 3
+                    extraStats[awayId].scPoints += 1
                     extraStats[awayId].scWins++
                   }
                   if (extraStats[homeId]) {

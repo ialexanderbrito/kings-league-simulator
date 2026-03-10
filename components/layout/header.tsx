@@ -214,7 +214,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                         <span className="text-[var(--team-primary)]">Kings</span>
                         <span>League</span>
                       </h1>
-                      <p className="text-[10px] text-gray-500 font-medium">Simulador 2026</p>
+                      <p className="text-[10px] text-gray-500 font-medium">Simulador</p>
                     </div>
                   </Link>
 
@@ -309,7 +309,7 @@ export function Header({ loading, selectedTeam, onTeamSelect, setActiveTab }: He
                   <span className="text-[var(--team-primary)]">Kings</span>
                   <span>League</span>
                 </h1>
-                <p className="text-[10px] text-gray-500">Simulador 2026</p>
+                <p className="text-[10px] text-gray-500">Simulador</p>
               </div>
             </Link>
             <button

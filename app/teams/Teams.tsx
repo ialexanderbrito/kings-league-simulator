@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TeamsGridSkeleton } from "@/components/skeletons/teams-grid-skeleton"
 import { ButtonTop } from "@/components/ui/button-top"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import type { Team, TeamDetails } from "@/types/kings-league"
@@ -87,7 +88,7 @@ export default function Teams() {
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 mb-4">
               <Shield className="w-4 h-4 text-orange-400" />
-              <span className="text-sm font-medium text-orange-400">Kings League Brasil 2026</span>
+              <span className="text-sm font-medium text-orange-400">Kings League Brasil</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
@@ -302,53 +303,3 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
   )
 }
 
-function TeamsGridSkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-      {Array(12).fill(0).map((_, index) => (
-        <div key={index} className="bg-[#111111] border border-white/5 rounded-2xl overflow-hidden">
-          {/* Gradient bar */}
-          <div className="h-1 bg-gradient-to-r from-gray-700 to-gray-600 animate-pulse" />
-
-          <div className="p-5">
-            {/* Header skeleton */}
-            <div className="flex items-start gap-4 mb-4">
-              <Skeleton className="rounded-2xl bg-white/5" style={{ width: '72px', height: '72px' }} />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-5 w-3/4 bg-white/5" />
-                <Skeleton className="h-4 w-1/2 bg-white/5" />
-                <Skeleton className="h-3 w-20 bg-white/5" />
-              </div>
-            </div>
-
-            {/* President section skeleton */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Skeleton className="w-3.5 h-3.5 rounded bg-white/5" />
-                <Skeleton className="h-3 w-16 bg-white/5" />
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                <Skeleton className="w-12 h-12 rounded-xl bg-white/5" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-24 bg-white/5" />
-                  <Skeleton className="h-3 w-16 bg-white/5" />
-                </div>
-              </div>
-            </div>
-
-            {/* Coach skeleton */}
-            <div className="mt-3 pt-3 border-t border-white/5">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-9 h-9 rounded-lg bg-white/5" />
-                <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-3 w-20 bg-white/5" />
-                  <Skeleton className="h-2.5 w-12 bg-white/5" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}

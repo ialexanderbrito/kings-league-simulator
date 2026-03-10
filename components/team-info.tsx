@@ -175,7 +175,7 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
                   style={{ backgroundColor: team.firstColorHEX + '30', color: team.firstColorHEX }}
                 >
                   <Flame className="w-3 h-3 mr-1" />
-                  Kings League 2026
+                  Kings League Brasil
                 </Badge>
                 {gamesPlayed > 0 && winRate >= 50 && (
                   <Badge className="px-3 py-1 text-xs font-bold bg-green-500/20 text-green-400 border-0">
@@ -381,7 +381,7 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
                 </div>
                 <div>
                   <CardTitle className="text-xl text-white">Elenco Completo</CardTitle>
-                  <CardDescription className="text-gray-400">Jogadores da temporada 2026</CardDescription>
+                  <CardDescription className="text-gray-400">Jogadores da temporada atual</CardDescription>
                 </div>
               </div>
             </CardHeader>

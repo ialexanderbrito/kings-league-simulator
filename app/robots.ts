@@ -6,22 +6,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/', '/_next/', '/private/'],
+        disallow: ['/api/', '/_next/'],
       },
-      {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: ['/api/', '/admin/'],
-        crawlDelay: 0,
-      },
-      {
-        userAgent: 'Bingbot',
-        allow: '/',
-        disallow: ['/api/', '/admin/'],
-        crawlDelay: 0,
-      }
     ],
     sitemap: 'https://kings-league-simulator.vercel.app/sitemap.xml',
-    host: 'https://kings-league-simulator.vercel.app',
   }
 }

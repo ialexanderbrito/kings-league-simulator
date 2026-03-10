@@ -156,7 +156,7 @@ export default function HomePage() {
         setActiveTab={() => { }}
       />
 
-      {/* Hero Section - Redesenhado 2026 */}
+      {/* Hero Section */}
       <section
         ref={heroRef}
         className="relative min-h-[100dvh] flex items-center justify-center pt-16 pb-8 overflow-hidden"
@@ -205,7 +205,7 @@ export default function HomePage() {
               <div className="h-6 w-px bg-gradient-to-b from-transparent via-[var(--team-primary)]/50 to-transparent" />
               <div className="text-left">
                 <p className="text-sm font-bold text-white tracking-wide">Kings League Brasil</p>
-                <p className="text-xs text-[var(--team-primary)] font-medium">Temporada 2026</p>
+                <p className="text-xs text-[var(--team-primary)] font-medium">Temporada Atual</p>
               </div>
               <div className="flex items-center gap-1.5 ml-2 px-2.5 py-1 bg-[var(--team-primary)]/10 rounded-full">
                 <Flame className="w-3.5 h-3.5 text-[var(--team-primary)]" />
@@ -241,7 +241,7 @@ export default function HomePage() {
 
             {/* Subtitle - Mais clean */}
             <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed font-light">
-              A temporada 2026 está chegando. Simule partidas, analise estatísticas
+              A nova temporada está chegando. Simule partidas, analise estatísticas
               e descubra quem será o <span className="text-white font-medium">próximo campeão</span>.
             </p>
 
@@ -332,7 +332,7 @@ export default function HomePage() {
       {/* Divisória Curved Loop 1 */}
       <div className="relative overflow-hidden bg-[#030303]">
         <CurvedLoop
-          marqueeText="KINGS LEAGUE 2026 ✦ NOVA TEMPORADA ✦ SIMULADOR OFICIAL ✦ "
+          marqueeText="KINGS LEAGUE ✦ NOVA TEMPORADA ✦ SIMULADOR OFICIAL ✦ "
           speed={1.2}
           curveAmount={0}
           direction="right"
@@ -341,7 +341,7 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Seção Recursos - Redesenhada 2026 */}
+      {/* Seção Recursos */}
       <section ref={featuresRef} className="py-16 md:py-24 bg-[#030303] relative" id="recursos">
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden">
@@ -363,7 +363,7 @@ export default function HomePage() {
               </span>
             </h2>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto font-light">
-              Ferramentas completas para você viver cada momento da Kings League 2026
+              Ferramentas completas para você viver cada momento da Kings League
             </p>
           </div>
 
@@ -492,7 +492,7 @@ export default function HomePage() {
       {/* Divisória Curved Loop 2 */}
       <div className="relative overflow-hidden bg-[#030303]">
         <CurvedLoop
-          marqueeText="CONHEÇA OS TIMES ✦ ESCOLHA SEU FAVORITO ✦ TEMPORADA 2026 ✦ "
+          marqueeText="CONHEÇA OS TIMES ✦ ESCOLHA SEU FAVORITO ✦ NOVA TEMPORADA ✦ "
           speed={1.2}
           curveAmount={0}
           direction="left"
@@ -501,7 +501,7 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Seção de Times - Redesenhada 2026 */}
+      {/* Seção de Times */}
       <section ref={teamsRef} className="py-16 md:py-24 bg-[#030303] relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/3 right-0 w-[600px] h-[600px] bg-[var(--team-primary)]/5 rounded-full blur-[150px]" />
@@ -512,7 +512,7 @@ export default function HomePage() {
           <div className={`text-center mb-12 md:mb-16 transition-all duration-700 ${visibleSections.teams ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--team-primary)]/10 border border-[var(--team-primary)]/20 rounded-full mb-6">
               <Crown className="w-4 h-4 text-[var(--team-primary)]" />
-              <span className="text-sm font-semibold text-[var(--team-primary)] uppercase tracking-wider">Times 2026</span>
+              <span className="text-sm font-semibold text-[var(--team-primary)] uppercase tracking-wider">Times</span>
             </div>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
               <span className="text-white">Os Competidores</span>
@@ -600,7 +600,7 @@ export default function HomePage() {
       {/* Divisória Curved Loop 3 */}
       <div className="relative overflow-hidden bg-[#030303]">
         <CurvedLoop
-          marqueeText="SEJA O CAMPEÃO ✦ SIMULE AGORA ✦ KINGS LEAGUE 2026 ✦ "
+          marqueeText="SEJA O CAMPEÃO ✦ SIMULE AGORA ✦ KINGS LEAGUE ✦ "
           speed={1.2}
           curveAmount={0}
           direction="right"
@@ -609,7 +609,7 @@ export default function HomePage() {
         />
       </div>
 
-      {/* CTA Final - Redesenhado 2026 */}
+      {/* CTA Final */}
       <section ref={ctaRef} className="py-20 md:py-32 relative overflow-hidden bg-[#030303]">
         {/* Background effects */}
         <div className="absolute inset-0">
@@ -643,7 +643,7 @@ export default function HomePage() {
 
                 <p className="text-lg md:text-xl text-gray-400 mb-10 leading-relaxed max-w-2xl mx-auto font-light">
                   Simule a temporada completa, acompanhe cada partida e descubra
-                  se o seu time tem o que é preciso para ser <span className="text-white font-medium">campeão da Kings League 2026</span>.
+                  se o seu time tem o que é preciso para ser <span className="text-white font-medium">campeão da Kings League</span>.
                 </p>
 
                 {/* Benefícios */}
