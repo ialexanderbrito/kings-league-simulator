@@ -74,11 +74,20 @@ export function Footer() {
           <div className="flex flex-col space-y-3">
             <h3 className="text-lg font-semibold text-white">Informações Legais</h3>
             <p className="text-sm text-gray-400">
-              Este é um projeto não-oficial feito por fãs. Todos os nomes, logos e marcas registradas pertencem aos seus respectivos proprietários.
+              Este site é um projeto independente e não-oficial, criado por fãs. Não possuímos qualquer afiliação, parceria, patrocínio, endosso ou vínculo com a Kings League, Kosmos, organizadores, equipes ou jogadores.
             </p>
             <p className="text-xs text-gray-500">
-              Kings League é uma marca registrada de Kosmos. Este site não possui nenhuma afiliação oficial.
+              Kings League e elementos relacionados (nomes, escudos, logotipos e marcas) pertencem aos seus respectivos titulares e são utilizados apenas para fins informativos.
             </p>
+
+            <div className="pt-1 flex flex-col gap-2 text-sm">
+              <Link href="/termos-de-uso" className="text-gray-400 hover:text-white transition-colors">
+                Termos de Uso
+              </Link>
+              <Link href="/politica-de-privacidade" className="text-gray-400 hover:text-white transition-colors">
+                Política de Privacidade
+              </Link>
+            </div>
           </div>
         </div>
 
