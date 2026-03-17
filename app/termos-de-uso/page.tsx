@@ -1,21 +1,49 @@
-import { Metadata } from 'next'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Footer } from "@/components/layout/footer"
+"use client"
 
-export const metadata: Metadata = {
-  title: 'Termos de Uso',
-  description: 'Termos de uso e condições para utilização do Kings League Simulador, um projeto não-oficial criado por fãs.',
-}
+import { useState } from 'react'
+import Link from 'next/link'
+import { Header } from '@/components/layout/header'
+import { Button } from '@/components/ui/button'
+import { Footer } from '@/components/layout/footer'
+import { ArrowLeft, FileText } from 'lucide-react'
 
 export default function TermosDeUso() {
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
+
   return (
-    <main className="bg-[#121212] min-h-screen text-white">
+    <main className="min-h-screen bg-[#0a0a0a] text-white">
+      <Header
+        loading={false}
+        selectedTeam={selectedTeam}
+        onTeamSelect={(id) => setSelectedTeam(id)}
+        setActiveTab={() => { }}
+      />
 
-      <div className="container mx-auto px-4 max-w-4xl py-8">
-        <h1 className="text-3xl font-bold mb-6 text-center">Termos de Uso</h1>
+      <div className="container mx-auto px-4 py-6 sm:py-10 max-w-4xl">
+        <Link href="/">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-gray-500 hover:text-white mb-6"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </Button>
+        </Link>
 
-        <div className="bg-[#1a1a1a] p-6 rounded-lg shadow-lg">
+        <div className="text-center space-y-4 mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--team-primary)]/10 border border-[var(--team-primary)]/20">
+            <FileText className="w-4 h-4 text-[var(--team-primary)]" />
+            <span className="text-sm font-medium text-[var(--team-primary)]">Informações Legais</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl font-bold text-white">Termos de Uso</h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Diretrizes e condições para uso do Kings League Simulador.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-white/5 bg-[#111] p-6 sm:p-8 shadow-2xl">
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-[var(--team-primary)]">1. Aceitação dos Termos</h2>
             <p className="mb-4">
@@ -89,7 +117,7 @@ export default function TermosDeUso() {
         </div>
 
         <div className="mt-8 text-center">
-          <Button asChild variant="default" className="bg-[var(--team-primary)] hover:bg-[var(--team-primary)]/80">
+          <Button asChild className="bg-[var(--team-primary)] text-black hover:bg-[var(--team-primary)]/90 font-semibold">
             <Link href="/">
               Voltar para a página inicial
             </Link>
