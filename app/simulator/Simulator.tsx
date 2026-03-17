@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 import TeamCarousel from "@/components/team-carousel"
-import DisclaimerNotice from "@/components/disclaimer-notice"
 import { EmptyLeagueState } from "@/components/empty-league-state"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import { calculateStandings } from "@/lib/calculate-standings"
@@ -400,8 +399,6 @@ export default function SimulatorPage() {
             loading={loading}
           />
         </div>
-
-        <DisclaimerNotice forceShow={false} />
 
         {usingFallback && (
           <Alert className="mb-6 bg-[#332700] border-[#F4AF23] text-white">
