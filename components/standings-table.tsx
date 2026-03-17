@@ -106,12 +106,14 @@ export default function StandingsTable(props: StandingsTableProps) {
             {/* Table */}
             <div className="overflow-hidden">
               {/* Header Row */}
-              <div className="grid grid-cols-[32px_1fr_40px_32px_32px] sm:grid-cols-[40px_1fr_48px_40px_40px] gap-1 px-3 py-2 text-[10px] sm:text-xs text-gray-500 font-medium border-b border-white/5">
+              <div className="grid grid-cols-[28px_1fr_56px_44px_30px] xs:grid-cols-[32px_1fr_56px_32px_32px_32px] sm:grid-cols-[40px_1fr_72px_40px_40px_40px] gap-1 px-3 py-2 text-[10px] sm:text-xs text-gray-500 font-medium border-b border-white/5">
                 <div className="text-center">#</div>
                 <div>Time</div>
-                <div className="text-center">Pts</div>
-                <div className="text-center hidden xs:block">J</div>
-                <div className="text-center hidden xs:block">SG</div>
+                <div className="text-center">V-D</div>
+                <div className="text-center xs:hidden">G</div>
+                <div className="text-center hidden xs:block">GP</div>
+                <div className="text-center hidden xs:block">GC</div>
+                <div className="text-center">SG</div>
               </div>
 
               {/* Team Rows */}
@@ -127,7 +129,7 @@ export default function StandingsTable(props: StandingsTableProps) {
                       key={team.id}
                       onClick={() => onTeamSelect(team.id)}
                       className={cn(
-                        "grid grid-cols-[32px_1fr_40px_32px_32px] sm:grid-cols-[40px_1fr_48px_40px_40px] gap-1 px-3 py-2.5 items-center",
+                        "grid grid-cols-[28px_1fr_56px_44px_30px] xs:grid-cols-[32px_1fr_56px_32px_32px_32px] sm:grid-cols-[40px_1fr_72px_40px_40px_40px] gap-1 px-3 py-2.5 items-center",
                         "cursor-pointer transition-all duration-200",
                         "hover:bg-white/5",
                         isFavorite && "bg-[var(--team-primary)]/5 border-l-2 border-[var(--team-primary)]"
@@ -183,22 +185,36 @@ export default function StandingsTable(props: StandingsTableProps) {
                         </div>
                       </div>
 
-                      {/* Points */}
+                      {/* Wins - Losses */}
                       <div className="text-center">
-                        <span className="text-sm sm:text-base font-bold text-[var(--team-primary,#F4AF23)]">
-                          {team.points}
+                        <span className="text-xs sm:text-sm font-semibold text-[var(--team-primary,#F4AF23)] whitespace-nowrap">
+                          {`${team.won ?? 0}-${team.lost ?? 0}`}
                         </span>
                       </div>
 
-                      {/* Games Played */}
+                      {/* Goals (mobile compact) */}
+                      <div className="text-center xs:hidden">
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                          {`${team.goalsFor ?? 0}/${team.goalsAgainst ?? 0}`}
+                        </span>
+                      </div>
+
+                      {/* Goals For */}
                       <div className="text-center hidden xs:block">
                         <span className="text-xs text-gray-400">
-                          {team.played ?? 0}
+                          {team.goalsFor ?? 0}
+                        </span>
+                      </div>
+
+                      {/* Goals Against */}
+                      <div className="text-center hidden xs:block">
+                        <span className="text-xs text-gray-400">
+                          {team.goalsAgainst ?? 0}
                         </span>
                       </div>
 
                       {/* Goal Difference */}
-                      <div className="text-center hidden xs:block">
+                      <div className="text-center">
                         <span className={cn(
                           "text-xs font-medium",
                           (team.goalDifference ?? (team.goalsFor - team.goalsAgainst)) > 0
