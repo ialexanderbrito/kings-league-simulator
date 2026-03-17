@@ -12,11 +12,7 @@ export function FullTableSkeleton() {
                 <TableHead className="w-12 text-center text-xs text-muted-foreground font-normal py-3">P</TableHead>
                 <TableHead className="w-8 px-0"></TableHead>
                 <TableHead className="text-xs text-muted-foreground font-normal py-3">TIME</TableHead>
-                <TableHead className="text-center text-xs text-muted-foreground font-normal w-16 py-3">PTS</TableHead>
-                <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden sm:table-cell">PJ</TableHead>
-                <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3">VMB</TableHead>
-                <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3 hidden sm:table-cell">VSO</TableHead>
-                <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3">D</TableHead>
+                <TableHead className="text-center text-xs text-muted-foreground font-normal w-20 py-3">V - D</TableHead>
                 <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GP</TableHead>
                 <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">GC</TableHead>
                 <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell">SG</TableHead>
@@ -50,28 +46,8 @@ export function FullTableSkeleton() {
                     </div>
                   </TableCell>
 
-                  {/* Points */}
-                  <TableCell className="text-center py-2 w-16">
-                    <Skeleton className="h-4 w-6 mx-auto" style={{ backgroundColor: 'color-mix(in srgb, var(--team-primary) 20%, transparent)' }} />
-                  </TableCell>
-
-                  {/* Games Played (PJ) - hidden sm */}
-                  <TableCell className="text-center py-2 w-12 hidden sm:table-cell">
-                    <Skeleton className="h-3 w-4 mx-auto" />
-                  </TableCell>
-
-                  {/* Wins (VMB) */}
-                  <TableCell className="text-center py-2 w-10">
-                    <Skeleton className="h-3 w-4 mx-auto" />
-                  </TableCell>
-
-                  {/* Shootout Wins (VSO) - hidden sm */}
-                  <TableCell className="text-center py-2 w-10 hidden sm:table-cell">
-                    <Skeleton className="h-3 w-4 mx-auto" />
-                  </TableCell>
-
-                  {/* Losses (D) */}
-                  <TableCell className="text-center py-2 w-10">
+                  {/* Wins and losses (V - D) */}
+                  <TableCell className="text-center py-2 w-20">
                     <Skeleton className="h-3 w-4 mx-auto" />
                   </TableCell>
 

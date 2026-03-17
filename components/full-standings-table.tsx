@@ -98,11 +98,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                       <TableHead className="w-12 text-center text-xs text-muted-foreground font-normal py-3" title="Posição">P</TableHead>
                       <TableHead className="w-8 px-0"></TableHead>
                       <TableHead className="text-xs text-muted-foreground font-normal py-3">TIME</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-16 py-3" title="Pontos">PTS</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden sm:table-cell" title="Partidas Jogadas">PJ</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3" title="Vitórias no Match Ball (tempo regulamentar)">VMB</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3 hidden sm:table-cell" title="Vitórias no Shootout (empate no tempo regulamentar)">VSO</TableHead>
-                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-10 py-3" title="Derrotas">D</TableHead>
+                      <TableHead className="text-center text-xs text-muted-foreground font-normal w-20 py-3" title="Vitórias - Derrotas">V - D</TableHead>
                       <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell" title="Gols Pró (marcados)">GP</TableHead>
                       <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell" title="Gols Contra (sofridos)">GC</TableHead>
                       <TableHead className="text-center text-xs text-muted-foreground font-normal w-12 py-3 hidden md:table-cell" title="Saldo de Gols">SG</TableHead>
@@ -174,11 +170,7 @@ export default function FullStandingsTable(props: StandingsTableProps) {
                             </div>
                           </TableCell>
 
-                          <TableCell className="text-center font-bold text-[var(--team-primary,var(--team-primary))] text-sm py-2 w-16">{team.points}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-12">{team.played ?? 0}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 w-10">{team.regularWins ?? (team.won - (team.penaltyWins ?? 0))}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 hidden sm:table-cell w-10">{team.penaltyWins ?? 0}</TableCell>
-                          <TableCell className="text-center text-xs text-foreground py-2 w-10">{team.lost ?? 0}</TableCell>
+                          <TableCell className="text-center text-xs text-foreground py-2 w-20 whitespace-nowrap">{`${team.won ?? 0} - ${team.lost ?? 0}`}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalsFor ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalsAgainst ?? 0}</TableCell>
                           <TableCell className="text-center text-xs text-foreground py-2 hidden md:table-cell w-12">{team.goalDifference ?? (team.goalsFor - team.goalsAgainst)}</TableCell>
@@ -216,18 +208,10 @@ export default function FullStandingsTable(props: StandingsTableProps) {
       <div className="bg-card rounded-lg px-4 py-3">
         <p className="text-xs font-semibold text-muted-foreground mb-2">Legenda da Tabela</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-          <span><strong className="text-foreground">PTS</strong> – Pontos</span>
-          <span><strong className="text-foreground">PJ</strong> – Partidas Jogadas</span>
-          <span><strong className="text-foreground">VMB</strong> – Vitórias no Match Ball</span>
-          <span><strong className="text-foreground">VSO</strong> – Vitórias no Shootout</span>
-          <span><strong className="text-foreground">D</strong> – Derrotas</span>
+          <span><strong className="text-foreground">V - D</strong> – Vitórias e Derrotas</span>
           <span><strong className="text-foreground">GP</strong> – Gols Pró</span>
           <span><strong className="text-foreground">GC</strong> – Gols Contra</span>
           <span><strong className="text-foreground">SG</strong> – Saldo de Gols</span>
-        </div>
-        <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
-          <p><strong className="text-foreground">Match Ball</strong> – Vitória no tempo regulamentar (1 ponto)</p>
-          <p><strong className="text-foreground">Shootout</strong> – Quando o jogo empata, o vencedor do Shootout ganha 1 ponto</p>
         </div>
       </div>
     </div>
