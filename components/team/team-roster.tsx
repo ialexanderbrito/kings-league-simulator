@@ -1,10 +1,12 @@
+"use client"
+
 import { PlayerCard } from "@/components/team/player-card"
 import { PlayerCardSkeleton } from "@/components/skeletons/player-card-skeleton"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import type { Player } from "@/types/kings-league"
-import { Users, ShieldCheck, Target, Zap, Goal, Info, Sparkles, Star, ChevronRight } from "lucide-react"
-import type { ReactNode } from 'react'
+import { Users, ShieldCheck, Target, Zap, Goal, Info, Sparkles, Star, AlertTriangle } from "lucide-react"
+import { useMemo, useState, type ReactNode } from 'react'
 import { cn } from "@/lib/utils"
 
 interface TeamRosterProps {
@@ -12,26 +14,75 @@ interface TeamRosterProps {
   loading: boolean
 }
 
+type RatingFilter = "all" | "wildcard" | "elite" | "rare" | "common" | "basic" | "injured"
+
+function getAttrValue(attr: string | undefined): number {
+  const value = Number.parseInt(attr || "70", 10)
+  return Number.isNaN(value) ? 70 : value
+}
+
+function getPlayerRatingTier(player: Player): Exclude<RatingFilter, "all"> {
+  const isWildcard = player.category === "wildcard" || player?.metaInformation?.status === "Wildcard"
+  if (isWildcard) return "wildcard"
+
+  const meta = player.metaInformation
+  if (!meta) return "common"
+
+  const values = player.role === "goalkeeper"
+    ? [
+      getAttrValue(meta.diving),
+      getAttrValue(meta.handling),
+      getAttrValue(meta.reflexes),
+      getAttrValue(meta.anticipation),
+    ]
+    : [
+      getAttrValue(meta.passing),
+      getAttrValue(meta.shooting),
+      getAttrValue(meta.defence),
+      getAttrValue(meta.physical),
+      getAttrValue(meta.duels),
+      getAttrValue(meta.skills),
+    ]
+
+  const rating = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length)
+
+  if (rating >= 78) return "elite"
+  if (rating >= 74) return "rare"
+  if (rating >= 70) return "common"
+  return "basic"
+}
+
 export function TeamRoster({ players, loading }: TeamRosterProps) {
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState<RatingFilter>("all")
+
   if (loading) {
     return <TeamRosterSkeleton />
   }
 
-  const goalkeepers = players.filter(p => p.role === 'goalkeeper')
-  const defenders = players.filter(p => p.role === 'defender')
-  const midfielders = players.filter(p => p.role === 'midfielder')
-  const forwards = players.filter(p => p.role === 'forward')
+  const filteredPlayers = useMemo(() => {
+    if (selectedRatingFilter === "all") return players
+    if (selectedRatingFilter === "injured") {
+      return players.filter((player) => String(player?.metaInformation?.injury || "").toLowerCase() === "true")
+    }
+    return players.filter((player) => getPlayerRatingTier(player) === selectedRatingFilter)
+  }, [players, selectedRatingFilter])
+
+  const goalkeepers = filteredPlayers.filter(p => p.role === 'goalkeeper')
+  const defenders = filteredPlayers.filter(p => p.role === 'defender')
+  const midfielders = filteredPlayers.filter(p => p.role === 'midfielder')
+  const forwards = filteredPlayers.filter(p => p.role === 'forward')
 
   // Calcular estatísticas do elenco
   const totalPlayers = players.length
 
   const wildcardCount = players.filter(p => p.category === "wildcard" || p?.metaInformation?.status === "Wildcard").length
   const draftedCount = players.filter(p => p.category === "draft" || p?.metaInformation?.status === "Draft").length
+  const injuredCount = players.filter(p => String(p?.metaInformation?.injury || "").toLowerCase() === "true").length
 
   return (
     <div className="space-y-8">
       {/* Header com estatísticas do elenco */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           icon={Users}
           value={totalPlayers}
@@ -50,10 +101,21 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
           label="Wild Cards"
           color="amber"
         />
+        <StatCard
+          icon={AlertTriangle}
+          value={injuredCount}
+          label="Machucados"
+          color="red"
+        />
       </div>
 
       {/* Legenda de cards */}
-      <RatingLegend />
+      <RatingLegend
+        selectedFilter={selectedRatingFilter}
+        onSelectFilter={setSelectedRatingFilter}
+        totalPlayers={players.length}
+        filteredPlayers={filteredPlayers.length}
+      />
 
       {/* Seções por posição */}
       {goalkeepers.length > 0 && (
@@ -96,13 +158,13 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
         />
       )}
 
-      {players.length === 0 && (
+      {filteredPlayers.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 rounded-2xl bg-white/[0.02] border border-white/5">
           <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
             <Users className="w-10 h-10 text-gray-500" />
           </div>
-          <p className="text-lg font-medium text-white mb-1">Nenhum jogador encontrado</p>
-          <p className="text-sm text-gray-500">O elenco será exibido quando disponível</p>
+          <p className="text-lg font-medium text-white mb-1">Nenhum jogador encontrado para esse filtro</p>
+          <p className="text-sm text-gray-500">Selecione outro tier no Sistema de Rating para ver mais jogadores</p>
         </div>
       )}
     </div>
@@ -146,13 +208,24 @@ function StatCard({ icon: Icon, value, label, color }: { icon: any; value: React
   )
 }
 
-function RatingLegend() {
+function RatingLegend({
+  selectedFilter,
+  onSelectFilter,
+  totalPlayers,
+  filteredPlayers,
+}: {
+  selectedFilter: RatingFilter
+  onSelectFilter: (filter: RatingFilter) => void
+  totalPlayers: number
+  filteredPlayers: number
+}) {
   const ratings = [
-    { color: "from-amber-600 to-amber-800", border: "border-amber-500", label: "Wild Card", desc: "Jogadores contratados fora do draft" },
-    { color: "from-blue-600 to-blue-800", border: "border-blue-500", label: "78-82", desc: "Rating Elite" },
-    { color: "from-red-600 to-red-800", border: "border-red-500", label: "74-77", desc: "Rating Alto" },
-    { color: "from-green-600 to-green-800", border: "border-green-500", label: "70-73", desc: "Rating Médio" },
-    { color: "from-zinc-600 to-zinc-800", border: "border-zinc-500", label: "65-69", desc: "Rating Básico" },
+    { key: "wildcard" as const, color: "from-amber-600 to-amber-800", border: "border-amber-500", label: "Wild Card", desc: "Contratados fora do draft" },
+    { key: "elite" as const, color: "from-blue-600 to-blue-800", border: "border-blue-500", label: "78+", desc: "Rating Elite" },
+    { key: "rare" as const, color: "from-red-600 to-red-800", border: "border-red-500", label: "74-77", desc: "Rating Alto" },
+    { key: "common" as const, color: "from-green-600 to-green-800", border: "border-green-500", label: "70-73", desc: "Rating Médio" },
+    { key: "basic" as const, color: "from-zinc-600 to-zinc-800", border: "border-zinc-500", label: "< 70", desc: "Rating Básico" },
+    { key: "injured" as const, color: "from-rose-600 to-red-700", border: "border-rose-500", label: "Machucados", desc: "Status de lesão ativo" },
   ]
 
   return (
@@ -164,15 +237,44 @@ function RatingLegend() {
           </div>
           <div>
             <h4 className="text-base font-semibold text-white">Sistema de Rating</h4>
-            <p className="text-xs text-gray-500">Classificação dos cards baseada no rating geral</p>
+            <p className="text-xs text-gray-500">Clique em um tier ou em Machucados para filtrar os jogadores</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => onSelectFilter("all")}
+            aria-pressed={selectedFilter === "all"}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
+              selectedFilter === "all"
+                ? "bg-white text-black border-white"
+                : "bg-white/[0.03] text-gray-300 border-white/10 hover:bg-white/[0.08]"
+            )}
+          >
+            Todos ({totalPlayers})
+          </button>
+          {selectedFilter !== "all" && (
+            <span className="text-xs text-gray-400">
+              Mostrando {filteredPlayers} de {totalPlayers}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {ratings.map((rating, index) => (
-            <div
+            <button
               key={index}
-              className="group flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all duration-200"
+              type="button"
+              onClick={() => onSelectFilter(selectedFilter === rating.key ? "all" : rating.key)}
+              aria-pressed={selectedFilter === rating.key}
+              className={cn(
+                "group flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-200 text-left",
+                selectedFilter === rating.key
+                  ? "bg-white/10 border-white/25 ring-1 ring-white/20"
+                  : "bg-white/[0.02] border-white/5 hover:border-white/10"
+              )}
             >
               <div className={cn(
                 "w-8 h-8 rounded-lg bg-gradient-to-b border flex-shrink-0",
@@ -183,7 +285,7 @@ function RatingLegend() {
                 <p className="text-xs font-semibold text-white truncate">{rating.label}</p>
                 <p className="text-[10px] text-gray-500 truncate">{rating.desc}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 

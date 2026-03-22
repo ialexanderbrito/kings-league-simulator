@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import type { Player } from "@/types/kings-league"
 import { calculateAge, cn } from "@/lib/utils"
-import { Trophy, TrendingUp, Award, Star, Zap, Shield, Target, ChevronDown, ChevronUp, Sparkles } from "lucide-react"
+import { Trophy, TrendingUp, Award, Star, Zap, Shield, Target, ChevronDown, ChevronUp, Sparkles, AlertTriangle } from "lucide-react"
 
 interface PlayerCardProps {
   player: Player
@@ -12,6 +12,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
   const [imageSrc, setImageSrc] = useState<string>(player.image?.url || '/kl-player-placeholder.webp')
 
   const isWildcard = player.category === "wildcard" || player?.metaInformation?.status === "Wildcard"
+  const isInjured = String(player?.metaInformation?.injury || "").toLowerCase() === "true"
 
   useEffect(() => {
     setImageSrc(player.image?.url || '/kl-player-placeholder.webp')
@@ -257,6 +258,12 @@ export function PlayerCard({ player }: PlayerCardProps) {
                     {isWildcard && <Sparkles className="w-2.5 h-2.5 inline mr-1" />}
                     {cardStyle.tier}
                   </span>
+                  {isInjured && (
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 border border-red-500/30 inline-flex items-center gap-1">
+                      <AlertTriangle className="w-2.5 h-2.5" />
+                      Machucado
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
