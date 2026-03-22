@@ -172,6 +172,7 @@ export interface Player {
   }
   metaInformation?: {
     duels?: string
+    injury?: string
     skills?: string
     average?: string
     defence?: string
