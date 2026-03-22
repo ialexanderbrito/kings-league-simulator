@@ -9,6 +9,23 @@ const teamDetailsCache: Record<string, { data: TeamDetails, timestamp: number }>
 // Tempo de expiração do cache em milissegundos (12 horas)
 const CACHE_EXPIRY_TIME = 12 * 60 * 60 * 1000
 
+function sanitizeTeamDetailsPlayers(teamId: string, teamDetails: TeamDetails): TeamDetails {
+  if (!Array.isArray(teamDetails.players)) {
+    return teamDetails
+  }
+
+  // Safety net no client: evita exibir presidente listado como jogador no Dibrados FC.
+  if (teamId === "220") {
+    teamDetails.players = teamDetails.players.filter((player: any) => {
+      const isLucasTyltyById = Number(player?.id) === 86902
+      const isLucasTyltyByName = String(player?.shortName || "").trim().toLowerCase() === "lucas tylty"
+      return !(isLucasTyltyById && isLucasTyltyByName)
+    })
+  }
+
+  return teamDetails
+}
+
 export async function fetchLeagueData(): Promise<LeagueData> {
   try {
     // Busca dados locais (estrutura base)
@@ -127,10 +144,11 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
     }
     
     const teamDetails = await response.json()
+    const sanitizedTeamDetails = sanitizeTeamDetailsPlayers(teamId, teamDetails)
     
-    if (teamDetails.players && teamDetails.players.length > 0) {
+    if (sanitizedTeamDetails.players && sanitizedTeamDetails.players.length > 0) {
       await Promise.all(
-        teamDetails.players.map(async (player: any) => {
+        sanitizedTeamDetails.players.map(async (player: any) => {
           try {
             const playerStats = await fetchPlayerStats(player.id)
             player.stats = playerStats
@@ -143,11 +161,11 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
     
     // Armazenar no cache com timestamp atual
     teamDetailsCache[teamId] = {
-      data: teamDetails,
+      data: sanitizedTeamDetails,
       timestamp: now
     }
     
-    return teamDetails
+    return sanitizedTeamDetails
   } catch (error) {
     throw error
   }

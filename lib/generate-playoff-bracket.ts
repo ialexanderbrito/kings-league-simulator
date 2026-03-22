@@ -194,6 +194,8 @@ export function updatePlayoffBracket(
       (nextMatchId === 'final' ? newBracket.final : undefined);
     
     if (nextMatch) {
+      const nextMatchPreviousWinnerId = nextMatch.winnerId;
+
       // Determinar qual posição específica deve ser atualizada baseado na partida de origem
       let targetPosition: 'home' | 'away' | null = null;
       
@@ -260,30 +262,19 @@ export function updatePlayoffBracket(
       // Se um dos times foi substituído, apenas resetar o vencedor (não os scores)
       if (previousWinnerId !== newWinnerId) {
         nextMatch.winnerId = null;
-        
-        // Atualizar recursivamente a final se necessário
-        if (nextMatch.nextMatchId === 'final' && newBracket.final) {
+
+        // Se alteramos uma partida que alimenta uma semifinal, invalidar a vaga
+        // correspondente da final APENAS quando havia um vencedor prévio da semifinal.
+        if (nextMatch.stage === 'semifinal' && newBracket.final && nextMatchPreviousWinnerId) {
           const finalMatch = newBracket.final;
-          
-          // Se o vencedor anterior está na final, remover
-          if (finalMatch.homeTeamId === previousWinnerId || finalMatch.awayTeamId === previousWinnerId) {
-            if (finalMatch.homeTeamId === previousWinnerId) {
-              finalMatch.homeTeamId = null;
-            }
-            if (finalMatch.awayTeamId === previousWinnerId) {
-              finalMatch.awayTeamId = null;
-            }
-            
-            // Se há um novo vencedor, colocar na final
-            if (newWinnerId) {
-              if (finalMatch.homeTeamId === null) {
-                finalMatch.homeTeamId = newWinnerId;
-              } else if (finalMatch.awayTeamId === null) {
-                finalMatch.awayTeamId = newWinnerId;
-              }
-            }
-            
-            // Resetar apenas o vencedor da final, preservando os scores
+
+          if (nextMatch.id === 'sf1' && finalMatch.homeTeamId === nextMatchPreviousWinnerId) {
+            finalMatch.homeTeamId = null;
+            finalMatch.winnerId = null;
+          }
+
+          if (nextMatch.id === 'sf2' && finalMatch.awayTeamId === nextMatchPreviousWinnerId) {
+            finalMatch.awayTeamId = null;
             finalMatch.winnerId = null;
           }
         }
