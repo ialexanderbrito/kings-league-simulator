@@ -6,6 +6,20 @@ import {
   type KingsLeaguePlayer,
 } from "@/lib/api"
 
+function sanitizeTeamPlayers(teamId: string, players: KingsLeaguePlayer[]): KingsLeaguePlayer[] {
+  // Regra de negócio temporária: na API da competição, o presidente do Dibrados FC
+  // está vindo duplicado indevidamente como jogador.
+  if (teamId !== "220") {
+    return players
+  }
+
+  return players.filter((player) => {
+    const isLucasTyltyById = Number(player.id) === 86902
+    const isLucasTyltyByName = String(player.shortName || "").trim().toLowerCase() === "lucas tylty"
+    return !(isLucasTyltyById && isLucasTyltyByName)
+  })
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { teamId: string } }
@@ -49,6 +63,8 @@ export async function GET(
         stats: null,
         metaInformation: player.metaInformation || {},
       }))
+
+      playersData = sanitizeTeamPlayers(teamId, playersData)
     }
 
     const response = {
