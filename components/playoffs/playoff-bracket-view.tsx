@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { PlayoffBracket, Team } from "@/types/kings-league";
 import { PlayoffMatchCard } from "./playoff-match-card";
-import { Card, CardContent } from "@/components/ui/card";
 import { updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
 import { useTeamTheme } from "@/contexts/team-theme-context";
-import { Trophy, ChevronRight, ChevronLeft, Info } from "lucide-react";
-import { cn, getProxyImageUrl } from "@/lib/utils";
+import { Trophy, Sparkles, Info } from "lucide-react";
+import { getProxyImageUrl } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 
@@ -62,27 +61,43 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate }: PlayoffB
     <div className="w-full">
       {/* Banner do campeão */}
       {champion && (
-        <div className="mb-6 flex flex-col items-center justify-center">
-          <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 via-yellow-200/10 to-transparent border border-yellow-400/30 shadow">
-            <Trophy className="w-6 h-6 text-yellow-500 drop-shadow" />
-            <span className="font-bold text-lg text-yellow-700">{champion.name}</span>
-            <span className="text-xs text-yellow-700 font-medium uppercase ml-2">Campeão</span>
+        <div className="mb-6 sm:mb-7 flex justify-center">
+          <div className="w-full max-w-[360px] rounded-2xl border border-border/70 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm px-3.5 py-3 sm:px-4 sm:py-3.5">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="absolute -inset-1 rounded-full bg-[var(--team-primary)]/20 blur-sm" aria-hidden="true" />
+                <img
+                  src={getProxyImageUrl(champion.logo?.url)}
+                  alt={`Logo ${champion.name}`}
+                  className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[var(--team-primary)]/35 bg-background object-contain p-1"
+                  loading="lazy"
+                  crossOrigin="anonymous"
+                />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--team-primary)]/35 bg-[var(--team-primary)]/10 px-2 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-foreground/90">
+                  <Trophy className="w-3.5 h-3.5 text-[var(--team-primary)]" />
+                  Campeão
+                </div>
+                <p className="mt-1.5 text-base sm:text-lg font-semibold leading-tight text-foreground truncate" title={champion.name}>
+                  {champion.name}
+                </p>
+                <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <Sparkles className="w-3 h-3" />
+                  Melhor campanha no bracket
+                </p>
+              </div>
+            </div>
           </div>
-          <img
-            src={getProxyImageUrl(champion.logo?.url)}
-            alt={`Logo ${champion.name}`}
-            className="w-20 h-20 mt-2 rounded-full border-4 border-yellow-400 bg-white object-contain shadow-lg"
-            loading="lazy"
-            crossOrigin="anonymous"
-          />
         </div>
       )}
 
       {/* Bracket grid com linhas SVG */}
-      <div className="relative overflow-x-auto">
-        <div className="grid grid-cols-3 gap-x-8 gap-y-8 min-h-[420px]">
+      <div className="relative overflow-x-auto pb-2">
+        <div className="grid grid-cols-3 gap-x-3 sm:gap-x-5 md:gap-x-8 gap-y-4 sm:gap-y-6 md:gap-y-8 min-h-[360px] sm:min-h-[400px] md:min-h-[420px] min-w-[920px] md:min-w-0">
           {/* Quartas de final */}
-          <div className="flex flex-col justify-between h-full min-h-[320px]">
+          <div className="flex flex-col justify-between h-full min-h-[260px] sm:min-h-[300px] md:min-h-[320px]">
             {quarterfinals.map((m, i) => (
               <div key={m.id} className="relative flex-1 flex items-center">
                 <PlayoffMatchCard
@@ -101,7 +116,7 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate }: PlayoffB
             ))}
           </div>
           {/* Semifinais */}
-          <div className="flex flex-col justify-between h-full min-h-[220px]">
+          <div className="flex flex-col justify-between h-full min-h-[170px] sm:min-h-[200px] md:min-h-[220px]">
             {semifinals.map((m, i) => (
               <div key={m.id} className="relative flex-1 flex items-center">
                 <PlayoffMatchCard
@@ -120,7 +135,7 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate }: PlayoffB
             ))}
           </div>
           {/* Final */}
-          <div className="flex flex-col justify-center h-full min-h-[120px]">
+          <div className="flex flex-col justify-center h-full min-h-[90px] sm:min-h-[100px] md:min-h-[120px]">
             {finalMatch ? (
               <PlayoffMatchCard
                 match={finalMatch}

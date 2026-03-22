@@ -61,7 +61,7 @@ export function PlayoffMatchCard({
       )}
       aria-label={homeTeam && awayTeam ? `Partida: ${homeTeam.name} vs ${awayTeam.name}` : "Partida dos playoffs"}
     >
-      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] items-center gap-3 sm:gap-4 md:gap-6 w-full">
+      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] items-center gap-2 sm:gap-3 md:gap-6 w-full">
         {/* Time da casa */}
         {homeTeam ? (
           <div className="flex items-center gap-2 justify-end">
@@ -90,7 +90,7 @@ export function PlayoffMatchCard({
         )}
 
         {/* Área central - Seletor de vencedor */}
-        <div className="flex flex-col items-center px-1 sm:px-2 min-w-[100px] sm:min-w-[120px]">
+        <div className="flex flex-col items-center px-1 sm:px-2 min-w-[90px] sm:min-w-[110px] md:min-w-[120px]">
           {/* Badge de Ao Vivo */}
           {isLive && (
             <Badge
@@ -113,7 +113,7 @@ export function PlayoffMatchCard({
 
           {/* Seletores circulares de vencedor */}
           {homeTeam && awayTeam ? (
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3">
               {/* Botão Time da Casa (tamanho reduzido) */}
               <Button
                 onClick={() => onWinnerSelect(match.id, selectedWinner === "home" ? null : "home")}
@@ -121,14 +121,14 @@ export function PlayoffMatchCard({
                 size="icon"
                 className={cn(
                   // smaller circular button and project yellow when selected
-                  "w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
+                  "w-8 h-8 sm:w-9 sm:h-9 md:w-7 md:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
                   isHomeWinner
-                    ? "bg-[var(--team-primary] border-[var(--team-primary] text-black"
+                    ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black"
                     : "border-border hover:border-[var(--team-primary)]"
                 )}
                 aria-label={`Selecionar ${homeTeam.name} como vencedor`}
               >
-                {isHomeWinner && <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 font-bold" strokeWidth={3} />}
+                {isHomeWinner && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-3.5 md:h-3.5 font-bold" strokeWidth={3} />}
               </Button>
 
               <span className="text-xs sm:text-sm text-muted-foreground font-bold">VS</span>
@@ -139,14 +139,14 @@ export function PlayoffMatchCard({
                 variant="outline"
                 size="icon"
                 className={cn(
-                  "w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
+                  "w-8 h-8 sm:w-9 sm:h-9 md:w-7 md:h-7 rounded-full transition-colors duration-200 border-2 flex-shrink-0",
                   isAwayWinner
-                    ? "bg-[var(--team-primary] border-[var(--team-primary] text-black"
+                    ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black"
                     : "border-border hover:border-[var(--team-primary)]"
                 )}
                 aria-label={`Selecionar ${awayTeam.name} como vencedor`}
               >
-                {isAwayWinner && <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 font-bold" strokeWidth={3} />}
+                {isAwayWinner && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-3.5 md:h-3.5 font-bold" strokeWidth={3} />}
               </Button>
             </div>
           ) : (
