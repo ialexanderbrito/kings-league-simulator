@@ -1,5 +1,13 @@
 import type { Round, Team, TeamStanding } from "@/types/kings-league"
 
+type HeadToHeadStats = {
+  points: number
+  goalsFor: number
+  goalsAgainst: number
+  goalDifference: number
+  matches: number
+}
+
 export function calculateStandings(
   rounds: Round[],
   teams: Record<string, Team>,
@@ -22,6 +30,71 @@ export function calculateStandings(
 
   // Construir estatísticas globais por time (acumular todas as partidas)
   const globalStats: Record<string, TeamStanding> = {}
+
+  const buildHeadToHeadStats = (teamIds: string[]): Record<string, HeadToHeadStats> => {
+    const ids = new Set(teamIds)
+    const h2hStats: Record<string, HeadToHeadStats> = {}
+
+    teamIds.forEach((id) => {
+      h2hStats[id] = {
+        points: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+        matches: 0,
+      }
+    })
+
+    rounds.forEach((round) => {
+      round.matches.forEach((match) => {
+        const homeId = match.participants.homeTeamId
+        const awayId = match.participants.awayTeamId
+
+        if (!ids.has(homeId) || !ids.has(awayId)) return
+
+        const { homeScore, awayScore, homeScoreP, awayScoreP } = match.scores
+        if (homeScore === null || awayScore === null) return
+
+        const home = h2hStats[homeId]
+        const away = h2hStats[awayId]
+
+        home.matches += 1
+        away.matches += 1
+
+        home.goalsFor += homeScore
+        home.goalsAgainst += awayScore
+        away.goalsFor += awayScore
+        away.goalsAgainst += homeScore
+
+        if (homeScore > awayScore) {
+          home.points += 1
+        } else if (homeScore < awayScore) {
+          away.points += 1
+        } else {
+          // Empate -> checar Shootout
+          if (homeScoreP !== null && awayScoreP !== null) {
+            if (homeScoreP > awayScoreP) {
+              home.points += 1
+            } else if (awayScoreP > homeScoreP) {
+              away.points += 1
+            } else {
+              home.points += 1
+              away.points += 1
+            }
+          } else {
+            home.points += 1
+            away.points += 1
+          }
+        }
+      })
+    })
+
+    Object.keys(h2hStats).forEach((id) => {
+      h2hStats[id].goalDifference = h2hStats[id].goalsFor - h2hStats[id].goalsAgainst
+    })
+
+    return h2hStats
+  }
 
   const ensureTeam = (id: string) => {
     if (!globalStats[id]) {
@@ -154,12 +227,8 @@ export function calculateStandings(
       }
     })
 
-    const sorted = list.sort((a, b) => {
-      // Tiebreakers (in order): points, wins, goal difference, goals for, name
-      const aPoints = Number(a.points || 0)
-      const bPoints = Number(b.points || 0)
-      if (bPoints !== aPoints) return bPoints - aPoints
-
+    const compareFallback = (a: TeamStanding, b: TeamStanding) => {
+      // Critérios globais após confronto direto: vitórias, saldo, gols pró, nome
       const aWon = Number(a.won || 0)
       const bWon = Number(b.won || 0)
       if (bWon !== aWon) return bWon - aWon
@@ -172,8 +241,63 @@ export function calculateStandings(
       const bGF = Number(b.goalsFor || 0)
       if (bGF !== aGF) return bGF - aGF
 
-      return (a.name || '').localeCompare(b.name || '')
+      return (a.name || "").localeCompare(b.name || "")
+    }
+
+    // 1) Ordena por pontos para formar blocos empatados
+    const byPoints = [...list].sort((a, b) => {
+      const aPoints = Number(a.points || 0)
+      const bPoints = Number(b.points || 0)
+      if (bPoints !== aPoints) return bPoints - aPoints
+      return compareFallback(a, b)
     })
+
+    // 2) Em cada bloco de empate em pontos, aplica confronto direto
+    const sorted: TeamStanding[] = []
+    let i = 0
+
+    while (i < byPoints.length) {
+      const currentPoints = Number(byPoints[i].points || 0)
+      let j = i + 1
+
+      while (j < byPoints.length && Number(byPoints[j].points || 0) === currentPoints) {
+        j += 1
+      }
+
+      const tieBlock = byPoints.slice(i, j)
+      if (tieBlock.length <= 1) {
+        sorted.push(...tieBlock)
+        i = j
+        continue
+      }
+
+      const h2hStats = buildHeadToHeadStats(tieBlock.map((t) => t.id))
+      const hasHeadToHeadData = tieBlock.some((t) => Number(h2hStats[t.id]?.matches || 0) > 0)
+
+      const tieSorted = [...tieBlock].sort((a, b) => {
+        if (hasHeadToHeadData) {
+          const aH2H = h2hStats[a.id]
+          const bH2H = h2hStats[b.id]
+
+          const aH2HPoints = Number(aH2H?.points || 0)
+          const bH2HPoints = Number(bH2H?.points || 0)
+          if (bH2HPoints !== aH2HPoints) return bH2HPoints - aH2HPoints
+
+          const aH2HGD = Number(aH2H?.goalDifference || 0)
+          const bH2HGD = Number(bH2H?.goalDifference || 0)
+          if (bH2HGD !== aH2HGD) return bH2HGD - aH2HGD
+
+          const aH2HGF = Number(aH2H?.goalsFor || 0)
+          const bH2HGF = Number(bH2H?.goalsFor || 0)
+          if (bH2HGF !== aH2HGF) return bH2HGF - aH2HGF
+        }
+
+        return compareFallback(a, b)
+      })
+
+      sorted.push(...tieSorted)
+      i = j
+    }
 
     // remover duplicatas por id
     const seen = new Set<string>()
