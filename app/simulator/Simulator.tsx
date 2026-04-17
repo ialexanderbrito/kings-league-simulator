@@ -335,16 +335,21 @@ export default function SimulatorPage() {
     orderedKeys.push(...middle)
     if (keys.includes('B')) orderedKeys.push('B')
 
-    // Sort each group's standings to match full table ordering: points desc, goalDifference desc, goalsFor desc, won desc
+    // Preserva a ordenação oficial/calculada por rank (inclui critérios de desempate)
     orderedKeys.forEach((k) => {
       const arr = groups[k] || []
       arr.sort((a: any, b: any) => {
+        const rankA = Number(a.rank ?? 0)
+        const rankB = Number(b.rank ?? 0)
+        if (rankA > 0 && rankB > 0 && rankA !== rankB) return rankA - rankB
+
         if ((b.points ?? 0) !== (a.points ?? 0)) return (b.points ?? 0) - (a.points ?? 0)
+        if ((b.won ?? 0) !== (a.won ?? 0)) return (b.won ?? 0) - (a.won ?? 0)
         const gdA = a.goalDifference ?? ((a.goalsFor ?? 0) - (a.goalsAgainst ?? 0))
         const gdB = b.goalDifference ?? ((b.goalsFor ?? 0) - (b.goalsAgainst ?? 0))
         if (gdB !== gdA) return gdB - gdA
         if ((b.goalsFor ?? 0) !== (a.goalsFor ?? 0)) return (b.goalsFor ?? 0) - (a.goalsFor ?? 0)
-        return (b.won ?? 0) - (a.won ?? 0)
+        return String(a.name ?? "").localeCompare(String(b.name ?? ""))
       })
       groups[k] = arr
     })
