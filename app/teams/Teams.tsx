@@ -1,23 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
-import { Skeleton } from "@/components/ui/skeleton"
 import { TeamsGridSkeleton } from "@/components/skeletons/teams-grid-skeleton"
 import { ButtonTop } from "@/components/ui/button-top"
-import { fetchLeagueData } from "@/lib/fetch-league-data"
-import type { Team, TeamDetails } from "@/types/kings-league"
+import { fetchLeagueData, fetchTeamDetails } from "@/lib/fetch-league-data"
+import type { Team, TeamDetails, TeamStanding } from "@/types/kings-league"
 import { cn, getProxyImageUrl } from "@/lib/utils"
-import { Users, Crown, ChevronRight, Sparkles, Shield, User } from "lucide-react"
+import { Users, Crown, ChevronRight, ArrowUpRight, Trophy } from "lucide-react"
+import KingsLeagueLogo from "@/components/kings-league-logo"
 
 export default function Teams() {
   const [loading, setLoading] = useState(true)
   const [teams, setTeams] = useState<Team[]>([])
   const [teamDetails, setTeamDetails] = useState<Record<string, TeamDetails>>({})
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
-  const [standings, setStandings] = useState<any[]>([])
+  const [standings, setStandings] = useState<TeamStanding[]>([])
 
   useEffect(() => {
     const loadData = async () => {
@@ -26,25 +26,22 @@ export default function Teams() {
         if (leagueData?.teams) {
           setTeams(leagueData.teams)
           setStandings(leagueData.standings || [])
+          setLoading(false)
 
-          await Promise.all(
+          // Atualiza detalhes em segundo plano aproveitando o cache
+          Promise.all(
             leagueData.teams.map(async (team) => {
               try {
-                const response = await fetch(`/api/team-details/${team.id}`)
-                if (response.ok) {
-                  const teamDetail = await response.json()
-                  setTeamDetails(prev => ({
-                    ...prev,
-                    [team.id]: teamDetail
-                  }))
-                }
+                const teamDetail = await fetchTeamDetails(team.id)
+                setTeamDetails(prev => ({
+                  ...prev,
+                  [team.id]: teamDetail
+                }))
               } catch (error) {
-                console.error(`Erro ao buscar detalhes do time ${team.id}:`, error)
+                // Silencioso: falhas individuais não devem quebrar a página
               }
             })
-          )
-
-          setLoading(false)
+          ).catch(() => {})
         }
       } catch (error) {
         console.error("Erro ao carregar dados da liga:", error)
@@ -59,17 +56,15 @@ export default function Teams() {
     setSelectedTeam(teamId)
   }
 
-  const teamsRecord: Record<string, Team> = teams.reduce((acc, team) => {
-    acc[team.id] = team
-    return acc
-  }, {} as Record<string, Team>)
-
-  // Calcular estatísticas
-  const totalPlayers = Object.values(teamDetails).reduce((acc, td) => acc + (td?.players?.length || 0), 0)
-  const totalPresidents = Object.values(teamDetails).filter(td => td?.staff?.some(s => s.role === 'president')).length
+  // Map de standings por ID de time para lookup instantâneo O(1)
+  const standingsMap = useMemo(() => {
+    const map = new Map<string, TeamStanding>()
+    standings.forEach(s => map.set(String(s.id), s))
+    return map
+  }, [standings])
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
+    <main className="min-h-screen bg-[#060608] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black relative">
       <Header
         loading={loading}
         selectedTeam={selectedTeam}
@@ -77,61 +72,46 @@ export default function Teams() {
         setActiveTab={() => { }}
       />
 
-      <div className="container mx-auto px-4 py-6 sm:py-10">
-        {/* Hero Header */}
-        <div className="relative mb-8 sm:mb-12">
-          {/* Background Glow */}
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-orange-500/10 rounded-full blur-3xl" />
+      {/* Iluminação Ambiente Suave */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div
+          className="absolute top-20 left-1/2 -translate-x-1/2 w-[900px] h-[400px] rounded-full blur-[140px] opacity-15"
+          style={{
+            background: 'radial-gradient(circle, var(--team-primary) 0%, rgba(244, 175, 35, 0.05) 50%, transparent 80%)'
+          }}
+        />
+      </div>
+
+      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl flex-1 flex flex-col relative z-10">
+        {/* Header da Página - Padrão Oficial Kings League */}
+        <div className="mb-6 sm:mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
+            <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+            <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
+              Temporada Oficial • Kings League Brasil
+            </span>
           </div>
 
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 mb-4">
-              <Shield className="w-4 h-4 text-orange-400" />
-              <span className="text-sm font-medium text-orange-400">Kings League Brasil</span>
-            </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+            Times &amp; <span className="text-[var(--team-primary,#F4AF23)]">Presidentes</span>
+          </h1>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
-              Todos os <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">Times</span>
-            </h1>
-
-            <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto">
-              Explore os times, seus presidentes e comissões técnicas da competição
-            </p>
-
-            {/* Stats Pills */}
-            {!loading && (
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                  <Shield className="w-4 h-4 text-orange-400" />
-                  <span className="text-sm text-white font-medium">{teams.length}</span>
-                  <span className="text-sm text-gray-500">times</span>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                  <Users className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm text-white font-medium">{totalPlayers}</span>
-                  <span className="text-sm text-gray-500">jogadores</span>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                  <Crown className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm text-white font-medium">{totalPresidents}</span>
-                  <span className="text-sm text-gray-500">presidentes</span>
-                </div>
-              </div>
-            )}
-          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+            As 10 identidades oficiais e as lideranças que comandam os esquadrões da Kings League.
+          </p>
         </div>
 
-        {/* Teams Grid */}
+        {/* Grid de Times com Acabamento Liquid Glass */}
         {loading ? (
           <TeamsGridSkeleton />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pb-12 sm:pb-16">
             {teams.map((team) => (
               <TeamCard
                 key={team.id}
                 team={team}
                 teamDetails={teamDetails[team.id]}
+                standing={standingsMap.get(String(team.id))}
                 isSelected={selectedTeam === team.id}
               />
             ))}
@@ -148,15 +128,17 @@ export default function Teams() {
 interface TeamCardProps {
   team: Team
   teamDetails?: TeamDetails
+  standing?: TeamStanding
   isSelected: boolean
 }
 
-function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
+function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
   const router = useRouter()
 
-  const president = teamDetails?.staff?.find(s => s.role === 'president')
-  const coach = teamDetails?.staff?.find(s => s.role === 'coach')
-  const playersCount = teamDetails?.players?.length || 0
+  const president =
+    teamDetails?.staff?.find((s) => s.role === "president") ||
+    (team as any).staffs?.find((s: any) => s.role === "president")
+  const playersCount = teamDetails?.players?.length || (team as any).players?.length || 13
 
   const handleClick = () => {
     router.push(`/team/${team.id}`)
@@ -166,11 +148,9 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
     <article
       onClick={handleClick}
       className={cn(
-        "group relative cursor-pointer overflow-hidden transition-all duration-300",
-        "bg-[#111111] border border-white/5 rounded-2xl",
-        "hover:border-white/10 hover:bg-[#151515] hover:-translate-y-1",
-        "hover:shadow-2xl hover:shadow-orange-500/5",
-        isSelected && "ring-2 ring-orange-500/50 border-orange-500/30"
+        "liquid-glass-card group relative cursor-pointer overflow-hidden rounded-3xl p-5 sm:p-6",
+        "flex flex-col justify-between",
+        isSelected && "ring-2 ring-[var(--team-primary)]/50"
       )}
       role="button"
       tabIndex={0}
@@ -182,124 +162,124 @@ function TeamCard({ team, teamDetails, isSelected }: TeamCardProps) {
         }
       }}
     >
-      {/* Gradient Border Top */}
+      {/* Refração de Luz Ambiente Baseada na Cor do Time */}
       <div
-        className="h-1 transition-all duration-300 group-hover:h-1.5"
-        style={{
-          background: `linear-gradient(90deg, ${team.firstColorHEX}, ${team.secondColorHEX})`
-        }}
-        aria-hidden="true"
+        className="pointer-events-none absolute -top-20 -right-20 w-56 h-56 rounded-full blur-3xl opacity-15 group-hover:opacity-30 transition-opacity duration-300"
+        style={{ backgroundColor: team.firstColorHEX || 'var(--team-primary)' }}
       />
 
-      {/* Background Glow on Hover */}
+      {/* Filete de Brilho Especular Superior com a Cor do Time */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        className="pointer-events-none absolute inset-x-8 top-0 h-[1.5px] opacity-70 group-hover:opacity-100 transition-opacity duration-300"
         style={{
-          background: `radial-gradient(circle at 50% 0%, ${team.firstColorHEX}10, transparent 70%)`
+          background: `linear-gradient(90deg, transparent, ${team.firstColorHEX || 'var(--team-primary)'} 50%, transparent)`
         }}
       />
 
-      <div className="relative p-5">
-        {/* Header - Logo e Info */}
-        <div className="flex items-start gap-4 mb-4">
-          <div className={cn(
-            "relative w-18 h-18 flex-shrink-0 rounded-2xl overflow-hidden",
-            "bg-white/5 border border-white/10",
-            "group-hover:border-white/20 transition-all duration-300"
-          )}
-            style={{ width: '72px', height: '72px' }}
-          >
-            <img
-              src={getProxyImageUrl(team.logo?.url)}
-              alt=""
-              className="w-full h-full object-contain p-2.5"
-              loading="lazy"
-              crossOrigin="anonymous"
+      <div>
+        {/* Top: Escudo e Identidade do Clube */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+            {/* Escudo do Clube em redoma de vidro */}
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl p-2.5 bg-white/[0.04] border border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform duration-200 ease-out">
+              <img
+                src={getProxyImageUrl(team.logo?.url)}
+                alt={`Escudo ${team.name}`}
+                className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
+                loading="lazy"
+                crossOrigin="anonymous"
+              />
+            </div>
+
+            {/* Nome & Tag */}
+            <div className="min-w-0 flex-1">
+              <h3 className="font-extrabold text-white text-base sm:text-lg tracking-tight truncate leading-snug">
+                {team.name}
+              </h3>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-zinc-300">
+                  {team.shortName}
+                </span>
+                {standing && (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-zinc-400 flex items-center gap-1">
+                    <Trophy className="w-2.5 h-2.5 text-amber-400" />
+                    <span>#{standing.rank}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Botão de Ação / Ícone de Abertura */}
+          <div className="w-8 h-8 rounded-full flex items-center justify-center liquid-pill-btn text-zinc-400 group-hover:text-white shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150">
+            <ArrowUpRight className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Destaque Central: O Presidente */}
+        <div className="my-5 p-3 sm:p-3.5 rounded-2xl bg-white/[0.025] group-hover:bg-white/[0.05] border border-white/[0.06] group-hover:border-white/[0.1] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] transition-[background-color,border-color] duration-150">
+          <div className="flex items-center gap-3">
+            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 shrink-0">
+              {president?.image?.url ? (
+                <img
+                  src={getProxyImageUrl(president.image.url)}
+                  alt={president.shortName || "Presidente"}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-amber-400 text-sm font-black bg-gradient-to-br from-amber-500/20 to-orange-500/20">
+                  {president?.shortName?.substring(0, 2) || "PR"}
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-black/80 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-sm">
+                <Crown className="w-2.5 h-2.5" />
+              </div>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/90 flex items-center gap-1">
+                Presidente
+              </span>
+              <p className="text-sm font-bold text-white truncate leading-snug mt-0.5">
+                {president ? (president.shortName || `${president.firstName} ${president.lastName}`) : "A Definir"}
+              </p>
+              <p className="text-[11px] text-zinc-400 font-medium truncate">
+                Liderança &amp; Transmissão
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Minimalista */}
+      <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 font-medium">
+            <Users className="w-3.5 h-3.5 text-zinc-500" />
+            <span>{playersCount} atletas</span>
+          </div>
+          {/* Swatch de Cores do Time */}
+          <div className="flex items-center -space-x-1" title="Cores do time">
+            <div
+              className="w-2.5 h-2.5 rounded-full border border-black/40"
+              style={{ backgroundColor: team.firstColorHEX }}
+            />
+            <div
+              className="w-2.5 h-2.5 rounded-full border border-black/40"
+              style={{ backgroundColor: team.secondColorHEX }}
             />
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-white text-base truncate group-hover:text-orange-400 transition-colors">
-              {team.name}
-            </h3>
-            <p className="text-sm text-gray-500">{team.shortName}</p>
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <Users className="w-3.5 h-3.5 text-gray-600" />
-              <span className="text-xs text-gray-500">{playersCount} jogadores</span>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-orange-400 group-hover:translate-x-1 transition-all" />
         </div>
 
-        {/* Presidente Section */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Crown className="w-3.5 h-3.5 text-amber-500" />
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Presidente</span>
-          </div>
-
-          {president ? (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-white/10">
-                {president.image?.url ? (
-                  <img
-                    src={president.image.url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full text-amber-400 text-sm font-bold">
-                    {president.shortName?.substring(0, 1)}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {president.shortName}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Sparkles className="w-3 h-3 text-amber-500" />
-                  <span className="text-xs text-amber-500/80">Presidente</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center gap-2 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-              <User className="w-4 h-4 text-gray-600" />
-              <span className="text-xs text-gray-500">Não disponível</span>
-            </div>
-          )}
-        </div>
-
-        {/* Técnico Section */}
-        {coach && (
-          <div className="mt-3 pt-3 border-t border-white/5">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
-                {coach.image?.url ? (
-                  <img
-                    src={coach.image.url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full text-blue-400 text-xs font-bold">
-                    {coach.firstName?.substring(0, 1)}{coach.lastName?.substring(0, 1)}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-300 truncate">
-                  {coach.firstName} {coach.lastName}
-                </p>
-                <span className="text-[10px] text-gray-500">Técnico</span>
-              </div>
-            </div>
-          </div>
-        )}
+        <span className="font-semibold text-zinc-400 group-hover:text-white transition-colors duration-150 flex items-center gap-1">
+          Ver perfil
+          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-150" />
+        </span>
       </div>
     </article>
   )
 }
+
 
