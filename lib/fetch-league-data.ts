@@ -1,5 +1,13 @@
 import type { LeagueData, TeamDetails, PlayerStats } from "@/types/kings-league"
 
+// In-memory cache e controle de chamadas em voo no cliente
+let leagueDataCache: { data: LeagueData; timestamp: number } | null = null
+let pendingLeagueDataPromise: Promise<LeagueData> | null = null
+const LEAGUE_DATA_CACHE_TTL = 3 * 60 * 1000 // 3 minutos
+
+const pendingTeamPromises = new Map<string, Promise<TeamDetails>>()
+const pendingPlayerStatsPromises = new Map<number, Promise<PlayerStats>>()
+
 // Cache para estatísticas de jogadores
 const playerStatsCache: Record<number, { data: PlayerStats, timestamp: number }> = {}
 
@@ -26,168 +34,227 @@ function sanitizeTeamDetailsPlayers(teamId: string, teamDetails: TeamDetails): T
   return teamDetails
 }
 
-export async function fetchLeagueData(): Promise<LeagueData> {
-  try {
-    // Busca dados locais (estrutura base)
-    const response = await fetch("/api/league-data", {
-      next: { revalidate: 300 }
-    })
+const SESSION_CACHE_KEY = "kl_league_data_cache_v2"
 
-    if (!response.ok) {
-      try {
-        const errorData = await response.json()
-        throw new Error(
-          `Falha ao carregar dados (status: ${response.status}): ${errorData.message || "Erro desconhecido"}`,
-        )
-      } catch (parseError) {
-        throw new Error(`Falha ao carregar dados (status: ${response.status})`)
-      }
-    }
+export async function fetchLeagueData(options: { forceRefresh?: boolean } = {}): Promise<LeagueData> {
+  const now = Date.now()
 
-    const data = await response.json()
-    if (data.error) {
-      throw new Error(data.error)
-    }
-
-    // Busca times da rota interna protegida
-    const teamsResp = await fetch("/api/teams", { next: { revalidate: 300 } })
-    if (!teamsResp.ok) {
-      throw new Error("Falha ao buscar times da API interna")
-    }
-    const remoteTeams = await teamsResp.json()
-    // Normaliza para o shape local Team (id como string)
-    data.teams = (remoteTeams || []).map((t: any) => ({
-      id: String(t.id),
-      name: t.name,
-      shortName: t.shortName,
-      completeName: t.completeName,
-      countryId: t.countryId,
-      firstColorHEX: t.firstColorHEX,
-      secondColorHEX: t.secondColorHEX,
-      logo: t.logo || { url: "/placeholder-logo.svg" },
-      gender: t.gender,
-      metaInformation: t.metaInformation,
-    }))
-
-    if (!data.teams || !data.standings || !data.rounds) {
-      throw new Error("Dados incompletos recebidos da API")
-    }
-
-    const officialMatches: any[] = []
-
-    // Filtra rodadas para remover playoffs (Quartas, Semi, Final)
-    if (data.rounds && Array.isArray(data.rounds)) {
-      data.rounds = data.rounds.filter((round: any) => {
-        const roundName = round.name?.toLowerCase() || '';
-        return !roundName.includes('quarta') && 
-               !roundName.includes('semi') && 
-               !roundName.includes('final');
-      });
-    }
-
-    // Mescla placares/status oficiais nas rodadas
-    if (officialMatches.length > 0 && data.rounds) {
-      const officialById = new Map<number, any>()
-      officialMatches.forEach((m: any) => {
-        officialById.set(Number(m.id), m)
-      })
-      data.rounds = data.rounds.map((round: any) => ({
-        ...round,
-        matches: Array.isArray(round.matches)
-          ? round.matches.map((match: any) => {
-              const official = officialById.get(Number(match.id))
-              if (official) {
-                return {
-                  ...match,
-                  status: official.status ?? match.status,
-                  scores: {
-                    homeScore: official.scores?.homeScore ?? match.scores?.homeScore ?? null,
-                    awayScore: official.scores?.awayScore ?? match.scores?.awayScore ?? null,
-                    homeScore1T: official.scores?.homeScore1T ?? match.scores?.homeScore1T ?? null,
-                    awayScore1T: official.scores?.awayScore1T ?? match.scores?.awayScore1T ?? null,
-                    homeScore2T: official.scores?.homeScore2T ?? match.scores?.homeScore2T ?? null,
-                    awayScore2T: official.scores?.awayScore2T ?? match.scores?.awayScore2T ?? null,
-                    homeScore3T: official.scores?.homeScore3T ?? match.scores?.homeScore3T ?? null,
-                    awayScore3T: official.scores?.awayScore3T ?? match.scores?.awayScore3T ?? null,
-                    homeScoreP: official.scores?.homeScoreP ?? match.scores?.homeScoreP ?? null,
-                    awayScoreP: official.scores?.awayScoreP ?? match.scores?.awayScoreP ?? null,
-                  },
-                  metaInformation: official.metaInformation ?? match.metaInformation,
-                }
-              }
-              return match
-            })
-          : []
-      }))
-    }
-
-    return data
-  } catch (error: any) {
-    throw new Error(`Falha ao carregar dados da Kings League Brasil: ${error.message}`)
+  // 1. Retorna do cache se válido e não forçado
+  if (!options.forceRefresh && leagueDataCache && (now - leagueDataCache.timestamp) < LEAGUE_DATA_CACHE_TTL) {
+    return leagueDataCache.data
   }
+
+  // 2. No navegador, recupera instantaneamente do sessionStorage (0ms de latência mesmo no 3G)
+  if (!options.forceRefresh && typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem(SESSION_CACHE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed?.data && parsed?.timestamp && (now - parsed.timestamp) < LEAGUE_DATA_CACHE_TTL) {
+          leagueDataCache = parsed
+          return parsed.data
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Se já existe uma requisição em andamento, reaproveita a Promise
+  if (pendingLeagueDataPromise) {
+    return pendingLeagueDataPromise
+  }
+
+  pendingLeagueDataPromise = (async () => {
+    try {
+      const response = await fetch("/api/league-data")
+
+      if (!response.ok) {
+        try {
+          const errorData = await response.json()
+          throw new Error(
+            `Falha ao carregar dados (status: ${response.status}): ${errorData.mensagem || errorData.erro || "Erro desconhecido"}`
+          )
+        } catch {
+          throw new Error(`Falha ao carregar dados (status: ${response.status})`)
+        }
+      }
+
+      const data: LeagueData = await response.json()
+      if ((data as any).erro) {
+        throw new Error((data as any).erro)
+      }
+
+      if (!data.teams || !data.standings || !data.rounds) {
+        throw new Error("Dados incompletos recebidos da API")
+      }
+
+      // Filtra rodadas para remover playoffs da fase regular (Quartas, Semi, Final)
+      if (Array.isArray(data.rounds)) {
+        data.rounds = data.rounds.filter((round: any) => {
+          const roundName = (round.name || "").toLowerCase()
+          return !roundName.includes("quarta") &&
+                 !roundName.includes("semi") &&
+                 !roundName.includes("final")
+        })
+      }
+
+      // Atualiza o cache local e sessionStorage
+      leagueDataCache = {
+        data,
+        timestamp: Date.now(),
+      }
+
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(leagueDataCache))
+        } catch {}
+      }
+
+      return data
+    } catch (error: any) {
+      // Se houver falha de rede e tivermos dado anterior em cache, usa como fallback
+      if (leagueDataCache) {
+        return leagueDataCache.data
+      }
+      if (typeof window !== "undefined") {
+        try {
+          const stored = sessionStorage.getItem(SESSION_CACHE_KEY)
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            if (parsed?.data) return parsed.data
+          }
+        } catch {}
+      }
+      throw new Error(`Falha ao carregar dados da Kings League Brasil: ${error.message}`)
+    } finally {
+      pendingLeagueDataPromise = null
+    }
+  })()
+
+  return pendingLeagueDataPromise
 }
 
+
 export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
-  try {
-    // Verificar se temos dados em cache e se ainda são válidos
-    const cachedData = teamDetailsCache[teamId]
-    const now = Date.now()
-    
-    if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
-      return cachedData.data
-    }
-    
-    const response = await fetch(`/api/team-details/${teamId}`)
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar detalhes do time: ${response.status} ${response.statusText}`)
-    }
-    
-    const teamDetails = await response.json()
-    const sanitizedTeamDetails = sanitizeTeamDetailsPlayers(teamId, teamDetails)
-    
-    if (sanitizedTeamDetails.players && sanitizedTeamDetails.players.length > 0) {
-      await Promise.all(
-        sanitizedTeamDetails.players.map(async (player: any) => {
-          try {
-            const playerStats = await fetchPlayerStats(player.id)
-            player.stats = playerStats
-          } catch (error) {
-            console.warn(`Erro ao buscar estatísticas para o jogador ${player.id}:`, error)
-          }
-        })
-      )
-    }
-    
-    // Armazenar no cache com timestamp atual
-    teamDetailsCache[teamId] = {
-      data: sanitizedTeamDetails,
-      timestamp: now
-    }
-    
-    return sanitizedTeamDetails
-  } catch (error) {
-    throw error
+  const cachedData = teamDetailsCache[teamId]
+  const now = Date.now()
+  
+  if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
+    return cachedData.data
   }
+
+  // Deduplicação de requisição em andamento para o mesmo time
+  if (pendingTeamPromises.has(teamId)) {
+    return pendingTeamPromises.get(teamId)!
+  }
+
+  const teamPromise = (async () => {
+    try {
+      const response = await fetch(`/api/team-details/${teamId}`)
+      
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar detalhes do time: ${response.status} ${response.statusText}`)
+      }
+      
+      const teamDetails = await response.json()
+      const sanitizedTeamDetails = sanitizeTeamDetailsPlayers(teamId, teamDetails)
+      
+      if (sanitizedTeamDetails.players && sanitizedTeamDetails.players.length > 0) {
+        await Promise.all(
+          sanitizedTeamDetails.players.map(async (player: any) => {
+            try {
+              const playerStats = await fetchPlayerStats(player.id)
+              player.stats = playerStats
+            } catch (error) {
+              console.warn(`Erro ao buscar estatísticas para o jogador ${player.id}:`, error)
+            }
+          })
+        )
+        
+        // Balanceamento de Overalls e Wild Cards
+        let wildcardCount = 0;
+        sanitizedTeamDetails.players = sanitizedTeamDetails.players.filter((p: any) => {
+          const isWc = p.category?.toLowerCase() === "wildcard" || 
+                       p.metaInformation?.status?.toLowerCase().includes("jogador 11") ||
+                       p.metaInformation?.status?.toLowerCase().includes("jogador 12") ||
+                       p.metaInformation?.status?.toLowerCase().includes("jogador 13") ||
+                       p.metaInformation?.status?.toLowerCase().includes("wildcard");
+                       
+          if (!p.metaInformation) p.metaInformation = {};
+          
+          if (isWc) {
+             wildcardCount++;
+             if (wildcardCount > 3) return false; // Limite de 3 Wild Cards por time
+          } else {
+             // Jogador comum (Draft/Base)
+             const currentAvg = p.metaInformation.average;
+             if (!currentAvg || currentAvg === "70" || currentAvg === "0" || currentAvg === "null") {
+                 const stats = p.stats;
+                 let base = 68; // Overall base
+                 if (stats) {
+                     base += Math.min(10, (stats.goalsScored || 0) * 1.5);
+                     base += Math.min(8, (stats.assists || 0) * 1.0);
+                     base += Math.min(5, (stats.mvps || 0) * 2.5);
+                     base += Math.min(4, (stats.matchesPlayed || 0) * 0.4);
+                 }
+                 if (p.role === "goalkeeper" && stats) {
+                     base += Math.min(10, (stats.matchesPlayed || 0) * 1.0); 
+                 }
+                 p.metaInformation.average = Math.min(84, Math.floor(base)).toString();
+             }
+          }
+          return true;
+        });
+      }
+      
+      // Armazenar no cache com timestamp atual
+      teamDetailsCache[teamId] = {
+        data: sanitizedTeamDetails,
+        timestamp: Date.now()
+      }
+      
+      return sanitizedTeamDetails
+    } finally {
+      pendingTeamPromises.delete(teamId)
+    }
+  })()
+
+  pendingTeamPromises.set(teamId, teamPromise)
+  return teamPromise
 }
 
 export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
-  try {
-    // Verificar se temos dados em cache e se ainda são válidos
-    const cachedData = playerStatsCache[playerId]
-    const now = Date.now()
-    
-    if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
-      return cachedData.data
-    }
-    
-    // Request compact payload (server supports ?compact=true and ?fields=...)
-    // We only need a few codes to compute aggregated stats client-side
-    const fields = encodeURIComponent('PG,GOL,ASS-V,CRT-G,CRT-R,MVP')
-    const response = await fetch(`/api/player-stats/${playerId}?compact=true&fields=${fields}`)
-    
-    if (!response.ok) {
-      return {
+  const cachedData = playerStatsCache[playerId]
+  const now = Date.now()
+  
+  if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
+    return cachedData.data
+  }
+
+  // Deduplicação de requisições em voo para o mesmo jogador
+  if (pendingPlayerStatsPromises.has(playerId)) {
+    return pendingPlayerStatsPromises.get(playerId)!
+  }
+
+  const statsPromise = (async () => {
+    try {
+      // Request compact payload (server supports ?compact=true and ?fields=...)
+      const fields = encodeURIComponent('PG,GOL,ASS-V,CRT-G,CRT-R,MVP')
+      const response = await fetch(`/api/player-stats/${playerId}?compact=true&fields=${fields}`)
+      
+      if (!response.ok) {
+        return {
+          matchesPlayed: 0,
+          goalsScored: 0,
+          assists: 0,
+          yellowCards: 0,
+          redCards: 0,
+          mvps: 0
+        }
+      }
+      
+      const data = await response.json()
+      
+      const processedStats: PlayerStats = {
         matchesPlayed: 0,
         goalsScored: 0,
         assists: 0,
@@ -195,18 +262,6 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
         redCards: 0,
         mvps: 0
       }
-    }
-    
-    const data = await response.json()
-    
-    const processedStats: PlayerStats = {
-      matchesPlayed: 0,
-      goalsScored: 0,
-      assists: 0,
-      yellowCards: 0,
-      redCards: 0,
-      mvps: 0
-    }
     
     if (Array.isArray(data.rankings)) {
       processedStats.rankings = data.rankings
@@ -240,11 +295,11 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
     // Armazenar no cache com timestamp atual
     playerStatsCache[playerId] = {
       data: processedStats,
-      timestamp: now
+      timestamp: Date.now()
     }
     
     return processedStats
-  } catch (error) {
+  } catch {
     return {
       matchesPlayed: 0,
       goalsScored: 0,
@@ -253,5 +308,17 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
       redCards: 0,
       mvps: 0
     }
+  } finally {
+    pendingPlayerStatsPromises.delete(playerId)
   }
+})()
+
+  pendingPlayerStatsPromises.set(playerId, statsPromise)
+  return statsPromise
 }
+
+export function clearLeagueDataCache() {
+  leagueDataCache = null
+}
+
+

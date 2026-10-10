@@ -162,15 +162,11 @@ async function fetchOfficialMatchData(matchIds: number[]): Promise<Map<number, O
   for (const batch of batches) {
     const promises = batch.map(async (id) => {
       try {
-        const url = `https://kingsleague.pro/api/v1/competition/matches/${id}?live=true&competitionId=${COMPETITION_ID}`
-        const response = await fetch(url, {
-          headers: KINGS_LEAGUE_SIMPLE_HEADERS,
-          cache: "no-store",
+        const url = `/competition/matches/${id}?live=true&competitionId=${COMPETITION_ID}`
+        const json = await fetchFromKingsLeague<any>(url, {
+          noCache: true,
         })
 
-        if (!response.ok) return null
-
-        const json = await response.json()
         if (!json?.id) return null
 
         const scores: Match["scores"] = {
@@ -266,25 +262,21 @@ function mergeOfficialData(rounds: Round[], officialById: Map<number, OfficialMa
 }
 
 /**
- * Identifica partidas que precisam de atualização de dados oficiais
+ * Identifica partidas que precisam de atualização de dados oficiais (apenas partidas em andamento/ao vivo)
  */
 function getMatchIdsNeedingUpdate(rounds: Round[]): number[] {
   const matchIds: number[] = []
 
   rounds.forEach((round) => {
     round.matches.forEach((match) => {
-      const home = match.scores?.homeScore
-      const away = match.scores?.awayScore
       const status = (match.status || "").toString().toLowerCase()
-
-      const needsUpdate =
-        home === null ||
-        away === null ||
+      const isLive =
         status.includes("live") ||
+        status.includes("inplay") ||
         status.includes("in_progress") ||
         status.includes("ongoing")
 
-      if (needsUpdate && match.id) {
+      if (isLive && match.id) {
         matchIds.push(Number(match.id))
       }
     })
@@ -293,26 +285,17 @@ function getMatchIdsNeedingUpdate(rounds: Round[]): number[] {
   return matchIds
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Busca dados da temporada e partidas em paralelo
-    const [seasonData, matchesData] = await Promise.all([
+    // Busca dados da temporada, partidas e lista oficial de times em paralelo
+    const [seasonData, matchesData, seasonTeams] = await Promise.all([
       kingsLeagueApi.getSeasonData(),
       kingsLeagueApi.getMatchCenterData(),
+      kingsLeagueApi.getSeasonTeams().catch(() => []),
     ])
-
-    // Valida dados de partidas — aceitar arrays vazios pois a API pode popular partidas gradualmente
-    if (!Array.isArray(matchesData) || matchesData.length === 0) {
-      // Continua com rounds vazios em vez de abortar o endpoint
-    }
 
     // Transforma rodadas (aceita matchesData vazio/undefined)
     let rounds: Round[] = Array.isArray(matchesData) ? matchesData.map(transformRound) : []
-
-    // Valida estrutura da temporada — se a API ainda não tiver fases, não abortamos o endpoint
-    if (!seasonData?.phases?.length) {
-      // Continua com times e standings vazios em vez de abortar o endpoint
-    }
 
     // Encontra fases (aceita nomes em inglês ou traduzidos)
     const isGroupPhase = (p: KingsLeaguePhase) => {
@@ -327,20 +310,44 @@ export async function GET() {
       return name.includes("playoff") || name.includes("playoffs") || display.includes("playoff") || display.includes("playoffs")
     }
 
-    let groupStagePhase = seasonData.phases.find(isGroupPhase)
-    const playoffsPhase = seasonData.phases.find(isPlayoffsPhase)
+    let groupStagePhase = seasonData?.phases?.find(isGroupPhase)
+    const playoffsPhase = seasonData?.phases?.find(isPlayoffsPhase)
 
     // Se não encontrou a fase de grupos pelos nomes, tenta usar qualquer fase que tenha grupos definidos
-    if (!groupStagePhase?.groups?.length) {
+    if (!groupStagePhase?.groups?.length && seasonData?.phases?.length) {
       const anyPhaseWithGroups = seasonData.phases.find(
         (p: KingsLeaguePhase) => Array.isArray(p.groups) && p.groups.length > 0
       )
       if (anyPhaseWithGroups) groupStagePhase = anyPhaseWithGroups
     }
 
-    // Agrega times e standings de todos os grupos (quando disponíveis)
+    // Agrega times e standings de todos os grupos
     const teamsMap: Record<string, Team> = {}
     const aggregatedStandings: TeamStanding[] = []
+
+    // 1. Popula times a partir da lista oficial completa da temporada (inclui staffs/presidentes e redes sociais)
+    const officialTeamsList = Array.isArray(seasonTeams)
+      ? seasonTeams
+      : (seasonTeams as any)?.teams ?? []
+
+    if (Array.isArray(officialTeamsList)) {
+      officialTeamsList.forEach((st: any) => {
+        const id = String(st.id)
+        teamsMap[id] = {
+          id,
+          name: st.name,
+          shortName: st.shortName,
+          completeName: st.completeName,
+          countryId: st.countryId || 0,
+          firstColorHEX: st.firstColorHEX || "#cccccc",
+          secondColorHEX: st.secondColorHEX || "#333333",
+          logo: st.logo || { url: "" },
+          gender: st.gender || "male",
+          metaInformation: st.metaInformation,
+          staffs: st.staffs,
+        } as any
+      })
+    }
 
     if (groupStagePhase?.groups?.length) {
       groupStagePhase.groups.forEach((group: KingsLeagueGroup & { standings?: ApiStanding[] }) => {
@@ -382,8 +389,6 @@ export async function GET() {
           }
         })
       })
-
-      // standings permanecerá vazio — isso evita erro e permite que a UI mostre rodadas mesmo sem standings
     }
 
     // Consolida standings para evitar duplicatas
@@ -410,7 +415,7 @@ export async function GET() {
       playoffsTurns = playoffsPhase.groups[0].turns
     }
 
-    // Busca e mescla dados oficiais para partidas em andamento ou sem placar
+    // Busca e mescla dados oficiais APENAS para partidas ativamente em andamento (ao vivo)
     try {
       const matchIdsToFetch = getMatchIdsNeedingUpdate(rounds)
       if (matchIdsToFetch.length > 0) {
@@ -418,12 +423,12 @@ export async function GET() {
         rounds = mergeOfficialData(rounds, officialById)
       }
     } catch {
-      // Falha ao buscar dados oficiais não deve quebrar o endpoint principal
+      // Falha ao buscar dados oficiais de jogos ao vivo não quebra o endpoint principal
     }
 
     return createSuccessResponse(
       { ...leagueData, rounds, playoffs: playoffsTurns },
-      { cache: "SHORT" }
+      { cache: "SHORT", req: request }
     )
   } catch (error) {
     return createErrorResponse("Falha ao carregar dados da Kings League Brasil", error)
