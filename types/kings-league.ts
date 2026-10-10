@@ -232,3 +232,33 @@ export interface TierListData {
 export interface TierListState extends TierListData {
   timestamp: number;
 }
+
+// Tipos para Cenários de Simulação
+export type ScenarioPreset =
+  | "win-all"
+  | "lose-all"
+  | "draw-win-shootout"
+  | "draw-lose-shootout"
+  | "clear-team-games"
+
+export interface ScenarioSnapshot {
+  version: 1
+  id: string
+  name: string
+  teamId: string
+  preset: ScenarioPreset
+  rounds: Round[]
+  standings: TeamStanding[]
+  createdAt: number
+  updatedAt: number
+}
+
+export interface ScenarioMetrics {
+  rank: number
+  points: number
+  won: number
+  lost: number
+  goalDifference: number
+  goalsFor: number
+  goalsAgainst: number
+}
