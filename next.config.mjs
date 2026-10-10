@@ -34,6 +34,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'cdn.kingsleague.pro',
       },
+      {
+        protocol: 'https',
+        hostname: 'kingsleague-cdn.kama.football',
+      },
     ],
   },
   experimental: {
