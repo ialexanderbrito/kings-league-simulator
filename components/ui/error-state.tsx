@@ -1,127 +1,118 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { AlertTriangle, RefreshCw, Home, Wifi, Clock, Bug } from "lucide-react"
-import KingsLeagueLogo from "@/components/kings-league-logo"
-import Link from "next/link"
+"use client"
 
-interface ErrorStateProps {
-  error: string
+import { useState } from "react"
+import Link from "next/link"
+import { AlertCircle, RefreshCw, Home, Bug } from "lucide-react"
+import KingsLeagueLogo from "@/components/kings-league-logo"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+
+export interface ErrorStateProps {
+  title?: string
+  error?: string
   debugInfo?: string | null
-  onRetry: () => void
+  onRetry?: () => void
+  homeHref?: string
 }
 
-export function ErrorState({ error, debugInfo, onRetry }: ErrorStateProps) {
+export function ErrorState({
+  title,
+  error,
+  debugInfo,
+  onRetry,
+  homeHref = "/",
+}: ErrorStateProps) {
+  const [isRetrying, setIsRetrying] = useState(false)
+
+  const isNotFound = typeof error === "string" && error.toLowerCase().includes("não encontrado")
+  const displayTitle = title || (isNotFound ? "Item não encontrado" : "Falha ao carregar dados")
+  const displayMessage = error || "Não foi possível carregar as informações necessárias no momento."
+
+  const handleRetry = () => {
+    if (!onRetry) return
+    setIsRetrying(true)
+    try {
+      onRetry()
+    } finally {
+      setTimeout(() => setIsRetrying(false), 800)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#121212] to-[#0a0a0a] text-white">
-      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-screen">
-        {/* Logo */}
-        <div className="mb-8 animate-in fade-in duration-500">
-          <KingsLeagueLogo
-            className="mx-auto"
-            width={80}
-            height={102}
-            aria-label="Kings League Brasil Logo"
-          />
+    <div className="min-h-screen bg-[#060608] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden select-none">
+      {/* Ambient Liquid Specular Glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[360px] bg-[radial-gradient(ellipse_at_center,rgba(244,175,35,0.06)_0%,rgba(244,63,94,0.03)_50%,transparent_70%)] blur-[120px]" />
+      </div>
+
+      {/* Central Liquid Glass Panel */}
+      <div className="liquid-glass-panel relative w-full max-w-md rounded-3xl p-6 sm:p-8 text-center border border-white/[0.08] shadow-[0_24px_50px_-15px_rgba(0,0,0,0.85)] z-10 animate-in fade-in zoom-in-95 duration-200">
+        {/* Status Pill Badge */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-6 text-[11px] font-semibold uppercase tracking-wider text-amber-400/90 border border-amber-400/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+          {isNotFound ? "Consulta Indisponível" : "Instabilidade Temporária"}
         </div>
 
-        {/* Conteúdo Principal */}
-        <Card className="bg-gradient-to-br from-[#1a1a1a]/80 to-[#0f0f0f]/80 border border-[#333]/20 backdrop-blur-sm shadow-2xl max-w-2xl w-full animate-in slide-in-from-bottom duration-700">
-          <CardContent className="p-8 sm:p-12 text-center">
-            {/* Ícone de Erro */}
-            <div className="mb-6 animate-in zoom-in duration-500 delay-100">
-              <div className="relative inline-flex items-center justify-center">
-                <div className="absolute inset-0 bg-red-500/20 blur-2xl rounded-full scale-150" />
-                <div className="relative p-4 rounded-2xl bg-gradient-to-br from-red-500/20 to-red-900/20 border border-red-500/30">
-                  <AlertTriangle
-                    className="w-12 h-12 sm:w-14 sm:h-14 text-red-500"
-                    aria-hidden="true"
-                  />
-                </div>
+        {/* Minimal Liquid Icon */}
+        <div className="w-14 h-14 mx-auto mb-5 rounded-2xl liquid-glass flex items-center justify-center border border-white/10 shadow-lg relative group">
+          <AlertCircle className="w-6 h-6 text-amber-400 transition-transform duration-200 group-hover:scale-105" aria-hidden="true" />
+        </div>
+
+        {/* Typography */}
+        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-2">
+          {displayTitle}
+        </h1>
+        <p className="text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto mb-6">
+          {displayMessage}
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full">
+          {onRetry && (
+            <Button
+              onClick={handleRetry}
+              disabled={isRetrying}
+              className="w-full sm:w-auto h-11 px-5 rounded-xl bg-gradient-to-r from-[var(--team-primary,#F4AF23)] to-amber-500 hover:from-amber-400 hover:to-[var(--team-primary,#F4AF23)] text-zinc-950 font-bold shadow-lg shadow-amber-500/10 transition-transform duration-150 btn-press disabled:opacity-70"
+            >
+              <RefreshCw className={cn("w-4 h-4 mr-2", isRetrying && "animate-spin")} aria-hidden="true" />
+              {isRetrying ? "Recarregando..." : "Tentar novamente"}
+            </Button>
+          )}
+
+          <Button
+            asChild
+            variant="glass"
+            className="w-full sm:w-auto h-11 px-5 rounded-xl btn-press"
+          >
+            <Link href={homeHref} className="flex items-center justify-center gap-2">
+              <Home className="w-4 h-4" aria-hidden="true" />
+              <span>Início</span>
+            </Link>
+          </Button>
+        </div>
+
+        {/* Minimalist Debug Info Collapsible */}
+        {debugInfo && (
+          <div className="mt-6 pt-4 border-t border-white/5">
+            <details className="group text-left">
+              <summary className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors duration-150 select-none">
+                <Bug className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Detalhes técnicos</span>
+              </summary>
+              <div className="mt-2.5 relative">
+                <pre className="p-3 rounded-xl bg-black/40 border border-white/5 text-[11px] font-mono text-zinc-400 overflow-x-auto scrollbar-minimal max-h-28 text-left leading-normal whitespace-pre-wrap break-all">
+                  {debugInfo}
+                </pre>
               </div>
-              <div className="h-1 w-24 mx-auto mt-6 bg-gradient-to-r from-transparent via-red-500/50 to-transparent rounded-full" />
-            </div>
+            </details>
+          </div>
+        )}
+      </div>
 
-            {/* Título */}
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-white animate-in fade-in duration-700 delay-200">
-              Erro ao carregar dados
-            </h2>
-
-            {/* Descrição do Erro */}
-            <p className="text-base sm:text-lg text-gray-400 mb-6 leading-relaxed animate-in fade-in duration-700 delay-300">
-              {error}
-            </p>
-
-            {/* Sugestões */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 animate-in fade-in duration-700 delay-400">
-              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1a1a]/50 border border-[#333]/30">
-                <Wifi className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-                <span className="text-xs text-gray-500 text-center">Verifique sua conexão</span>
-              </div>
-              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1a1a]/50 border border-[#333]/30">
-                <RefreshCw className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-                <span className="text-xs text-gray-500 text-center">Recarregue a página</span>
-              </div>
-              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1a1a]/50 border border-[#333]/30">
-                <Clock className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-                <span className="text-xs text-gray-500 text-center">Aguarde e tente novamente</span>
-              </div>
-            </div>
-
-            {/* Botões de Ação */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center animate-in fade-in duration-700 delay-500">
-              <Button
-                onClick={onRetry}
-                size="lg"
-                className="bg-gradient-to-r from-[var(--team-primary,#F4AF23)] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[var(--team-primary,#F4AF23)] text-black font-semibold shadow-lg hover:shadow-[rgb(var(--team-primary-rgb),0.5)] transition-all duration-300 hover:scale-105"
-              >
-                <RefreshCw className="w-5 h-5 mr-2" aria-hidden="true" />
-                Tentar novamente
-              </Button>
-
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[rgb(var(--team-primary-rgb),0.5)] transition-all duration-300 hover:scale-105"
-              >
-                <Link href="/" className="flex items-center gap-2">
-                  <Home className="w-5 h-5" aria-hidden="true" />
-                  Voltar ao início
-                </Link>
-              </Button>
-            </div>
-
-            {/* Detalhes técnicos */}
-            {debugInfo && (
-              <div className="mt-8 pt-6 border-t border-[#333]/30 animate-in fade-in duration-700 delay-600">
-                <details className="group">
-                  <summary className="flex items-center justify-center gap-2 text-xs text-gray-500 cursor-pointer hover:text-gray-400 transition-colors">
-                    <Bug className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Detalhes técnicos</span>
-                  </summary>
-                  <pre className="mt-3 text-xs text-gray-600 bg-black/30 p-4 rounded-lg overflow-x-auto text-left border border-[#333]/20">
-                    {debugInfo}
-                  </pre>
-                </details>
-              </div>
-            )}
-
-            {/* Link de Suporte */}
-            <div className="mt-6 pt-6 border-t border-[#333]/30 animate-in fade-in duration-700 delay-700">
-              <p className="text-sm text-gray-500">
-                Problema persistindo?{' '}
-                <a
-                  href="https://github.com/ialexanderbrito/kings-league-simulator/issues"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[var(--team-primary,#F4AF23)] hover:text-[#f59e0b] underline transition-colors duration-200"
-                >
-                  Reporte o erro
-                </a>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Subtle Brand Footer */}
+      <div className="mt-8 flex items-center justify-center gap-2 opacity-40 hover:opacity-80 transition-opacity duration-200">
+        <KingsLeagueLogo width={24} height={31} aria-label="Kings League Brasil" />
+        <span className="text-[11px] font-semibold tracking-wider text-zinc-400 uppercase">Kings League Simulator</span>
       </div>
     </div>
   )

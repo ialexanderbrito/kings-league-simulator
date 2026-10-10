@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
-import { Trophy } from "lucide-react"
+import KingsLeagueLogo from "@/components/kings-league-logo"
 import { cn } from "@/lib/utils"
 
 interface SimulationCaptureOverlayProps {
@@ -30,8 +30,8 @@ export function SimulationCaptureOverlay({
         <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent px-6 py-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
-                <Trophy className="w-5 h-5 text-white" />
+              <div className="p-2 rounded-xl bg-[var(--team-primary,#F4AF23)]/20 border border-[var(--team-primary,#F4AF23)]/40 shadow-sm shadow-[var(--team-primary,#F4AF23)]/20">
+                <KingsLeagueLogo width={20} height={24} />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white">{title}</h3>
