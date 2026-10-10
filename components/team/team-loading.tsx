@@ -1,160 +1,103 @@
 import React from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MatchesListSkeleton } from "@/components/team/matches-list"
-import { Calendar, Users, Trophy, Target, TrendingUp, Shield, Swords } from "lucide-react"
+import { Calendar, Users } from "lucide-react"
 
 export function TeamLoading() {
   return (
-    <div className="space-y-8">
-      {/* Hero Section Skeleton */}
-      <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-[#0a0a0a]">
-        <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-transparent" />
+    <div className="space-y-3.5 sm:space-y-4">
+      {/* Header Compacto Skeleton com Specular Rim */}
+      <section className="relative overflow-hidden rounded-2xl liquid-glass-card border border-white/10 p-3 sm:p-4 shadow-xl">
+        {/* Specular Rim */}
+        <div
+          className="pointer-events-none absolute inset-x-8 top-0 h-[1.5px] opacity-75"
+          style={{
+            background: "linear-gradient(90deg, transparent, var(--team-primary, #F4AF23) 50%, transparent)",
+          }}
+        />
 
-        <div className="relative p-6 md:p-10">
-          <div className="flex flex-col lg:flex-row items-center gap-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-3.5 text-left w-full md:w-auto min-w-0">
             {/* Logo Skeleton */}
-            <div className="relative">
-              <Skeleton className="w-28 h-28 md:w-36 md:h-36 rounded-2xl" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl liquid-stat-box p-1.5 flex items-center justify-center border border-white/10 shrink-0">
+              <Skeleton className="w-full h-full rounded-xl bg-white/10" />
             </div>
 
             {/* Info Skeleton */}
-            <div className="flex-1 text-center lg:text-left space-y-4">
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
-                <Skeleton className="h-6 w-32 rounded-full" />
-                <Skeleton className="h-6 w-24 rounded-full" />
-              </div>
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <Skeleton className="h-6 w-48 sm:w-60 rounded-lg bg-white/10" />
 
-              <Skeleton className="h-12 w-64 mx-auto lg:mx-0" />
-
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="w-16 h-4" />
-                  <Skeleton className="w-6 h-6 rounded-full" />
-                  <Skeleton className="w-6 h-6 rounded-full" />
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                {/* 2 Color Dots */}
+                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/8">
+                  <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
+                  <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
                 </div>
-                <Skeleton className="w-px h-5" />
-                <div className="flex gap-2">
-                  <Skeleton className="w-8 h-8 rounded-full" />
-                  <Skeleton className="w-8 h-8 rounded-full" />
-                  <Skeleton className="w-8 h-8 rounded-full" />
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
-                <Skeleton className="h-14 w-40 rounded-xl" />
-                <Skeleton className="h-14 w-36 rounded-xl" />
+                {/* Staff */}
+                <Skeleton className="h-3 w-28 rounded bg-white/5" />
+                <Skeleton className="h-3 w-20 rounded bg-white/5" />
               </div>
             </div>
+          </div>
 
-            {/* Quick Stats Skeleton */}
-            <div className="grid grid-cols-2 gap-3">
-              {[Trophy, Target, Swords, Users].map((Icon, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                  <Skeleton className="w-8 h-8 rounded-lg mb-2" />
-                  <Skeleton className="h-7 w-10 mb-1" />
-                  <Skeleton className="h-3 w-14" />
-                </div>
-              ))}
+          {/* Integrated Form Guide Skeleton */}
+          <div className="flex items-center gap-3 shrink-0 self-stretch md:self-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-2 md:pt-0 w-full md:w-auto">
+            <div className="flex flex-col md:items-end space-y-1">
+              <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                Forma Recente
+              </span>
+              <span className="text-[10px] text-zinc-600">Últimos 5 jogos</span>
+            </div>
+            <div className="flex gap-1">
+              {Array(5)
+                .fill(0)
+                .map((_, i) => (
+                  <Skeleton key={i} className="w-6 h-6 rounded-md bg-white/10" />
+                ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Cards Skeleton */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {[TrendingUp, Shield, Target, Users].map((Icon, i) => (
-          <Card key={i} className="bg-[#0a0a0a] border-white/5 rounded-2xl overflow-hidden">
-            <CardHeader className="pb-2 pt-4 px-4">
-              <div className="flex items-center gap-2">
-                <Skeleton className="w-8 h-8 rounded-lg" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <div className="space-y-2">
-                {Array(i === 3 ? 2 : i === 1 ? 3 : 4).fill(0).map((_, j) => (
-                  <div key={j} className="flex items-center justify-between">
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-4 w-8" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      {/* 4 Cards Compactos Skeleton em Linha Única */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
+        {[
+          { label: "Jogos", value: "—", sub: "Vitórias / Derrotas" },
+          { label: "Aproveitamento", value: "—%", sub: "Desempenho Geral" },
+          { label: "Saldo de Gols", value: "—", sub: "Gols Pró / Contra" },
+          { label: "Elenco", value: "—", sub: "Plantel Inscrito" },
+        ].map((item, i) => (
+          <div key={i} className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-semibold text-zinc-400">{item.label}</span>
+              <Skeleton className="h-4 w-10 rounded bg-white/10" />
+            </div>
+            <Skeleton className="h-1.5 w-full rounded-full bg-white/10" />
+            <div className="flex justify-between items-center pt-1 border-t border-white/5 text-[10px] text-zinc-500">
+              <span>{item.sub}</span>
+              <Skeleton className="h-2.5 w-12 rounded bg-white/5" />
+            </div>
+          </div>
         ))}
       </section>
 
-      {/* Tabs Skeleton */}
-      <Tabs defaultValue="matches" className="w-full">
-        <TabsList className="w-full h-auto p-1.5 bg-[#0a0a0a] border border-white/5 rounded-2xl grid grid-cols-2 gap-2">
-          <TabsTrigger
-            value="matches"
-            className="h-12 rounded-xl font-semibold text-sm data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black transition-all duration-300 flex items-center justify-center gap-2"
-            disabled
-          >
-            <Calendar className="w-4 h-4" />
-            <Skeleton className="h-4 w-16" />
-          </TabsTrigger>
-          <TabsTrigger
-            value="team"
-            className="h-12 rounded-xl font-semibold text-sm data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black transition-all duration-300 flex items-center justify-center gap-2"
-            disabled
-          >
-            <Users className="w-4 h-4" />
-            <Skeleton className="h-4 w-14" />
-          </TabsTrigger>
-        </TabsList>
+      {/* Sub-Navegação de Abas Skeleton Centralizada */}
+      <div className="space-y-4">
+        <div className="flex justify-center items-center py-2 sm:py-3">
+          <div className="p-1 rounded-full liquid-nav-track flex gap-1 border border-white/10 shadow-md">
+            <div className="h-7 px-4 rounded-full bg-white/10 flex items-center gap-2 text-white">
+              <Calendar className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" />
+              <span className="text-xs font-bold">Partidas</span>
+            </div>
+            <div className="h-7 px-4 rounded-full flex items-center gap-2 text-zinc-400">
+              <Users className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold">Elenco</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Matches Tab Skeleton */}
-        <TabsContent value="matches" className="mt-6">
-          <MatchesListSkeleton />
-        </TabsContent>
-
-        {/* Roster Tab Skeleton */}
-        <TabsContent value="team" className="mt-6">
-          <Card className="bg-[#0a0a0a] border-white/5 rounded-2xl overflow-hidden">
-            <CardHeader className="pb-4 border-b border-white/5 bg-gradient-to-r from-white/5 to-transparent">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-10 h-10 rounded-xl" />
-                <div>
-                  <Skeleton className="h-6 w-36 mb-2" />
-                  <Skeleton className="h-4 w-48" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                {/* Legend Skeleton */}
-                <div className="p-4 bg-white/5 border border-white/5 rounded-xl">
-                  <Skeleton className="h-5 w-32 mb-3" />
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {Array(5).fill(0).map((_, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <Skeleton className="w-5 h-5 rounded" />
-                        <Skeleton className="h-3 w-16" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Players Skeleton */}
-                {['Goleiros', 'Defensores', 'Meio-campistas', 'Atacantes'].map((position, idx) => (
-                  <div key={position}>
-                    <Skeleton className="h-6 w-32 mb-4" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-                      {Array(idx === 0 ? 2 : 4).fill(0).map((_, i) => (
-                        <Skeleton key={i} className="w-72 h-[420px] rounded-xl" />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        <MatchesListSkeleton />
+      </div>
     </div>
   )
 }
