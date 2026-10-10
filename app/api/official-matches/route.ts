@@ -20,8 +20,8 @@ export async function GET(request: Request) {
 
     const data = await kingsLeagueApi.getMatchDetails(matchId)
 
-    // Retorna sem cache pois são dados em tempo real
-    return createSuccessResponse(data)
+    // Cache ultra-curto (30s) para permitir atualização em tempo real sem sobrecarregar a API externa
+    return createSuccessResponse(data, { cache: "LIVE", req: request })
   } catch (error) {
     return createErrorResponse("Erro ao buscar dados oficiais da partida", error)
   }

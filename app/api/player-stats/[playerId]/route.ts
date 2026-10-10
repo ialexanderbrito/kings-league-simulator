@@ -7,7 +7,7 @@ import {
 
 export async function GET(
   request: Request,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const { playerId } = await params
@@ -66,10 +66,10 @@ export async function GET(
         _requestedFields: Array.from(importantCodes),
       }
 
-      return createSuccessResponse(compacted, { cache: "DAILY" })
+      return createSuccessResponse(compacted, { cache: "DAILY", req: request })
     }
 
-    return createSuccessResponse(playerStats, { cache: "DAILY" })
+    return createSuccessResponse(playerStats, { cache: "DAILY", req: request })
   } catch (error) {
     return createErrorResponse("Falha ao carregar estatísticas do jogador", error)
   }

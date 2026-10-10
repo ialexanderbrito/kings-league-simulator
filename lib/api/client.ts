@@ -1,7 +1,7 @@
+import https from "https"
 import {
   KINGS_LEAGUE_BASE_URL,
   KINGS_LEAGUE_HEADERS,
-  KINGS_LEAGUE_SIMPLE_HEADERS,
   SEASON_ID,
   COMPETITION_ID,
   CACHE_DURATIONS,
@@ -19,42 +19,144 @@ interface FetchOptions {
   fullHeaders?: boolean
 }
 
+// Agente HTTPS com TLSv1.3 sem ALPN e com Connection Pooling (Keep-Alive)
+const httpsAgent = new https.Agent({
+  minVersion: "TLSv1.3",
+  maxVersion: "TLSv1.3",
+  ALPNProtocols: [],
+  keepAlive: true,
+  keepAliveMsecs: 30000,
+  maxSockets: 50,
+  maxFreeSockets: 20,
+  timeout: 10000,
+})
+
+interface MemoryCacheEntry<T> {
+  data: T
+  expiresAt: number
+}
+
+const MAX_CACHE_ENTRIES = 300
+const memoryCache = new Map<string, MemoryCacheEntry<unknown>>()
+const pendingRequests = new Map<string, Promise<unknown>>()
+
+function setMemoryCache<T>(key: string, data: T, expiresAt: number) {
+  if (memoryCache.size >= MAX_CACHE_ENTRIES) {
+    // Evita vazamento de memória removendo a chave mais antiga
+    const firstKey = memoryCache.keys().next().value
+    if (firstKey) {
+      memoryCache.delete(firstKey)
+    }
+  }
+  memoryCache.set(key, { data, expiresAt })
+}
+
+function httpsGet<T>(url: string, headers: Record<string, string>, timeoutMs = 10000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      url,
+      {
+        agent: httpsAgent,
+        headers,
+        timeout: timeoutMs,
+      },
+      (res) => {
+        let body = ""
+        res.on("data", (chunk) => {
+          body += chunk
+        })
+        res.on("end", () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            try {
+              resolve(JSON.parse(body) as T)
+            } catch (err) {
+              reject(
+                new Error(
+                  `Falha ao converter resposta da Kings League para JSON: ${(err as Error).message}`
+                )
+              )
+            }
+          } else {
+            reject(
+              new Error(
+                `Erro na API da Kings League: ${res.statusCode} ${res.statusMessage || ""}`
+              )
+            )
+          }
+        })
+      }
+    )
+
+    req.on("timeout", () => {
+      req.destroy(new Error(`Timeout de ${timeoutMs}ms atingido na requisição para ${url}`))
+    })
+
+    req.on("error", (err) => {
+      reject(err)
+    })
+  })
+}
+
 /**
  * Cliente HTTP para a API da Kings League
- * Centraliza todas as requisições com tratamento de erros e cache
+ * Centraliza todas as requisições com tratamento de erros, cache e desduplicação de chamadas em voo
  */
 export async function fetchFromKingsLeague<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { cache, revalidate, noCache = false, fullHeaders = false } = options
+  const { cache, revalidate, noCache = false } = options
 
   const url = endpoint.startsWith("http")
     ? endpoint
     : `${KINGS_LEAGUE_BASE_URL}${endpoint}`
 
-  const fetchOptions: RequestInit & { next?: { revalidate: number } } = {
-    headers: fullHeaders ? KINGS_LEAGUE_HEADERS : KINGS_LEAGUE_SIMPLE_HEADERS,
+  const ttlSeconds = noCache
+    ? 0
+    : revalidate !== undefined
+    ? revalidate
+    : cache
+    ? CACHE_DURATIONS[cache].revalidate
+    : 0
+
+  const now = Date.now()
+
+  // 1. Verifica cache em memória válido
+  if (ttlSeconds > 0) {
+    const cached = memoryCache.get(url) as MemoryCacheEntry<T> | undefined
+    if (cached && cached.expiresAt > now) {
+      return cached.data
+    }
   }
 
-  // Configura cache
-  if (noCache) {
-    fetchOptions.cache = "no-store"
-  } else if (revalidate !== undefined) {
-    fetchOptions.next = { revalidate }
-  } else if (cache) {
-    fetchOptions.next = { revalidate: CACHE_DURATIONS[cache].revalidate }
+  // 2. Coalescência de requisições: se já há uma requisição em andamento para esta URL, reutiliza a Promise
+  if (pendingRequests.has(url)) {
+    return pendingRequests.get(url) as Promise<T>
   }
 
-  const response = await fetch(url, fetchOptions)
+  const fetchPromise = (async () => {
+    try {
+      const data = await httpsGet<T>(url, KINGS_LEAGUE_HEADERS)
 
-  if (!response.ok) {
-    throw new Error(
-      `Erro na API da Kings League: ${response.status} ${response.statusText}`
-    )
-  }
+      if (ttlSeconds > 0) {
+        setMemoryCache(url, data, now + ttlSeconds * 1000)
+      }
 
-  return response.json()
+      return data
+    } catch (err) {
+      // Fallback: se a API falhar ou estiver instável, retorna dado anterior em cache (mesmo expirado)
+      const stale = memoryCache.get(url) as MemoryCacheEntry<T> | undefined
+      if (stale) {
+        return stale.data
+      }
+      throw err
+    } finally {
+      pendingRequests.delete(url)
+    }
+  })()
+
+  pendingRequests.set(url, fetchPromise)
+  return fetchPromise
 }
 
 /**
@@ -82,7 +184,7 @@ export const kingsLeagueApi = {
   /**
    * Busca detalhes de um time específico
    */
-  getTeamDetails: (teamId: string) =>
+  getTeamDetails: (teamId: string, seasonId?: string) =>
     fetchFromKingsLeague<KingsLeagueTeamResponse>(
       `/competition/teams/${teamId}`,
       { cache: "LONG" }
@@ -91,18 +193,18 @@ export const kingsLeagueApi = {
   /**
    * Busca membros do staff de um time
    */
-  getTeamStaff: (teamId: string) =>
+  getTeamStaff: (teamId: string, seasonId?: string) =>
     fetchFromKingsLeague<KingsLeagueStaffResponse>(
-      `/competition/teams/${teamId}/season-data/${SEASON_ID}/staffs`,
+      `/competition/teams/${teamId}/season-data/${seasonId || SEASON_ID}/staffs`,
       { cache: "LONG" }
     ),
 
   /**
    * Busca jogadores de um time
    */
-  getTeamPlayers: (teamId: string) =>
+  getTeamPlayers: (teamId: string, seasonId?: string) =>
     fetchFromKingsLeague<KingsLeaguePlayer[]>(
-      `/competition/teams/${teamId}/season-data/${SEASON_ID}/players`,
+      `/competition/teams/${teamId}/season-data/${seasonId || SEASON_ID}/players`,
       { cache: "LONG" }
     ),
 
@@ -121,16 +223,16 @@ export const kingsLeagueApi = {
   getPlayerStats: (playerId: string) =>
     fetchFromKingsLeague<KingsLeaguePlayerStats>(
       `/competition/players/${playerId}/season-data/${SEASON_ID}/stats`,
-      { cache: "LONG" }
+      { cache: "DAILY" }
     ),
 
   /**
-   * Busca dados de uma partida específica
+   * Busca dados de uma partida específica (cache de 30s para jogos ao vivo)
    */
   getMatchDetails: (matchId: string) =>
     fetchFromKingsLeague<KingsLeagueMatchDetails>(
       `/competition/matches/${matchId}?live=true&competitionId=${COMPETITION_ID}`,
-      { noCache: true }
+      { cache: "LIVE" }
     ),
 }
 

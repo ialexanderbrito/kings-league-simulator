@@ -15,17 +15,19 @@ function sanitizeTeamPlayers(teamId: string, players: KingsLeaguePlayer[]): King
 
   return players.filter((player) => {
     const isLucasTyltyById = Number(player.id) === 86902
-    const isLucasTyltyByName = String(player.shortName || "").trim().toLowerCase() === "lucas tylty"
+    const isLucasTyltyByName = String((player as any).shortName || "").trim().toLowerCase() === "lucas tylty"
     return !(isLucasTyltyById && isLucasTyltyByName)
   })
 }
 
 export async function GET(
   request: Request,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     const { teamId } = await params
+    const { searchParams } = new URL(request.url)
+    const seasonId = searchParams.get('seasonId') || undefined
 
     if (!teamId) {
       return createErrorResponse(
@@ -37,9 +39,9 @@ export async function GET(
 
     // Busca dados em paralelo para melhor performance
     const [teamDetails, staffResponse, playersResponse] = await Promise.allSettled([
-      kingsLeagueApi.getTeamDetails(teamId),
-      kingsLeagueApi.getTeamStaff(teamId),
-      kingsLeagueApi.getTeamPlayers(teamId),
+      kingsLeagueApi.getTeamDetails(teamId, seasonId),
+      kingsLeagueApi.getTeamStaff(teamId, seasonId),
+      kingsLeagueApi.getTeamPlayers(teamId, seasonId),
     ])
 
     // Extrai dados do time (obrigatório)
@@ -53,10 +55,26 @@ export async function GET(
       staffData = staffResponse.value
     }
 
-    // Extrai jogadores (opcional) com normalização
+    // Extrai jogadores (opcional) com normalização e fallback
     let playersData: KingsLeaguePlayer[] = []
-    if (playersResponse.status === "fulfilled" && Array.isArray(playersResponse.value)) {
-      playersData = playersResponse.value.map((player) => ({
+    
+    // Fallback: se falhou buscar jogadores de uma season específica (ex: time não existia no Split 1), busca da season atual
+    if (playersResponse.status === "rejected" && seasonId) {
+      console.warn(`Falha ao buscar jogadores do time ${teamId} na temporada ${seasonId}. Tentando temporada padrão...`);
+      try {
+        const fallbackPlayers = await kingsLeagueApi.getTeamPlayers(teamId);
+        if (Array.isArray(fallbackPlayers)) {
+          playersData = fallbackPlayers;
+        }
+      } catch (e) {
+        console.error(`Falha ao buscar fallback de jogadores para o time ${teamId}`, e);
+      }
+    } else if (playersResponse.status === "fulfilled" && Array.isArray(playersResponse.value)) {
+      playersData = playersResponse.value;
+    }
+
+    if (playersData.length > 0) {
+      playersData = playersData.map((player) => ({
         ...player,
         role: player.role || "midfielder",
         height: player.height || 175,
@@ -73,7 +91,7 @@ export async function GET(
       players: playersData,
     }
 
-    return createSuccessResponse(response, { cache: "LONG" })
+    return createSuccessResponse(response, { cache: "LONG", req: request })
   } catch (error) {
     return createErrorResponse("Falha ao carregar detalhes do time", error)
   }

@@ -31,26 +31,55 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Domain not allowed" }, { status: 403 })
     }
 
+    const clientIfNoneMatch = request.headers.get("if-none-match")
+
+    const upstreamHeaders: Record<string, string> = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    }
+    if (clientIfNoneMatch) {
+      upstreamHeaders["If-None-Match"] = clientIfNoneMatch
+    }
+
     const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
+      headers: upstreamHeaders,
     })
+
+    if (response.status === 304) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400, immutable",
+        },
+      })
+    }
 
     if (!response.ok) {
       return NextResponse.json({ error: "Failed to fetch image" }, { status: response.status })
     }
 
     const contentType = response.headers.get("content-type") || "image/png"
-    const buffer = await response.arrayBuffer()
+    const upstreamEtag = response.headers.get("etag")
 
-    return new NextResponse(buffer, {
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400, immutable",
+      "Access-Control-Allow-Origin": "*",
+    }
+
+    if (upstreamEtag) {
+      headers["ETag"] = upstreamEtag
+      const cleanClient = clientIfNoneMatch?.replace(/^W\//, "").replace(/"/g, "").trim()
+      const cleanUpstream = upstreamEtag.replace(/^W\//, "").replace(/"/g, "").trim()
+      if (cleanClient && (cleanClient === cleanUpstream || cleanClient === "*")) {
+        return new NextResponse(null, { status: 304, headers })
+      }
+    }
+
+    // Retorna streaming do corpo da imagem diretamente evitando alocação excessiva em memória
+    return new NextResponse(response.body, {
       status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=86400, s-maxage=86400, immutable",
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers,
     })
   } catch (error) {
     console.error("Error proxying image:", error)

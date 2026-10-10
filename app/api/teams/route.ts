@@ -10,7 +10,7 @@ import {
  * Rota: GET /api/teams
  * Retorna a lista de times normalizada para o formato interno do app
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const seasonData = await kingsLeagueApi.getSeasonTeams();
 
@@ -24,7 +24,7 @@ export async function GET() {
       return nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' })
     })
 
-    return createSuccessResponse(teams, { cache: "LONG" });
+    return createSuccessResponse(teams, { cache: "LONG", req: request });
   } catch (error) {
     return createErrorResponse("Falha ao carregar lista de times", error)
   }
