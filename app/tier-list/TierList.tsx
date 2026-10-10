@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
-import { Team, TierListData, TierItem } from "@/types/kings-league"
+import { Team, TierListData } from "@/types/kings-league"
+import { fetchLeagueData } from "@/lib/fetch-league-data"
 import {
   getTierList,
   saveTierList,
@@ -12,6 +13,12 @@ import {
   createNewTier,
   moveTierUp,
   moveTierDown,
+  resetTeamsToPool,
+  addTierAbove,
+  addTierBelow,
+  clearTierTeams,
+  applyPreset,
+  PresetTemplate,
 } from "@/lib/tier-list-manager"
 import {
   DndContext,
@@ -33,13 +40,15 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { snapdom } from "@zumer/snapdom"
 import { toast } from "sonner"
-import { ListOrdered } from "lucide-react"
+import KingsLeagueLogo from "@/components/kings-league-logo"
 
 export default function TierList() {
   const [teams, setTeams] = useState<Team[]>([])
   const [tierListData, setTierListData] = useState<TierListData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [selectedPoolTeamId, setSelectedPoolTeamId] = useState<string | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
   const tierListRef = useRef<HTMLDivElement>(null)
 
@@ -52,24 +61,20 @@ export default function TierList() {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 5,
+        delay: 150,
+        tolerance: 6,
       },
     })
   )
 
-  // Carregar times da API
+  // Carregar times da API via cache compartilhado
   useEffect(() => {
     async function loadTeams() {
       try {
-        const response = await fetch('/api/teams')
-        if (!response.ok) throw new Error('Erro ao carregar times')
-
-        const data = await response.json()
-        // API retorna array diretamente, não objeto com .teams
-        const teamsArray = Array.isArray(data) ? data : data.teams || []
-        const sortedTeams = teamsArray.sort((a: Team, b: Team) =>
-          a.name.localeCompare(b.name)
+        const leagueData = await fetchLeagueData()
+        const teamsArray = Array.isArray(leagueData?.teams) ? leagueData.teams : []
+        const sortedTeams = [...teamsArray].sort((a: Team, b: Team) =>
+          (a.name || "").localeCompare(b.name || "")
         )
         setTeams(sortedTeams)
       } catch (error) {
@@ -85,7 +90,7 @@ export default function TierList() {
   useEffect(() => {
     if (teams.length === 0) return
 
-    const allTeamIds = teams.map(t => t.id)
+    const allTeamIds = teams.map((t) => t.id)
 
     // Tentar carregar da URL primeiro
     if (typeof window !== 'undefined' && window.location.hash) {
@@ -109,10 +114,9 @@ export default function TierList() {
     if (savedData) {
       setTierListData({
         tiers: savedData.tiers,
-        unassigned: savedData.unassigned
+        unassigned: savedData.unassigned,
       })
     } else {
-      // Criar tier list inicial
       setTierListData(getInitialTierListData(allTeamIds))
     }
 
@@ -129,6 +133,7 @@ export default function TierList() {
   // Handlers de drag and drop
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragId(event.active.id as string)
+    setSelectedPoolTeamId(null)
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -140,31 +145,27 @@ export default function TierList() {
     const teamId = active.id as string
     const overId = over.id as string
 
-    // Encontrar de onde o time está vindo
+    // De onde o time está vindo
     let fromTierId: string | 'unassigned' = 'unassigned'
     if (tierListData.unassigned.includes(teamId)) {
       fromTierId = 'unassigned'
     } else {
-      const fromTier = tierListData.tiers.find(t => t.teams.includes(teamId))
+      const fromTier = tierListData.tiers.find((t) => t.teams.includes(teamId))
       if (fromTier) fromTierId = fromTier.id
     }
 
-    // Determinar para onde está indo
-    let toTierId: string | 'unassigned' = overId
-
-    // Se não mudou de lugar, não fazer nada
+    const toTierId: string | 'unassigned' = overId
     if (fromTierId === toTierId) return
 
-    // Criar nova estrutura de dados
     const newData = JSON.parse(JSON.stringify(tierListData)) as TierListData
 
-    // Remover do local de origem
+    // Remover da origem
     if (fromTierId === 'unassigned') {
-      newData.unassigned = newData.unassigned.filter(id => id !== teamId)
+      newData.unassigned = newData.unassigned.filter((id) => id !== teamId)
     } else {
-      const fromTier = newData.tiers.find(t => t.id === fromTierId)
+      const fromTier = newData.tiers.find((t) => t.id === fromTierId)
       if (fromTier) {
-        fromTier.teams = fromTier.teams.filter(id => id !== teamId)
+        fromTier.teams = fromTier.teams.filter((id) => id !== teamId)
       }
     }
 
@@ -172,10 +173,47 @@ export default function TierList() {
     if (toTierId === 'unassigned') {
       newData.unassigned.push(teamId)
     } else {
-      const toTier = newData.tiers.find(t => t.id === toTierId)
+      const toTier = newData.tiers.find((t) => t.id === toTierId)
       if (toTier) {
         toTier.teams.push(teamId)
       }
+    }
+
+    setTierListData(newData)
+  }
+
+  // Quick-Link instantâneo
+  const handleQuickAssign = (teamId: string, toTierId: string) => {
+    if (!tierListData) return
+
+    const newData = JSON.parse(JSON.stringify(tierListData)) as TierListData
+
+    newData.unassigned = newData.unassigned.filter((id) => id !== teamId)
+    newData.tiers.forEach((t) => {
+      t.teams = t.teams.filter((id) => id !== teamId)
+    })
+
+    const targetTier = newData.tiers.find((t) => t.id === toTierId)
+    if (targetTier) {
+      targetTier.teams.push(teamId)
+      setTierListData(newData)
+    }
+
+    setSelectedPoolTeamId(null)
+  }
+
+  // Remover time de uma tier e retornar ao banco
+  const handleRemoveTeamFromTier = (teamId: string) => {
+    if (!tierListData) return
+
+    const newData = JSON.parse(JSON.stringify(tierListData)) as TierListData
+
+    newData.tiers.forEach((tier) => {
+      tier.teams = tier.teams.filter((id) => id !== teamId)
+    })
+
+    if (!newData.unassigned.includes(teamId)) {
+      newData.unassigned.push(teamId)
     }
 
     setTierListData(newData)
@@ -192,41 +230,73 @@ export default function TierList() {
 
     setTierListData({
       ...tierListData,
-      tiers: [...tierListData.tiers, newTier]
+      tiers: [...tierListData.tiers, newTier],
     })
 
-    toast.success('Nova tier adicionada!')
+    toast.success('Nova categoria adicionada!')
   }
 
   // Remover tier
   const handleRemoveTier = (tierId: string) => {
     if (!tierListData) return
 
-    const tier = tierListData.tiers.find(t => t.id === tierId)
+    const tier = tierListData.tiers.find((t) => t.id === tierId)
     if (!tier) return
 
-    // Mover times da tier para não atribuídos
     const newData = {
       ...tierListData,
-      tiers: tierListData.tiers.filter(t => t.id !== tierId),
-      unassigned: [...tierListData.unassigned, ...tier.teams]
+      tiers: tierListData.tiers.filter((t) => t.id !== tierId),
+      unassigned: [...tierListData.unassigned, ...tier.teams],
     }
 
     setTierListData(newData)
-    toast.success('Tier removida!')
+    toast.success('Categoria removida!')
   }
 
-  // Atualizar nome da tier
+  // Adicionar tier imediatamente acima
+  const handleAddTierAbove = (tierId: string) => {
+    if (!tierListData) return
+    const newData = addTierAbove(tierListData, tierId)
+    setTierListData(newData)
+    toast.success('Nova categoria adicionada acima!')
+  }
+
+  // Adicionar tier imediatamente abaixo
+  const handleAddTierBelow = (tierId: string) => {
+    if (!tierListData) return
+    const newData = addTierBelow(tierListData, tierId)
+    setTierListData(newData)
+    toast.success('Nova categoria adicionada abaixo!')
+  }
+
+  // Esvaziar times de uma tier específica
+  const handleClearTier = (tierId: string) => {
+    if (!tierListData) return
+    const newData = clearTierTeams(tierListData, tierId)
+    setTierListData(newData)
+    toast.success('Times desta categoria voltaram para o banco!')
+  }
+
+  // Aplicar modelo pronto
+  const handleApplyPreset = (preset: PresetTemplate) => {
+    if (!tierListData) return
+    const newData = applyPreset(tierListData, preset)
+    setTierListData(newData)
+    setSelectedPoolTeamId(null)
+    toast.success(`Modelo "${preset.name}" aplicado!`)
+  }
+
+  // Atualizar nome da tier diretamente
   const handleUpdateTierName = (tierId: string, newName: string) => {
     if (!tierListData) return
 
-    const newTiers = tierListData.tiers.map(tier =>
+    const newTiers = tierListData.tiers.map((tier) =>
       tier.id === tierId ? { ...tier, name: newName } : tier
     )
 
     setTierListData({
       ...tierListData,
-      tiers: newTiers
+      tiers: newTiers,
     })
   }
 
@@ -234,13 +304,13 @@ export default function TierList() {
   const handleUpdateTierColor = (tierId: string, newColor: string) => {
     if (!tierListData) return
 
-    const newTiers = tierListData.tiers.map(tier =>
+    const newTiers = tierListData.tiers.map((tier) =>
       tier.id === tierId ? { ...tier, color: newColor } : tier
     )
 
     setTierListData({
       ...tierListData,
-      tiers: newTiers
+      tiers: newTiers,
     })
   }
 
@@ -258,190 +328,128 @@ export default function TierList() {
     setTierListData(newData)
   }
 
-  // Resetar tier list
+  // Limpar apenas posições dos times
+  const handleResetPositions = () => {
+    if (!tierListData) return
+    const newData = resetTeamsToPool(tierListData)
+    setTierListData(newData)
+    setSelectedPoolTeamId(null)
+    toast.success('Todos os times voltaram para o banco!')
+  }
+
+  // Resetar tudo para o padrão
   const handleReset = () => {
     if (!teams.length) return
 
-    const allTeamIds = teams.map(t => t.id)
+    const allTeamIds = teams.map((t) => t.id)
     const newData = getInitialTierListData(allTeamIds)
 
     setTierListData(newData)
     clearTierList()
+    setSelectedPoolTeamId(null)
 
-    // Limpar URL
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', window.location.pathname)
     }
 
-    toast.success('Tier list resetada!')
+    toast.success('Tier list restaurada para o padrão original!')
   }
 
-  // Baixar como imagem
+  // Baixar como imagem PNG limpa em alta resolução
   const handleDownload = async () => {
     if (!tierListRef.current) return
 
-    try {
-      toast.loading('Gerando imagem...', { id: 'download' })
+    setIsDownloading(true)
+    const toastId = toast.loading('Gerando imagem em alta resolução...')
 
-      // Adicionar classe para modo de captura (ocultar elementos interativos)
+    try {
+      // Ativar modo de captura (mostra cabeçalho oficial e marca d'água, oculta botões de edição)
       tierListRef.current.classList.add('capture-mode')
 
-      // Aguardar um pouco para aplicar os estilos
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Aguardar aplicação dos estilos no DOM
+      await new Promise((resolve) => setTimeout(resolve, 150))
 
-      // Capturar a tier list usando snapdom com proxy para CORS
       const capture = await snapdom(tierListRef.current, {
         scale: 2,
-        useProxy: 'https://proxy.corsfix.com/?'
+        useProxy: 'https://proxy.corsfix.com/?',
       })
       const canvas = await capture.toCanvas()
 
-      // Remover classe de captura
-      tierListRef.current.classList.remove('capture-mode')
+      // Converte para Blob e inicia download
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((b) => resolve(b), 'image/png', 1)
+      })
 
-      // Criar canvas final com watermark
-      const finalCanvas = document.createElement('canvas')
-      const ctx = finalCanvas.getContext('2d')
-      if (!ctx) throw new Error('Canvas context not available')
+      if (!blob) throw new Error('Falha ao gerar blob de imagem')
 
-      const watermarkHeight = 60
-      finalCanvas.width = canvas.width
-      finalCanvas.height = canvas.height + watermarkHeight
-
-      // Fundo
-      ctx.fillStyle = '#0a0a0a'
-      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height)
-
-      // Desenhar tier list
-      ctx.drawImage(canvas, 0, 0)
-
-      // Watermark
-      ctx.fillStyle = '#1a1a1a'
-      ctx.fillRect(0, canvas.height, finalCanvas.width, watermarkHeight)
-
-      // Linha separadora
-      ctx.strokeStyle = '#F4AF23'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.moveTo(0, canvas.height)
-      ctx.lineTo(finalCanvas.width, canvas.height)
-      ctx.stroke()
-
-      // Texto do watermark
-      ctx.fillStyle = '#ffffff'
-      ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText('Criado em klsimulator.vercel.app/tier-list', finalCanvas.width / 2, canvas.height + watermarkHeight / 2)
-
-      // Ícone decorativo (coroa)
-      ctx.fillStyle = '#F4AF23'
-      ctx.font = '28px system-ui'
-      const textWidth = ctx.measureText('Criado em klsimulator.vercel.app/tier-list').width
-      ctx.fillText('👑', (finalCanvas.width / 2) - (textWidth / 2) - 40, canvas.height + watermarkHeight / 2)
-
+      const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
-      link.download = 'tier-list-kings-league.png'
-      link.href = finalCanvas.toDataURL('image/png')
+      link.download = 'kings-league-tier-list.png'
+      link.href = url
       link.click()
 
-      toast.success('Imagem baixada com sucesso!', { id: 'download' })
+      setTimeout(() => URL.revokeObjectURL(url), 2000)
+
+      toast.success('Imagem baixada com sucesso!', { id: toastId })
     } catch (error) {
       console.error('Erro ao gerar imagem:', error)
-      // Garantir que a classe seja removida em caso de erro
+      toast.error('Erro ao gerar imagem. Tente novamente.', { id: toastId })
+    } finally {
       tierListRef.current?.classList.remove('capture-mode')
-      toast.error('Erro ao gerar imagem. Tente novamente.', { id: 'download' })
+      setIsDownloading(false)
     }
   }
 
-  // Compartilhar via URL
+  // Compartilhar via link
   const handleShare = async () => {
     if (!tierListData) {
       toast.error('Nenhuma tier list para compartilhar')
       return
     }
 
-    toast.loading('Gerando link otimizado...', { id: 'share' })
+    const toastId = toast.loading('Gerando link...')
 
     try {
       const encoded = encodeTierListToURL(tierListData)
       if (!encoded) {
-        toast.error('Erro ao gerar link', { id: 'share' })
+        toast.error('Erro ao gerar link', { id: toastId })
         return
       }
 
       const url = `${window.location.origin}${window.location.pathname}#data=${encoded}`
 
-      // Informar sobre o tamanho do link (útil para redes sociais)
-      const linkSize = url.length
-      console.log(`📊 Link otimizado gerado: ${linkSize} caracteres`)
-
-      // Tentar usar Web Share API se disponível (mobile)
       if (typeof navigator !== 'undefined' && navigator.share) {
         try {
           await navigator.share({
-            title: 'Minha Tier List Kings League',
-            text: 'Confira minha tier list da Kings League!',
+            title: 'Minha Tier List Kings League Brasil',
+            text: 'Confira meu ranking de times da Kings League Brasil!',
             url: url,
           })
-          toast.success('Compartilhado!', { id: 'share' })
+          toast.success('Compartilhado com sucesso!', { id: toastId })
           return
         } catch (shareError: unknown) {
-          // Se o usuário cancelar, não mostrar erro
           if (shareError instanceof Error && shareError.name === 'AbortError') {
-            toast.dismiss('share')
+            toast.dismiss(toastId)
             return
           }
-          // Continua para tentar clipboard
         }
       }
 
-      // Fallback: copiar para clipboard
-      try {
-        await navigator.clipboard.writeText(url)
-
-        // Mensagem de sucesso com informação sobre tamanho
-        const sizeInfo = linkSize > 280
-          ? ' (Link longo, considere usar um encurtador)'
-          : ' ✓ Ideal para redes sociais!'
-
-        toast.success(`Link copiado!${sizeInfo}`, { id: 'share' })
-      } catch {
-        // Fallback para navegadores antigos ou contextos inseguros
-        const textArea = document.createElement('textarea')
-        textArea.value = url
-        textArea.style.position = 'fixed'
-        textArea.style.left = '-999999px'
-        textArea.style.top = '-999999px'
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-
-        try {
-          const successful = document.execCommand('copy')
-          if (successful) {
-            toast.success('Link copiado!', { id: 'share' })
-          } else {
-            toast.info('Copie o link manualmente', { id: 'share', description: url.substring(0, 50) + '...' })
-          }
-        } catch {
-          toast.info('Copie o link manualmente', { id: 'share', description: url.substring(0, 50) + '...' })
-        }
-
-        document.body.removeChild(textArea)
-      }
+      await navigator.clipboard.writeText(url)
+      toast.success('Link copiado para a área de transferência!', { id: toastId })
     } catch (error) {
       console.error('Erro ao compartilhar:', error)
-      toast.error('Erro ao gerar link', { id: 'share' })
+      toast.error('Erro ao copiar link', { id: toastId })
     }
   }
 
-  // Obter team por ID
-  const getTeamById = useCallback((id: string): Team | undefined => {
-    return teams.find(t => t.id === id)
-  }, [teams])
+  const getTeamById = useCallback(
+    (id: string): Team | undefined => {
+      return teams.find((t) => t.id === id)
+    },
+    [teams]
+  )
 
-  // Obter time sendo arrastado
   const activeDragTeam = activeDragId ? getTeamById(activeDragId) : null
 
   const handleTeamSelect = (teamId: string) => {
@@ -454,89 +462,179 @@ export default function TierList() {
 
   if (!tierListData) {
     return (
-      <main className="min-h-screen bg-[#0a0a0a]">
+      <main className="min-h-screen bg-[#040405] text-white">
         <Header
           loading={false}
           selectedTeam={selectedTeam}
           onTeamSelect={handleTeamSelect}
-          setActiveTab={() => { }}
+          setActiveTab={() => {}}
         />
-        <div className="flex items-center justify-center py-20">
-          <p className="text-white">Erro ao carregar tier list</p>
+        <div className="flex items-center justify-center py-24">
+          <p className="text-zinc-400 text-sm">Erro ao carregar a tier list.</p>
         </div>
         <Footer />
       </main>
     )
   }
 
+  const totalTeamsCount = teams.length
+
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
+    <main className="min-h-screen bg-[#040405] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black">
       <Header
         loading={false}
         selectedTeam={selectedTeam}
         onTeamSelect={handleTeamSelect}
-        setActiveTab={() => { }}
+        setActiveTab={() => {}}
       />
 
-      <div className="container mx-auto px-4 py-6 sm:py-10">
-        {/* Hero Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center">
-              <ListOrdered className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-                Tier List
-              </h1>
-              <p className="text-gray-400 text-sm sm:text-base">
-                Arraste os times para criar seu ranking personalizado
-              </p>
-            </div>
+      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl flex-1 flex flex-col">
+        {/* Header da Página - Estilo idêntico ao da Home */}
+        <div className="mb-4 sm:mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
+            <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+            <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
+              TierMaker Oficial
+            </span>
           </div>
+
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+            Tier List <span className="text-[var(--team-primary,#F4AF23)]">Kings League</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+            Arraste os times para a tabela ou clique nos escudos para vincular diretamente. Clique no nome para editar.
+          </p>
         </div>
 
-        {/* Controles */}
+        {/* Barra de Controles Minimalista */}
         <TierControls
           onAddTier={handleAddTier}
+          onApplyPreset={handleApplyPreset}
+          onResetPositions={handleResetPositions}
           onReset={handleReset}
           onDownload={handleDownload}
           onShare={handleShare}
+          isDownloading={isDownloading}
         />
 
-        {/* Tier List */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          {/* Pool de times não atribuídos - FIXO NO TOPO */}
-          <div className="sticky top-0 z-40 pb-6 pt-1 bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-transparent">
+          {/* Banco de Times Disponíveis (Dock Compacto) */}
+          <div className="mb-4 sm:mb-6">
             <TeamPool
-              teams={tierListData.unassigned.map(id => getTeamById(id)).filter(Boolean) as Team[]}
+              teams={
+                tierListData.unassigned
+                  .map((id) => getTeamById(id))
+                  .filter(Boolean) as Team[]
+              }
+              allTiers={tierListData.tiers}
+              selectedTeamId={selectedPoolTeamId}
+              onSelectTeam={(teamId) => setSelectedPoolTeamId(teamId)}
+              onQuickAssign={handleQuickAssign}
+              onRecallAll={handleResetPositions}
+              totalTeamsCount={totalTeamsCount}
             />
           </div>
 
-          <div ref={tierListRef} className="space-y-4 mb-8">
+          {/* Tabela Oficial TierMaker */}
+          <div
+            ref={tierListRef}
+            className="rounded-2xl border border-white/[0.08] overflow-hidden bg-[#09090d] shadow-2xl mb-8 divide-y divide-white/[0.06]"
+          >
+            {/* Cabeçalho oficial com design de transmissão esportiva */}
+            <div className="relative overflow-hidden px-4 py-3 sm:px-6 sm:py-4.5 bg-[#07070b] border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              {/* Linha de acento dourada sutil no topo do card */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--team-primary,#F4AF23)] to-transparent opacity-80 pointer-events-none" />
+
+              {/* Identidade Kings League */}
+              <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                <div className="relative shrink-0 flex items-center justify-center">
+                  <KingsLeagueLogo width={28} height={34} className="sm:w-8 sm:h-[38px] drop-shadow-[0_0_12px_rgba(244,175,35,0.45)]" />
+                </div>
+                <div className="flex flex-col justify-center select-none min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm sm:text-lg font-black uppercase text-white tracking-wider leading-tight">
+                      Kings League Brasil
+                    </span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[var(--team-primary,#F4AF23)] text-black whitespace-nowrap shadow-sm leading-none">
+                      Tier List
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] text-zinc-400 font-semibold uppercase tracking-wider truncate mt-0.5 leading-tight">
+                    Ranking Oficial da Comunidade
+                  </span>
+                </div>
+              </div>
+
+              {/* Badge Oficial do Simulador */}
+              <div className="flex items-center gap-2 select-none self-end sm:self-auto shrink-0">
+                <div className="flex flex-col items-end justify-center px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-white/[0.03] border border-white/10">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
+                    <span className="text-[8px] sm:text-[9px] font-mono uppercase tracking-widest text-zinc-400 leading-none whitespace-nowrap">
+                      SIMULADOR OFICIAL
+                    </span>
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-mono font-bold text-[var(--team-primary,#F4AF23)] leading-none tracking-tight whitespace-nowrap">
+                    klsimulator.vercel.app
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Linhas de Tier */}
             {tierListData.tiers.map((tier, index) => (
               <TierRow
                 key={tier.id}
                 tier={tier}
-                teams={tier.teams.map(id => getTeamById(id)).filter(Boolean) as Team[]}
+                teams={
+                  tier.teams
+                    .map((id) => getTeamById(id))
+                    .filter(Boolean) as Team[]
+                }
                 onUpdateName={handleUpdateTierName}
                 onUpdateColor={handleUpdateTierColor}
                 onRemove={handleRemoveTier}
+                onAddAbove={handleAddTierAbove}
+                onAddBelow={handleAddTierBelow}
+                onClearTier={handleClearTier}
                 onMoveUp={handleMoveTierUp}
                 onMoveDown={handleMoveTierDown}
                 canRemove={tierListData.tiers.length > 1}
                 canMoveUp={index > 0}
                 canMoveDown={index < tierListData.tiers.length - 1}
+                selectedPoolTeamId={selectedPoolTeamId}
+                onQuickAssign={(tierId) => {
+                  if (selectedPoolTeamId) {
+                    handleQuickAssign(selectedPoolTeamId, tierId)
+                  }
+                }}
+                onRemoveTeam={handleRemoveTeamFromTier}
               />
             ))}
+
+            {/* Marca d'água / Assinatura oficial no rodapé */}
+            <div className="px-4 py-3 sm:px-6 sm:py-3.5 bg-[#050508] border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between text-xs gap-2.5 sm:gap-4 select-none text-center sm:text-left">
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-center sm:justify-start">
+                <span className="text-sm leading-none drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]">👑</span>
+                <span className="text-zinc-400 font-medium text-xs">
+                  Crie sua tier list em:
+                </span>
+                <span className="font-mono font-bold text-xs text-[var(--team-primary,#F4AF23)] bg-white/[0.04] border border-white/10 px-2 sm:px-2.5 py-0.5 rounded break-all sm:break-normal">
+                  klsimulator.vercel.app/tier-list
+                </span>
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-500 font-semibold uppercase tracking-wider">
+                Kings League Brasil • Simulador Oficial
+              </div>
+            </div>
           </div>
 
-          {/* Drag Overlay */}
+          {/* Drag Overlay para o escudo em movimento */}
           <DragOverlay>
             {activeDragTeam && (
               <TeamDraggable team={activeDragTeam} isDragging />

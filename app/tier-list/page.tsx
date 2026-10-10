@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: 'https://kings-league-simulator.vercel.app/tier-list',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-tier-list.png',
         width: 1200,
         height: 630,
         alt: 'Tier List Kings League Brasil - Crie e Compartilhe Seu Ranking',
@@ -31,6 +31,14 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Tier List Kings League Brasil 🏆',
     description: '⚡ Crie sua tier list dos times da Kings League! Arraste, solte e compartilhe. 100% GRÁTIS!',
+    images: [
+      {
+        url: '/og-tier-list.png',
+        width: 1200,
+        height: 630,
+        alt: 'Tier List Kings League Brasil Preview',
+      },
+    ],
   },
   alternates: {
     canonical: 'https://kings-league-simulator.vercel.app/tier-list',
