@@ -1,8 +1,14 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Player } from "@/types/kings-league"
+import { getCalibratedPlayerOverall } from "./player-ratings"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+export function getPlayerOverall(player: Player): number {
+  return getCalibratedPlayerOverall(player)
 }
 
 /**
@@ -10,8 +16,8 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function getProxyImageUrl(originalUrl: string | undefined | null): string {
   if (!originalUrl) return "/placeholder.svg"
-  // Se já é uma URL relativa ou do placeholder, retorna direto
-  if (originalUrl.startsWith("/")) return originalUrl
+  // Se já é uma URL relativa, do placeholder ou data URI, retorna direto
+  if (originalUrl.startsWith("/") || originalUrl.startsWith("data:")) return originalUrl
   return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`
 }
 
