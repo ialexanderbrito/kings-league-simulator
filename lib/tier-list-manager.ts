@@ -321,3 +321,135 @@ export function moveTierDown(data: TierListData, tierId: string): TierListData {
   
   return newData;
 }
+
+/**
+ * Move todos os times de todas as tiers de volta para o pool de não atribuídos,
+ * mantendo os nomes e cores customizados das tiers.
+ */
+export function resetTeamsToPool(data: TierListData): TierListData {
+  const allTeamIds: string[] = [];
+  const emptyTiers = data.tiers.map(t => {
+    allTeamIds.push(...t.teams);
+    return { ...t, teams: [] };
+  });
+  allTeamIds.push(...data.unassigned);
+
+  const uniqueTeamIds = Array.from(new Set(allTeamIds));
+
+  return {
+    tiers: emptyTiers,
+    unassigned: uniqueTeamIds,
+  };
+}
+
+/**
+ * Adiciona uma nova tier imediatamente acima de uma tier existente
+ */
+export function addTierAbove(data: TierListData, targetTierId: string): TierListData {
+  const newData = JSON.parse(JSON.stringify(data)) as TierListData;
+  const index = newData.tiers.findIndex(t => t.id === targetTierId);
+  if (index === -1) return data;
+
+  const newTier = createNewTier(`tier-${Date.now()}`, newData.tiers.length);
+  newData.tiers.splice(index, 0, newTier);
+  return newData;
+}
+
+/**
+ * Adiciona uma nova tier imediatamente abaixo de uma tier existente
+ */
+export function addTierBelow(data: TierListData, targetTierId: string): TierListData {
+  const newData = JSON.parse(JSON.stringify(data)) as TierListData;
+  const index = newData.tiers.findIndex(t => t.id === targetTierId);
+  if (index === -1) return data;
+
+  const newTier = createNewTier(`tier-${Date.now()}`, newData.tiers.length);
+  newData.tiers.splice(index + 1, 0, newTier);
+  return newData;
+}
+
+/**
+ * Move os times de uma tier específica de volta para o banco de não atribuídos
+ */
+export function clearTierTeams(data: TierListData, tierId: string): TierListData {
+  const newData = JSON.parse(JSON.stringify(data)) as TierListData;
+  const tier = newData.tiers.find(t => t.id === tierId);
+  if (!tier || tier.teams.length === 0) return data;
+
+  newData.unassigned = Array.from(new Set([...newData.unassigned, ...tier.teams]));
+  tier.teams = [];
+  return newData;
+}
+
+export interface PresetTemplate {
+  id: string;
+  name: string;
+  description: string;
+  tiers: { name: string; color: string }[];
+}
+
+export const PRESET_LISTS: PresetTemplate[] = [
+  {
+    id: 'kings-league',
+    name: 'Kings League Oficial',
+    description: 'Campeão até Pior Campanha',
+    tiers: [
+      { name: 'Campeão', color: '#FFD700' },
+      { name: 'Semifinal', color: '#C0C0C0' },
+      { name: 'Playoffs', color: '#CD7F32' },
+      { name: 'Pode Surpreender', color: '#10B981' },
+      { name: 'Pior Campanha', color: '#EF4444' },
+    ]
+  },
+  {
+    id: 'classic-s-f',
+    name: 'Clássico S ao F',
+    description: 'S, A, B, C, D, E, F',
+    tiers: [
+      { name: 'S', color: '#FF7F7F' },
+      { name: 'A', color: '#FFBF7F' },
+      { name: 'B', color: '#FFDF7F' },
+      { name: 'C', color: '#FFFF7F' },
+      { name: 'D', color: '#BFFF7F' },
+      { name: 'E', color: '#7FFFFF' },
+      { name: 'F', color: '#7FBFFF' },
+    ]
+  },
+  {
+    id: 'tournament',
+    name: 'Termômetro da Temporada',
+    description: 'Favorito, Na Briga, Decepção...',
+    tiers: [
+      { name: 'Favorito ao Título', color: '#FFD700' },
+      { name: 'Classificação Direta', color: '#10B981' },
+      { name: 'Na Briga', color: '#3B82F6' },
+      { name: 'Precisa Melhorar', color: '#F59E0B' },
+      { name: 'Decepção', color: '#EF4444' },
+    ]
+  }
+];
+
+/**
+ * Aplica um preset de tiers, devolvendo todos os times para o banco
+ */
+export function applyPreset(data: TierListData, preset: PresetTemplate): TierListData {
+  const allTeamIds: string[] = [];
+  data.tiers.forEach(t => allTeamIds.push(...t.teams));
+  allTeamIds.push(...data.unassigned);
+  const uniqueTeamIds = Array.from(new Set(allTeamIds));
+
+  const newTiers: TierItem[] = preset.tiers.map((t, idx) => ({
+    id: `tier-${idx + 1}`,
+    name: t.name,
+    color: t.color,
+    teams: []
+  }));
+
+  return {
+    tiers: newTiers,
+    unassigned: uniqueTeamIds,
+  };
+}
+
+
+
