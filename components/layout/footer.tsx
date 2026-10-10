@@ -8,7 +8,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="relative mt-20 pb-10 sm:pb-12 pt-6 w-full overflow-hidden select-none">
+    <footer className="relative mt-8 sm:mt-10 pb-8 sm:pb-10 pt-2 sm:pt-3 w-full overflow-hidden select-none">
       {/* Linha de reflexo especular superior */}
       <div
         className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent"
@@ -29,35 +29,24 @@ export function Footer() {
         <div className="liquid-glass rounded-3xl p-5 sm:p-6 md:px-8 md:py-6 border border-white/[0.08] shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.14)] flex flex-col gap-5 sm:gap-6">
           {/* Top Bar: Identidade, Status e Ações */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
-            {/* Brand + Status Live Badge */}
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="group inline-flex items-center gap-2.5 transition-[transform,opacity] duration-150 ease-out active:scale-[0.97]"
-                aria-label="Ir para a página inicial"
-              >
-                <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] group-hover:border-[var(--team-primary,#F4AF23)]/40 transition-colors duration-150">
-                  <KingsLeagueLogo size={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-xs sm:text-sm font-black text-white tracking-tight leading-none group-hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-150">
-                    Kings League <span className="text-[var(--team-primary,#F4AF23)]">Simulador</span>
-                  </span>
-                  <span className="text-[10px] text-zinc-500 font-medium tracking-wide uppercase mt-0.5">
-                    Brasil • Split 2026
-                  </span>
-                </div>
-              </Link>
-
-              {/* Live Pill Status */}
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-[11px] font-semibold text-emerald-400">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-                </span>
-                <span className="leading-none text-[10px] sm:text-[11px]">API Online</span>
+            {/* Brand */}
+            <Link
+              href="/"
+              className="group inline-flex items-center gap-2.5 transition-[transform,opacity] duration-150 ease-out active:scale-[0.97]"
+              aria-label="Ir para a página inicial"
+            >
+              <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] group-hover:border-[var(--team-primary,#F4AF23)]/40 transition-colors duration-150">
+                <KingsLeagueLogo size={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
               </div>
-            </div>
+              <div className="flex flex-col text-left">
+                <span className="text-xs sm:text-sm font-black text-white tracking-tight leading-none group-hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-150">
+                  Kings League <span className="text-[var(--team-primary,#F4AF23)]">Simulador</span>
+                </span>
+                <span className="text-[10px] text-zinc-500 font-medium tracking-wide uppercase mt-0.5">
+                  Brasil • Split 2026
+                </span>
+              </div>
+            </Link>
 
             {/* Links Essenciais Minimalistas */}
             <nav aria-label="Navegação do rodapé" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">

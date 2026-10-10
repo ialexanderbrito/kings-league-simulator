@@ -104,7 +104,7 @@ export default function HomePage() {
       />
 
       {/* Hero Canvas Ultra-Compacto (100% focado em simular e usar as ferramentas) */}
-      <div className="relative pt-[76px] pb-6 sm:pt-[84px] sm:pb-8 flex-1 flex flex-col items-center justify-start overflow-hidden">
+      <div className="relative pt-2 pb-6 sm:pt-4 sm:pb-8 flex-1 flex flex-col items-center justify-start overflow-hidden">
         
         {/* Iluminação Ambiente Líquida Suave de Fundo */}
         <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
