@@ -1,124 +1,152 @@
-import Link from 'next/link'
-import { Separator } from "@/components/ui/separator"
+"use client"
+
+import Link from "next/link"
+import { ArrowUpRight, Github } from "lucide-react"
+import KingsLeagueLogo from "@/components/kings-league-logo"
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="mt-16 py-8 bg-gradient-to-b from-transparent to-black/40 backdrop-blur-sm border-t border-[#333]/20">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          {/* Sobre */}
-          <div className="flex flex-col space-y-3">
-            <h3 className="text-lg font-semibold text-white">Kings League Simulador</h3>
-            <p className="text-sm text-gray-400">
-              Simulador não-oficial da Kings League, oferecendo estatísticas em tempo real,
-              simulação de partidas e informações detalhadas sobre times e jogadores.
-            </p>
-            <div className="flex space-x-4 pt-2">
-              <a
-                href="https://github.com/ialexanderbrito/kings-league-simulator"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors"
-                aria-label="GitHub Repository"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a
-                href="https://twitter.com/ialexanderbrito"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors"
-                aria-label="Twitter Profile"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                </svg>
-              </a>
-            </div>
-          </div>
+    <footer className="relative mt-20 pb-10 sm:pb-12 pt-6 w-full overflow-hidden select-none">
+      {/* Linha de reflexo especular superior */}
+      <div
+        className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent"
+        aria-hidden="true"
+      />
 
-          {/* Links Rápidos */}
-          <div className="flex flex-col space-y-3">
-            <h3 className="text-lg font-semibold text-white">Links Úteis</h3>
-            <nav aria-label="Links de navegação do rodapé">
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                    Início
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/teams" className="text-gray-400 hover:text-white transition-colors">
-                    Times
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/standings" className="text-gray-400 hover:text-white transition-colors">
-                    Classificação
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/tier-list" className="text-gray-400 hover:text-white transition-colors">
-                    Tier List
-                  </Link>
-                </li>
-              </ul>
+      {/* Iluminação ambiente dourada sutil de fundo */}
+      <div
+        className="pointer-events-none absolute -bottom-10 left-1/2 -translate-x-1/2 w-[500px] h-[160px] rounded-full blur-[100px] opacity-[0.06]"
+        style={{
+          background: "radial-gradient(circle, var(--team-primary, #F4AF23) 0%, transparent 70%)",
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="container mx-auto px-4 max-w-7xl relative z-10">
+        {/* Dock Liquid Glass Unificado */}
+        <div className="liquid-glass rounded-3xl p-5 sm:p-6 md:px-8 md:py-6 border border-white/[0.08] shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.14)] flex flex-col gap-5 sm:gap-6">
+          {/* Top Bar: Identidade, Status e Ações */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+            {/* Brand + Status Live Badge */}
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="group inline-flex items-center gap-2.5 transition-[transform,opacity] duration-150 ease-out active:scale-[0.97]"
+                aria-label="Ir para a página inicial"
+              >
+                <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] group-hover:border-[var(--team-primary,#F4AF23)]/40 transition-colors duration-150">
+                  <KingsLeagueLogo size={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-xs sm:text-sm font-black text-white tracking-tight leading-none group-hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-150">
+                    Kings League <span className="text-[var(--team-primary,#F4AF23)]">Simulador</span>
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-medium tracking-wide uppercase mt-0.5">
+                    Brasil • Split 2026
+                  </span>
+                </div>
+              </Link>
+
+              {/* Live Pill Status */}
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-[11px] font-semibold text-emerald-400">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+                <span className="leading-none text-[10px] sm:text-[11px]">API Online</span>
+              </div>
+            </div>
+
+            {/* Links Essenciais Minimalistas */}
+            <nav aria-label="Navegação do rodapé" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+              <Link
+                href="/standings"
+                prefetch={true}
+                className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
+              >
+                Classificação
+              </Link>
+              <Link
+                href="/simulator"
+                prefetch={true}
+                className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
+              >
+                Simulador
+              </Link>
+              <Link
+                href="/teams"
+                prefetch={true}
+                className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
+              >
+                Times
+              </Link>
+              <Link
+                href="/termos-de-uso"
+                prefetch={true}
+                className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
+              >
+                Termos
+              </Link>
+              <Link
+                href="/politica-de-privacidade"
+                prefetch={true}
+                className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
+              >
+                Privacidade
+              </Link>
             </nav>
-          </div>
 
-          {/* Informações Legais */}
-          <div className="flex flex-col space-y-3">
-            <h3 className="text-lg font-semibold text-white">Informações Legais</h3>
-            <p className="text-sm text-gray-400">
-              Este site é um projeto independente e não-oficial, criado por fãs. Não possuímos qualquer afiliação, parceria, patrocínio, endosso ou vínculo com a Kings League, Kosmos, organizadores, equipes ou jogadores.
-            </p>
-            <p className="text-xs text-gray-500">
-              Kings League e elementos relacionados (nomes, escudos, logotipos e marcas) pertencem aos seus respectivos titulares e são utilizados apenas para fins informativos.
-            </p>
+            {/* Socials & Assinatura do Criador */}
+            <div className="flex items-center gap-2 self-stretch md:self-auto justify-between md:justify-end pt-2 md:pt-0 border-t border-white/[0.04] md:border-t-0">
+              <div className="flex items-center gap-1.5">
+                <a
+                  href="https://github.com/ialexanderbrito/kings-league-simulator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.14] text-zinc-400 hover:text-white flex items-center justify-center transition-[transform,color,background-color,border-color] duration-150 ease-out active:scale-[0.95]"
+                  aria-label="Código no GitHub"
+                >
+                  <Github className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://x.com/ialexanderbrito"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.14] text-zinc-400 hover:text-white flex items-center justify-center transition-[transform,color,background-color,border-color] duration-150 ease-out active:scale-[0.95]"
+                  aria-label="Perfil no X / Twitter"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+              </div>
 
-            <div className="pt-1 flex flex-col gap-2 text-sm">
-              <Link href="/termos-de-uso" className="text-gray-400 hover:text-white transition-colors">
-                Termos de Uso
-              </Link>
-              <Link href="/politica-de-privacidade" className="text-gray-400 hover:text-white transition-colors">
-                Política de Privacidade
-              </Link>
+              {/* Pill do Autor com Micro-Interação */}
+              <a
+                href="https://ialexanderbrito.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.16] text-[11px] font-medium text-zinc-300 hover:text-white transition-[transform,color,background-color,border-color] duration-150 ease-out active:scale-[0.96]"
+              >
+                <span>por</span>
+                <span className="font-semibold text-white group-hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-150">
+                  ialexanderbrito
+                </span>
+                <ArrowUpRight className="w-3 h-3 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150 ease-out" />
+              </a>
             </div>
           </div>
-        </div>
 
-        <Separator className="bg-gray-800 mb-6" />
-
-        <div className="flex flex-col md:flex-row items-center justify-between text-center md:text-left">
-          <p className="text-sm text-gray-400">
-            © {currentYear} Kings League Simulador. Todos os direitos reservados.
-          </p>
-
-          <div className="mt-4 md:mt-0 flex items-center">
-            <p className="text-sm text-gray-400">
-              Desenvolvido com <span className="text-[var(--team-primary)]">♥</span> por
+          {/* Bottom Bar: Disclaimer Legal Minimalista em Linha Única */}
+          <div className="pt-3 border-t border-white/[0.05] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-zinc-500 leading-relaxed text-center sm:text-left">
+            <p>
+              © {currentYear} Kings League Simulador. Projeto independente de fãs, sem vínculo oficial com a Kings League ou Kosmos.
             </p>
-            <a
-              href="https://ialexanderbrito.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-1 text-md font-medium text-white hover:text-[var(--team-primary)] transition-colors group flex items-center gap-1.5"
-            >
-              ialexanderbrito
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
-                aria-hidden="true"
-              >
-                <path fillRule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clipRule="evenodd" />
-              </svg>
-            </a>
+            <p className="text-zinc-600 sm:text-zinc-500 text-[10px] sm:text-[11px] shrink-0">
+              Marcas registradas pertencem aos seus titulares.
+            </p>
           </div>
         </div>
       </div>

@@ -1,87 +1,102 @@
-import { useEffect } from "react"
-import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { TableIcon } from "lucide-react"
 import MatchesTable from "@/components/matches-table"
 import StandingsTable from "@/components/standings-table"
-import { SimulationCaptureOverlay } from "@/components/simulation-capture-overlay"
 import { Team, Round, TeamStanding } from "@/types/kings-league"
 import { useRouter } from "next/navigation"
-import { useSimulationCapture } from "@/hooks/use-simulation-capture"
 
 interface MainContentProps {
   rounds: Round[]
   teams: Record<string, Team>
+  standings?: TeamStanding[]
   groupedStandings: Array<{ groupName: string; standings: TeamStanding[] }>
   previousStandings: TeamStanding[]
-  selectedTeam: string | null
-  onTeamSelect: (teamId: string) => void
+  selectedTeam?: string | null
+  onTeamSelect?: (teamId: string) => void
   onScoreUpdate: (roundId: number, matchId: number, homeScore: string | number | null, awayScore: string | number | null, homeShootoutScore?: number, awayShootoutScore?: number) => void
-  activeTab: 'matches' | 'team'
-  setActiveTab: (tab: 'matches' | 'team') => void
+  activeTab?: 'matches' | 'team'
+  setActiveTab?: (tab: 'matches' | 'team') => void
+  showPlayoffs?: boolean
+  onTogglePlayoffs?: () => void
 }
 
 export function MainContent({
   rounds,
   teams,
+  standings,
   groupedStandings,
   previousStandings,
   selectedTeam,
   onTeamSelect,
   onScoreUpdate,
   activeTab = "matches",
-  setActiveTab
+  setActiveTab,
+  showPlayoffs,
+  onTogglePlayoffs,
 }: MainContentProps) {
   const router = useRouter()
-  const { showCaptureOverlay } = useSimulationCapture()
-
-  useEffect(() => {
-    if (selectedTeam) {
-      setActiveTab("team")
-    }
-  }, [selectedTeam, setActiveTab])
 
   const handleTeamSelect = (teamId: string) => {
     router.push(`/team/${teamId}`)
-    onTeamSelect(teamId)
+    onTeamSelect?.(teamId)
   }
 
-
   return (
-    <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'matches' | 'team')} className="w-full">
-      <TabsContent value="matches" className="mt-0">
-        <SimulationCaptureOverlay visible={showCaptureOverlay}>
-          <div id="simulation-content" className="grid grid-cols-1 lg:grid-cols-[1fr,380px] xl:grid-cols-[1fr,500px] gap-6">
-            {/* Matches Section */}
-            <div className="p-4 sm:p-6 rounded-2xl bg-[#111111] border border-white/5">
-              <MatchesTable rounds={rounds} teams={teams} onScoreUpdate={onScoreUpdate} />
-            </div>
+    <div className="w-full">
+        <div id="simulation-content" className="grid grid-cols-1 lg:grid-cols-[1fr,390px] xl:grid-cols-[1fr,440px] gap-4 sm:gap-6 items-start">
+          {/* Matches Section */}
+          <div
+            id="matches-section"
+            className="relative rounded-2xl border border-zinc-800/80 overflow-hidden bg-[#09090d]/90 backdrop-blur-md shadow-2xl p-2.5 sm:p-4"
+          >
+            {/* Linha de acento dourada sutil no topo do card */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--team-primary,#F4AF23)] to-transparent opacity-80 pointer-events-none" />
+            <MatchesTable 
+              rounds={rounds} 
+              teams={teams} 
+              standings={standings}
+              onScoreUpdate={onScoreUpdate} 
+              showPlayoffs={showPlayoffs}
+              onTogglePlayoffs={onTogglePlayoffs}
+            />
+          </div>
 
-            {/* Standings Section */}
-            <div className="lg:sticky lg:top-6 h-fit">
-              <div className="rounded-2xl bg-[#111111] border border-white/5 overflow-hidden">
-                {/* Header */}
-                <div className="px-4 py-3 border-b border-white/5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-[var(--team-primary]/10 border border-[var(--team-primary]/20">
-                      <TableIcon className="w-4 h-4 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-                    </div>
-                    <span className="text-base font-semibold text-white">Classificação</span>
+          {/* Standings Section */}
+          <div className="lg:sticky lg:top-20 h-fit">
+            <div className="relative rounded-2xl border border-zinc-800/80 overflow-hidden bg-[#09090d] shadow-2xl divide-y divide-zinc-800/60">
+              {/* Linha de acento dourada sutil no topo do card */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--team-primary,#F4AF23)] to-transparent opacity-80 pointer-events-none" />
+
+              {/* Header com estilo oficial de transmissão */}
+              <div className="px-3.5 py-2.5 sm:px-4 sm:py-2.5 bg-[#07070b] border-b border-zinc-800/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-[var(--team-primary,#F4AF23)]/10 border border-[var(--team-primary,#F4AF23)]/20 shadow-sm shadow-[var(--team-primary,#F4AF23)]/10">
+                    <TableIcon className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm sm:text-base font-black text-white leading-tight">Classificação</span>
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-zinc-900/60 text-zinc-400 border border-zinc-800">Fase Regular</span>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-0">
-                  <StandingsTable
-                    groupedStandings={groupedStandings}
-                    onTeamSelect={handleTeamSelect}
-                    previousStandings={previousStandings}
-                  />
+                {/* Badge Ao Vivo */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900/60 border border-zinc-800 select-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
+                  <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">AO VIVO</span>
                 </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-0">
+                <StandingsTable
+                  groupedStandings={groupedStandings}
+                  onTeamSelect={handleTeamSelect}
+                  previousStandings={previousStandings}
+                  rounds={rounds}
+                />
               </div>
             </div>
           </div>
-        </SimulationCaptureOverlay>
-      </TabsContent>
-    </Tabs>
+        </div>
+    </div>
   )
 }
