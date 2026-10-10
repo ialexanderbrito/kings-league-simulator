@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { PlayoffBracket, Team } from "@/types/kings-league";
 import { PlayoffMatchCard } from "./playoff-match-card";
+import { ChampionBanner } from "./champion-banner";
 import { updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
-import { Crown, Sparkles, Info } from "lucide-react";
-import { getProxyImageUrl } from "@/lib/utils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 
 interface PlayoffBracketViewProps {
@@ -34,9 +33,27 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
 
   // Handler para seleção de vencedor
   const handleWinnerSelect = (matchId: string, winner: "home" | "away" | null) => {
+    // Partidas já encerradas oficialmente não podem ter vencedor alterado
+    const allMatches = [
+      ...(localBracket?.quarterfinals || []),
+      ...(localBracket?.semifinals || []),
+      ...(localBracket?.final ? [localBracket.final] : [])
+    ];
+    const target = allMatches.find(m => m.id === matchId);
+    if (
+      target && (
+        target.status === "ended" ||
+        target.status?.toLowerCase() === "ended" ||
+        target.status?.toLowerCase() === "finished" ||
+        (target.homeScore !== null && target.awayScore !== null && target.homeScore !== undefined && target.awayScore !== undefined)
+      )
+    ) {
+      return;
+    }
+
     if (!winner) {
       const updated = JSON.parse(JSON.stringify(localBracket)) as PlayoffBracket;
-      const target = findAndClearMatch(updated, matchId);
+      findAndClearMatch(updated, matchId);
       setLocalBracket(updated);
       onBracketUpdate(updated);
       return;
@@ -58,39 +75,13 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
 
   return (
     <div className="w-full">
-      {/* Banner do campeão */}
+      {/* Banner do campeão com celebração e confetes */}
       {champion && (
-        <div className="mb-6 flex justify-center animate-in fade-in zoom-in-95 duration-200">
-          <div className="w-full max-w-sm rounded-2xl border border-[var(--team-primary)]/30 bg-gradient-to-b from-[var(--team-primary)]/15 via-[#09090d]/90 to-[#09090d]/90 backdrop-blur-md shadow-[0_8px_32px_rgba(244,175,35,0.15)] px-4 py-3 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--team-primary)]/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="flex items-center gap-3 relative">
-              <div className="relative flex-shrink-0">
-                <div className="absolute -inset-1 rounded-2xl bg-[var(--team-primary)]/30 blur-sm" aria-hidden="true" />
-                <img
-                  src={getProxyImageUrl(champion.logo?.url)}
-                  alt={`Logo ${champion.name}`}
-                  className="relative w-12 h-12 rounded-xl border border-[var(--team-primary)]/50 liquid-stat-box object-contain p-1.5 shadow-md"
-                  loading="lazy"
-                  crossOrigin="anonymous"
-                />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--team-primary)]/40 bg-[var(--team-primary)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--team-primary)]">
-                  <Crown className="w-3 h-3" />
-                  Campeão dos Playoffs
-                </div>
-                <p className="mt-1 text-sm sm:text-base font-bold text-white truncate" title={champion.name}>
-                  {champion.name}
-                </p>
-                <p className="text-[10px] sm:text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
-                  <Sparkles className="w-3 h-3 text-[var(--team-primary)]" />
-                  Vencedor da Grande Final
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ChampionBanner
+          champion={champion}
+          finalMatch={finalMatch}
+          teams={teams}
+        />
       )}
 
       {/* Mobile scroll hint */}
@@ -137,7 +128,6 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
                 selectedWinner={quarterfinals[0].winnerId ? (quarterfinals[0].winnerId === quarterfinals[0].homeTeamId ? "home" : "away") : null}
                 stage="quarterfinal"
                 isLive={Boolean(quarterfinals[0].homeScore !== null || quarterfinals[0].awayScore !== null) && !quarterfinals[0].winnerId}
-                youtubeUrl={quarterfinals[0].youtubeUrl || undefined}
                 hasTwoGroups={hasTwoGroups}
               />
             )}
@@ -153,7 +143,6 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
                 selectedWinner={quarterfinals[1].winnerId ? (quarterfinals[1].winnerId === quarterfinals[1].homeTeamId ? "home" : "away") : null}
                 stage="quarterfinal"
                 isLive={Boolean(quarterfinals[1].homeScore !== null || quarterfinals[1].awayScore !== null) && !quarterfinals[1].winnerId}
-                youtubeUrl={quarterfinals[1].youtubeUrl || undefined}
                 hasTwoGroups={hasTwoGroups}
               />
             )}
@@ -169,7 +158,6 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
                 selectedWinner={quarterfinals[2].winnerId ? (quarterfinals[2].winnerId === quarterfinals[2].homeTeamId ? "home" : "away") : null}
                 stage="quarterfinal"
                 isLive={Boolean(quarterfinals[2].homeScore !== null || quarterfinals[2].awayScore !== null) && !quarterfinals[2].winnerId}
-                youtubeUrl={quarterfinals[2].youtubeUrl || undefined}
                 hasTwoGroups={hasTwoGroups}
               />
             )}
@@ -195,7 +183,6 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
                 selectedWinner={semifinals[0].winnerId ? (semifinals[0].winnerId === semifinals[0].homeTeamId ? "home" : "away") : null}
                 stage="semifinal"
                 isLive={Boolean(semifinals[0].homeScore !== null || semifinals[0].awayScore !== null) && !semifinals[0].winnerId}
-                youtubeUrl={semifinals[0].youtubeUrl || undefined}
                 hasTwoGroups={hasTwoGroups}
               />
             )}
@@ -211,7 +198,6 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
                 selectedWinner={semifinals[1].winnerId ? (semifinals[1].winnerId === semifinals[1].homeTeamId ? "home" : "away") : null}
                 stage="semifinal"
                 isLive={Boolean(semifinals[1].homeScore !== null || semifinals[1].awayScore !== null) && !semifinals[1].winnerId}
-                youtubeUrl={semifinals[1].youtubeUrl || undefined}
                 hasTwoGroups={hasTwoGroups}
               />
             )}
@@ -236,7 +222,6 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
                 selectedWinner={finalMatch.winnerId ? (finalMatch.winnerId === finalMatch.homeTeamId ? "home" : "away") : null}
                 stage="final"
                 isLive={Boolean(finalMatch.homeScore !== null || finalMatch.awayScore !== null) && !finalMatch.winnerId}
-                youtubeUrl={finalMatch.youtubeUrl || undefined}
                 hasTwoGroups={hasTwoGroups}
               />
             ) : (

@@ -208,6 +208,7 @@ export interface PlayoffMatch {
   nextMatchId: string | null;
   order: number;
   youtubeUrl?: string; // URL para assistir a partida no YouTube
+  status?: string;
 }
 
 export interface PlayoffBracket {

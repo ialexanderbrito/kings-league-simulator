@@ -126,6 +126,105 @@ export function determineChallengerAdvantage(
 }
 
 /**
+ * Mescla dados de partidas oficiais dos playoffs (já realizadas ou agendadas) no chaveamento.
+ */
+export function applyOfficialPlayoffsToBracket(
+  bracket: PlayoffBracket,
+  officialPlayoffs: unknown[]
+): PlayoffBracket {
+  if (!bracket || !Array.isArray(officialPlayoffs) || officialPlayoffs.length === 0) {
+    return bracket;
+  }
+
+  const updatedBracket = JSON.parse(JSON.stringify(bracket)) as PlayoffBracket;
+
+  let qfOfficial: any[] = [];
+  let sfOfficial: any[] = [];
+  let finalOfficial: any | null = null;
+
+  for (const turn of officialPlayoffs as any[]) {
+    const turnName = String(turn?.name || "").toLowerCase();
+    const matches = Array.isArray(turn?.matches) ? turn.matches : [];
+
+    if (turnName.includes("quarta")) {
+      qfOfficial = matches;
+    } else if (turnName.includes("semi")) {
+      sfOfficial = matches;
+    } else if (turnName.includes("final")) {
+      finalOfficial = matches[0] || null;
+    }
+  }
+
+  const getPosition = (m: any, fallback: number) => {
+    try {
+      if (m?.metaInformation?.bracket_config) {
+        const cfg = typeof m.metaInformation.bracket_config === "string"
+          ? JSON.parse(m.metaInformation.bracket_config)
+          : m.metaInformation.bracket_config;
+        if (cfg?.position_in_turn !== undefined) return Number(cfg.position_in_turn);
+      }
+    } catch {
+      // Ignora erro de JSON parse
+    }
+    return fallback;
+  };
+
+  qfOfficial.sort((a, b) => getPosition(a, 0) - getPosition(b, 0));
+  sfOfficial.sort((a, b) => getPosition(a, 0) - getPosition(b, 0));
+
+  const fillMatch = (targetMatch: PlayoffMatch | undefined, officialMatch: any) => {
+    if (!targetMatch || !officialMatch) return;
+
+    const homeId = officialMatch.participants?.homeTeamId ? String(officialMatch.participants.homeTeamId) : null;
+    const awayId = officialMatch.participants?.awayTeamId ? String(officialMatch.participants.awayTeamId) : null;
+
+    if (homeId) targetMatch.homeTeamId = homeId;
+    if (awayId) targetMatch.awayTeamId = awayId;
+
+    const hs = officialMatch.scores?.homeScore;
+    const as = officialMatch.scores?.awayScore;
+    const hp = officialMatch.scores?.homeScoreP;
+    const ap = officialMatch.scores?.awayScoreP;
+
+    if (hs !== null && hs !== undefined) targetMatch.homeScore = Number(hs);
+    if (as !== null && as !== undefined) targetMatch.awayScore = Number(as);
+    if (hp !== null && hp !== undefined) targetMatch.homeScoreP = Number(hp);
+    if (ap !== null && ap !== undefined) targetMatch.awayScoreP = Number(ap);
+
+    // Determina o vencedor oficial da partida
+    let winner: string | null = null;
+    if (hs !== null && as !== null && hs !== undefined && as !== undefined) {
+      if (hs > as) winner = homeId;
+      else if (as > hs) winner = awayId;
+      else if (hp !== null && ap !== null && hp !== undefined && ap !== undefined) {
+        winner = hp > ap ? homeId : ap > hp ? awayId : null;
+      }
+    }
+    if (winner) targetMatch.winnerId = winner;
+
+    targetMatch.youtubeUrl = officialMatch.metaInformation?.youtube_url || officialMatch.metaInformation?.live_link || undefined;
+    targetMatch.status = officialMatch.status || (hs !== null && as !== null ? "ended" : undefined);
+  };
+
+  if (updatedBracket.quarterfinals) {
+    if (qfOfficial[0]) fillMatch(updatedBracket.quarterfinals[0], qfOfficial[0]);
+    if (qfOfficial[1]) fillMatch(updatedBracket.quarterfinals[1], qfOfficial[1]);
+    if (qfOfficial[2]) fillMatch(updatedBracket.quarterfinals[2], qfOfficial[2]);
+  }
+
+  if (updatedBracket.semifinals) {
+    if (sfOfficial[0]) fillMatch(updatedBracket.semifinals[0], sfOfficial[0]);
+    if (sfOfficial[1]) fillMatch(updatedBracket.semifinals[1], sfOfficial[1]);
+  }
+
+  if (updatedBracket.final && finalOfficial) {
+    fillMatch(updatedBracket.final, finalOfficial);
+  }
+
+  return updatedBracket;
+}
+
+/**
  * Gera o chaveamento dos playoffs com base na classificação atual.
  * Suporta o formato oficial Kings Cup com 2 grupos e vantagem de Challenger (SC),
  * com fallback para formato de tabela única quando aplicável.
@@ -133,7 +232,8 @@ export function determineChallengerAdvantage(
 export function generatePlayoffBracket(
   standings: TeamStanding[],
   teams: Record<string, Team>,
-  rounds?: Round[]
+  rounds?: Round[],
+  officialPlayoffs?: unknown[]
 ): PlayoffBracket {
   if (standings.length < 7) {
     throw new Error("É necessário ter pelo menos 7 times na classificação para gerar os playoffs");
@@ -282,11 +382,17 @@ export function generatePlayoffBracket(
       order: 1
     };
 
-    return {
+    const baseBracket = {
       quarterfinals,
       semifinals,
       final
     };
+
+    if (officialPlayoffs && Array.isArray(officialPlayoffs) && officialPlayoffs.length > 0) {
+      return applyOfficialPlayoffsToBracket(baseBracket, officialPlayoffs);
+    }
+
+    return baseBracket;
   }
 
   // Formato oficial de tabela única (Split da Kings League Brasil)
@@ -402,11 +508,17 @@ export function generatePlayoffBracket(
     order: 1
   };
 
-  return {
+  const baseBracket = {
     quarterfinals,
     semifinals,
     final
   };
+
+  if (officialPlayoffs && Array.isArray(officialPlayoffs) && officialPlayoffs.length > 0) {
+    return applyOfficialPlayoffsToBracket(baseBracket, officialPlayoffs);
+  }
+
+  return baseBracket;
 }
 
 /**

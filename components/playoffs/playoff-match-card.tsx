@@ -3,8 +3,7 @@ import { PlayoffMatch, Team } from "@/types/kings-league";
 import { cn } from "@/lib/utils";
 import { TeamDisplay } from "@/components/matches/team-display";
 import { Badge } from "@/components/ui/badge";
-import { Youtube, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 
 interface PlayoffMatchCardProps {
   match: PlayoffMatch;
@@ -16,7 +15,6 @@ interface PlayoffMatchCardProps {
   selectedWinner: "home" | "away" | null;
   stage: "quarterfinal" | "semifinal" | "final";
   isLive?: boolean;
-  youtubeUrl?: string;
   hasTwoGroups?: boolean;
 }
 
@@ -27,13 +25,11 @@ export function PlayoffMatchCard({
   selectedWinner,
   stage,
   isLive = false,
-  youtubeUrl,
   hasTwoGroups = false,
 }: PlayoffMatchCardProps) {
   const homeTeam = match.homeTeamId ? teams[match.homeTeamId] : null;
   const awayTeam = match.awayTeamId ? teams[match.awayTeamId] : null;
 
-  // Verificar se tem vencedor definido
   // Helpers de título de cada confronto
   const getStageInfo = () => {
     switch (match.id) {
@@ -81,11 +77,20 @@ export function PlayoffMatchCard({
 
   const stageInfo = getStageInfo()
 
+  const isEnded = Boolean(
+    match.status === "ended" ||
+    match.status?.toLowerCase() === "ended" ||
+    match.status?.toLowerCase() === "finished" ||
+    (match.homeScore !== null && match.awayScore !== null && match.homeScore !== undefined && match.awayScore !== undefined)
+  );
+  const hasScores = match.homeScore !== null && match.awayScore !== null && match.homeScore !== undefined && match.awayScore !== undefined;
+
   return (
     <article
       className={cn(
-        "relative rounded-2xl p-2.5 sm:p-3 border transition-[border-color,box-shadow,background-color] duration-150 w-full",
-        "bg-[#09090d]/90 backdrop-blur-md border-zinc-800 hover:border-zinc-700 shadow-sm",
+        "relative rounded-2xl p-2.5 sm:p-3 border transition-[border-color,box-shadow,background-color] duration-150 w-full select-none",
+        "bg-[#09090d]/90 backdrop-blur-md border-zinc-800 shadow-sm",
+        isEnded ? "pointer-events-none cursor-default" : "hover:border-zinc-700",
         hasWinner && "border-zinc-800"
       )}
       aria-label={homeTeam && awayTeam ? `Partida: ${homeTeam.name} vs ${awayTeam.name}` : "Partida dos playoffs"}
@@ -114,8 +119,8 @@ export function PlayoffMatchCard({
           </div>
         )}
 
-        {/* Área central - Seletor de vencedor */}
-        <div className="flex flex-col items-center px-1 sm:px-1.5 min-w-[80px] sm:min-w-[92px]">
+        {/* Área central - Placar ou Seletor de vencedor */}
+        <div className="flex flex-col items-center px-1 sm:px-1.5 min-w-[80px] sm:min-w-[96px]">
           {/* Badge de Ao Vivo */}
           {isLive && (
             <Badge
@@ -130,28 +135,78 @@ export function PlayoffMatchCard({
             </Badge>
           )}
 
-          {/* Placa: Fase do playoff */}
-          <div className="flex flex-col items-center mb-1.5 text-center leading-tight">
+          {/* Placa: Fase do playoff + Status */}
+          <div className="flex items-center justify-center gap-1 mb-1.5 text-center leading-tight">
             <span className="text-[10px] text-zinc-300 font-bold uppercase tracking-wider">
               {stageInfo.label}
             </span>
+            {isEnded && (
+              <span className="text-[8px] font-mono font-bold uppercase text-zinc-500 bg-zinc-900/80 px-1 py-0.2 rounded border border-zinc-800">
+                FIM
+              </span>
+            )}
           </div>
 
-          {/* Seletores de vencedor */}
-          {homeTeam && awayTeam ? (
+          {/* Exibição de Placar ou Seletores de vencedor */}
+          {hasScores ? (
+            <div 
+              className={cn(
+                "flex flex-col items-center select-none",
+                isEnded ? "cursor-default pointer-events-none" : "cursor-pointer group/score"
+              )}
+              onClick={isEnded ? undefined : () => {
+                onWinnerSelect(match.id, selectedWinner === "home" ? "away" : "home");
+              }}
+              title={isEnded ? undefined : "Clique para alternar vencedor na simulação"}
+            >
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <span
+                  className={cn(
+                    "w-6 sm:w-7 h-6 sm:h-7 flex items-center justify-center font-mono font-black text-xs sm:text-sm rounded-lg border transition-all duration-150",
+                    isHomeWinner
+                      ? "bg-[rgba(var(--team-primary-rgb,244,175,35),0.18)] border-[var(--team-primary,#F4AF23)] text-[var(--team-primary,#F4AF23)] shadow-sm"
+                      : "bg-zinc-900/90 border-zinc-800 text-zinc-300",
+                    !isEnded && "group-hover/score:border-zinc-700"
+                  )}
+                >
+                  {match.homeScore}
+                </span>
+                <span className="text-zinc-600 text-[10px] font-black select-none">×</span>
+                <span
+                  className={cn(
+                    "w-6 sm:w-7 h-6 sm:h-7 flex items-center justify-center font-mono font-black text-xs sm:text-sm rounded-lg border transition-all duration-150",
+                    isAwayWinner
+                      ? "bg-[rgba(var(--team-primary-rgb,244,175,35),0.18)] border-[var(--team-primary,#F4AF23)] text-[var(--team-primary,#F4AF23)] shadow-sm"
+                      : "bg-zinc-900/90 border-zinc-800 text-zinc-300",
+                    !isEnded && "group-hover/score:border-zinc-700"
+                  )}
+                >
+                  {match.awayScore}
+                </span>
+              </div>
+              {match.homeScoreP !== null && match.awayScoreP !== null && match.homeScoreP !== undefined && match.awayScoreP !== undefined && (
+                <span className="mt-1 text-[8px] sm:text-[9px] font-mono font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 select-none">
+                  SO: {match.homeScoreP}-{match.awayScoreP}
+                </span>
+              )}
+            </div>
+          ) : homeTeam && awayTeam ? (
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Botão Time da Casa */}
               <button
                 type="button"
-                onClick={() => onWinnerSelect(match.id, selectedWinner === "home" ? null : "home")}
+                onClick={isEnded ? undefined : () => onWinnerSelect(match.id, selectedWinner === "home" ? null : "home")}
+                disabled={isEnded}
+                aria-disabled={isEnded}
                 className={cn(
                   "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-[background-color,border-color,transform,box-shadow] duration-150 active:scale-[0.92] border",
                   isHomeWinner
                     ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black font-black shadow-[0_0_12px_rgba(244,175,35,0.4)]"
-                    : "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white"
+                    : "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white",
+                  isEnded && "cursor-not-allowed opacity-80 pointer-events-none select-none"
                 )}
                 aria-label={`Selecionar ${homeTeam.name} como vencedor`}
-                title={isHomeWinner ? "Desmarcar vencedor" : `Marcar ${homeTeam.name} como vencedor`}
+                title={isEnded ? undefined : isHomeWinner ? "Desmarcar vencedor" : `Marcar ${homeTeam.name} como vencedor`}
               >
                 {isHomeWinner ? (
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -160,20 +215,23 @@ export function PlayoffMatchCard({
                 )}
               </button>
 
-              <span className="text-[9px] sm:text-[10px] text-zinc-500 font-bold tracking-wider">VS</span>
+              <span className="text-[9px] sm:text-[10px] text-zinc-500 font-bold tracking-wider select-none">VS</span>
 
               {/* Botão Time Visitante */}
               <button
                 type="button"
-                onClick={() => onWinnerSelect(match.id, selectedWinner === "away" ? null : "away")}
+                onClick={isEnded ? undefined : () => onWinnerSelect(match.id, selectedWinner === "away" ? null : "away")}
+                disabled={isEnded}
+                aria-disabled={isEnded}
                 className={cn(
                   "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-[background-color,border-color,transform,box-shadow] duration-150 active:scale-[0.92] border",
                   isAwayWinner
                     ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black font-black shadow-[0_0_12px_rgba(244,175,35,0.4)]"
-                    : "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white"
+                    : "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white",
+                  isEnded && "cursor-not-allowed opacity-80 pointer-events-none select-none"
                 )}
                 aria-label={`Selecionar ${awayTeam.name} como vencedor`}
-                title={isAwayWinner ? "Desmarcar vencedor" : `Marcar ${awayTeam.name} como vencedor`}
+                title={isEnded ? undefined : isAwayWinner ? "Desmarcar vencedor" : `Marcar ${awayTeam.name} como vencedor`}
               >
                 {isAwayWinner ? (
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -186,20 +244,6 @@ export function PlayoffMatchCard({
             <p className="text-[10px] text-zinc-500 text-center font-medium">
               Aguardando
             </p>
-          )}
-
-          {/* Link do YouTube */}
-          {youtubeUrl && (
-            <a
-              href={youtubeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={homeTeam && awayTeam ? `Assistir partida no YouTube: ${homeTeam.name} vs ${awayTeam.name}` : "Assistir partida no YouTube"}
-              className="inline-flex items-center gap-1 mt-2.5 px-2.5 py-1 rounded-full text-[10px] font-medium transition-[background-color,transform] duration-150 bg-red-600/10 text-red-500 hover:bg-red-600/20 active:scale-[0.95]"
-            >
-              <Youtube className="w-3 h-3" aria-hidden="true" />
-              <span>Vídeo</span>
-            </a>
           )}
         </div>
 
