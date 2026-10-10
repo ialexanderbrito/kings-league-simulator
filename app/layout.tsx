@@ -135,20 +135,19 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-        {/* Preconnect para melhorar performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preconnect para acelerar carregamento direto das imagens oficiais sem passar pela Vercel */}
+        <link rel="preconnect" href="https://kingsleague-cdn.kama.football" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
 
         <meta name="google-adsense-account" content="ca-pub-4240296013936173" />
-      </head>
-      <body className={`${inter.className} min-h-screen antialiased`} suppressHydrationWarning>
-        <Script
-          id="adsbygoogle-init"
-          strategy="afterInteractive"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4240296013936173`}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4240296013936173"
           crossOrigin="anonymous"
         />
+      </head>
+      <body className={`${inter.className} min-h-screen antialiased`} suppressHydrationWarning>
 
         {/* Google Analytics */}
         <Script
