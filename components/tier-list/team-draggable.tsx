@@ -3,18 +3,24 @@
 import { Team } from "@/types/kings-league"
 import { useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
+import { X } from "lucide-react"
+import { getProxyImageUrl } from "@/lib/utils"
 
 interface TeamDraggableProps {
   team: Team
   isDragging?: boolean
+  isSelected?: boolean
+  onClick?: () => void
+  onRemove?: () => void
 }
 
-// Função para gerar URL do proxy de imagem
-function getProxyImageUrl(originalUrl: string): string {
-  return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`
-}
-
-export function TeamDraggable({ team, isDragging = false }: TeamDraggableProps) {
+export function TeamDraggable({
+  team,
+  isDragging = false,
+  isSelected = false,
+  onClick,
+  onRemove,
+}: TeamDraggableProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: team.id,
   })
@@ -24,53 +30,77 @@ export function TeamDraggable({ team, isDragging = false }: TeamDraggableProps) 
     touchAction: 'none' as const,
   }
 
+  const handleClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('.remove-team-btn')) {
+      return
+    }
+    if (onClick) {
+      onClick()
+    }
+  }
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (onRemove) {
+      onRemove()
+    }
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
+      onClick={handleClick}
       className={`
-        group relative flex flex-col items-center justify-start pt-2
-        w-20 h-[7rem] xs:w-24 xs:h-[8rem] sm:w-28 sm:h-[8rem]
-        rounded-xl cursor-grab active:cursor-grabbing
-        border border-white/10 hover:border-white/30
-        transition-all duration-200 shadow-lg
-        ${isDragging ? 'opacity-50 scale-95 shadow-2xl' : 'hover:scale-105 hover:shadow-2xl'}
+        group relative flex flex-col items-center justify-between p-1.5
+        w-[72px] h-[72px] sm:w-[84px] sm:h-[84px]
+        rounded-xl cursor-grab active:cursor-grabbing select-none
+        border transition-all duration-150 btn-press
+        bg-[#111116] hover:bg-[#161620]
+        ${isDragging ? 'opacity-40 scale-95 shadow-2xl z-50' : 'shadow-sm'}
+        ${isSelected
+          ? 'border-[var(--team-primary,#F4AF23)] ring-2 ring-[var(--team-primary,#F4AF23)] shadow-[0_0_15px_rgba(244,175,35,0.35)] scale-105 z-20 bg-[#1a1a24]'
+          : 'border-white/[0.08] hover:border-white/25 hover:scale-[1.03]'
+        }
       `}
+      title={team.name}
     >
-      {/* Background com cores do time */}
-      <div
-        className="absolute inset-0 rounded-xl"
-        style={{
-          background: `linear-gradient(135deg, ${team.firstColorHEX} 0%, ${team.secondColorHEX} 100%)`,
-        }}
-      />
+      {/* Botão de remoção rápida (aparece em hover nos times já colocados) */}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={handleRemove}
+          title="Remover do patamar"
+          className="remove-team-btn capture-hide absolute -top-1.5 -right-1.5 z-30 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-red-600/90 hover:bg-red-500 text-white flex items-center justify-center shadow-md border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        >
+          <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5]" />
+        </button>
+      )}
 
-      {/* Overlay escuro para melhor contraste */}
-      <div className="absolute inset-0 rounded-xl bg-black/20 group-hover:bg-black/10 transition-colors duration-200" />
-
-      {/* Logo do time - usando img nativo via proxy para compatibilidade com html2canvas */}
-      <div className="relative z-10 w-12 h-12 xs:w-14 xs:h-14 sm:w-16 sm:h-16 mb-1 flex items-center justify-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={getProxyImageUrl(team.logo.url)}
-          alt={team.name}
-          crossOrigin="anonymous"
-          className="w-full h-full object-contain drop-shadow-lg"
-        />
+      {/* Escudo do time em tamanho grande e de alto impacto */}
+      <div className="relative w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center shrink-0">
+        {team.logo?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={getProxyImageUrl(team.logo.url)}
+            alt={team.name}
+            crossOrigin="anonymous"
+            draggable={false}
+            className="w-full h-full object-contain filter drop-shadow-[0_2px_5px_rgba(0,0,0,0.6)] pointer-events-none transition-transform duration-150 group-hover:scale-105"
+          />
+        ) : (
+          <span className="text-xs font-black text-white">{team.shortName}</span>
+        )}
       </div>
 
-      {/* Nome do time */}
-      <div className="relative z-10 w-full px-1 pb-2 mt-auto">
-        <p
-          className="text-white text-[10px] xs:text-xs sm:text-sm font-bold text-center leading-relaxed"
-          style={{
-            textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-          }}
-        >
-          {team.shortName}
-        </p>
+      {/* Sigla oficial de 3 letras do time (ex: FUR, CAP, G3X, FLX) */}
+      <div className="w-full text-center px-0.5 mt-0.5">
+        <span className="block text-[10px] font-black text-zinc-300 leading-none uppercase whitespace-nowrap overflow-visible select-none">
+          {team.shortName || team.name.slice(0, 3)}
+        </span>
       </div>
     </div>
   )

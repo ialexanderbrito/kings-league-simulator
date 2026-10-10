@@ -1,77 +1,185 @@
 "use client"
 
-import { Team } from "@/types/kings-league"
+import { Team, TierItem } from "@/types/kings-league"
 import { useDroppable } from "@dnd-kit/core"
 import { TeamDraggable } from "./team-draggable"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, CheckCircle2 } from "lucide-react"
+import { RotateCcw, CheckCircle2, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface TeamPoolProps {
   teams: Team[]
+  allTiers?: TierItem[]
+  selectedTeamId?: string | null
+  onSelectTeam?: (teamId: string | null) => void
+  onQuickAssign?: (teamId: string, tierId: string) => void
+  onRecallAll?: () => void
+  totalTeamsCount?: number
 }
 
-export function TeamPool({ teams }: TeamPoolProps) {
+// Calcula contraste para texto preto ou branco
+function getContrastTextColor(hexColor: string): string {
+  try {
+    const cleanHex = hexColor.replace("#", "")
+    const fullHex =
+      cleanHex.length === 3
+        ? cleanHex
+            .split("")
+            .map((c) => c + c)
+            .join("")
+        : cleanHex
+    const r = parseInt(fullHex.substring(0, 2), 16) || 0
+    const g = parseInt(fullHex.substring(2, 4), 16) || 0
+    const b = parseInt(fullHex.substring(4, 6), 16) || 0
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.55 ? "#000000" : "#ffffff"
+  } catch {
+    return "#000000"
+  }
+}
+
+export function TeamPool({
+  teams,
+  allTiers = [],
+  selectedTeamId = null,
+  onSelectTeam,
+  onQuickAssign,
+  onRecallAll,
+  totalTeamsCount = 10,
+}: TeamPoolProps) {
   const { setNodeRef, isOver } = useDroppable({
-    id: 'unassigned',
+    id: "unassigned",
   })
 
   const isEmpty = teams.length === 0
+  const selectedTeam = teams.find((t) => t.id === selectedTeamId)
+  const rankedCount = Math.max(0, totalTeamsCount - teams.length)
 
-  // Versão minimizada quando não há times
+  // Quando todos os times estão alocados
   if (isEmpty) {
     return (
-      <Card className="bg-[#1a1a1a] border-white/10 shadow-lg shadow-black/20">
-        <CardHeader className="py-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2 text-white">
-              <Users className="w-4 h-4 text-[var(--team-primary,#F4AF23)]" />
-              Times Disponíveis
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-              <span className="text-green-400 text-xs font-medium">
-                Todos organizados! 🎉
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+      <div className="rounded-2xl border border-white/[0.08] bg-[#09090d] p-3 sm:p-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-300">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>Todos os times foram posicionados no ranking!</span>
+        </div>
+
+        {onRecallAll && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onRecallAll}
+            className="text-xs text-zinc-400 hover:text-white h-7 px-2.5 rounded-lg border border-white/5 bg-white/[0.03] btn-press"
+          >
+            <RotateCcw className="w-3 h-3 mr-1.5" />
+            Recolher ao banco
+          </Button>
+        )}
+      </div>
     )
   }
 
-  // Versão completa quando há times
   return (
-    <Card className="bg-[#1a1a1a] border-white/10 shadow-lg shadow-black/20">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl flex items-center gap-2 text-white">
-            <Users className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" />
+    <div className="rounded-2xl border border-white/[0.08] bg-[#09090d] shadow-lg transition-all duration-150">
+      {/* Header do Banco de Times */}
+      <div className="px-3.5 py-2.5 sm:px-4 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs sm:text-sm font-bold text-white tracking-wide">
             Times Disponíveis
-          </CardTitle>
-          <span className="text-gray-400 text-xs sm:text-sm bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
-            {teams.length} {teams.length === 1 ? 'time' : 'times'}
+          </span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-zinc-400">
+            {teams.length} restantes
           </span>
         </div>
-      </CardHeader>
-      <CardContent>
+
+        {onRecallAll && rankedCount > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onRecallAll}
+            className="text-xs text-zinc-400 hover:text-white h-7 px-2 rounded-lg border border-white/5 bg-white/[0.02] btn-press"
+            title="Devolver todos os times posicionados para o banco"
+          >
+            <RotateCcw className="w-3 h-3 mr-1" />
+            <span className="hidden xs:inline">Recolher todos</span>
+          </Button>
+        )}
+      </div>
+
+      {/* Barra Rápida de Atribuição (Quick-Link) */}
+      {selectedTeam && onQuickAssign && allTiers.length > 0 && (
+        <div className="px-3 py-2 bg-white/[0.03] border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-zinc-400 text-[11px]">Vincular</span>
+            <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10 text-[11px]">
+              {selectedTeam.name}
+            </span>
+            <span className="text-zinc-400 text-[11px]">a:</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {allTiers.map((tier) => (
+              <button
+                key={tier.id}
+                type="button"
+                onClick={() => onQuickAssign(selectedTeam.id, tier.id)}
+                className="text-[10px] font-black px-2 py-1 rounded shadow-sm transition-transform hover:scale-105 active:scale-95 uppercase tracking-tight btn-press"
+                style={{
+                  backgroundColor: tier.color,
+                  color: getContrastTextColor(tier.color),
+                }}
+              >
+                {tier.name}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => onSelectTeam && onSelectTeam(null)}
+              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 ml-1"
+              title="Cancelar seleção"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Grid de Escudos no Banco */}
+      <div className="p-3">
         <div
           ref={setNodeRef}
           className={`
-            min-h-[150px] p-4 rounded-xl border-2 border-dashed
-            transition-all duration-200
+            min-h-[84px] p-2 rounded-xl border border-dashed transition-all duration-150
+            flex flex-wrap items-center gap-1.5 sm:gap-2
             ${isOver
-              ? 'border-[var(--team-primary,#F4AF23)]/50 bg-[var(--team-primary,#F4AF23)]/5'
-              : 'border-white/10 bg-white/[0.02]'
+              ? "border-[var(--team-primary,#F4AF23)] bg-[var(--team-primary,#F4AF23)]/5"
+              : "border-white/[0.08] bg-[#060608]"
             }
           `}
         >
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-            {teams.map((team) => (
-              <TeamDraggable key={team.id} team={team} />
-            ))}
-          </div>
+          {teams.map((team) => {
+            const isSelected = selectedTeamId === team.id
+            return (
+              <TeamDraggable
+                key={team.id}
+                team={team}
+                isSelected={isSelected}
+                onClick={() => {
+                  if (onSelectTeam) {
+                    onSelectTeam(isSelected ? null : team.id)
+                  }
+                }}
+              />
+            )
+          })}
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="mt-2 text-[10px] text-zinc-500 px-1">
+          Arraste os times para a tabela ou clique para vincular instantaneamente.
+        </div>
+      </div>
+    </div>
   )
 }
