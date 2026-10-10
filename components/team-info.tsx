@@ -1,25 +1,41 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle, Trophy, Target, Shield, Users, TrendingUp, Calendar, Flame, User, Swords, Instagram, Youtube, TwitchIcon } from "lucide-react"
+import {
+  AlertTriangle,
+  Users,
+  Calendar,
+  Instagram,
+  Youtube,
+  TwitchIcon,
+} from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchTeamDetails } from "@/lib/fetch-league-data"
 import { MatchesList } from "@/components/team/matches-list"
 import { TeamRoster } from "@/components/team/team-roster"
-import type { Team, Round, TeamDetails } from "@/types/kings-league"
-import { getProxyImageUrl } from "@/lib/utils"
+import type { Team, Round, TeamDetails, TeamStanding } from "@/types/kings-league"
+import { getProxyImageUrl, cn } from "@/lib/utils"
 
 interface TeamInfoProps {
   team: Team
   rounds: Round[]
   teams: Record<string, Team>
+  standings?: TeamStanding[]
 }
 
-export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
+// Ícone TikTok minimalista em SVG
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-2.901 2.885 2.896 2.896 0 0 1-2.895-2.885 2.896 2.896 0 0 1 2.895-2.886c.414 0 .807.086 1.163.242V9.52a6.34 6.34 0 0 0-1.163-.108C5.973 9.412 3 12.38 3 16.037 3 19.694 5.973 22.66 9.473 22.66c3.5 0 6.474-2.966 6.474-6.623V9.824a8.217 8.217 0 0 0 4.642 1.41v-3.48a4.808 4.808 0 0 1-1-.068z" />
+    </svg>
+  )
+}
+
+export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamInfoProps) {
   const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,29 +58,36 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
   }, [team.id])
 
   // Encontrar todas as partidas deste time
-  const teamMatches = rounds.flatMap((round) =>
-    round.matches
-      .filter((match) => match.participants.homeTeamId === team.id || match.participants.awayTeamId === team.id)
-      .map((match) => ({
-        ...match,
-        id: String(match.id),
-        round: round.name.replace('Jornada', 'Rodada'),
-        roundId: String(round.id),
-        ended: round.ended,
-      })),
-  )
+  const teamMatches = useMemo(() => {
+    return rounds.flatMap((round) =>
+      round.matches
+        .filter((match) => match.participants.homeTeamId === team.id || match.participants.awayTeamId === team.id)
+        .map((match) => ({
+          ...match,
+          id: String(match.id),
+          round: round.name.replace("Jornada", "Rodada"),
+          roundId: String(round.id),
+          ended: round.ended,
+        }))
+    )
+  }, [rounds, team.id])
 
-  // Calcular estatísticas
-  const gamesPlayed = teamMatches.filter(m =>
-    m.scores.homeScore !== null && m.scores.awayScore !== null
-  ).length
+  // Partidas já finalizadas com placar
+  const finishedMatches = useMemo(() => {
+    return teamMatches
+      .filter((m) => m.scores.homeScore !== null && m.scores.awayScore !== null)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }, [teamMatches])
+
+  // Estatísticas calculadas
+  const gamesPlayed = finishedMatches.length
 
   let wins = 0
   let losses = 0
   let penaltyWins = 0
   let penaltyLosses = 0
 
-  teamMatches.forEach(m => {
+  finishedMatches.forEach((m) => {
     if (m.scores.homeScore === null || m.scores.awayScore === null) return
 
     const isHome = m.participants.homeTeamId === team.id
@@ -78,8 +101,12 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
     } else if (teamScore < opponentScore) {
       losses += 1
     } else {
-      if (teamPenaltyScore !== null && teamPenaltyScore !== undefined &&
-        opponentPenaltyScore !== null && opponentPenaltyScore !== undefined) {
+      if (
+        teamPenaltyScore !== null &&
+        teamPenaltyScore !== undefined &&
+        opponentPenaltyScore !== null &&
+        opponentPenaltyScore !== undefined
+      ) {
         if (teamPenaltyScore > opponentPenaltyScore) {
           penaltyWins += 1
         } else if (teamPenaltyScore < opponentPenaltyScore) {
@@ -89,13 +116,13 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
     }
   })
 
-  const goalsFor = teamMatches.reduce((total, match) => {
+  const goalsFor = finishedMatches.reduce((total, match) => {
     if (match.scores.homeScore === null || match.scores.awayScore === null) return total
     const isHome = match.participants.homeTeamId === team.id
     return total + (isHome ? match.scores.homeScore : match.scores.awayScore)
   }, 0)
 
-  const goalsAgainst = teamMatches.reduce((total, match) => {
+  const goalsAgainst = finishedMatches.reduce((total, match) => {
     if (match.scores.homeScore === null || match.scores.awayScore === null) return total
     const isHome = match.participants.homeTeamId === team.id
     return total + (isHome ? match.scores.awayScore : match.scores.homeScore)
@@ -104,344 +131,380 @@ export default function TeamInfo({ team, rounds, teams }: TeamInfoProps) {
   const goalDifference = goalsFor - goalsAgainst
   const playersCount = teamDetails?.players?.length || 0
   const totalWins = wins + penaltyWins
+  const totalLosses = losses + penaltyLosses
   const winRate = gamesPlayed > 0 ? Math.round((totalWins / gamesPlayed) * 100) : 0
 
+  // Guia de Forma (últimos 5 jogos finalizados) estilo Sofascore
+  const formGuide = useMemo(() => {
+    const lastMatches = [...finishedMatches].slice(-5)
+    return lastMatches.map((m) => {
+      const isHome = m.participants.homeTeamId === team.id
+      const teamScore = isHome ? m.scores.homeScore! : m.scores.awayScore!
+      const oppScore = isHome ? m.scores.awayScore! : m.scores.homeScore!
+      const teamPen = isHome ? m.scores.homeScoreP : m.scores.awayScoreP
+      const oppPen = isHome ? m.scores.awayScoreP : m.scores.homeScoreP
+      const oppId = isHome ? m.participants.awayTeamId : m.participants.homeTeamId
+      const oppTeam = teams[oppId]
+
+      let result: "W" | "L" | "SOW" | "SOL" = "W"
+      if (teamScore > oppScore) {
+        result = "W"
+      } else if (teamScore < oppScore) {
+        result = "L"
+      } else {
+        if (teamPen !== null && teamPen !== undefined && oppPen !== null && oppPen !== undefined) {
+          result = teamPen > oppPen ? "SOW" : "SOL"
+        }
+      }
+
+      return {
+        matchId: m.id,
+        round: m.round,
+        result,
+        scoreText: `${teamScore} - ${oppScore}${teamPen !== null && teamPen !== undefined ? ` (SO ${teamPen}-${oppPen})` : ""}`,
+        opponent: oppTeam,
+        date: m.date,
+      }
+    })
+  }, [finishedMatches, team.id, teams])
+
+  // Informações de Classificação do Time
+  const teamStanding = useMemo(() => {
+    return standings.find((s) => String(s.id) === String(team.id))
+  }, [standings, team.id])
+
+  // Staff (Presidente & Técnico)
   const president = teamDetails?.staff?.find((member: any) => member.role === "president")
   const coach = teamDetails?.staff?.find((member: any) => member.role === "coach")
 
+  // Links sociais
+  const meta = teamDetails?.metaInformation || team.metaInformation
   const socialLinks = [
-    { url: teamDetails?.metaInformation?.instagram_url, icon: Instagram, label: "Instagram" },
-    { url: teamDetails?.metaInformation?.youtube_url, icon: Youtube, label: "YouTube" },
-    { url: teamDetails?.metaInformation?.twitch_url, icon: TwitchIcon, label: "Twitch" },
+    { url: meta?.tiktok_url, icon: TikTokIcon, label: "TikTok" },
+    { url: meta?.instagram_url, icon: Instagram, label: "Instagram" },
+    { url: meta?.youtube_url, icon: Youtube, label: "YouTube" },
+    { url: meta?.twitch_url, icon: TwitchIcon, label: "Twitch" },
   ].filter((link) => link.url)
 
   return (
-    <div className="space-y-8">
-      {/* Hero Section do Time */}
-      <section className="relative overflow-hidden rounded-3xl border border-white/5">
-        {/* Background com gradiente do time */}
+    <div className="space-y-3.5 sm:space-y-4">
+      {/* Header do Time Compacto & Minimalista em Liquid Glass */}
+      <section className="relative overflow-hidden rounded-2xl liquid-glass-card border border-white/10 p-3 sm:p-4 shadow-xl transition-all duration-200">
+        {/* Iluminação ambiente sutil sintonizada nas cores do clube */}
         <div
-          className="absolute inset-0"
+          className="pointer-events-none absolute inset-0 select-none opacity-20"
           style={{
-            background: `linear-gradient(135deg, ${team.firstColorHEX}30 0%, ${team.secondColorHEX}20 50%, transparent 100%)`,
+            background: `radial-gradient(circle at 10% 30%, ${team.firstColorHEX} 0%, transparent 50%), radial-gradient(circle at 90% 70%, ${team.secondColorHEX} 0%, transparent 45%)`,
           }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/95 via-[#0a0a0a]/80 to-[#0a0a0a]/60" />
-
-        {/* Decorative elements */}
-        <div
-          className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-[100px] opacity-30"
-          style={{ backgroundColor: team.firstColorHEX }}
-        />
-        <div
-          className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full blur-[80px] opacity-20"
-          style={{ backgroundColor: team.secondColorHEX }}
+          aria-hidden="true"
         />
 
-        <div className="relative p-6 md:p-10">
-          <div className="flex flex-col lg:flex-row items-center gap-8">
-            {/* Logo do Time */}
-            <div className="relative group">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
+          {/* Lado Esquerdo: Brasão + Título + Metadados Inline */}
+          <div className="flex items-center gap-3 sm:gap-3.5 text-left w-full md:w-auto min-w-0">
+            {/* Escudo do Time Compacto */}
+            <div className="relative group shrink-0">
               <div
-                className="absolute inset-0 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity"
+                className="absolute inset-0 rounded-2xl blur-md opacity-30 group-hover:opacity-50 transition-opacity duration-200"
                 style={{ backgroundColor: team.firstColorHEX }}
               />
-              <div className="relative w-28 h-28 md:w-36 md:h-36 flex items-center justify-center">
+              <div
+                className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl liquid-stat-box p-1.5 flex items-center justify-center border border-white/15"
+                style={{
+                  boxShadow: `0 4px 16px -4px ${team.firstColorHEX}30`,
+                }}
+              >
                 {loading ? (
-                  <Skeleton className="w-full h-full rounded-2xl" />
-                ) : teamDetails?.logo?.url ? (
+                  <Skeleton className="w-full h-full rounded-xl bg-white/10" />
+                ) : teamDetails?.logo?.url || team.logo?.url ? (
                   <img
-                    src={getProxyImageUrl(teamDetails.logo.url)}
-                    alt={`Logo do ${team.name}`}
-                    className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105"
+                    src={getProxyImageUrl(teamDetails?.logo?.url || team.logo?.url)}
+                    alt={`Logo oficial do ${team.name}`}
+                    className="w-full h-full object-contain drop-shadow-md transition-transform duration-150 group-hover:scale-105"
                     crossOrigin="anonymous"
                   />
                 ) : (
                   <div
-                    className="w-full h-full rounded-2xl flex items-center justify-center text-4xl font-black"
-                    style={{ backgroundColor: team.firstColorHEX + '30' }}
+                    className="w-full h-full rounded-xl flex items-center justify-center text-base font-black text-white"
+                    style={{ backgroundColor: team.firstColorHEX + "40" }}
                   >
-                    {team.name.substring(0, 2).toUpperCase()}
+                    {team.shortName || team.name.substring(0, 2).toUpperCase()}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Informações Principais */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-3">
-                <Badge
-                  className="px-3 py-1 text-xs font-bold border-0"
-                  style={{ backgroundColor: team.firstColorHEX + '30', color: team.firstColorHEX }}
-                >
-                  <Flame className="w-3 h-3 mr-1" />
-                  Kings League Brasil
-                </Badge>
-                {gamesPlayed > 0 && winRate >= 50 && (
-                  <Badge className="px-3 py-1 text-xs font-bold bg-green-500/20 text-green-400 border-0">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    {winRate}% Vitórias
-                  </Badge>
-                )}
-              </div>
-
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 tracking-tight">
+            {/* Informações Principais do Time */}
+            <div className="space-y-1 min-w-0 flex-1">
+              {/* Nome do Time */}
+              <h1 className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight leading-tight truncate">
                 {team.name}
               </h1>
 
-              {/* Cores e Redes Sociais */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-400">Cores:</span>
+              {/* Cores, Redes Sociais e Staff Inline */}
+              <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-zinc-400">
+                {/* Cores do Clube */}
+                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/8">
                   <div
-                    className="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg"
+                    className="w-2 h-2 rounded-full border border-white/30"
                     style={{ backgroundColor: team.firstColorHEX }}
-                    title="Cor principal"
+                    title={`Cor Primária: ${team.firstColorHEX}`}
                   />
                   <div
-                    className="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg"
+                    className="w-2 h-2 rounded-full border border-white/30"
                     style={{ backgroundColor: team.secondColorHEX }}
-                    title="Cor secundária"
+                    title={`Cor Secundária: ${team.secondColorHEX}`}
                   />
                 </div>
 
+                {/* Redes Sociais */}
                 {socialLinks.length > 0 && (
-                  <>
-                    <div className="w-px h-5 bg-gray-700" />
-                    <nav className="flex items-center gap-2">
-                      {socialLinks.map((link) => {
-                        const Icon = link.icon
-                        return (
-                          <a
-                            key={link.label}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300"
-                            aria-label={`${link.label} do ${team.name}`}
-                          >
-                            <Icon className="w-4 h-4" />
-                          </a>
-                        )
-                      })}
-                    </nav>
-                  </>
+                  <div className="flex items-center gap-1">
+                    {socialLinks.map((link) => {
+                      const Icon = link.icon
+                      return (
+                        <a
+                          key={link.label}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="liquid-pill-btn w-5 h-5 rounded-md flex items-center justify-center text-zinc-400 hover:text-white btn-press"
+                          aria-label={`${link.label} do ${team.name}`}
+                          title={link.label}
+                        >
+                          <Icon className="w-2.5 h-2.5" />
+                        </a>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Staff Compacto */}
+                {(president || coach) && (
+                  <div className="flex items-center gap-2 text-[11px]">
+                    {president && (
+                      <span className="truncate max-w-[150px]" title={president.shortName}>
+                        <span className="text-zinc-500 uppercase text-[9px] mr-1 font-semibold">Pres:</span>
+                        <span className="text-zinc-300 font-semibold">{president.shortName}</span>
+                      </span>
+                    )}
+                    {president && coach && <span className="text-zinc-600">•</span>}
+                    {coach && (
+                      <span className="truncate max-w-[120px]" title={coach.shortName}>
+                        <span className="text-zinc-500 uppercase text-[9px] mr-1 font-semibold">Téc:</span>
+                        <span className="text-zinc-300 font-semibold">{coach.shortName}</span>
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
-
-              {/* Staff do Time */}
-              {(president || coach) && (
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
-                  {president && (
-                    <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                      <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-800">
-                        {president.image?.url ? (
-                          <img src={president.image.url} alt={`${president.shortName}`} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <User className="w-4 h-4 text-gray-500" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Presidente</p>
-                        <p className="text-sm font-semibold text-white">{president.shortName}</p>
-                      </div>
-                    </div>
-                  )}
-                  {coach && (
-                    <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                      <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-800">
-                        {coach.image?.url ? (
-                          <img src={coach.image.url} alt={`${coach.firstName} ${coach.lastName}`} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <User className="w-4 h-4 text-gray-500" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Técnico</p>
-                        <p className="text-sm font-semibold text-white">{coach.firstName} {coach.lastName}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Stats Rápidas */}
-            <div className="grid grid-cols-2 gap-3">
-              <QuickStatCard icon={Trophy} value={totalWins} label="Vitórias" color={team.firstColorHEX} loading={loading} />
-              <QuickStatCard icon={Target} value={goalsFor} label="Gols" color={team.firstColorHEX} loading={loading} />
-              <QuickStatCard icon={Swords} value={gamesPlayed} label="Jogos" color={team.firstColorHEX} loading={loading} />
-              <QuickStatCard icon={Users} value={playersCount} label="Jogadores" color={team.firstColorHEX} loading={loading} />
             </div>
           </div>
+
+          {/* Lado Direito: Forma Recente Integrada ao Header (Economiza Espaço Vertical) */}
+          {formGuide.length > 0 && (
+            <div className="flex items-center gap-3 shrink-0 self-stretch md:self-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-2 md:pt-0 w-full md:w-auto">
+              <div className="flex flex-col md:items-end">
+                <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Forma Recente</span>
+                <span className="text-[10px] text-zinc-500">Últimos {formGuide.length} jogos</span>
+              </div>
+
+              {/* Pílulas de Forma V / D / SO */}
+              <div className="flex items-center gap-1">
+                {formGuide.map((item, index) => (
+                  <div
+                    key={index}
+                    className="group relative flex flex-col items-center"
+                    title={`${item.round}: ${item.scoreText} vs ${item.opponent?.shortName || "Adversário"}`}
+                  >
+                    <div
+                      className={cn(
+                        "w-6 h-6 rounded-md font-black text-[11px] flex items-center justify-center cursor-default transition-transform duration-150 group-hover:scale-110 border",
+                        item.result === "W" && "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm",
+                        item.result === "SOW" && "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+                        item.result === "L" && "bg-rose-500/20 text-rose-400 border-rose-500/40 shadow-sm",
+                        item.result === "SOL" && "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                      )}
+                    >
+                      {item.result === "W" ? "V" : item.result === "SOW" ? "SO" : item.result === "L" ? "D" : "SO"}
+                    </div>
+                    <span className="text-[8px] font-bold text-zinc-500 uppercase mt-0.5">
+                      {item.opponent?.shortName || `J${index + 1}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Cards de Estatísticas Detalhadas */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <DetailStatCard
-          title="Desempenho"
-          icon={TrendingUp}
-          color={team.firstColorHEX}
-          loading={loading}
-          stats={[
-            { label: "Jogos", value: gamesPlayed },
-            { label: "Vitórias", value: wins, highlight: "green" },
-            { label: "Derrotas", value: losses, highlight: "red" },
-            { label: "Aproveitamento", value: `${winRate}%` },
-          ]}
-        />
-        <DetailStatCard
-          title="Shootout"
-          icon={Shield}
-          color={team.firstColorHEX}
-          loading={loading}
-          stats={[
-            { label: "Total", value: penaltyWins + penaltyLosses },
-            { label: "Vitórias", value: penaltyWins, highlight: "green" },
-            { label: "Derrotas", value: penaltyLosses, highlight: "red" },
-          ]}
-        />
-        <DetailStatCard
-          title="Gols"
-          icon={Target}
-          color={team.firstColorHEX}
-          loading={loading}
-          stats={[
-            { label: "Marcados", value: goalsFor, highlight: "primary" },
-            { label: "Sofridos", value: goalsAgainst },
-            { label: "Saldo", value: goalDifference > 0 ? `+${goalDifference}` : goalDifference, highlight: goalDifference > 0 ? "green" : goalDifference < 0 ? "red" : undefined },
-          ]}
-        />
-        <DetailStatCard
-          title="Elenco"
-          icon={Users}
-          color={team.firstColorHEX}
-          loading={loading}
-          stats={[
-            { label: "Total", value: playersCount },
-            { label: "Wild Cards", value: teamDetails?.players?.filter((p: any) => p.category === "wildcard").length || 0 },
-          ]}
-        />
+      {/* 4 Cards de Métricas Sofascore Compactos em Linha Única */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
+        {/* Card 1: Aproveitamento */}
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Aproveitamento</span>
+            <span className="text-xs font-black text-white tabular-nums">{winRate}%</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-emerald-400 transition-all duration-300"
+              style={{ width: `${winRate}%` }}
+            />
+          </div>
+          <div className="flex justify-between items-center text-[9px] text-zinc-400 font-medium">
+            <span>{totalWins} vitórias</span>
+            <span>{totalLosses} derrotas</span>
+          </div>
+        </div>
+
+        {/* Card 2: Gols & Saldo */}
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Gols &amp; Saldo</span>
+            <span
+              className={cn(
+                "text-[9px] font-black px-1.5 py-0.2 rounded border",
+                goalDifference > 0
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                  : goalDifference < 0
+                  ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                  : "bg-zinc-500/10 text-zinc-300 border-zinc-500/30"
+              )}
+            >
+              {goalDifference > 0 ? `+${goalDifference}` : goalDifference}
+            </span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-rose-500/30 overflow-hidden flex">
+            <div
+              className="h-full bg-emerald-400 rounded-l-full transition-all duration-300"
+              style={{
+                width: `${goalsFor + goalsAgainst > 0 ? (goalsFor / (goalsFor + goalsAgainst)) * 100 : 50}%`,
+              }}
+            />
+          </div>
+          <div className="flex justify-between items-center text-[9px]">
+            <span className="text-emerald-400 font-semibold">{goalsFor} pró</span>
+            <span className="text-rose-400 font-semibold">{goalsAgainst} contra</span>
+          </div>
+        </div>
+
+        {/* Card 3: Shootouts */}
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Shootouts (SO)</span>
+            <span className="text-xs font-black text-white tabular-nums">{penaltyWins + penaltyLosses}</span>
+          </div>
+          <div className="flex items-center justify-between text-[9px]">
+            <span className="text-zinc-400">Vitórias: <strong className="text-emerald-400">{penaltyWins}</strong></span>
+            <span className="text-zinc-400">Derrotas: <strong className="text-rose-400">{penaltyLosses}</strong></span>
+          </div>
+          <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-white/5 pt-1">
+            <span>Conversão SO</span>
+            <span className="text-zinc-300 font-bold">
+              {penaltyWins + penaltyLosses > 0 ? `${Math.round((penaltyWins / (penaltyWins + penaltyLosses)) * 100)}%` : "—"}
+            </span>
+          </div>
+        </div>
+
+        {/* Card 4: Tabela & Plantel */}
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Tabela &amp; Plantel</span>
+            <span className="text-[10px] font-bold text-[var(--team-primary)]">
+              {teamStanding ? `${teamStanding.rank}º Lugar` : "Kings League"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[9px]">
+            <span className="text-zinc-400">Pontos: <strong className="text-white">{teamStanding?.points || 0}</strong></span>
+            <span className="text-zinc-400">Wild Cards: <strong className="text-amber-400">{teamDetails?.players?.filter((p: any) => p.category === "wildcard").length || 0}</strong></span>
+          </div>
+          <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-white/5 pt-1">
+            <span>Plantel Total</span>
+            <span className="text-zinc-300 font-bold">{playersCount} atletas</span>
+          </div>
+        </div>
       </section>
 
       {error && (
         <Alert className="bg-yellow-500/10 border-yellow-500/30 text-white rounded-2xl">
           <AlertTriangle className="h-4 w-4 text-yellow-500" />
           <AlertTitle className="text-yellow-500">Atenção</AlertTitle>
-          <AlertDescription className="text-gray-300">{error}</AlertDescription>
+          <AlertDescription className="text-zinc-300">{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Tabs de Conteúdo */}
+      {/* Navegação por Abas: Partidas vs Elenco Padronizada e Perfeitamente Alinhada */}
       <Tabs defaultValue="matches" className="w-full">
-        <TabsList className="w-full h-auto p-1.5 bg-[#0a0a0a] border border-white/5 rounded-2xl grid grid-cols-2 gap-2">
-          <TabsTrigger
-            value="matches"
-            className="h-12 rounded-xl font-semibold text-sm data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black data-[state=active]:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+        {/* Barra de Sub-Navegação Centralizada sem Linha Divisória */}
+        <div className="flex justify-center items-center py-2 sm:py-3">
+          <TabsList
+            className="inline-flex h-auto p-1 rounded-full liquid-nav-track border border-white/10 bg-white/[0.03] shadow-md gap-1"
+            aria-label="Navegação entre Partidas e Elenco"
           >
-            <Calendar className="w-4 h-4" />
-            Partidas
-            {teamMatches.length > 0 && (
-              <Badge className="h-5 px-1.5 text-[10px] bg-white/20 text-current border-0">
-                {teamMatches.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="team"
-            className="h-12 rounded-xl font-semibold text-sm data-[state=active]:bg-[var(--team-primary)] data-[state=active]:text-black data-[state=active]:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            <Users className="w-4 h-4" />
-            Elenco
-            {playersCount > 0 && (
-              <Badge className="h-5 px-1.5 text-[10px] bg-white/20 text-current border-0">
-                {playersCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
+            <TabsTrigger
+              value="matches"
+              className={cn(
+                "relative inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-[color,background-color,transform,box-shadow,border-color] duration-150 btn-press",
+                "text-zinc-400 hover:text-white hover:bg-white/[0.05]",
+                "data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-white/15 data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2),0_2px_8px_-2px_rgba(0,0,0,0.5)]"
+              )}
+            >
+              <Calendar className="w-3.5 h-3.5 text-[var(--team-primary)]" />
+              <span>Partidas</span>
+              {teamMatches.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-zinc-300">
+                  {teamMatches.length}
+                </span>
+              )}
+            </TabsTrigger>
 
-        {/* Aba de Partidas */}
-        <TabsContent value="matches" className="mt-6">
+            <TabsTrigger
+              value="team"
+              className={cn(
+                "relative inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-[color,background-color,transform,box-shadow,border-color] duration-150 btn-press",
+                "text-zinc-400 hover:text-white hover:bg-white/[0.05]",
+                "data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-white/15 data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2),0_2px_8px_-2px_rgba(0,0,0,0.5)]"
+              )}
+            >
+              <Users className="w-3.5 h-3.5 text-[var(--team-primary)]" />
+              <span>Elenco</span>
+              {playersCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-zinc-300">
+                  {playersCount}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Conteúdo: Partidas */}
+        <TabsContent value="matches" className="focus-visible:outline-none">
           <MatchesList teamId={team.id} teamMatches={teamMatches} teams={teams} loading={loading} />
         </TabsContent>
 
-        {/* Aba de Elenco */}
-        <TabsContent value="team" className="mt-6">
-          <Card className="bg-[#0a0a0a] border-white/5 rounded-2xl overflow-hidden">
-            <CardHeader className="pb-4 border-b border-white/5 bg-gradient-to-r from-white/5 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: team.firstColorHEX + '20' }}>
-                  <Users className="w-5 h-5" style={{ color: team.firstColorHEX }} />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-white">Elenco Completo</CardTitle>
-                  <CardDescription className="text-gray-400">Jogadores da temporada atual</CardDescription>
-                </div>
+        {/* Conteúdo: Elenco */}
+        <TabsContent value="team" className="focus-visible:outline-none">
+          <div className="liquid-glass-panel rounded-2xl overflow-hidden p-4 sm:p-5 lg:p-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-white/5 mb-5">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: team.firstColorHEX + "20" }}
+              >
+                <Users className="w-4 h-4" style={{ color: team.firstColorHEX }} />
               </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <TeamRoster players={teamDetails?.players || []} loading={loading} />
-            </CardContent>
-          </Card>
+              <div>
+                <h2 className="text-base font-bold text-white">Elenco Completo</h2>
+                <p className="text-xs text-zinc-400">Atletas inscritos na Kings League Brasil</p>
+              </div>
+            </div>
+
+            <TeamRoster players={teamDetails?.players || []} loading={loading} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
   )
 }
 
-// Componente de Card de Estatística Rápida
-function QuickStatCard({ icon: Icon, value, label, color, loading }: { icon: any; value: number; label: string; color: string; loading: boolean }) {
-  return (
-    <div className="relative group">
-      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" style={{ backgroundColor: color + '20' }} />
-      <div className="relative p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all duration-300">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ backgroundColor: color + '20' }}>
-          <Icon className="w-4 h-4" style={{ color }} />
-        </div>
-        {loading ? <Skeleton className="h-7 w-10 mb-1" /> : <p className="text-2xl font-black text-white">{value}</p>}
-        <p className="text-xs text-gray-500 font-medium">{label}</p>
-      </div>
-    </div>
-  )
-}
-
-// Componente de Card de Estatística Detalhada
-function DetailStatCard({ title, icon: Icon, color, loading, stats }: { title: string; icon: any; color: string; loading: boolean; stats: Array<{ label: string; value: string | number; highlight?: "green" | "red" | "primary" }> }) {
-  const getHighlightColor = (highlight?: string) => {
-    switch (highlight) {
-      case "green": return "text-green-400"
-      case "red": return "text-red-400"
-      case "primary": return "text-[var(--team-primary)]"
-      default: return "text-white"
-    }
-  }
-
-  return (
-    <Card className="bg-[#0a0a0a] border-white/5 rounded-2xl overflow-hidden hover:border-white/10 transition-all duration-300">
-      <CardHeader className="pb-2 pt-4 px-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: color + '15' }}>
-            <Icon className="w-4 h-4" style={{ color }} />
-          </div>
-          <CardTitle className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{title}</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="px-4 pb-4">
-        <div className="space-y-2">
-          {stats.map((stat, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">{stat.label}</span>
-              {loading ? <Skeleton className="h-4 w-8" /> : <span className={`text-sm font-bold ${getHighlightColor(stat.highlight)}`}>{stat.value}</span>}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}

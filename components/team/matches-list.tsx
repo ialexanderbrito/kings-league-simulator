@@ -1,8 +1,9 @@
-import { Badge } from "@/components/ui/badge"
+"use client"
+
+import { useState, useMemo } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Trophy, Clock, Youtube, Calendar, CheckCircle2, Timer, Swords, TrendingUp, ChevronRight } from "lucide-react"
+import { Youtube, Calendar, Timer } from "lucide-react"
 import { Team } from "@/types/kings-league"
-import { useTeamTheme } from "@/contexts/team-theme-context"
 import { cn, getProxyImageUrl } from "@/lib/utils"
 
 interface MatchesListProps {
@@ -43,498 +44,498 @@ function formatDate(dateString: string): string {
   }
 }
 
-function formatFullDate(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat("pt-BR", {
-      weekday: "long",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    }).format(date)
-  } catch (error) {
-    return dateString
-  }
-}
-
 export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesListProps) {
-  const { favoriteTeam } = useTeamTheme();
+  const [filter, setFilter] = useState<"all" | "wins" | "losses">("all")
+
+  const pastMatches = useMemo(() => {
+    return teamMatches
+      .filter((m) => m.scores.homeScore !== null && m.scores.awayScore !== null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [teamMatches])
+
+  const futureMatches = useMemo(() => {
+    return teamMatches
+      .filter((m) => m.scores.homeScore === null || m.scores.awayScore === null)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }, [teamMatches])
+
+  // Calcular estatísticas das partidas já realizadas
+  const matchResults = useMemo(() => {
+    return pastMatches.map((match) => {
+      const isHome = match.participants.homeTeamId === teamId
+      const homeScore = match.scores.homeScore!
+      const awayScore = match.scores.awayScore!
+      const homeScoreP = match.scores.homeScoreP
+      const awayScoreP = match.scores.awayScoreP
+      const hasPenalties =
+        homeScoreP !== undefined &&
+        homeScoreP !== null &&
+        awayScoreP !== undefined &&
+        awayScoreP !== null
+
+      const homePenaltyWin = hasPenalties && homeScoreP > awayScoreP
+      const awayPenaltyWin = hasPenalties && awayScoreP > homeScoreP
+
+      let isWin = false
+      let isShootout = false
+
+      if (homeScore === awayScore) {
+        if (hasPenalties) {
+          isShootout = true
+          isWin = (isHome && homePenaltyWin) || (!isHome && awayPenaltyWin)
+        }
+      } else {
+        isWin = (isHome && homeScore > awayScore) || (!isHome && awayScore > homeScore)
+      }
+
+      return {
+        ...match,
+        isHome,
+        isWin,
+        isShootout,
+        hasPenalties,
+        homeScore,
+        awayScore,
+        homeScoreP,
+        awayScoreP,
+        homeTeam: teams[match.participants.homeTeamId],
+        awayTeam: teams[match.participants.awayTeamId],
+      }
+    })
+  }, [pastMatches, teamId, teams])
+
+  const totalWins = matchResults.filter((m) => m.isWin).length
+  const totalLosses = matchResults.length - totalWins
+
+  // Partidas filtradas
+  const filteredPastMatches = useMemo(() => {
+    if (filter === "wins") return matchResults.filter((m) => m.isWin)
+    if (filter === "losses") return matchResults.filter((m) => !m.isWin)
+    return matchResults
+  }, [matchResults, filter])
 
   if (loading) {
     return <MatchesListSkeleton />
   }
 
-  const pastMatches = teamMatches
-    .filter(m => m.scores.homeScore !== null && m.scores.awayScore !== null)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  const futureMatches = teamMatches
-    .filter(m => m.scores.homeScore === null || m.scores.awayScore === null)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-  // Função para verificar se um time da partida é o favorito (exceto o time atual da página)
-  const hasOpponentFavoriteTeam = (match: any) => {
-    if (!favoriteTeam) return false;
-
-    // Se o time atual não for o favorito, verificar se o oponente é o favorito
-    if (teamId !== favoriteTeam.id) {
-      const opponentId = match.participants.homeTeamId === teamId
-        ? match.participants.awayTeamId
-        : match.participants.homeTeamId;
-
-      return opponentId === favoriteTeam.id;
-    }
-
-    return false;
+  if (teamMatches.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 rounded-2xl liquid-glass-panel border border-white/8 text-center p-6">
+        <div className="w-12 h-12 rounded-2xl liquid-stat-box flex items-center justify-center mb-2.5 text-zinc-500">
+          <Calendar className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-bold text-white mb-1">Nenhuma partida registrada</p>
+        <p className="text-xs text-zinc-400 max-w-sm">
+          Os confrontos deste time na Kings League Brasil serão exibidos aqui assim que forem anunciados.
+        </p>
+      </div>
+    )
   }
 
-  // Calcular estatísticas rápidas
-  const totalWins = pastMatches.filter(m => {
-    const isHome = m.participants.homeTeamId === teamId;
-    const homeScore = m.scores.homeScore || 0;
-    const awayScore = m.scores.awayScore || 0;
-    const homeScoreP = m.scores.homeScoreP;
-    const awayScoreP = m.scores.awayScoreP;
-
-    if (homeScore !== awayScore) {
-      return (isHome && homeScore > awayScore) || (!isHome && awayScore > homeScore);
-    }
-    // Empate - verificar Shootout
-    if (homeScoreP !== undefined && homeScoreP !== null && awayScoreP !== undefined && awayScoreP !== null) {
-      return (isHome && homeScoreP > awayScoreP) || (!isHome && awayScoreP > homeScoreP);
-    }
-    return false;
-  }).length;
-
-  const totalLosses = pastMatches.length - totalWins;
-
   return (
-    <div className="space-y-6">
-      {/* Header com estatísticas */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-white/5 to-transparent border border-white/5">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-            <Swords className="w-6 h-6 text-orange-400" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Histórico de Partidas</h2>
-            <p className="text-sm text-gray-400">
-              {pastMatches.length} disputadas • {futureMatches.length} agendadas
-            </p>
-          </div>
-        </div>
+    <div className="space-y-3.5">
+      {/* Barra de Filtros em Pílulas com Liquid Filter Track */}
+      <div className="flex items-center gap-1.5 p-1 rounded-xl liquid-filter-track w-fit">
+        <button
+          onClick={() => setFilter("all")}
+          className={cn(
+            "liquid-filter-pill px-3 py-1 rounded-lg text-xs font-semibold",
+            filter === "all"
+              ? "bg-white/15 text-white shadow-sm border border-white/20"
+              : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+          )}
+        >
+          Todos ({pastMatches.length})
+        </button>
 
-        {pastMatches.length > 0 && (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-sm font-semibold text-green-400">{totalWins}V</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span className="text-sm font-semibold text-red-400">{totalLosses}D</span>
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => setFilter("wins")}
+          className={cn(
+            "liquid-filter-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold",
+            filter === "wins"
+              ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm"
+              : "text-zinc-400 hover:text-emerald-400 hover:bg-white/5 border border-transparent"
+          )}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          Vitórias ({totalWins})
+        </button>
+
+        <button
+          onClick={() => setFilter("losses")}
+          className={cn(
+            "liquid-filter-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold",
+            filter === "losses"
+              ? "bg-rose-500/25 text-rose-300 border border-rose-500/40 shadow-sm"
+              : "text-zinc-400 hover:text-rose-400 hover:bg-white/5 border border-transparent"
+          )}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+          Derrotas ({totalLosses})
+        </button>
       </div>
 
-      {teamMatches.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 rounded-2xl bg-white/5 border border-white/5">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-            <Calendar className="w-8 h-8 text-gray-500" />
+      {/* Próximas Partidas Agendadas (Se houver) */}
+      {futureMatches.length > 0 && (
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-1.5 px-1 pt-1 pb-0.5">
+            <Timer className="w-3.5 h-3.5 text-sky-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Próximos Confrontos ({futureMatches.length})
+            </span>
           </div>
-          <p className="text-lg font-medium text-white mb-1">Nenhuma partida encontrada</p>
-          <p className="text-sm text-gray-500">As partidas aparecerão aqui quando forem agendadas</p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Próximas partidas */}
-          {futureMatches.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <Timer className="w-4 h-4 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-white">Próximas Partidas</h3>
-                  <p className="text-xs text-gray-500">{futureMatches.length} partida{futureMatches.length > 1 ? 's' : ''} agendada{futureMatches.length > 1 ? 's' : ''}</p>
-                </div>
-              </div>
 
-              <div className="grid gap-3">
-                {futureMatches.map((match) => {
-                  const isOpponentFavorite = hasOpponentFavoriteTeam(match);
-                  const isHomeTeamFavorite = favoriteTeam?.id === match.participants.homeTeamId;
-                  const isAwayTeamFavorite = favoriteTeam?.id === match.participants.awayTeamId;
-                  const isLiveMatch = match.status === "inPlay1H" || match.status === "inPlay2H" || match.status === "inPlayET" || match.status === "inPlayP";
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+            {futureMatches.map((match) => {
+              const homeTeam = teams[match.participants.homeTeamId]
+              const awayTeam = teams[match.participants.awayTeamId]
+              const isCurrentTeamHome = match.participants.homeTeamId === teamId
+              const isLive =
+                match.status === "inPlay1H" ||
+                match.status === "inPlay2H" ||
+                match.status === "inPlayET" ||
+                match.status === "inPlayP"
 
-                  return (
-                    <div
-                      key={match.id}
-                      className={cn(
-                        "group relative overflow-hidden rounded-2xl border transition-all duration-300",
-                        isLiveMatch
-                          ? "bg-red-500/5 border-red-500/30 hover:border-red-500/50"
-                          : isOpponentFavorite
-                            ? "bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40"
-                            : "bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.04]"
-                      )}
-                    >
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border-b border-white/5">
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-medium border-white/10 bg-white/5 text-gray-300"
-                          >
-                            {match.round}
-                          </Badge>
-                          {isLiveMatch && (
-                            <Badge className="bg-red-500 text-white text-[10px] px-2 flex items-center gap-1.5 animate-pulse">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-                              </span>
-                              AO VIVO
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <Calendar className="w-3 h-3" />
-                          <time dateTime={match.date}>{formatDate(match.date)}</time>
-                        </div>
+              return (
+                <div
+                  key={match.id}
+                  className={cn(
+                    "relative flex flex-col justify-between p-3.5 rounded-2xl overflow-hidden group",
+                    isLive
+                      ? "liquid-match-card-loss border-rose-500/40 shadow-rose-950/20"
+                      : "liquid-match-card-scheduled"
+                  )}
+                >
+                  {/* Top Bar: Rodada + Data/Horário */}
+                  <div className="relative z-10 flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/5 text-zinc-300 border border-white/10 uppercase tracking-wider">
+                      {match.round.replace("Rodada ", "R")}
+                    </span>
+
+                    <span className="text-[11px] text-zinc-400 font-medium">
+                      {formatDate(match.date)}
+                    </span>
+                  </div>
+
+                  {/* Duelo Central */}
+                  <div className="relative z-10 flex items-center justify-between gap-2 py-3">
+                    {/* Mandante */}
+                    <div className="flex-1 flex flex-col items-center text-center min-w-0">
+                      <div
+                        className={cn(
+                          "w-10 h-10 rounded-xl liquid-stat-box p-1.5 flex items-center justify-center mb-1.5 transition-transform duration-200 group-hover:scale-105",
+                          isCurrentTeamHome && "ring-1.5 ring-[var(--team-primary)]/60 bg-[var(--team-primary)]/10"
+                        )}
+                      >
+                        <img
+                          src={getProxyImageUrl(homeTeam?.logo?.url)}
+                          alt={homeTeam?.name || ""}
+                          className="w-full h-full object-contain"
+                          loading="lazy"
+                          crossOrigin="anonymous"
+                        />
                       </div>
-
-                      {/* Match Content */}
-                      <div className="p-4">
-                        <div className="flex items-center justify-between gap-4">
-                          {/* Home Team */}
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className={cn(
-                              "relative w-12 h-12 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0",
-                              isHomeTeamFavorite && "ring-2 ring-orange-500"
-                            )}>
-                              <img
-                                src={getProxyImageUrl(teams[match.participants.homeTeamId].logo?.url)}
-                                alt={teams[match.participants.homeTeamId].name}
-                                className="w-10 h-10 object-contain"
-                                loading="lazy"
-                                crossOrigin="anonymous"
-                              />
-                            </div>
-                            <div className="min-w-0">
-                              <p className={cn(
-                                "font-bold text-sm truncate",
-                                isHomeTeamFavorite ? "text-orange-400" : "text-white"
-                              )}>
-                                {teams[match.participants.homeTeamId].shortName}
-                              </p>
-                              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Mandante</p>
-                            </div>
-                          </div>
-
-                          {/* VS Badge */}
-                          <div className="flex flex-col items-center px-4">
-                            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                              <span className="text-sm font-bold text-gray-400">VS</span>
-                            </div>
-                            <span className="text-[10px] text-gray-500 mt-1.5">
-                              {isLiveMatch ? 'Em andamento' : 'Agendada'}
-                            </span>
-                          </div>
-
-                          {/* Away Team */}
-                          <div className="flex items-center gap-3 flex-1 min-w-0 justify-end">
-                            <div className="min-w-0 text-right">
-                              <p className={cn(
-                                "font-bold text-sm truncate",
-                                isAwayTeamFavorite ? "text-orange-400" : "text-white"
-                              )}>
-                                {teams[match.participants.awayTeamId].shortName}
-                              </p>
-                              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Visitante</p>
-                            </div>
-                            <div className={cn(
-                              "relative w-12 h-12 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0",
-                              isAwayTeamFavorite && "ring-2 ring-orange-500"
-                            )}>
-                              <img
-                                src={getProxyImageUrl(teams[match.participants.awayTeamId].logo?.url)}
-                                alt={teams[match.participants.awayTeamId].name}
-                                className="w-10 h-10 object-contain"
-                                loading="lazy"
-                                crossOrigin="anonymous"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <span
+                        className={cn(
+                          "text-xs font-semibold truncate max-w-full leading-tight",
+                          isCurrentTeamHome ? "text-white font-bold" : "text-zinc-400"
+                        )}
+                        title={homeTeam?.name}
+                      >
+                        {homeTeam?.shortName || homeTeam?.name}
+                      </span>
+                      <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
+                        Casa
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
-          {/* Partidas disputadas */}
-          {pastMatches.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4 text-green-400" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-white">Partidas Disputadas</h3>
-                  <p className="text-xs text-gray-500">{pastMatches.length} partida{pastMatches.length > 1 ? 's' : ''} finalizada{pastMatches.length > 1 ? 's' : ''}</p>
-                </div>
-              </div>
-
-              <div className="grid gap-3">
-                {pastMatches.map((match) => {
-                  const isHome = match.participants.homeTeamId === teamId;
-                  const isOpponentFavorite = hasOpponentFavoriteTeam(match);
-
-                  const homeScore = match.scores.homeScore;
-                  const awayScore = match.scores.awayScore;
-                  const homeScoreP = match.scores.homeScoreP;
-                  const awayScoreP = match.scores.awayScoreP;
-                  const hasPenalties = homeScoreP !== undefined && homeScoreP !== null &&
-                    awayScoreP !== undefined && awayScoreP !== null;
-
-                  const isLiveMatch = match.status === "inPlay1H" || match.status === "inPlay2H" || match.status === "inPlayET" || match.status === "inPlayP";
-
-                  const homePenaltyWin = hasPenalties && homeScoreP > awayScoreP;
-                  const awayPenaltyWin = hasPenalties && awayScoreP > homeScoreP;
-
-                  // Determinar resultado
-                  let result = '';
-                  let resultStyle = { bg: '', text: '', border: '' };
-
-                  if (homeScore === awayScore) {
-                    if (hasPenalties) {
-                      if ((isHome && homePenaltyWin) || (!isHome && awayPenaltyWin)) {
-                        result = 'Vitória (SO)';
-                        resultStyle = { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/30' };
-                      } else {
-                        result = 'Derrota (SO)';
-                        resultStyle = { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30' };
-                      }
-                    } else {
-                      result = 'Empate';
-                      resultStyle = { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/30' };
-                    }
-                  } else if ((isHome && homeScore! > awayScore!) || (!isHome && awayScore! > homeScore!)) {
-                    result = 'Vitória';
-                    resultStyle = { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/30' };
-                  } else {
-                    result = 'Derrota';
-                    resultStyle = { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30' };
-                  }
-
-                  const leftTeamId = match.participants.homeTeamId;
-                  const rightTeamId = match.participants.awayTeamId;
-                  const showLeftTeamTrophy = homeScore === awayScore && hasPenalties && homePenaltyWin;
-                  const showRightTeamTrophy = homeScore === awayScore && hasPenalties && awayPenaltyWin;
-                  const isLeftTeamFavorite = favoriteTeam?.id === leftTeamId;
-                  const isRightTeamFavorite = favoriteTeam?.id === rightTeamId;
-
-                  return (
-                    <div
-                      key={match.id}
-                      className={cn(
-                        "group relative overflow-hidden rounded-2xl border transition-all duration-300",
-                        result.includes('Vitória')
-                          ? "bg-green-500/[0.03] border-green-500/20 hover:border-green-500/40"
-                          : result.includes('Derrota')
-                            ? "bg-red-500/[0.03] border-red-500/20 hover:border-red-500/40"
-                            : "bg-yellow-500/[0.03] border-yellow-500/20 hover:border-yellow-500/40"
-                      )}
-                    >
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border-b border-white/5">
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-medium border-white/10 bg-white/5 text-gray-300"
-                          >
-                            {match.round}
-                          </Badge>
-                          <Badge className={cn("text-[10px] px-2 border", resultStyle.bg, resultStyle.text, resultStyle.border)}>
-                            {result}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <Clock className="w-3 h-3" />
-                          <time dateTime={match.date}>{formatDate(match.date)}</time>
-                        </div>
-                      </div>
-
-                      {/* Match Content */}
-                      <div className="p-4">
-                        <div className="flex items-center justify-between gap-4">
-                          {/* Home Team */}
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className={cn(
-                              "relative w-12 h-12 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0",
-                              isLeftTeamFavorite && "ring-2 ring-orange-500"
-                            )}>
-                              <img
-                                src={getProxyImageUrl(teams[leftTeamId].logo?.url)}
-                                alt={teams[leftTeamId].name}
-                                className="w-10 h-10 object-contain"
-                                loading="lazy"
-                                crossOrigin="anonymous"
-                              />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className={cn(
-                                  "font-bold text-sm truncate",
-                                  isLeftTeamFavorite ? "text-orange-400" : "text-white"
-                                )}>
-                                  {teams[leftTeamId].shortName}
-                                </p>
-                                {showLeftTeamTrophy && (
-                                  <Trophy className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
-                                )}
-                              </div>
-                              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Mandante</p>
-                            </div>
-                          </div>
-
-                          {/* Score */}
-                          <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                              <span className="text-2xl font-black text-white tabular-nums">{homeScore}</span>
-                              <span className="text-sm text-gray-500">-</span>
-                              <span className="text-2xl font-black text-white tabular-nums">{awayScore}</span>
-                            </div>
-                            {hasPenalties && (
-                              <div className="mt-1.5 flex items-center gap-1.5">
-                                <span className="text-[10px] text-gray-500">Shootout:</span>
-                                <span className="text-xs font-bold text-white tabular-nums">{homeScoreP} - {awayScoreP}</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Away Team */}
-                          <div className="flex items-center gap-3 flex-1 min-w-0 justify-end">
-                            <div className="min-w-0 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {showRightTeamTrophy && (
-                                  <Trophy className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
-                                )}
-                                <p className={cn(
-                                  "font-bold text-sm truncate",
-                                  isRightTeamFavorite ? "text-orange-400" : "text-white"
-                                )}>
-                                  {teams[rightTeamId].shortName}
-                                </p>
-                              </div>
-                              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Visitante</p>
-                            </div>
-                            <div className={cn(
-                              "relative w-12 h-12 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0",
-                              isRightTeamFavorite && "ring-2 ring-orange-500"
-                            )}>
-                              <img
-                                src={getProxyImageUrl(teams[rightTeamId].logo?.url)}
-                                alt={teams[rightTeamId].name}
-                                className="w-10 h-10 object-contain"
-                                loading="lazy"
-                                crossOrigin="anonymous"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* YouTube Link */}
-                        {match.metaInformation?.youtube_url && (
-                          <div className="mt-4 pt-4 border-t border-white/5">
-                            <a
-                              href={match.metaInformation.youtube_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 transition-all duration-200 group"
-                            >
-                              <Youtube className="w-4 h-4" />
-                              <span className="text-sm font-medium">Assistir Partida</span>
-                              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                            </a>
-                          </div>
+                    {/* Badge Central VS / Ao Vivo */}
+                    <div className="flex flex-col items-center shrink-0 px-2">
+                      <div className="inline-flex items-center px-3 py-1 rounded-xl bg-black/60 border border-white/10 shadow-inner">
+                        {isLive ? (
+                          <span className="text-[10px] font-black text-rose-400 animate-pulse tracking-wider">
+                            AO VIVO
+                          </span>
+                        ) : (
+                          <span className="text-xs font-black text-zinc-400 tracking-wider">
+                            VS
+                          </span>
                         )}
                       </div>
+                      <span className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mt-1">
+                        Agendado
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+
+                    {/* Visitante */}
+                    <div className="flex-1 flex flex-col items-center text-center min-w-0">
+                      <div
+                        className={cn(
+                          "w-10 h-10 rounded-xl liquid-stat-box p-1.5 flex items-center justify-center mb-1.5 transition-transform duration-200 group-hover:scale-105",
+                          !isCurrentTeamHome && "ring-1.5 ring-[var(--team-primary)]/60 bg-[var(--team-primary)]/10"
+                        )}
+                      >
+                        <img
+                          src={getProxyImageUrl(awayTeam?.logo?.url)}
+                          alt={awayTeam?.name || ""}
+                          className="w-full h-full object-contain"
+                          loading="lazy"
+                          crossOrigin="anonymous"
+                        />
+                      </div>
+                      <span
+                        className={cn(
+                          "text-xs font-semibold truncate max-w-full leading-tight",
+                          !isCurrentTeamHome ? "text-white font-bold" : "text-zinc-400"
+                        )}
+                        title={awayTeam?.name}
+                      >
+                        {awayTeam?.shortName || awayTeam?.name}
+                      </span>
+                      <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
+                        Fora
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Footer da Partida */}
+                  <div className="relative z-10 pt-2 border-t border-white/5 flex items-center justify-between text-[10px]">
+                    <span className="text-zinc-500 font-medium">
+                      {isCurrentTeamHome ? "Mando de campo" : "Visitante"}
+                    </span>
+                    <span className="text-sky-400/80 font-semibold uppercase tracking-wider">
+                      Em breve
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
+
+      {/* Grid 3x3 de Partidas Finalizadas com cor estática de vitória/derrota */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+        {filteredPastMatches.map((match) => {
+          const { isHome, isWin, isShootout, homeScore, awayScore, homeScoreP, awayScoreP, homeTeam, awayTeam } = match
+
+          const resultLabel = isShootout ? (isWin ? "V (SO)" : "D (SO)") : isWin ? "V" : "D"
+
+          return (
+            <div
+              key={match.id}
+              className={cn(
+                "relative flex flex-col justify-between p-3.5 rounded-2xl group",
+                isWin ? "liquid-match-card-win" : "liquid-match-card-loss"
+              )}
+            >
+              {/* Header do Card: Rodada + Resultado + Data */}
+              <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
+                <div className="flex items-center gap-1.5">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/5 text-zinc-300 border border-white/10 uppercase tracking-wider">
+                    {match.round.replace("Rodada ", "R")}
+                  </span>
+
+                  <span
+                    className={cn(
+                      "px-2 py-0.5 rounded-md font-black text-[10px] tracking-wide border flex items-center gap-1.5 shadow-sm",
+                      isWin
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-950/40"
+                        : "bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-rose-950/40"
+                    )}
+                    title={isWin ? "Vitória do time" : "Derrota do time"}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", isWin ? "bg-emerald-400" : "bg-rose-400")} />
+                    {resultLabel}
+                  </span>
+                </div>
+
+                <span className="text-[11px] text-zinc-400 font-medium">
+                  {formatDate(match.date)}
+                </span>
+              </div>
+
+              {/* Duelo Central: Mandante x Placar x Visitante */}
+              <div className="relative z-10 flex items-center justify-between gap-2 py-3">
+                {/* Mandante */}
+                <div className="flex-1 flex flex-col items-center text-center min-w-0">
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-xl liquid-stat-box p-1.5 flex items-center justify-center mb-1.5 transition-transform duration-200 group-hover:scale-105",
+                      isHome && "ring-1.5 ring-[var(--team-primary)]/60 bg-[var(--team-primary)]/10"
+                    )}
+                  >
+                    <img
+                      src={getProxyImageUrl(homeTeam?.logo?.url)}
+                      alt={homeTeam?.name || ""}
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold truncate max-w-full leading-tight",
+                      isHome ? "text-white font-bold" : "text-zinc-400"
+                    )}
+                    title={homeTeam?.name}
+                  >
+                    {homeTeam?.shortName || homeTeam?.name}
+                  </span>
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
+                    Casa
+                  </span>
+                </div>
+
+                {/* Placar Central Sofascore */}
+                <div className="flex flex-col items-center shrink-0 px-1">
+                  <div
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/70 border shadow-inner",
+                      isWin ? "border-emerald-500/30" : "border-rose-500/30"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-base sm:text-lg font-black tabular-nums leading-none",
+                        homeScore > awayScore ? "text-white font-black" : "text-zinc-400"
+                      )}
+                    >
+                      {homeScore}
+                    </span>
+                    <span className="text-zinc-600 text-xs font-bold leading-none">-</span>
+                    <span
+                      className={cn(
+                        "text-base sm:text-lg font-black tabular-nums leading-none",
+                        awayScore > homeScore ? "text-white font-black" : "text-zinc-400"
+                      )}
+                    >
+                      {awayScore}
+                    </span>
+                  </div>
+
+                  {isShootout ? (
+                    <span className="text-[9px] font-bold text-amber-400 mt-1 px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">
+                      SO {homeScoreP}-{awayScoreP}
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mt-1">
+                      Finalizado
+                    </span>
+                  )}
+                </div>
+
+                {/* Visitante */}
+                <div className="flex-1 flex flex-col items-center text-center min-w-0">
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-xl liquid-stat-box p-1.5 flex items-center justify-center mb-1.5 transition-transform duration-200 group-hover:scale-105",
+                      !isHome && "ring-1.5 ring-[var(--team-primary)]/60 bg-[var(--team-primary)]/10"
+                    )}
+                  >
+                    <img
+                      src={getProxyImageUrl(awayTeam?.logo?.url)}
+                      alt={awayTeam?.name || ""}
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold truncate max-w-full leading-tight",
+                      !isHome ? "text-white font-bold" : "text-zinc-400"
+                    )}
+                    title={awayTeam?.name}
+                  >
+                    {awayTeam?.shortName || awayTeam?.name}
+                  </span>
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
+                    Fora
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer do Card: Localização + YouTube Highlights */}
+              <div className="relative z-10 pt-2 border-t border-white/5 flex items-center justify-between">
+                <span className="text-[10px] text-zinc-500 font-medium">
+                  {isHome ? "Mando de campo" : "Visitante"}
+                </span>
+
+                {match.metaInformation?.youtube_url ? (
+                  <a
+                    href={match.metaInformation.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-press inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/40 transition-[color,background-color,border-color] duration-150"
+                    title="Assistir Melhores Momentos no YouTube"
+                  >
+                    <Youtube className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                    <span>Gols e Lances</span>
+                  </a>
+                ) : (
+                  <span className="text-[10px] text-zinc-600 font-medium">
+                    Sem vídeo
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
 export function MatchesListSkeleton() {
   return (
-    <div className="space-y-6">
-      {/* Header skeleton */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white/5 border border-white/5">
-        <div className="flex items-center gap-4">
-          <Skeleton className="w-12 h-12 rounded-xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <Skeleton className="h-8 w-16 rounded-lg" />
-          <Skeleton className="h-8 w-16 rounded-lg" />
-        </div>
+    <div className="space-y-3.5">
+      {/* Mini Filter Toolbar Skeleton */}
+      <div className="flex items-center gap-1.5 p-1 rounded-xl liquid-filter-track w-fit">
+        <Skeleton className="h-7 w-20 rounded-lg bg-white/10" />
+        <Skeleton className="h-7 w-24 rounded-lg bg-white/10" />
+        <Skeleton className="h-7 w-24 rounded-lg bg-white/10" />
       </div>
 
-      {/* Section header skeleton */}
-      <div className="flex items-center gap-3">
-        <Skeleton className="w-8 h-8 rounded-lg" />
-        <div className="space-y-1">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-3 w-24" />
-        </div>
-      </div>
+      {/* Grid 3x3 Skeletons */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+        {Array(9)
+          .fill(0)
+          .map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl liquid-glass-panel border border-white/5 p-3.5 flex flex-col justify-between h-[154px] animate-pulse"
+            >
+              <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="h-4 w-10 rounded-md bg-white/10" />
+                  <Skeleton className="h-4 w-12 rounded-md bg-white/10" />
+                </div>
+                <Skeleton className="h-3.5 w-24 rounded bg-white/10" />
+              </div>
 
-      {/* Match cards skeleton */}
-      <div className="grid gap-3">
-        {Array(3).fill(0).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-white/5 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-5 w-20 rounded-full" />
-                <Skeleton className="h-5 w-16 rounded-full" />
-              </div>
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <div className="p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 flex-1">
-                  <Skeleton className="w-12 h-12 rounded-xl" />
-                  <div className="space-y-1.5">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-3 w-14" />
-                  </div>
+              <div className="flex items-center justify-between py-2">
+                <div className="flex-1 flex flex-col items-center">
+                  <Skeleton className="w-10 h-10 rounded-xl bg-white/10 mb-1.5" />
+                  <Skeleton className="h-3 w-16 bg-white/10" />
                 </div>
-                <Skeleton className="w-28 h-12 rounded-xl" />
-                <div className="flex items-center gap-3 flex-1 justify-end">
-                  <div className="space-y-1.5 text-right">
-                    <Skeleton className="h-4 w-20 ml-auto" />
-                    <Skeleton className="h-3 w-14 ml-auto" />
-                  </div>
-                  <Skeleton className="w-12 h-12 rounded-xl" />
+
+                <div className="px-2">
+                  <Skeleton className="h-7 w-16 rounded-xl bg-white/10" />
+                </div>
+
+                <div className="flex-1 flex flex-col items-center">
+                  <Skeleton className="w-10 h-10 rounded-xl bg-white/10 mb-1.5" />
+                  <Skeleton className="h-3 w-16 bg-white/10" />
                 </div>
               </div>
+
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                <Skeleton className="h-3 w-16 bg-white/10" />
+                <Skeleton className="h-5 w-24 rounded-lg bg-white/10" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   )

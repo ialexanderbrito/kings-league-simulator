@@ -1,12 +1,23 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import { PlayerCard } from "@/components/team/player-card"
 import { PlayerCardSkeleton } from "@/components/skeletons/player-card-skeleton"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 import type { Player } from "@/types/kings-league"
-import { Users, ShieldCheck, Target, Zap, Goal, Info, Sparkles, Star, AlertTriangle } from "lucide-react"
-import { useMemo, useState, type ReactNode } from 'react'
+import {
+  Users,
+  Sparkles,
+  Star,
+  AlertTriangle,
+  SlidersHorizontal,
+  Goal,
+  ShieldCheck,
+  Zap,
+  Target,
+  Search,
+  X,
+  RotateCcw,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface TeamRosterProps {
@@ -28,21 +39,32 @@ function getPlayerRatingTier(player: Player): Exclude<RatingFilter, "all"> {
   const meta = player.metaInformation
   if (!meta) return "common"
 
-  const values = player.role === "goalkeeper"
-    ? [
-      getAttrValue(meta.diving),
-      getAttrValue(meta.handling),
-      getAttrValue(meta.reflexes),
-      getAttrValue(meta.anticipation),
-    ]
-    : [
-      getAttrValue(meta.passing),
-      getAttrValue(meta.shooting),
-      getAttrValue(meta.defence),
-      getAttrValue(meta.physical),
-      getAttrValue(meta.duels),
-      getAttrValue(meta.skills),
-    ]
+  if (meta.average) {
+    const avg = Number.parseInt(meta.average, 10)
+    if (!Number.isNaN(avg) && avg > 0) {
+      if (avg >= 78) return "elite"
+      if (avg >= 74) return "rare"
+      if (avg >= 70) return "common"
+      return "basic"
+    }
+  }
+
+  const values =
+    player.role === "goalkeeper"
+      ? [
+          getAttrValue(meta.diving),
+          getAttrValue(meta.handling),
+          getAttrValue(meta.reflexes),
+          getAttrValue(meta.anticipation),
+        ]
+      : [
+          getAttrValue(meta.passing),
+          getAttrValue(meta.shooting),
+          getAttrValue(meta.defence),
+          getAttrValue(meta.physical),
+          getAttrValue(meta.duels),
+          getAttrValue(meta.skills),
+        ]
 
   const rating = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length)
 
@@ -54,295 +76,527 @@ function getPlayerRatingTier(player: Player): Exclude<RatingFilter, "all"> {
 
 export function TeamRoster({ players, loading }: TeamRosterProps) {
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<RatingFilter>("all")
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // Contagem dinâmica por tier para exibir nas pílulas
+  const tierCounts = useMemo(() => {
+    const counts = {
+      all: players.length,
+      wildcard: 0,
+      elite: 0,
+      rare: 0,
+      common: 0,
+      basic: 0,
+      injured: 0,
+    }
+
+    players.forEach((p) => {
+      if (String(p?.metaInformation?.injury || "").toLowerCase() === "true") {
+        counts.injured += 1
+      }
+      const tier = getPlayerRatingTier(p)
+      if (tier in counts) {
+        counts[tier] += 1
+      }
+    })
+
+    return counts
+  }, [players])
+
+  const filteredPlayers = useMemo(() => {
+    let result = players
+
+    // Filtro por texto (nome do atleta ou fantasyName)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      result = result.filter((p) => {
+        const name = (p.shortName || "").toLowerCase()
+        const fantasy = (p.metaInformation?.fantasyName || "").toLowerCase()
+        return name.includes(q) || fantasy.includes(q)
+      })
+    }
+
+    if (selectedRatingFilter === "all") return result
+    if (selectedRatingFilter === "injured") {
+      return result.filter((player) => String(player?.metaInformation?.injury || "").toLowerCase() === "true")
+    }
+    return result.filter((player) => getPlayerRatingTier(player) === selectedRatingFilter)
+  }, [players, selectedRatingFilter, searchQuery])
+
+  const goalkeepers = filteredPlayers.filter((p) => p.role === "goalkeeper")
+  const defenders = filteredPlayers.filter((p) => p.role === "defender")
+  const midfielders = filteredPlayers.filter((p) => p.role === "midfielder")
+  const forwards = filteredPlayers.filter((p) => p.role === "forward")
+
+  // Estatísticas gerais
+  const totalPlayers = players.length
+  const wildcardCount = tierCounts.wildcard
+  const draftedCount = players.filter((p) => p.category === "draft" || p?.metaInformation?.status === "Draft").length
+  const injuredCount = tierCounts.injured
+
+  const isFilterActive = selectedRatingFilter !== "all" || searchQuery.trim() !== ""
+
+  const handleResetFilters = () => {
+    setSelectedRatingFilter("all")
+    setSearchQuery("")
+  }
 
   if (loading) {
     return <TeamRosterSkeleton />
   }
 
-  const filteredPlayers = useMemo(() => {
-    if (selectedRatingFilter === "all") return players
-    if (selectedRatingFilter === "injured") {
-      return players.filter((player) => String(player?.metaInformation?.injury || "").toLowerCase() === "true")
-    }
-    return players.filter((player) => getPlayerRatingTier(player) === selectedRatingFilter)
-  }, [players, selectedRatingFilter])
-
-  const goalkeepers = filteredPlayers.filter(p => p.role === 'goalkeeper')
-  const defenders = filteredPlayers.filter(p => p.role === 'defender')
-  const midfielders = filteredPlayers.filter(p => p.role === 'midfielder')
-  const forwards = filteredPlayers.filter(p => p.role === 'forward')
-
-  // Calcular estatísticas do elenco
-  const totalPlayers = players.length
-
-  const wildcardCount = players.filter(p => p.category === "wildcard" || p?.metaInformation?.status === "Wildcard").length
-  const draftedCount = players.filter(p => p.category === "draft" || p?.metaInformation?.status === "Draft").length
-  const injuredCount = players.filter(p => String(p?.metaInformation?.injury || "").toLowerCase() === "true").length
-
   return (
-    <div className="space-y-8">
-      {/* Header com estatísticas do elenco */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
+    <div className="space-y-6 sm:space-y-8">
+      {/* Resumo do Elenco: 4 Métricas em Liquid Glass Autêntico */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+        <RosterMetricCard
           icon={Users}
           value={totalPlayers}
-          label="Total de Jogadores"
-          color="orange"
+          label="Total de Atletas"
+          sublabel="Plantel Oficial"
+          accentColor="zinc"
         />
-        <StatCard
+        <RosterMetricCard
           icon={Star}
           value={draftedCount}
-          label="Draftados"
-          color="blue"
+          label="Draftados Oficial"
+          sublabel={totalPlayers > 0 ? `${Math.round((draftedCount / totalPlayers) * 100)}% do elenco` : "Draft da liga"}
+          accentColor="sky"
         />
-        <StatCard
+        <RosterMetricCard
           icon={Sparkles}
           value={wildcardCount}
-          label="Wild Cards"
-          color="amber"
+          label="Wild Cards Ativos"
+          sublabel={wildcardCount > 0 ? "Estrelas convidadas" : "Nenhum ativo"}
+          accentColor="amber"
         />
-        <StatCard
+        <RosterMetricCard
           icon={AlertTriangle}
           value={injuredCount}
-          label="Machucados"
-          color="red"
+          label="Em Recuperação"
+          sublabel={injuredCount === 0 ? "100% plantel apto" : `${injuredCount} no dep. médico`}
+          accentColor={injuredCount > 0 ? "rose" : "emerald"}
         />
       </div>
 
-      {/* Legenda de cards */}
-      <RatingLegend
-        selectedFilter={selectedRatingFilter}
-        onSelectFilter={setSelectedRatingFilter}
-        totalPlayers={players.length}
-        filteredPlayers={filteredPlayers.length}
-      />
+      {/* PAINEL DE FILTROS LIQUID GLASS (Design Master / Emil Kowalski) */}
+      <div className="relative rounded-2xl p-4 sm:p-5 border border-white/10 shadow-[0_20px_48px_-12px_rgba(0,0,0,0.85)] space-y-3.5 overflow-hidden bg-gradient-to-b from-[#13131c]/90 via-[#0d0d14]/90 to-[#0a0a0f]/95 backdrop-blur-2xl">
+        {/* Specular Top Rim Highlight */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+        {/* Ambient Glow */}
+        <div className="absolute -top-16 -left-16 w-64 h-32 bg-amber-500/[0.04] rounded-full blur-3xl pointer-events-none" />
 
-      {/* Seções por posição */}
+        {/* Header do Painel com Título, Busca e Reset */}
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-amber-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]">
+              <SlidersHorizontal className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
+                  Filtrar Elenco
+                </h3>
+                <span className="text-[10px] font-mono font-bold text-zinc-400 bg-white/5 border border-white/10 px-1.5 py-0.2 rounded">
+                  {filteredPlayers.length} / {totalPlayers}
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400">
+                Filtre por categoria, faixa de rating EA FC ou busque por atleta
+              </p>
+            </div>
+          </div>
+
+          {/* Barra de Ações: Busca Rápida + Limpar Filtros */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 sm:w-56">
+              <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar jogador..."
+                className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-black/40 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 focus:ring-1 focus:ring-white/20 transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-0.5 rounded transition-colors"
+                  aria-label="Limpar busca"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {isFilterActive && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/8 transition-colors flex items-center gap-1.5 btn-press shrink-0"
+                title="Limpar todos os filtros"
+              >
+                <RotateCcw className="w-3 h-3 text-zinc-400" />
+                <span className="hidden sm:inline">Limpar</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Floating Track de Pílulas em Liquid Glass */}
+        <div className="relative z-10 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl liquid-filter-track flex flex-wrap items-center gap-1.5">
+          <FilterPill
+            active={selectedRatingFilter === "all"}
+            onClick={() => setSelectedRatingFilter("all")}
+            label="Todos"
+            count={tierCounts.all}
+            tier="all"
+          />
+          <FilterPill
+            active={selectedRatingFilter === "wildcard"}
+            onClick={() => setSelectedRatingFilter("wildcard")}
+            label="Wild Cards"
+            count={tierCounts.wildcard}
+            tier="wildcard"
+            icon={<Sparkles className="w-3 h-3" />}
+          />
+          <FilterPill
+            active={selectedRatingFilter === "elite"}
+            onClick={() => setSelectedRatingFilter("elite")}
+            label="Elite 78+"
+            count={tierCounts.elite}
+            tier="elite"
+            dotColor="bg-sky-400"
+          />
+          <FilterPill
+            active={selectedRatingFilter === "rare"}
+            onClick={() => setSelectedRatingFilter("rare")}
+            label="Raro 74-77"
+            count={tierCounts.rare}
+            tier="rare"
+            dotColor="bg-purple-400"
+          />
+          <FilterPill
+            active={selectedRatingFilter === "common"}
+            onClick={() => setSelectedRatingFilter("common")}
+            label="Comum 70-73"
+            count={tierCounts.common}
+            tier="common"
+            dotColor="bg-emerald-400"
+          />
+          <FilterPill
+            active={selectedRatingFilter === "basic"}
+            onClick={() => setSelectedRatingFilter("basic")}
+            label="Básico < 70"
+            count={tierCounts.basic}
+            tier="basic"
+            dotColor="bg-zinc-400"
+          />
+          <FilterPill
+            active={selectedRatingFilter === "injured"}
+            onClick={() => setSelectedRatingFilter("injured")}
+            label="Machucados"
+            count={tierCounts.injured}
+            tier="injured"
+            icon={<AlertTriangle className="w-3 h-3 text-rose-400" />}
+          />
+        </div>
+      </div>
+
+      {/* Seções por Posição em Grid Fluido de Cards EA FC */}
       {goalkeepers.length > 0 && (
         <PositionSection
           title="Goleiros"
+          abbr="GOL"
           players={goalkeepers}
           icon={Goal}
-          color="yellow"
-          description="Última linha de defesa"
+          color="amber"
+          description="Segurança na meta, saída rápida e reposição de bola"
         />
       )}
 
       {defenders.length > 0 && (
         <PositionSection
           title="Defensores"
+          abbr="DEF"
           players={defenders}
           icon={ShieldCheck}
           color="blue"
-          description="Proteção e marcação"
+          description="Solidez na marcação, duelos e cobertura defensiva"
         />
       )}
 
       {midfielders.length > 0 && (
         <PositionSection
           title="Meio-campistas"
+          abbr="MEI"
           players={midfielders}
           icon={Zap}
-          color="green"
-          description="Criação e distribuição"
+          color="emerald"
+          description="Criação de jogadas, ritmo, passe e transição ofensiva"
         />
       )}
 
       {forwards.length > 0 && (
         <PositionSection
           title="Atacantes"
+          abbr="ATA"
           players={forwards}
           icon={Target}
-          color="red"
-          description="Finalizadores"
+          color="rose"
+          description="Poder de finalização, drible 1v1 e presença de área"
         />
       )}
 
       {filteredPlayers.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 rounded-2xl bg-white/[0.02] border border-white/5">
-          <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-            <Users className="w-10 h-10 text-gray-500" />
+        <div className="flex flex-col items-center justify-center py-16 rounded-2xl liquid-glass-panel border border-white/8 text-center p-6 space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]">
+            <Users className="w-6 h-6" />
           </div>
-          <p className="text-lg font-medium text-white mb-1">Nenhum jogador encontrado para esse filtro</p>
-          <p className="text-sm text-gray-500">Selecione outro tier no Sistema de Rating para ver mais jogadores</p>
+          <div>
+            <p className="text-base font-bold text-white mb-1">Nenhum jogador encontrado</p>
+            <p className="text-xs text-zinc-400 max-w-sm">
+              Não encontramos atletas para o filtro ou busca selecionada. Tente alternar o filtro ou limpar os termos de busca.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="liquid-pill-btn px-4 py-2 rounded-xl text-xs font-bold text-white inline-flex items-center gap-2"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Restaurar Elenco Completo</span>
+          </button>
         </div>
       )}
     </div>
   )
 }
 
-function StatCard({ icon: Icon, value, label, color }: { icon: any; value: ReactNode; label: string; color: string }) {
-  const colorClasses = {
-    orange: "bg-orange-500/10 border-orange-500/20 text-orange-400",
-    blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
-    amber: "bg-amber-500/10 border-amber-500/20 text-amber-400",
-    red: "bg-red-500/10 border-red-500/20 text-red-400",
-    green: "bg-green-500/10 border-green-500/20 text-green-400",
-    yellow: "bg-yellow-500/10 border-yellow-500/20 text-yellow-400",
+interface RosterMetricCardProps {
+  icon: any
+  value: number
+  label: string
+  sublabel: string
+  accentColor: "zinc" | "sky" | "amber" | "rose" | "emerald"
+}
+
+function RosterMetricCard({
+  icon: Icon,
+  value,
+  label,
+  sublabel,
+  accentColor,
+}: RosterMetricCardProps) {
+  const accentStyles = {
+    zinc: {
+      text: "text-zinc-100",
+      iconBg: "bg-white/[0.08] text-zinc-100 border-white/15 shadow-[0_0_16px_-4px_rgba(255,255,255,0.15)]",
+      glow: "from-white/[0.06] via-white/[0.01] to-transparent",
+    },
+    sky: {
+      text: "text-sky-300",
+      iconBg: "bg-sky-500/15 text-sky-400 border-sky-400/30 shadow-[0_0_16px_-4px_rgba(56,189,248,0.3)]",
+      glow: "from-sky-500/[0.08] via-sky-500/[0.02] to-transparent",
+    },
+    amber: {
+      text: "text-amber-300",
+      iconBg: "bg-amber-500/15 text-amber-400 border-amber-400/30 shadow-[0_0_16px_-4px_rgba(245,158,11,0.3)]",
+      glow: "from-amber-500/[0.08] via-amber-500/[0.02] to-transparent",
+    },
+    rose: {
+      text: "text-rose-300",
+      iconBg: "bg-rose-500/15 text-rose-400 border-rose-400/30 shadow-[0_0_16px_-4px_rgba(244,63,94,0.3)]",
+      glow: "from-rose-500/[0.08] via-rose-500/[0.02] to-transparent",
+    },
+    emerald: {
+      text: "text-emerald-300",
+      iconBg: "bg-emerald-500/15 text-emerald-400 border-emerald-400/30 shadow-[0_0_16px_-4px_rgba(52,211,153,0.3)]",
+      glow: "from-emerald-500/[0.08] via-emerald-500/[0.02] to-transparent",
+    },
   }
 
-  const iconBg = {
-    orange: "bg-orange-500/20",
-    blue: "bg-blue-500/20",
-    amber: "bg-amber-500/20",
-    red: "bg-red-500/20",
-    green: "bg-green-500/20",
-    yellow: "bg-yellow-500/20",
-  }
+  const current = accentStyles[accentColor] || accentStyles.zinc
 
   return (
-    <div className={cn(
-      "relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:scale-[1.02]",
-      colorClasses[color as keyof typeof colorClasses]
-    )}>
-      <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", iconBg[color as keyof typeof iconBg])}>
-          <Icon className="w-5 h-5" />
+    <div className="relative rounded-2xl p-4 sm:p-4.5 liquid-metric-card overflow-hidden group select-none">
+      {/* Specular Top Rim Highlight */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+
+      {/* Ambient Radial Glow */}
+      <div
+        className={cn(
+          "absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br blur-2xl pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity duration-300",
+          current.glow
+        )}
+      />
+
+      <div className="relative z-10 flex items-start justify-between gap-3">
+        {/* Número e Labels */}
+        <div className="space-y-1 min-w-0">
+          <p className="text-3xl sm:text-4xl font-black text-white tabular-nums tracking-tighter leading-none">
+            {value}
+          </p>
+          <div className="pt-1 min-w-0">
+            <p className="text-xs font-bold text-white uppercase tracking-wider leading-tight truncate">
+              {label}
+            </p>
+            <p className="text-[10px] font-medium text-zinc-400 tracking-wide mt-0.5 truncate">
+              {sublabel}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-2xl font-black text-white">{value}</p>
-          <p className="text-xs text-gray-400">{label}</p>
+
+        {/* Ícone em Caixilho de Vidro Iluminado */}
+        <div
+          className={cn(
+            "w-11 h-11 rounded-2xl flex items-center justify-center border shrink-0 transition-transform duration-200 group-hover:scale-105",
+            current.iconBg
+          )}
+        >
+          <Icon className="w-5 h-5" />
         </div>
       </div>
     </div>
   )
 }
 
-function RatingLegend({
-  selectedFilter,
-  onSelectFilter,
-  totalPlayers,
-  filteredPlayers,
-}: {
-  selectedFilter: RatingFilter
-  onSelectFilter: (filter: RatingFilter) => void
-  totalPlayers: number
-  filteredPlayers: number
-}) {
-  const ratings = [
-    { key: "wildcard" as const, color: "from-amber-600 to-amber-800", border: "border-amber-500", label: "Wild Card", desc: "Contratados fora do draft" },
-    { key: "elite" as const, color: "from-blue-600 to-blue-800", border: "border-blue-500", label: "78+", desc: "Rating Elite" },
-    { key: "rare" as const, color: "from-red-600 to-red-800", border: "border-red-500", label: "74-77", desc: "Rating Alto" },
-    { key: "common" as const, color: "from-green-600 to-green-800", border: "border-green-500", label: "70-73", desc: "Rating Médio" },
-    { key: "basic" as const, color: "from-zinc-600 to-zinc-800", border: "border-zinc-500", label: "< 70", desc: "Rating Básico" },
-    { key: "injured" as const, color: "from-rose-600 to-red-700", border: "border-rose-500", label: "Machucados", desc: "Status de lesão ativo" },
-  ]
+interface FilterPillProps {
+  active: boolean
+  onClick: () => void
+  label: string
+  count: number
+  tier: RatingFilter
+  icon?: React.ReactNode
+  dotColor?: string
+}
+
+function FilterPill({
+  active,
+  onClick,
+  label,
+  count,
+  tier,
+  icon,
+  dotColor,
+}: FilterPillProps) {
+  // Cores personalizadas de Liquid Glass por Tier quando ativo
+  const activeStyles: Record<RatingFilter, string> = {
+    all: "bg-white/15 text-white border-white/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.28),0_4px_12px_-2px_rgba(0,0,0,0.5)]",
+    wildcard:
+      "bg-amber-500/20 text-amber-300 border-amber-400/40 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.35),0_4px_16px_-2px_rgba(245,158,11,0.3)]",
+    elite:
+      "bg-sky-500/20 text-sky-300 border-sky-400/40 shadow-[inset_0_1px_0_0_rgba(56,189,248,0.35),0_4px_16px_-2px_rgba(14,165,233,0.3)]",
+    rare:
+      "bg-purple-500/20 text-purple-300 border-purple-400/40 shadow-[inset_0_1px_0_0_rgba(192,132,252,0.35),0_4px_16px_-2px_rgba(168,85,247,0.3)]",
+    common:
+      "bg-emerald-500/20 text-emerald-300 border-emerald-400/40 shadow-[inset_0_1px_0_0_rgba(52,211,153,0.35),0_4px_16px_-2px_rgba(16,185,129,0.3)]",
+    basic:
+      "bg-zinc-700/40 text-zinc-200 border-zinc-500/40 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2),0_4px_12px_-2px_rgba(0,0,0,0.5)]",
+    injured:
+      "bg-rose-500/20 text-rose-300 border-rose-400/40 shadow-[inset_0_1px_0_0_rgba(244,63,94,0.35),0_4px_16px_-2px_rgba(225,29,72,0.3)]",
+  }
+
+  const currentActiveStyle = activeStyles[tier] || activeStyles.all
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-r from-white/[0.03] to-transparent">
-      <div className="p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-            <Info className="w-5 h-5 text-gray-400" />
-          </div>
-          <div>
-            <h4 className="text-base font-semibold text-white">Sistema de Rating</h4>
-            <p className="text-xs text-gray-500">Clique em um tier ou em Machucados para filtrar os jogadores</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => onSelectFilter("all")}
-            aria-pressed={selectedFilter === "all"}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
-              selectedFilter === "all"
-                ? "bg-white text-black border-white"
-                : "bg-white/[0.03] text-gray-300 border-white/10 hover:bg-white/[0.08]"
-            )}
-          >
-            Todos ({totalPlayers})
-          </button>
-          {selectedFilter !== "all" && (
-            <span className="text-xs text-gray-400">
-              Mostrando {filteredPlayers} de {totalPlayers}
-            </span>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "liquid-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 border focus-visible:outline-none",
+        active
+          ? currentActiveStyle
+          : "bg-white/[0.03] text-zinc-400 border-transparent hover:bg-white/[0.08] hover:text-white hover:border-white/10"
+      )}
+    >
+      {icon && <span className="shrink-0">{icon}</span>}
+      {!icon && dotColor && (
+        <span
+          className={cn(
+            "w-1.5 h-1.5 rounded-full shrink-0",
+            dotColor,
+            active ? "ring-2 ring-white/30" : ""
           )}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-          {ratings.map((rating, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => onSelectFilter(selectedFilter === rating.key ? "all" : rating.key)}
-              aria-pressed={selectedFilter === rating.key}
-              className={cn(
-                "group flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-200 text-left",
-                selectedFilter === rating.key
-                  ? "bg-white/10 border-white/25 ring-1 ring-white/20"
-                  : "bg-white/[0.02] border-white/5 hover:border-white/10"
-              )}
-            >
-              <div className={cn(
-                "w-8 h-8 rounded-lg bg-gradient-to-b border flex-shrink-0",
-                rating.color,
-                rating.border
-              )} />
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{rating.label}</p>
-                <p className="text-[10px] text-gray-500 truncate">{rating.desc}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-white/5">
-          <p className="text-xs text-gray-500 flex items-start gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-            <span>
-              <strong className="text-gray-400">Nota:</strong> Os jogadores Wild Card não possuem atributos detalhados,
-              pois os ratings são definidos pela equipe da Kings League apenas para os jogadores draftados.
-            </span>
-          </p>
-        </div>
-      </div>
-    </div>
+        />
+      )}
+      <span>{label}</span>
+      <span
+        className={cn(
+          "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold tabular-nums ml-0.5",
+          active ? "bg-white/20 text-white" : "bg-white/5 text-zinc-400"
+        )}
+      >
+        {count}
+      </span>
+    </button>
   )
 }
 
 interface PositionSectionProps {
   title: string
+  abbr: string
   players: Player[]
   icon: any
-  color: string
+  color: "amber" | "blue" | "emerald" | "rose"
   description: string
 }
 
-function PositionSection({ title, players, icon: Icon, color, description }: PositionSectionProps) {
-  const colorClasses = {
-    yellow: { bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/30" },
-    blue: { bg: "bg-blue-500/20", text: "text-blue-400", border: "border-blue-500/30" },
-    green: { bg: "bg-green-500/20", text: "text-green-400", border: "border-green-500/30" },
-    red: { bg: "bg-red-500/20", text: "text-red-400", border: "border-red-500/30" },
+function PositionSection({ title, abbr, players, icon: Icon, color, description }: PositionSectionProps) {
+  const colorStyles = {
+    amber: {
+      bg: "bg-amber-500/15 text-amber-400",
+      border: "border-amber-500/30",
+      badge: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+    },
+    blue: {
+      bg: "bg-blue-500/15 text-blue-400",
+      border: "border-blue-500/30",
+      badge: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+    },
+    emerald: {
+      bg: "bg-emerald-500/15 text-emerald-400",
+      border: "border-emerald-500/30",
+      badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    },
+    rose: {
+      bg: "bg-rose-500/15 text-rose-400",
+      border: "border-rose-500/30",
+      badge: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+    },
   }
 
-  const styles = colorClasses[color as keyof typeof colorClasses]
+  const currentStyle = colorStyles[color]
 
   return (
     <div className="space-y-4">
-      {/* Header da seção */}
-      <div className="flex items-center justify-between">
+      {/* Header da Seção de Posição Estilo Futebol Moderno */}
+      <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-3">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", styles.bg)}>
-            <Icon className={cn("w-5 h-5", styles.text)} />
+          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", currentStyle.bg)}>
+            <Icon className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">{title}</h3>
-            <p className="text-xs text-gray-500">{description}</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-black text-white uppercase tracking-tight">{title}</h3>
+              <span className={cn("text-[10px] font-black px-1.5 py-0.5 rounded border uppercase", currentStyle.badge)}>
+                {abbr}
+              </span>
+            </div>
+            <p className="text-xs text-zinc-400">{description}</p>
           </div>
         </div>
-        <Badge variant="outline" className={cn("border", styles.border, styles.text)}>
-          {players.length} {players.length === 1 ? 'jogador' : 'jogadores'}
-        </Badge>
+
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-zinc-300">
+          {players.length} {players.length === 1 ? "atleta" : "atletas"}
+        </span>
       </div>
 
-      {/* Grid de jogadores */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-        {players.map(player => (
-          <div key={player.id} className="w-72 transition-transform duration-300 hover:scale-[1.02]">
+      {/* Grid Fluido e Responsivo de Cards FIFA */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+        {players.map((player) => (
+          <div key={player.id} className="h-full">
             <PlayerCard player={player} />
           </div>
         ))}
@@ -351,68 +605,31 @@ function PositionSection({ title, players, icon: Icon, color, description }: Pos
   )
 }
 
-function TeamRosterSkeleton() {
+export function TeamRosterSkeleton() {
   return (
-    <div className="space-y-8">
-      {/* Stats skeleton */}
+    <div className="space-y-6 sm:space-y-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {Array(4).fill(0).map((_, i) => (
-          <div key={i} className="rounded-xl border border-white/5 p-4 bg-white/[0.02]">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-10 h-10 rounded-lg" />
-              <div className="space-y-1.5">
-                <Skeleton className="h-6 w-10" />
-                <Skeleton className="h-3 w-20" />
+        {Array(4)
+          .fill(0)
+          .map((_, i) => (
+            <div key={i} className="liquid-metric-card p-4 sm:p-4.5 rounded-2xl relative overflow-hidden flex items-start justify-between">
+              <div className="space-y-2 flex-1">
+                <div className="h-8 w-14 bg-white/10 rounded-lg animate-pulse" />
+                <div className="h-3.5 w-24 bg-white/10 rounded animate-pulse" />
+                <div className="h-2.5 w-16 bg-white/10 rounded animate-pulse" />
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Legend skeleton */}
-      <div className="rounded-2xl border border-white/5 p-5 bg-white/[0.02]">
-        <div className="flex items-center gap-3 mb-4">
-          <Skeleton className="w-10 h-10 rounded-xl" />
-          <div className="space-y-1.5">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-3 w-48" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {Array(5).fill(0).map((_, i) => (
-            <div key={i} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
-              <Skeleton className="w-8 h-8 rounded-lg" />
-              <div className="space-y-1">
-                <Skeleton className="h-3 w-12" />
-                <Skeleton className="h-2 w-16" />
-              </div>
+              <div className="w-11 h-11 rounded-2xl bg-white/10 animate-pulse shrink-0" />
             </div>
           ))}
-        </div>
       </div>
 
-      {/* Position sections skeleton */}
-      {['Goleiros', 'Defensores', 'Meio-campistas', 'Atacantes'].map((position, index) => (
-        <div key={position} className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-10 h-10 rounded-xl" />
-              <div className="space-y-1.5">
-                <Skeleton className="h-5 w-28" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            </div>
-            <Skeleton className="h-6 w-24 rounded-full" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-            {Array(position === 'Goleiros' ? 2 : 4).fill(0).map((_, i) => (
-              <div key={i} className="w-72">
-                <PlayerCardSkeleton />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+        {Array(8)
+          .fill(0)
+          .map((_, i) => (
+            <PlayerCardSkeleton key={i} />
+          ))}
+      </div>
     </div>
   )
 }

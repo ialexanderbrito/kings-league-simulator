@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react"
 import { fetchLeagueData, fetchTeamDetails } from "@/lib/fetch-league-data"
 import TeamInfo from "@/components/team-info"
+
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { ErrorState } from "@/components/ui/error-state"
@@ -76,14 +77,14 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
   // Renderizando o estado de carregamento com o componente específico para time
   if (loading) {
     return (
-      <main className="bg-[#030303] min-h-screen text-white">
+      <main className="min-h-screen bg-[#060608] text-white">
         <Header
           loading={true}
           selectedTeam={null}
           onTeamSelect={() => { }}
           setActiveTab={() => { }}
         />
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
           <TeamLoading />
         </div>
         <Footer />
@@ -97,7 +98,23 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
   }
 
   return (
-    <main className="bg-[#030303] min-h-screen text-white">
+    <main className="min-h-screen bg-[#060608] text-white selection:bg-[var(--team-primary)] selection:text-black relative overflow-x-hidden">
+      {/* Iluminação Ambiente Suave baseada nas cores oficiais do time */}
+      <div className="pointer-events-none absolute inset-0 select-none overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[450px] rounded-full blur-[140px] opacity-15"
+          style={{
+            background: `radial-gradient(circle, ${team.firstColorHEX} 0%, ${team.secondColorHEX} 60%, transparent 80%)`,
+          }}
+        />
+        <div
+          className="absolute top-[400px] -right-32 w-[500px] h-[500px] rounded-full blur-[160px] opacity-10"
+          style={{
+            background: team.firstColorHEX,
+          }}
+        />
+      </div>
+
       <Header
         loading={false}
         selectedTeam={team.id}
@@ -105,11 +122,12 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
         setActiveTab={setActiveTab}
       />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-3 sm:py-5 max-w-7xl relative z-10">
         <TeamInfo
           team={team}
           rounds={rounds}
           teams={teams}
+          standings={standings}
         />
       </div>
 
