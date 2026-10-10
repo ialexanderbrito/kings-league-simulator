@@ -1,29 +1,316 @@
-import { Team, TeamStanding, PlayoffBracket, PlayoffMatch } from "@/types/kings-league";
+import { Team, TeamStanding, PlayoffBracket, PlayoffMatch, Round } from "@/types/kings-league";
 
 /**
- * Gera o chaveamento dos playoffs com base na classificação atual
- * 1º lugar vai direto para a semifinal
- * 2º ao 7º disputam as quartas de final
- * Formato atualizado conforme regras de 16.04.2025
+ * Determina qual grupo tem a vantagem do Challenger (SC) na Kings Cup.
+ * O grupo que vencer mais jogos de Challenger leva a vantagem:
+ * - 1º lugar do grupo vencedor vai direto para a Semifinal
+ * - 2º, 3º e 4º vão para as Quartas de Final
+ * - Do outro grupo, 1º, 2º e 3º vão para as Quartas de Final
+ * - 5º do grupo vencedor e 4º/5º do outro grupo são eliminados.
  */
-export function generatePlayoffBracket(standings: TeamStanding[], teams: Record<string, Team>): PlayoffBracket {
+export function determineChallengerAdvantage(
+  rounds?: Round[],
+  standings?: TeamStanding[],
+  teams?: Record<string, Team>
+): {
+  advantageGroup: string;
+  otherGroup: string;
+  groupAWins: number;
+  groupBWins: number;
+  groupAPoints: number;
+  groupBPoints: number;
+} {
+  // Verifica se a competição possui legitimamente dois grupos A e B
+  const hasStandingGroups = Boolean(
+    standings?.some((s) => s.groupName === "A") &&
+    standings?.some((s) => s.groupName === "B")
+  );
+  const hasRoundGroups = Boolean(
+    rounds?.some((r) => r.matches?.some((m) => m.groupName === "A")) &&
+    rounds?.some((r) => r.matches?.some((m) => m.groupName === "B"))
+  );
+  const hasTwoGroups = hasStandingGroups || hasRoundGroups;
+
+  if (!hasTwoGroups) {
+    return {
+      advantageGroup: "",
+      otherGroup: "",
+      groupAWins: 0,
+      groupBWins: 0,
+      groupAPoints: 0,
+      groupBPoints: 0,
+    };
+  }
+
+  const teamGroup: Record<string, string> = {};
+
+  // 1. Mapear time -> grupo através dos standings
+  standings?.forEach((s) => {
+    const g = s.groupName || (s as any).group;
+    if (g && (g === "A" || g === "B")) {
+      teamGroup[s.id] = g;
+    }
+  });
+
+  // 2. Mapear time -> grupo através das partidas
+  rounds?.forEach((r) => {
+    r.matches.forEach((m) => {
+      if (m.groupName === "A" || m.groupName === "B") {
+        if (!teamGroup[m.participants.homeTeamId]) teamGroup[m.participants.homeTeamId] = m.groupName;
+        if (!teamGroup[m.participants.awayTeamId]) teamGroup[m.participants.awayTeamId] = m.groupName;
+      }
+    });
+  });
+
+  let groupAWins = 0;
+  let groupBWins = 0;
+
+  rounds?.forEach((r) => {
+    r.matches.forEach((m) => {
+      const homeGroup = teamGroup[m.participants.homeTeamId];
+      const awayGroup = teamGroup[m.participants.awayTeamId];
+
+      const isChallengerMatch =
+        m.groupName?.toLowerCase() === "challenger" ||
+        (homeGroup && awayGroup && homeGroup !== awayGroup && (homeGroup === "A" || homeGroup === "B") && (awayGroup === "A" || awayGroup === "B"));
+
+      if (!isChallengerMatch) return;
+
+      const { homeScore, awayScore, homeScoreP, awayScoreP } = m.scores;
+      if (homeScore === null || awayScore === null) return;
+
+      let winnerGroup: string | null = null;
+      if (homeScore > awayScore) {
+        winnerGroup = homeGroup || null;
+      } else if (awayScore > homeScore) {
+        winnerGroup = awayGroup || null;
+      } else if (homeScoreP !== null && awayScoreP !== null) {
+        if (homeScoreP > awayScoreP) winnerGroup = homeGroup || null;
+        else if (awayScoreP > homeScoreP) winnerGroup = awayGroup || null;
+      }
+
+      if (winnerGroup === "A") groupAWins += 1;
+      else if (winnerGroup === "B") groupBWins += 1;
+    });
+  });
+
+  let groupAPoints = 0;
+  let groupBPoints = 0;
+  standings?.forEach((s) => {
+    const g = s.groupName || (s as any).group || teamGroup[s.id];
+    const pts = s.points ?? ((s.won ?? 0) * 3);
+    if (g === "A") groupAPoints += pts;
+    else if (g === "B") groupBPoints += pts;
+  });
+
+  let advantageGroup = "A";
+  if (groupBWins > groupAWins) {
+    advantageGroup = "B";
+  } else if (groupAWins > groupBWins) {
+    advantageGroup = "A";
+  } else {
+    // Desempate por total de pontos dos grupos
+    advantageGroup = groupBPoints > groupAPoints ? "B" : "A";
+  }
+
+  const otherGroup = advantageGroup === "A" ? "B" : "A";
+
+  return {
+    advantageGroup,
+    otherGroup,
+    groupAWins,
+    groupBWins,
+    groupAPoints,
+    groupBPoints,
+  };
+}
+
+/**
+ * Gera o chaveamento dos playoffs com base na classificação atual.
+ * Suporta o formato oficial Kings Cup com 2 grupos e vantagem de Challenger (SC),
+ * com fallback para formato de tabela única quando aplicável.
+ */
+export function generatePlayoffBracket(
+  standings: TeamStanding[],
+  teams: Record<string, Team>,
+  rounds?: Round[]
+): PlayoffBracket {
   if (standings.length < 7) {
     throw new Error("É necessário ter pelo menos 7 times na classificação para gerar os playoffs");
   }
 
-  // Obter os times que vão para os playoffs
-  const firstPlace = standings[0];
-  const secondPlace = standings[1];
-  const thirdPlace = standings[2];
-  const fourthPlace = standings[3];
-  const fifthPlace = standings[4];
-  const sixthPlace = standings[5];
-  const seventhPlace = standings[6];
+  // Verifica se é formato Kings Cup com 2 grupos (Grupos A e B)
+  const hasStandingGroups = Boolean(
+    standings.some((s) => s.groupName === "A") &&
+    standings.some((s) => s.groupName === "B")
+  );
+  const hasRoundGroups = Boolean(
+    rounds?.some((r) => r.matches?.some((m) => m.groupName === "A")) &&
+    rounds?.some((r) => r.matches?.some((m) => m.groupName === "B"))
+  );
+  const isKingsCupGroupFormat = hasStandingGroups || hasRoundGroups;
 
-  // Criar os jogos das quartas de final de acordo com as regras atualizadas
-  // Quartas 1: 4º vs 5º (Semifinalista 1)
-  // Quartas 2: 3º vs 6º (Semifinalista 2)
-  // Quartas 3: 2º vs 7º (Semifinalista 3)
+  if (isKingsCupGroupFormat) {
+    const groupA = standings.filter((s) => s.groupName === "A" || (s as any).group === "A");
+    const groupB = standings.filter((s) => s.groupName === "B" || (s as any).group === "B");
+
+    // Regra Kings Cup:
+    // O grupo que vencer mais no Challenger (SC) leva a vantagem:
+    // - 1º do grupo com vantagem vai DIRETO para a Semifinal 1
+    // - 2º, 3º e 4º do grupo com vantagem vão para as Quartas
+    // - 1º, 2º e 3º do outro grupo vão para as Quartas
+    // Confrontos das Quartas:
+    // QF1: 4º do Grupo Vencedor vs 1º do Outro Grupo (vencedor enfrenta o 1º na Semifinal 1)
+    // QF2: 3º do Grupo Vencedor vs 2º do Outro Grupo (vai para a Semifinal 2)
+    // QF3: 2º do Grupo Vencedor vs 3º do Outro Grupo (vai para a Semifinal 2)
+    const { advantageGroup, otherGroup } = determineChallengerAdvantage(rounds, standings, teams);
+
+    const sortGroup = (arr: TeamStanding[]) =>
+      arr.slice().sort((a, b) => {
+        const rankA = Number(a.rank || 0);
+        const rankB = Number(b.rank || 0);
+        if (rankA > 0 && rankB > 0 && rankA !== rankB) return rankA - rankB;
+        const ptsA = a.points ?? ((a.won ?? 0) * 3);
+        const ptsB = b.points ?? ((b.won ?? 0) * 3);
+        if (ptsB !== ptsA) return ptsB - ptsA;
+        const gdA = a.goalDifference ?? ((a.goalsFor ?? 0) - (a.goalsAgainst ?? 0));
+        const gdB = b.goalDifference ?? ((b.goalsFor ?? 0) - (b.goalsAgainst ?? 0));
+        if (gdB !== gdA) return gdB - gdA;
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      });
+
+    const groupAdv = sortGroup(advantageGroup === "A" ? groupA : groupB);
+    const groupOth = sortGroup(otherGroup === "A" ? groupA : groupB);
+
+    const adv1 = groupAdv[0];
+    const adv2 = groupAdv[1];
+    const adv3 = groupAdv[2];
+    const adv4 = groupAdv[3];
+
+    const oth1 = groupOth[0];
+    const oth2 = groupOth[1];
+    const oth3 = groupOth[2];
+
+    const quarterfinals: PlayoffMatch[] = [
+      {
+        id: "qf1",
+        stage: "quarterfinal",
+        matchNumber: 1,
+        homeTeamId: adv4?.id || null,
+        awayTeamId: oth1?.id || null,
+        homeScore: null,
+        awayScore: null,
+        homeScoreP: null,
+        awayScoreP: null,
+        winnerId: null,
+        nextMatchId: "sf1",
+        order: 1
+      },
+      {
+        id: "qf2",
+        stage: "quarterfinal",
+        matchNumber: 2,
+        homeTeamId: adv3?.id || null,
+        awayTeamId: oth2?.id || null,
+        homeScore: null,
+        awayScore: null,
+        homeScoreP: null,
+        awayScoreP: null,
+        winnerId: null,
+        nextMatchId: "sf2",
+        order: 2
+      },
+      {
+        id: "qf3",
+        stage: "quarterfinal",
+        matchNumber: 3,
+        homeTeamId: adv2?.id || null,
+        awayTeamId: oth3?.id || null,
+        homeScore: null,
+        awayScore: null,
+        homeScoreP: null,
+        awayScoreP: null,
+        winnerId: null,
+        nextMatchId: "sf2",
+        order: 3
+      }
+    ];
+
+    const semifinals: PlayoffMatch[] = [
+      {
+        id: "sf1",
+        stage: "semifinal",
+        matchNumber: 1,
+        homeTeamId: adv1?.id || null,
+        awayTeamId: null, // Vencedor de QF1 (4º Adv vs 1º Oth)
+        homeScore: null,
+        awayScore: null,
+        homeScoreP: null,
+        awayScoreP: null,
+        winnerId: null,
+        nextMatchId: "final",
+        order: 1
+      },
+      {
+        id: "sf2",
+        stage: "semifinal",
+        matchNumber: 2,
+        homeTeamId: null, // Vencedor de QF2 (3º Adv vs 2º Oth)
+        awayTeamId: null, // Vencedor de QF3 (2º Adv vs 3º Oth)
+        homeScore: null,
+        awayScore: null,
+        homeScoreP: null,
+        awayScoreP: null,
+        winnerId: null,
+        nextMatchId: "final",
+        order: 2
+      }
+    ];
+
+    const final: PlayoffMatch = {
+      id: "final",
+      stage: "final",
+      matchNumber: 1,
+      homeTeamId: null,
+      awayTeamId: null,
+      homeScore: null,
+      awayScore: null,
+      homeScoreP: null,
+      awayScoreP: null,
+      winnerId: null,
+      nextMatchId: null,
+      order: 1
+    };
+
+    return {
+      quarterfinals,
+      semifinals,
+      final
+    };
+  }
+
+  // Formato oficial de tabela única (Split da Kings League Brasil)
+  const sortedStandings = [...standings].sort((a, b) => {
+    const rankA = Number(a.rank || 0);
+    const rankB = Number(b.rank || 0);
+    if (rankA > 0 && rankB > 0 && rankA !== rankB) return rankA - rankB;
+    const ptsA = a.points ?? ((a.won ?? 0) * 3);
+    const ptsB = b.points ?? ((b.won ?? 0) * 3);
+    if (ptsB !== ptsA) return ptsB - ptsA;
+    const gdA = a.goalDifference ?? ((a.goalsFor ?? 0) - (a.goalsAgainst ?? 0));
+    const gdB = b.goalDifference ?? ((b.goalsFor ?? 0) - (b.goalsAgainst ?? 0));
+    if (gdB !== gdA) return gdB - gdA;
+    return String(a.name || "").localeCompare(String(b.name || ""));
+  });
+
+  const firstPlace = sortedStandings[0];
+  const secondPlace = sortedStandings[1];
+  const thirdPlace = sortedStandings[2];
+  const fourthPlace = sortedStandings[3];
+  const fifthPlace = sortedStandings[4];
+  const sixthPlace = sortedStandings[5];
+  const seventhPlace = sortedStandings[6];
+
   const quarterfinals: PlayoffMatch[] = [
     {
       id: "qf1",
@@ -69,16 +356,13 @@ export function generatePlayoffBracket(standings: TeamStanding[], teams: Record<
     }
   ];
 
-  // Criar as semifinais de acordo com as regras atualizadas
-  // Semifinal 1: 1º lugar vs Vencedor de Quartas 1 (4º vs 5º)
-  // Semifinal 2: Vencedor de Quartas 2 (3º vs 6º) vs Vencedor de Quartas 3 (2º vs 7º)
   const semifinals: PlayoffMatch[] = [
     {
       id: "sf1",
       stage: "semifinal",
       matchNumber: 1,
       homeTeamId: firstPlace.id,
-      awayTeamId: null, // Será definido após a simulação das quartas (vencedor de 4º vs 5º)
+      awayTeamId: null,
       homeScore: null,
       awayScore: null,
       homeScoreP: null,
@@ -91,8 +375,8 @@ export function generatePlayoffBracket(standings: TeamStanding[], teams: Record<
       id: "sf2",
       stage: "semifinal",
       matchNumber: 2,
-      homeTeamId: null, // Será definido após a simulação das quartas (vencedor de 3º vs 6º)
-      awayTeamId: null, // Será definido após a simulação das quartas (vencedor de 2º vs 7º)
+      homeTeamId: null,
+      awayTeamId: null,
       homeScore: null,
       awayScore: null,
       homeScoreP: null,
@@ -103,13 +387,12 @@ export function generatePlayoffBracket(standings: TeamStanding[], teams: Record<
     }
   ];
 
-  // Criar a final
   const final: PlayoffMatch = {
     id: "final",
     stage: "final",
     matchNumber: 1,
-    homeTeamId: null, // Será definido após a simulação das semifinais
-    awayTeamId: null, // Será definido após a simulação das semifinais
+    homeTeamId: null,
+    awayTeamId: null,
     homeScore: null,
     awayScore: null,
     homeScoreP: null,
