@@ -1,12 +1,11 @@
-﻿import '@/styles/globals.css'
+import '@/styles/globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider'
 import { TeamThemeProvider } from '@/contexts/team-theme-context'
+import { NavigationProgressBar } from '@/components/navigation-progress-bar'
 import { ButtonTop } from "@/components/ui/button-top"
-import { LeaguesSuggestionModal } from '@/components/leagues-suggestion-modal'
-import { CookieConsentBanner } from '@/components/cookie-consent-banner'
 import Script from 'next/script'
 
 const inter = Inter({
@@ -104,6 +103,16 @@ export const metadata: Metadata = {
     },
   },
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   metadataBase: new URL('https://kings-league-simulator.vercel.app'),
   other: {
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
@@ -121,8 +130,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" sizes="any" />
-        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
         {/* Preconnect para melhorar performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -153,7 +164,10 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-GCWCQ08JFR');
+            gtag('config', 'G-GCWCQ08JFR', {
+              client_storage: 'none',
+              anonymize_ip: true
+            });
           `}
         </Script>
 
@@ -165,11 +179,10 @@ export default function RootLayout({
           storageKey="kings-league-theme"
         >
           <TeamThemeProvider>
+            <NavigationProgressBar />
             {children}
             <Toaster />
             <ButtonTop />
-            <LeaguesSuggestionModal />
-            <CookieConsentBanner />
           </TeamThemeProvider>
         </ThemeProvider>
 
