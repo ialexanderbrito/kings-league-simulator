@@ -9,6 +9,7 @@ interface DateGroupProps {
   matches: Round["matches"];
   round: Round;
   teams: Record<string, Team>;
+  teamGroupMap?: Record<string, string>;
   scores: Record<string, {
     home: string;
     away: string;
@@ -26,7 +27,6 @@ interface DateGroupProps {
     matchId: number,
     winner: "home" | "away" | null
   ) => void;
-  favoriteTeam?: Team | null;
 }
 
 export const DateGroup: FC<DateGroupProps> = ({
@@ -34,27 +34,32 @@ export const DateGroup: FC<DateGroupProps> = ({
   matches,
   round,
   teams,
+  teamGroupMap,
   scores,
   showShootout,
   onScoreChange,
   onShootoutWinnerSelect,
-  favoriteTeam
 }) => {
   return (
-    <div className="space-y-3">
-      {/* Date Header */}
-      <div className="flex items-center gap-2 px-1">
-        <DateIcon className="w-4 h-4 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-        <span className="text-sm font-medium text-gray-300">
-          {DateFormatter.getWeekdayName(date)
-            ? `${DateFormatter.getWeekdayName(date)}, ${DateFormatter.formatDateDisplay(date)}`
-            : DateFormatter.formatDateDisplay(date)
-          }
+    <div className="space-y-1.5">
+      {/* Date Header - Minimalista e elegante */}
+      <div className="flex items-center justify-between px-1 text-[11px] font-semibold text-zinc-400">
+        <span className="flex items-center gap-1.5">
+          <DateIcon className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
+          <span>
+            {DateFormatter.getWeekdayName(date)
+              ? `${DateFormatter.getWeekdayName(date)}, ${DateFormatter.formatDateDisplay(date)}`
+              : DateFormatter.formatDateDisplay(date)
+            }
+          </span>
+        </span>
+        <span className="text-[10px] text-zinc-500 font-mono">
+          {matches.length} {matches.length === 1 ? "jogo" : "jogos"}
         </span>
       </div>
 
       {/* Matches */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {matches.map((match) => {
           const matchKey = `${round.id}-${match.id}`;
           const currentScores = scores[matchKey] || {
@@ -70,12 +75,12 @@ export const DateGroup: FC<DateGroupProps> = ({
               match={match}
               round={round}
               teams={teams}
+              teamGroupMap={teamGroupMap}
               formatDate={DateFormatter.formatMatchDate}
               currentScores={currentScores}
               showShootout={showShootoutInputs}
               onScoreChange={onScoreChange}
               onShootoutWinnerSelect={onShootoutWinnerSelect}
-              favoriteTeam={favoriteTeam}
             />
           );
         })}

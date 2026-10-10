@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
 interface ShootoutSelectorProps {
   homeTeamShortName: string;
@@ -19,18 +19,19 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
 }) => {
   return (
     <div
-      className="flex gap-2 items-center px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+      className="inline-flex gap-1.5 items-center px-2 py-1 rounded-xl bg-zinc-900/80 border border-zinc-800 backdrop-blur-sm select-none"
       role="group"
       aria-label="Seletor de vencedor no Shootout"
     >
       <button
         className={cn(
-          "w-6 h-6 rounded-full border transition-all duration-200 flex items-center justify-center",
-          "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50",
+          "w-5 h-5 sm:w-6 sm:h-6 rounded-lg border flex items-center justify-center btn-press",
+          "transition-[background-color,border-color,transform,box-shadow] duration-150 active:scale-90",
+          "focus:outline-none focus:ring-1 focus:ring-[var(--team-primary,#F4AF23)]/50",
           selectedWinner === "home"
-            ? "bg-emerald-500 border-emerald-400 shadow-md shadow-emerald-500/30"
-            : "bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30",
-          disabled && "opacity-50 cursor-not-allowed"
+            ? "bg-emerald-500 border-emerald-400 text-white shadow-sm shadow-emerald-500/40 font-black"
+            : "bg-zinc-900/80 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-400",
+          disabled && "opacity-40 cursor-not-allowed"
         )}
         onClick={() => !disabled && onWinnerSelect(selectedWinner === "home" ? null : "home")}
         disabled={disabled}
@@ -38,24 +39,26 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
         aria-pressed={selectedWinner === "home"}
         title={`${homeTeamShortName} vence no Shootout`}
       >
-        {selectedWinner === "home" && (
-          <Check className="w-4 h-4 text-white" aria-hidden="true" />
+        {selectedWinner === "home" ? (
+          <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />
+        ) : (
+          <span className="text-[9px] font-bold">1</span>
         )}
       </button>
 
-      <div className="flex items-center gap-1.5 px-1.5">
-        <Trophy className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-        <span className="text-xs font-medium text-gray-400">Shootout</span>
-      </div>
+      <span className="text-[10px] font-bold text-[var(--team-primary,#F4AF23)] uppercase tracking-wider px-1">
+        SO
+      </span>
 
       <button
         className={cn(
-          "w-6 h-6 rounded-full border transition-all duration-200 flex items-center justify-center",
-          "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50",
+          "w-5 h-5 sm:w-6 sm:h-6 rounded-lg border flex items-center justify-center btn-press",
+          "transition-[background-color,border-color,transform,box-shadow] duration-150 active:scale-90",
+          "focus:outline-none focus:ring-1 focus:ring-[var(--team-primary,#F4AF23)]/50",
           selectedWinner === "away"
-            ? "bg-emerald-500 border-emerald-400 shadow-md shadow-emerald-500/30"
-            : "bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30",
-          disabled && "opacity-50 cursor-not-allowed"
+            ? "bg-emerald-500 border-emerald-400 text-white shadow-sm shadow-emerald-500/40 font-black"
+            : "bg-zinc-900/80 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-400",
+          disabled && "opacity-40 cursor-not-allowed"
         )}
         onClick={() => !disabled && onWinnerSelect(selectedWinner === "away" ? null : "away")}
         disabled={disabled}
@@ -63,8 +66,10 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
         aria-pressed={selectedWinner === "away"}
         title={`${awayTeamShortName} vence no Shootout`}
       >
-        {selectedWinner === "away" && (
-          <Check className="w-4 h-4 text-white" aria-hidden="true" />
+        {selectedWinner === "away" ? (
+          <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />
+        ) : (
+          <span className="text-[9px] font-bold">2</span>
         )}
       </button>
     </div>

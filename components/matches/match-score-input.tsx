@@ -23,20 +23,31 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
       pattern="[0-9]*"
       maxLength={2}
       value={value}
-      placeholder="0"
-      style={{
-        boxShadow: isFocused ? `0 0 0 2px var(--team-primary)` : "none",
-      }}
+      placeholder=""
       className={cn(
-        "w-10 h-10 sm:w-11 sm:h-11 text-center rounded-lg text-base font-bold",
-        "bg-white/5 border border-white/10 text-white placeholder:text-gray-600",
-        "transition-all duration-200",
-        "focus:outline-none focus:border-[color:var(--team-primary)]",
-        "hover:border-white/20 hover:bg-white/10",
-        disabled ? "cursor-not-allowed opacity-50" : ""
+        "w-9 h-9 sm:w-10 sm:h-10 text-center rounded-xl font-mono text-base sm:text-lg font-black",
+        "bg-[#08080c] border border-zinc-800 text-white shadow-inner",
+        "transition-[border-color,box-shadow,background-color] duration-150 cursor-text",
+        "focus:outline-none focus:border-[var(--team-primary,#F4AF23)] focus:ring-2 focus:ring-[var(--team-primary,#F4AF23)]/25 focus:bg-[#0c0c12]",
+        "hover:border-zinc-700 hover:bg-[#0b0b10]",
+        disabled && "cursor-not-allowed opacity-40 hover:border-zinc-800 hover:bg-[#08080c]"
       )}
-      onFocus={() => setIsFocused(true)}
+      onFocus={(e) => {
+        setIsFocused(true);
+        e.target.select();
+      }}
       onBlur={() => setIsFocused(false)}
+      onKeyDown={(e) => {
+        if (disabled) return;
+        if (e.key === "Backspace" || e.key === "Delete") {
+          const target = e.target as HTMLInputElement;
+          const isAllSelected = target.selectionStart === 0 && target.selectionEnd === target.value.length;
+          if (value.length <= 1 || isAllSelected) {
+            e.preventDefault();
+            onScoreChange("");
+          }
+        }
+      }}
       onChange={(e) => {
         if (disabled) return;
         const numericValue = e.target.value.replace(/[^0-9]/g, "");
@@ -49,3 +60,4 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
     />
   );
 };
+

@@ -1,14 +1,12 @@
 import { FC } from "react";
 import { cn, getProxyImageUrl } from "@/lib/utils";
 import { Team } from "@/types/kings-league";
-import { Heart } from "lucide-react";
 
 interface TeamDisplayProps {
   team: Team;
   isWinner: boolean;
   position: "left" | "right";
   showShootout: boolean;
-  isFavorite?: boolean;
 }
 
 export const TeamDisplay: FC<TeamDisplayProps> = ({
@@ -16,9 +14,29 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
   isWinner,
   position,
   showShootout,
-  isFavorite
 }) => {
   const isLeftSide = position === "left";
+
+  const shieldEl = (
+    <div
+      className={cn(
+        "w-9 h-9 sm:w-10 sm:h-10 relative flex-shrink-0 rounded-xl p-1.5 transition-transform duration-200 group-hover:scale-105",
+        isWinner
+          ? "ring-1.5 ring-[var(--team-primary,#F4AF23)]/80 bg-[rgba(var(--team-primary-rgb,244,175,35),0.14)] shadow-[0_0_12px_rgba(244,175,35,0.25)] scale-105"
+          : "bg-zinc-900/60 border border-zinc-800/80"
+      )}
+    >
+      <img
+        src={getProxyImageUrl(team.logo?.url)}
+        alt={`Logo do ${team.name}`}
+        width={40}
+        height={40}
+        className="object-contain w-full h-full drop-shadow-sm"
+        loading="lazy"
+        crossOrigin="anonymous"
+      />
+    </div>
+  );
 
   return (
     <div className={cn(
@@ -27,65 +45,37 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
     )}>
       {isLeftSide ? (
         <>
-          <div className="flex-1 text-right overflow-hidden">
-            <div className="flex items-center justify-end gap-1.5">
-              {isFavorite && (
-                <Heart className="w-3.5 h-3.5 text-red-500" fill="currentColor" aria-label="Time favorito" />
+          <div className="flex-1 text-right overflow-hidden min-w-0">
+            <p
+              className={cn(
+                "font-bold text-xs sm:text-sm md:text-base truncate max-w-full leading-snug",
+                isWinner ? "text-[var(--team-primary,#F4AF23)]" : "text-zinc-100"
               )}
-              <p className={cn(
-                "font-semibold text-xs sm:text-sm md:text-base truncate max-w-full",
-                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-emerald-400" : "text-white"
-              )}
-                title={team.name}
-              >
-                {team.name}
-              </p>
-            </div>
-            <p className="text-xs text-gray-500 hidden md:block truncate mt-0.5">
-              {team.shortName}
+              title={team.name}
+            >
+              {team.name}
+            </p>
+            <p className="text-[11px] text-zinc-500 hidden sm:block truncate font-medium">
+              {team.shortName || team.name}
             </p>
           </div>
-          <div className="w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0 rounded-lg bg-white/5 p-1.5 border border-white/10">
-            <img
-              src={getProxyImageUrl(team.logo?.url)}
-              alt={`Logo do ${team.name}`}
-              width={48}
-              height={48}
-              className="object-contain w-full h-full"
-              loading="lazy"
-              crossOrigin="anonymous"
-            />
-          </div>
+          {shieldEl}
         </>
       ) : (
         <>
-          <div className="w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0 rounded-lg bg-white/5 p-1.5 border border-white/10">
-            <img
-              src={getProxyImageUrl(team.logo?.url)}
-              alt={`Logo do ${team.name}`}
-              width={48}
-              height={48}
-              className="object-contain w-full h-full"
-              loading="lazy"
-              crossOrigin="anonymous"
-            />
-          </div>
-          <div className="flex-1 text-left overflow-hidden">
-            <div className="flex items-center gap-1.5">
-              <p className={cn(
-                "font-semibold text-xs sm:text-sm md:text-base truncate max-w-full",
-                isFavorite ? "text-[var(--team-primary)]" : isWinner ? "text-emerald-400" : "text-white"
+          {shieldEl}
+          <div className="flex-1 text-left overflow-hidden min-w-0">
+            <p
+              className={cn(
+                "font-bold text-xs sm:text-sm md:text-base truncate max-w-full leading-snug",
+                isWinner ? "text-[var(--team-primary,#F4AF23)]" : "text-zinc-100"
               )}
-                title={team.name}
-              >
-                {team.name}
-              </p>
-              {isFavorite && (
-                <Heart className="w-3.5 h-3.5 text-red-500" fill="currentColor" aria-label="Time favorito" />
-              )}
-            </div>
-            <p className="text-xs text-gray-500 hidden md:block truncate mt-0.5">
-              {team.shortName}
+              title={team.name}
+            >
+              {team.name}
+            </p>
+            <p className="text-[11px] text-zinc-500 hidden sm:block truncate font-medium">
+              {team.shortName || team.name}
             </p>
           </div>
         </>
