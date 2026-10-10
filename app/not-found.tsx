@@ -1,129 +1,71 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Home, Table, Trophy, Search } from 'lucide-react'
-import KingsLeagueLogo from '@/components/kings-league-logo'
-import { Card, CardContent } from '@/components/ui/card'
+import Link from "next/link"
+import { Home, Trophy, Compass } from "lucide-react"
+import KingsLeagueLogo from "@/components/kings-league-logo"
+import { Button } from "@/components/ui/button"
 
 export const metadata = {
-  title: 'Página não encontrada | Kings League Simulador',
-  description: 'A página que você está procurando não foi encontrada. Retorne para a página inicial do Kings League Simulador.',
+  title: "Página não encontrada | Kings League Simulador",
+  description: "A página que você está procurando não foi encontrada. Retorne para o Kings League Simulador.",
 }
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#121212] to-[#0a0a0a] text-white">
-      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-screen">
-        {/* Logo */}
-        <div className="mb-8 animate-in fade-in duration-500">
-          <KingsLeagueLogo
-            className="mx-auto"
-            width={80}
-            height={102}
-            aria-label="Kings League Brasil Logo"
-          />
+    <div className="min-h-screen bg-[#060608] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden select-none">
+      {/* Ambient Liquid Specular Glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[360px] bg-[radial-gradient(ellipse_at_center,rgba(244,175,35,0.08)_0%,rgba(244,175,35,0.02)_40%,transparent_70%)] blur-[120px]" />
+      </div>
+
+      {/* Central Liquid Glass Panel */}
+      <div className="liquid-glass-panel relative w-full max-w-md rounded-3xl p-6 sm:p-8 text-center border border-white/[0.08] shadow-[0_24px_50px_-15px_rgba(0,0,0,0.85)] z-10 animate-in fade-in zoom-in-95 duration-200">
+        {/* Status Pill Badge */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-6 text-[11px] font-semibold uppercase tracking-wider text-[var(--team-primary,#F4AF23)] border border-[var(--team-primary)]/25">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,#F4AF23)]" />
+          Erro 404 • Fora de Campo
         </div>
 
-        {/* Conteúdo Principal */}
-        <Card className="bg-gradient-to-br from-[#1a1a1a]/80 to-[#0f0f0f]/80 border border-[#333]/20 backdrop-blur-sm shadow-2xl max-w-2xl w-full animate-in slide-in-from-bottom duration-700">
-          <CardContent className="p-8 sm:p-12 text-center">
-            {/* Código de Erro */}
-            <div className="mb-6 animate-in zoom-in duration-500 delay-100">
-              <h1 className="text-8xl sm:text-9xl font-black mb-2 bg-gradient-to-r from-[var(--team-primary,#F4AF23)] via-[#f59e0b] to-[var(--team-primary,#F4AF23)] bg-clip-text text-transparent animate-pulse-slow">
-                404
-              </h1>
-              <div className="h-1 w-24 mx-auto bg-gradient-to-r from-transparent via-[var(--team-primary,#F4AF23)] to-transparent rounded-full" />
-            </div>
+        {/* Minimal Liquid Icon */}
+        <div className="w-14 h-14 mx-auto mb-5 rounded-2xl liquid-glass flex items-center justify-center border border-white/10 shadow-lg group">
+          <Compass className="w-6 h-6 text-[var(--team-primary,#F4AF23)] transition-transform duration-300 group-hover:rotate-45" aria-hidden="true" />
+        </div>
 
-            {/* Título */}
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-white animate-in fade-in duration-700 delay-200">
-              Página não encontrada
-            </h2>
-
-            {/* Descrição */}
-            <p className="text-base sm:text-lg text-gray-400 mb-8 leading-relaxed animate-in fade-in duration-700 delay-300">
-              Ops! Parece que você tentou acessar uma página que não existe ou foi movida.
-              Não se preocupe, você pode voltar para o início ou explorar outras seções.
-            </p>
-
-            {/* Botões de Ação */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center animate-in fade-in duration-700 delay-400">
-              <Button
-                asChild
-                size="lg"
-                className="bg-gradient-to-r from-[var(--team-primary,#F4AF23)] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[var(--team-primary,#F4AF23)] text-black font-semibold shadow-lg hover:shadow-[var(--team-primary]/50 transition-all duration-300 hover:scale-105"
-              >
-                <Link href="/" className="flex items-center gap-2">
-                  <Home className="w-5 h-5" aria-hidden="true" />
-                  Página Inicial
-                </Link>
-              </Button>
-
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[var(--team-primary]/50 transition-all duration-300 hover:scale-105"
-              >
-                <Link href="/standings" className="flex items-center gap-2">
-                  <Table className="w-5 h-5" aria-hidden="true" />
-                  Classificação
-                </Link>
-              </Button>
-
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-[#333] bg-[#1a1a1a]/50 hover:bg-[#1a1a1a] hover:border-[var(--team-primary]/50 transition-all duration-300 hover:scale-105"
-              >
-                <Link href="/simulator" className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" aria-hidden="true" />
-                  Simulador
-                </Link>
-              </Button>
-            </div>
-
-            {/* Links Rápidos */}
-            <div className="mt-8 pt-8 border-t border-[#333]/30 animate-in fade-in duration-700 delay-500">
-              <p className="text-sm text-gray-500 mb-3">Links úteis:</p>
-              <div className="flex flex-wrap justify-center gap-4 text-sm">
-                <Link
-                  href="/teams"
-                  className="text-gray-400 hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-200 hover:underline"
-                >
-                  Times
-                </Link>
-                <span className="text-gray-600">•</span>
-                <Link
-                  href="/playoffs"
-                  className="text-gray-400 hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-200 hover:underline"
-                >
-                  Playoffs
-                </Link>
-                <span className="text-gray-600">•</span>
-                <Link
-                  href="/"
-                  className="text-gray-400 hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-200 hover:underline"
-                >
-                  Início
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Mensagem de Ajuda */}
-        <p className="mt-8 text-sm text-gray-500 animate-in fade-in duration-700 delay-600 text-center">
-          Se você acredita que isso é um erro, por favor{' '}
-          <a
-            href="https://github.com/ialexanderbrito/kings-league-simulator/issues"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#F4AF23] hover:text-[#f59e0b] underline transition-colors duration-200"
-          >
-            reporte o problema
-          </a>
+        {/* Typography */}
+        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-2">
+          Página não encontrada
+        </h1>
+        <p className="text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto mb-6">
+          O link acessado não existe, foi alterado ou não está mais disponível.
         </p>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full">
+          <Button
+            asChild
+            className="w-full sm:w-auto h-11 px-5 rounded-xl bg-gradient-to-r from-[var(--team-primary,#F4AF23)] to-amber-500 hover:from-amber-400 hover:to-[var(--team-primary,#F4AF23)] text-zinc-950 font-bold shadow-lg shadow-amber-500/10 transition-transform duration-150 btn-press"
+          >
+            <Link href="/" className="flex items-center justify-center gap-2">
+              <Home className="w-4 h-4" aria-hidden="true" />
+              <span>Página Inicial</span>
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            variant="glass"
+            className="w-full sm:w-auto h-11 px-5 rounded-xl btn-press"
+          >
+            <Link href="/simulator" className="flex items-center justify-center gap-2">
+              <Trophy className="w-4 h-4" aria-hidden="true" />
+              <span>Simulador</span>
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Subtle Brand Footer */}
+      <div className="mt-8 flex items-center justify-center gap-2 opacity-40 hover:opacity-80 transition-opacity duration-200">
+        <KingsLeagueLogo width={24} height={31} aria-label="Kings League Brasil" />
+        <span className="text-[11px] font-semibold tracking-wider text-zinc-400 uppercase">Kings League Simulator</span>
       </div>
     </div>
   )

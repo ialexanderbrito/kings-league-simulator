@@ -54,11 +54,14 @@ export function SchemaMarkup({
             "@type": "Place",
             "name": location
           },
-          "competitor": standings.slice(0, 5).map(standing => ({
-            "@type": "SportsTeam",
-            "name": teams[standing.teamId]?.name || standing.teamId,
-            "image": teams[standing.teamId]?.logo || "/placeholder-logo.svg"
-          }))
+          "competitor": standings.slice(0, 5).map(standing => {
+            const tId = standing.id || (standing as any).teamId
+            return {
+              "@type": "SportsTeam",
+              "name": teams[tId]?.name || tId,
+              "image": teams[tId]?.logo || "/placeholder-logo.svg"
+            }
+          })
         }
       }
     }
