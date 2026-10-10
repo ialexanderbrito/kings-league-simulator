@@ -43,7 +43,7 @@ export const MatchCard: FC<MatchCardProps> = ({
 }) => {
   const homeTeam = teams[match.participants.homeTeamId];
   const awayTeam = teams[match.participants.awayTeamId];
-  const isMatchEnded = match.status === "ended";
+  const isMatchEnded = match.status === "ended" || match.status?.toLowerCase() === "ended" || match.status?.toLowerCase() === "finished";
   const isLiveMatch = match.status === "inPlay1H" || match.status === "inPlay2H" || match.status === "inPlayET" || match.status === "inPlayP";
 
   const homeScore = match.scores.homeScore;
@@ -192,14 +192,21 @@ export const MatchCard: FC<MatchCardProps> = ({
               value={currentScores?.home !== undefined ? currentScores.home : (homeScore !== null ? String(homeScore) : "")}
               onScoreChange={(value) => onScoreChange(round.id, match.id, "home", value)}
               teamName={homeTeam?.name || "Casa"}
+              disabled={isMatchEnded}
             />
             <span className="text-zinc-600 text-xs font-black select-none px-0.5">×</span>
             <MatchScoreInput
               value={currentScores?.away !== undefined ? currentScores.away : (awayScore !== null ? String(awayScore) : "")}
               onScoreChange={(value) => onScoreChange(round.id, match.id, "away", value)}
               teamName={awayTeam?.name || "Fora"}
+              disabled={isMatchEnded}
             />
           </div>
+          {isMatchEnded && match.scores.homeScoreP !== null && match.scores.awayScoreP !== null && (
+            <span className="mt-1 text-[8px] sm:text-[9px] font-mono font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 select-none">
+              SO: {match.scores.homeScoreP}-{match.scores.awayScoreP}
+            </span>
+          )}
         </div>
 
         {/* Time Visitante */}
@@ -246,8 +253,8 @@ export const MatchCard: FC<MatchCardProps> = ({
         </div>
       </div>
 
-      {/* Linha retrátil de Shootout caso placares empatem */}
-      {(isTied || showShootout) && (
+      {/* Linha retrátil de Shootout caso placares empatem (apenas partidas em simulação/não finalizadas) */}
+      {!isMatchEnded && (isTied || showShootout) && (
         <div className={cn(
           "mt-1.5 pt-1 border-t flex items-center justify-center animate-in fade-in zoom-in-95 duration-150",
           isChallenger ? "border-[#34d399]/25" : "border-zinc-800/60"
@@ -257,6 +264,7 @@ export const MatchCard: FC<MatchCardProps> = ({
             awayTeamShortName={awayTeam?.shortName || awayTeam?.name || "2"}
             selectedWinner={shootoutWinner as "home" | "away" | null}
             onWinnerSelect={(w) => onShootoutWinnerSelect(round.id, match.id, w)}
+            disabled={isMatchEnded}
           />
         </div>
       )}

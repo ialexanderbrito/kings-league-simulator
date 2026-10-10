@@ -17,6 +17,7 @@ interface MainContentProps {
   setActiveTab?: (tab: 'matches' | 'team') => void
   showPlayoffs?: boolean
   onTogglePlayoffs?: () => void
+  playoffs?: any[]
 }
 
 export function MainContent({
@@ -32,6 +33,7 @@ export function MainContent({
   setActiveTab,
   showPlayoffs,
   onTogglePlayoffs,
+  playoffs,
 }: MainContentProps) {
   const router = useRouter()
 
@@ -57,6 +59,7 @@ export function MainContent({
               onScoreUpdate={onScoreUpdate} 
               showPlayoffs={showPlayoffs}
               onTogglePlayoffs={onTogglePlayoffs}
+              playoffs={playoffs}
             />
           </div>
 

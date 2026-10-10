@@ -630,6 +630,7 @@ export default function SimulatorPage() {
           setActiveTab={setActiveTab}
           showPlayoffs={showPlayoffs}
           onTogglePlayoffs={handleTogglePlayoffs}
+          playoffs={leagueData?.playoffs}
         />
       </div>
       <Footer />

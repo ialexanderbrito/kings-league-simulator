@@ -24,15 +24,17 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
       maxLength={2}
       value={value}
       placeholder=""
+      readOnly={disabled}
       className={cn(
         "w-9 h-9 sm:w-10 sm:h-10 text-center rounded-xl font-mono text-base sm:text-lg font-black",
         "bg-[#08080c] border border-zinc-800 text-white shadow-inner",
-        "transition-[border-color,box-shadow,background-color] duration-150 cursor-text",
-        "focus:outline-none focus:border-[var(--team-primary,#F4AF23)] focus:ring-2 focus:ring-[var(--team-primary,#F4AF23)]/25 focus:bg-[#0c0c12]",
-        "hover:border-zinc-700 hover:bg-[#0b0b10]",
-        disabled && "cursor-not-allowed opacity-40 hover:border-zinc-800 hover:bg-[#08080c]"
+        "transition-[border-color,box-shadow,background-color] duration-150",
+        disabled
+          ? "cursor-not-allowed opacity-60 hover:border-zinc-800 hover:bg-[#08080c] select-none"
+          : "cursor-text focus:outline-none focus:border-[var(--team-primary,#F4AF23)] focus:ring-2 focus:ring-[var(--team-primary,#F4AF23)]/25 focus:bg-[#0c0c12] hover:border-zinc-700 hover:bg-[#0b0b10]"
       )}
       onFocus={(e) => {
+        if (disabled) return;
         setIsFocused(true);
         e.target.select();
       }}

@@ -26,6 +26,7 @@ interface MatchesTableProps {
   ) => void
   showPlayoffs?: boolean
   onTogglePlayoffs?: () => void
+  playoffs?: any[]
 }
 
 export default function MatchesTable({
@@ -35,6 +36,7 @@ export default function MatchesTable({
   onScoreUpdate,
   showPlayoffs: externalShowPlayoffs,
   onTogglePlayoffs: externalTogglePlayoffs,
+  playoffs,
 }: MatchesTableProps) {
   const [internalShowPlayoffs, setInternalShowPlayoffs] = useState(false)
   const showPlayoffs = externalShowPlayoffs !== undefined ? externalShowPlayoffs : internalShowPlayoffs
@@ -49,13 +51,20 @@ export default function MatchesTable({
   const [scores, setScores] = useState<Record<string, { home: string; away: string; shootoutWinner: string | null }>>({})
   const [showShootout, setShowShootout] = useState<Record<string, boolean>>({})
   const [isClient, setIsClient] = useState(false)
+  const [customBracket, setCustomBracket] = useState<any>(null)
 
-  // Build playoff bracket reliably using standings first
+  useEffect(() => {
+    setCustomBracket(null)
+  }, [rounds, playoffs])
+
+  // Build playoff bracket reliably using standings first and official playoffs
   const playoffBracket = useMemo(() => {
+    if (customBracket) return customBracket
+
     let bracket: any = null
     try {
       if (standings && standings.length >= 7 && teams && Object.keys(teams).length >= 7) {
-        bracket = generatePlayoffBracket(standings, teams, rounds)
+        bracket = generatePlayoffBracket(standings, teams, rounds, playoffs)
       } else if (rounds.length > 0 && teams && Object.keys(teams).length >= 7) {
         const standingsObj = calculateStandings(rounds, teams, [])
         let standingsArray = Object.values(standingsObj).flat()
@@ -66,7 +75,7 @@ export default function MatchesTable({
           return true
         })
         if (standingsArray.length >= 7) {
-          bracket = generatePlayoffBracket(standingsArray, teams, rounds)
+          bracket = generatePlayoffBracket(standingsArray, teams, rounds, playoffs)
         }
       }
     } catch (e) {
@@ -80,13 +89,13 @@ export default function MatchesTable({
 
         const simStandings = getSimulatedStandings()
         if (simStandings && Array.isArray(simStandings) && simStandings.length >= 7) {
-          bracket = generatePlayoffBracket(simStandings, teams, rounds)
+          bracket = generatePlayoffBracket(simStandings, teams, rounds, playoffs)
         }
       } catch {}
     }
 
     return bracket
-  }, [standings, rounds, teams])
+  }, [standings, rounds, teams, playoffs, customBracket])
 
   // Mapeamento confiável de times para seus respectivos grupos (apenas quando houver grupos A e B)
   const teamGroupMap = useMemo(() => {
@@ -199,6 +208,11 @@ export default function MatchesTable({
     team: "home" | "away",
     value: string
   ) => {
+    const targetRound = rounds.find((r) => r.id === roundId)
+    const targetMatch = targetRound?.matches.find((m) => m.id === matchId)
+    const isEnded = targetMatch?.status?.toLowerCase() === "ended" || targetMatch?.status?.toLowerCase() === "finished"
+    if (isEnded) return
+
     const matchKey = `${roundId}-${matchId}`
     const currentMatch = scores[matchKey] ?? { home: "", away: "", shootoutWinner: null }
     const newHome = team === "home" ? value : currentMatch.home
@@ -230,6 +244,11 @@ export default function MatchesTable({
   }
 
   const handleShootoutWinner = (roundId: number, matchId: number, winner: "home" | "away" | null) => {
+    const targetRound = rounds.find((r) => r.id === roundId)
+    const targetMatch = targetRound?.matches.find((m) => m.id === matchId)
+    const isEnded = targetMatch?.status?.toLowerCase() === "ended" || targetMatch?.status?.toLowerCase() === "finished"
+    if (isEnded) return
+
     const matchKey = `${roundId}-${matchId}`
     setScores((prev) => ({ ...(prev ?? {}), [matchKey]: { ...(prev[matchKey] ?? { home: "", away: "", shootoutWinner: null }), shootoutWinner: winner } }))
 
@@ -295,7 +314,12 @@ export default function MatchesTable({
               bracket={playoffBracket}
               teams={teams}
               hasTwoGroups={Boolean(standings?.some((s) => s.groupName === 'A') && standings?.some((s) => s.groupName === 'B'))}
-              onBracketUpdate={() => { }}
+              onBracketUpdate={(updated) => {
+                setCustomBracket(updated)
+                try {
+                  saveSimulatedPlayoffs(updated)
+                } catch {}
+              }}
             />
           ) : (
             <div className="py-12 text-center rounded-2xl border border-zinc-800 bg-[#09090d]/80 p-6">

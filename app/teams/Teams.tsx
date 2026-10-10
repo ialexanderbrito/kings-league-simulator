@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { TeamsGridSkeleton } from "@/components/skeletons/teams-grid-skeleton"
 import { ButtonTop } from "@/components/ui/button-top"
-import { fetchLeagueData, fetchTeamDetails } from "@/lib/fetch-league-data"
+import { fetchLeagueData } from "@/lib/fetch-league-data"
 import type { Team, TeamDetails, TeamStanding } from "@/types/kings-league"
 import { cn, getProxyImageUrl } from "@/lib/utils"
 import { Users, Crown, ChevronRight, ArrowUpRight, Trophy } from "lucide-react"
@@ -28,20 +28,22 @@ export default function Teams() {
           setStandings(leagueData.standings || [])
           setLoading(false)
 
-          // Atualiza detalhes em segundo plano aproveitando o cache
-          Promise.all(
-            leagueData.teams.map(async (team) => {
+          // Lê detalhes apenas do cache local existente para economizar requisições de rede e cotas da Vercel
+          if (typeof window !== "undefined") {
+            const cachedDetails: Record<string, TeamDetails> = {}
+            leagueData.teams.forEach((t) => {
               try {
-                const teamDetail = await fetchTeamDetails(team.id)
-                setTeamDetails(prev => ({
-                  ...prev,
-                  [team.id]: teamDetail
-                }))
-              } catch (error) {
-                // Silencioso: falhas individuais não devem quebrar a página
-              }
+                const stored = sessionStorage.getItem(`kl_team_details_v2_${t.id}`)
+                if (stored) {
+                  const parsed = JSON.parse(stored)
+                  if (parsed?.data) cachedDetails[t.id] = parsed.data
+                }
+              } catch {}
             })
-          ).catch(() => {})
+            if (Object.keys(cachedDetails).length > 0) {
+              setTeamDetails(cachedDetails)
+            }
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar dados da liga:", error)
