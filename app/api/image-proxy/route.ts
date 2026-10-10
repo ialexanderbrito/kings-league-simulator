@@ -49,7 +49,9 @@ export async function GET(request: NextRequest) {
         status: 304,
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400, immutable",
+          "Cache-Control": "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400, immutable",
+          "CDN-Cache-Control": "public, s-maxage=2592000, stale-while-revalidate=86400",
+          "Vercel-CDN-Cache-Control": "public, s-maxage=2592000, stale-while-revalidate=86400",
         },
       })
     }
@@ -63,7 +65,9 @@ export async function GET(request: NextRequest) {
 
     const headers: Record<string, string> = {
       "Content-Type": contentType,
-      "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400, immutable",
+      "Cache-Control": "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400, immutable",
+      "CDN-Cache-Control": "public, s-maxage=2592000, stale-while-revalidate=86400",
+      "Vercel-CDN-Cache-Control": "public, s-maxage=2592000, stale-while-revalidate=86400",
       "Access-Control-Allow-Origin": "*",
     }
 

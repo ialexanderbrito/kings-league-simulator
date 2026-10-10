@@ -13,10 +13,17 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    root: process.cwd(),
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
+  compress: true,
+  poweredByHeader: false,
   images: {
+    // Evita o limite severo de 1.000 otimizações de imagem/mês do plano Hobby da Vercel
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

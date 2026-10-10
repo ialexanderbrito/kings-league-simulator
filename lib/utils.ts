@@ -12,11 +12,20 @@ export function getPlayerOverall(player: Player): number {
 }
 
 /**
- * Gera a URL do proxy de imagem para evitar problemas de CORS
+ * Retorna a URL da imagem diretamente da CDN oficial (kama.football / Cloudinary).
+ * Otimizado para Vercel Free Tier: evita invocações de Serverless Function e
+ * economiza 100% de transferência de dados/banda na Vercel.
  */
 export function getProxyImageUrl(originalUrl: string | undefined | null): string {
   if (!originalUrl) return "/placeholder.svg"
-  // Se já é uma URL relativa, do placeholder ou data URI, retorna direto
+  return originalUrl
+}
+
+/**
+ * Retorna a URL via proxy interno apenas quando estritamente necessário (ex: manipulação em canvas)
+ */
+export function getInternalProxyImageUrl(originalUrl: string | undefined | null): string {
+  if (!originalUrl) return "/placeholder.svg"
   if (originalUrl.startsWith("/") || originalUrl.startsWith("data:")) return originalUrl
   return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`
 }

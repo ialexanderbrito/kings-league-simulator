@@ -135,11 +135,25 @@ export async function fetchLeagueData(options: { forceRefresh?: boolean } = {}):
 
 
 export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
-  const cachedData = teamDetailsCache[teamId]
   const now = Date.now()
+  const cachedData = teamDetailsCache[teamId]
   
   if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
     return cachedData.data
+  }
+
+  // Recupera do sessionStorage para persistir entre recarregamentos e navegação
+  if (typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem(`kl_team_details_v2_${teamId}`)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed?.data && (now - parsed.timestamp) < CACHE_EXPIRY_TIME) {
+          teamDetailsCache[teamId] = parsed
+          return parsed.data
+        }
+      }
+    } catch {}
   }
 
   // Deduplicação de requisição em andamento para o mesmo time
@@ -207,9 +221,16 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
       }
       
       // Armazenar no cache com timestamp atual
-      teamDetailsCache[teamId] = {
+      const teamCacheEntry = {
         data: sanitizedTeamDetails,
         timestamp: Date.now()
+      }
+      teamDetailsCache[teamId] = teamCacheEntry
+
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(`kl_team_details_v2_${teamId}`, JSON.stringify(teamCacheEntry))
+        } catch {}
       }
       
       return sanitizedTeamDetails
@@ -223,11 +244,25 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
 }
 
 export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
-  const cachedData = playerStatsCache[playerId]
   const now = Date.now()
+  const cachedData = playerStatsCache[playerId]
   
   if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
     return cachedData.data
+  }
+
+  // Recupera do sessionStorage para persistir entre recarregamentos e navegação
+  if (typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem(`kl_player_stats_v2_${playerId}`)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed?.data && (now - parsed.timestamp) < CACHE_EXPIRY_TIME) {
+          playerStatsCache[playerId] = parsed
+          return parsed.data
+        }
+      }
+    } catch {}
   }
 
   // Deduplicação de requisições em voo para o mesmo jogador
@@ -293,9 +328,16 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
     }
     
     // Armazenar no cache com timestamp atual
-    playerStatsCache[playerId] = {
+    const playerCacheEntry = {
       data: processedStats,
       timestamp: Date.now()
+    }
+    playerStatsCache[playerId] = playerCacheEntry
+
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(`kl_player_stats_v2_${playerId}`, JSON.stringify(playerCacheEntry))
+      } catch {}
     }
     
     return processedStats

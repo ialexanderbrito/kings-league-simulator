@@ -37,11 +37,13 @@ export function createSuccessResponse<T>(data: T, options: ResponseOptions = {})
     "Content-Type": "application/json; charset=utf-8",
   }
 
-  // Adiciona headers de cache se especificado
+  // Adiciona headers de cache se especificado (otimizado para Edge Cache da Vercel)
   if (cache) {
     const cacheConfig = (typeof cache === "string" ? CACHE_DURATIONS[cache] : cache) as CacheCustomConfig
     const swrPart = cacheConfig.swr ? `, stale-while-revalidate=${cacheConfig.swr}` : ""
     headers["Cache-Control"] = `public, max-age=${cacheConfig.maxAge}, s-maxage=${cacheConfig.sMaxAge}${swrPart}`
+    headers["CDN-Cache-Control"] = `public, s-maxage=${cacheConfig.sMaxAge}${swrPart}`
+    headers["Vercel-CDN-Cache-Control"] = `public, s-maxage=${cacheConfig.sMaxAge}${swrPart}`
   }
 
   const bodyString = typeof data === "string" ? data : JSON.stringify(data)
