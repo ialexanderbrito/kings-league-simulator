@@ -13,11 +13,22 @@ export function calculateStandings(
   teams: Record<string, Team>,
   initialStandings: TeamStanding[],
 ): Record<string, TeamStanding[]> {
-  // Primeiro: agrupar partidas por grupo (mantemos para saber os grupos existentes)
+  // Verifica se a liga possui formato de dois grupos (Kings Cup) ou tabela única (Split Regular)
+  const hasStandingGroups = Boolean(
+    initialStandings?.some((s) => s.groupName === "A") &&
+    initialStandings?.some((s) => s.groupName === "B")
+  );
+  const hasRoundGroups = Boolean(
+    rounds?.some((r) => r.matches?.some((m) => m.groupName === "A")) &&
+    rounds?.some((r) => r.matches?.some((m) => m.groupName === "B"))
+  );
+  const hasTwoGroups = hasStandingGroups || hasRoundGroups;
+
+  // Agrupar partidas por grupo (se for tabela única, todas vão para o grupo Regular)
   const groupMatches: Record<string, Round[]> = {}
   rounds.forEach((round) => {
     round.matches.forEach((match) => {
-      const group = match.groupName || "Sem Grupo"
+      const group = hasTwoGroups ? (match.groupName || "A") : "Regular"
       if (!groupMatches[group]) groupMatches[group] = []
       let lastRound = groupMatches[group][groupMatches[group].length - 1]
       if (!lastRound || lastRound.id !== round.id) {
@@ -192,7 +203,7 @@ export function calculateStandings(
     }))
     // também adicionar times que o initialStandings declara pertencer ao grupo
     initialStandings.forEach((s) => {
-      const g = (s as any).groupName || (s as any).group || ''
+      const g = hasTwoGroups ? ((s as any).groupName || (s as any).group || '') : "Regular"
       if (String(g) === group) teamIds.add(s.id)
     })
 
@@ -200,7 +211,10 @@ export function calculateStandings(
     teamIds.forEach((id) => {
       if (globalStats[id]) {
         // usar uma cópia para evitar mutações inesperadas
-        list.push({ ...globalStats[id] })
+        list.push({ 
+          ...globalStats[id],
+          groupName: hasTwoGroups ? (globalStats[id].groupName || group) : "Regular"
+        })
       } else {
         // garantir que o time exista mesmo que não tenha jogado
         const standing = initialStandings.find(s => s.id === id)
@@ -222,7 +236,7 @@ export function calculateStandings(
           goalDifference: 0,
           rank: 0,
           positionLegend: (base as any).positionLegend ?? null,
-          groupName: (base as any).groupName || (base as any).group || group,
+          groupName: hasTwoGroups ? ((base as any).groupName || (base as any).group || group) : "Regular",
         })
       }
     })

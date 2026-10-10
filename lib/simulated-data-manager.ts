@@ -5,20 +5,45 @@ const SIMULATED_STANDINGS_KEY = '@kl-simulador:standings';
 const SIMULATED_ROUNDS_KEY = '@kl-simulador:rounds';
 const SIMULATED_TEAMS_KEY = '@kl-simulador:teams';
 const SIMULATED_PLAYOFFS_KEY = '@kl-simulador:playoffs';
+const SIMULATED_SEASON_KEY = '@kl-simulador:season_id';
+
+/**
+ * Salva o ID da temporada simulada
+ */
+export function saveSimulatedSeasonId(seasonId: number | string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SIMULATED_SEASON_KEY, String(seasonId));
+}
+
+/**
+ * Obtém o ID da temporada simulada
+ */
+export function getSimulatedSeasonId(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(SIMULATED_SEASON_KEY);
+}
 
 /**
  * Salva a classificação simulada no localStorage
  */
-export function saveSimulatedStandings(standings: TeamStanding[]): void {
+export function saveSimulatedStandings(standings: TeamStanding[], seasonId?: number | string): void {
   if (typeof window === 'undefined') return;
+  if (seasonId) localStorage.setItem(SIMULATED_SEASON_KEY, String(seasonId));
   localStorage.setItem(SIMULATED_STANDINGS_KEY, JSON.stringify(standings));
 }
 
 /**
  * Obtém a classificação simulada do localStorage
  */
-export function getSimulatedStandings(): TeamStanding[] | null {
+export function getSimulatedStandings(expectedSeasonId?: number | string): TeamStanding[] | null {
   if (typeof window === 'undefined') return null;
+  if (expectedSeasonId) {
+    const savedSeason = localStorage.getItem(SIMULATED_SEASON_KEY);
+    if (savedSeason && String(savedSeason) !== String(expectedSeasonId)) {
+      clearSimulatedData();
+      return null;
+    }
+  }
   const data = localStorage.getItem(SIMULATED_STANDINGS_KEY);
   if (!data) return null;
   
@@ -33,16 +58,24 @@ export function getSimulatedStandings(): TeamStanding[] | null {
 /**
  * Salva as rodadas simuladas no localStorage
  */
-export function saveSimulatedRounds(rounds: Round[]): void {
+export function saveSimulatedRounds(rounds: Round[], seasonId?: number | string): void {
   if (typeof window === 'undefined') return;
+  if (seasonId) localStorage.setItem(SIMULATED_SEASON_KEY, String(seasonId));
   localStorage.setItem(SIMULATED_ROUNDS_KEY, JSON.stringify(rounds));
 }
 
 /**
  * Obtém as rodadas simuladas do localStorage
  */
-export function getSimulatedRounds(): Round[] | null {
+export function getSimulatedRounds(expectedSeasonId?: number | string): Round[] | null {
   if (typeof window === 'undefined') return null;
+  if (expectedSeasonId) {
+    const savedSeason = localStorage.getItem(SIMULATED_SEASON_KEY);
+    if (savedSeason && String(savedSeason) !== String(expectedSeasonId)) {
+      clearSimulatedData();
+      return null;
+    }
+  }
   const data = localStorage.getItem(SIMULATED_ROUNDS_KEY);
   if (!data) return null;
   
@@ -57,16 +90,24 @@ export function getSimulatedRounds(): Round[] | null {
 /**
  * Salva os times no localStorage
  */
-export function saveSimulatedTeams(teams: Record<string, Team>): void {
+export function saveSimulatedTeams(teams: Record<string, Team>, seasonId?: number | string): void {
   if (typeof window === 'undefined') return;
+  if (seasonId) localStorage.setItem(SIMULATED_SEASON_KEY, String(seasonId));
   localStorage.setItem(SIMULATED_TEAMS_KEY, JSON.stringify(teams));
 }
 
 /**
  * Obtém os times do localStorage
  */
-export function getSimulatedTeams(): Record<string, Team> | null {
+export function getSimulatedTeams(expectedSeasonId?: number | string): Record<string, Team> | null {
   if (typeof window === 'undefined') return null;
+  if (expectedSeasonId) {
+    const savedSeason = localStorage.getItem(SIMULATED_SEASON_KEY);
+    if (savedSeason && String(savedSeason) !== String(expectedSeasonId)) {
+      clearSimulatedData();
+      return null;
+    }
+  }
   const data = localStorage.getItem(SIMULATED_TEAMS_KEY);
   if (!data) return null;
   
@@ -86,6 +127,8 @@ export function clearSimulatedData(): void {
   localStorage.removeItem(SIMULATED_STANDINGS_KEY);
   localStorage.removeItem(SIMULATED_ROUNDS_KEY);
   localStorage.removeItem(SIMULATED_TEAMS_KEY);
+  localStorage.removeItem(SIMULATED_PLAYOFFS_KEY);
+  localStorage.removeItem(SIMULATED_SEASON_KEY);
 }
 
 /**
