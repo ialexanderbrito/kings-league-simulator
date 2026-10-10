@@ -1,9 +1,7 @@
-import { MatchesTableSkeleton } from "@/components/skeletons/matches-table-skeleton"
+"use client"
+
+import { LoadingState } from "@/components/ui/loading-state"
 
 export default function Loading() {
-  return (
-    <div className="min-h-screen bg-[#030303] flex items-center justify-center">
-      <MatchesTableSkeleton />
-    </div>
-  )
+  return <LoadingState />
 }

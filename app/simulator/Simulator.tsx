@@ -3,11 +3,17 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
-import TeamCarousel from "@/components/team-carousel"
 import { EmptyLeagueState } from "@/components/empty-league-state"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
 import { calculateStandings } from "@/lib/calculate-standings"
-import { saveSimulatedStandings, saveSimulatedRounds, saveSimulatedTeams } from "@/lib/simulated-data-manager"
+import { 
+  saveSimulatedStandings, 
+  saveSimulatedRounds, 
+  saveSimulatedTeams, 
+  clearSimulatedData,
+  getSimulatedRounds,
+  getSimulatedStandings
+} from "@/lib/simulated-data-manager"
 import type { Round, Team, TeamStanding, LeagueData } from "@/types/kings-league"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
@@ -15,7 +21,11 @@ import { MainContent } from "@/components/layout/main-content"
 import { LoadingState } from "@/components/ui/loading-state"
 import { ErrorState } from "@/components/ui/error-state"
 import { SchemaMarkup } from "@/components/schema-markup"
+import { SimulatorControls } from "@/components/simulator-controls"
+import KingsLeagueLogo from "@/components/kings-league-logo"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 export default function SimulatorPage() {
   const [leagueData, setLeagueData] = useState<LeagueData | null>(null)
@@ -29,6 +39,7 @@ export default function SimulatorPage() {
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const [usingFallback, setUsingFallback] = useState(false)
   const [activeTab, setActiveTab] = useState<"matches" | "team">("matches")
+  const [showPlayoffs, setShowPlayoffs] = useState(false)
   const router = useRouter()
 
   const loadData = async () => {
@@ -52,15 +63,41 @@ export default function SimulatorPage() {
       })
       setTeams(teamsDict)
 
-      setRounds(data.rounds)
-      // Garante que standings seja sempre um array de TeamStanding
-      let parsedStandings: any[] = []
-      if (Array.isArray(data.standings)) {
-        parsedStandings = data.standings
-      } else if (data.standings && typeof data.standings === 'object') {
-        parsedStandings = Object.values(data.standings).flat()
+      // Restaura dados simulados previamente pelo usuário se existirem (valida seasonId)
+      const savedRounds = getSimulatedRounds(data.id)
+      const savedStandings = getSimulatedStandings(data.id)
+
+      if (savedRounds && savedRounds.length > 0) {
+        // Enriquecer savedRounds garantindo groupName oficial nas partidas
+        const enrichedRounds = savedRounds.map((sr) => {
+          const officialRound = data.rounds.find((r) => r.id === sr.id);
+          return {
+            ...sr,
+            matches: sr.matches.map((sm) => {
+              const officialMatch = officialRound?.matches.find((m) => m.id === sm.id);
+              return {
+                ...sm,
+                groupName: sm.groupName || officialMatch?.groupName,
+              };
+            }),
+          };
+        });
+        setRounds(enrichedRounds);
+      } else {
+        setRounds(data.rounds);
       }
-      setStandings(parsedStandings as any[])
+
+      if (savedStandings && savedStandings.length > 0) {
+        setStandings(savedStandings)
+      } else {
+        let parsedStandings: any[] = []
+        if (Array.isArray(data.standings)) {
+          parsedStandings = data.standings
+        } else if (data.standings && typeof data.standings === 'object') {
+          parsedStandings = Object.values(data.standings).flat()
+        }
+        setStandings(parsedStandings as any[])
+      }
 
       setLoading(false)
     } catch (err: any) {
@@ -69,7 +106,6 @@ export default function SimulatorPage() {
       setDebugInfo("Informações técnicas: " + (err.stack ? err.stack.split("\n")[0] : "Erro desconhecido"))
     }
   }
-
 
   useEffect(() => {
     loadData()
@@ -258,27 +294,32 @@ export default function SimulatorPage() {
       if (round.id === roundId) {
         const updatedMatches = round.matches.map((match) => {
           if (match.id === matchId) {
-            if (match.status === "ended") {
-              return match
-            }
-
             const updatedScores = { ...match.scores }
 
-            if (homeScore !== null && homeScore !== undefined) {
+            if (homeScore !== undefined) {
               updatedScores.homeScore = hScore
             }
 
-            if (awayScore !== null && awayScore !== undefined) {
+            if (awayScore !== undefined) {
               updatedScores.awayScore = aScore
             }
 
-            // Atualiza o placar de Shootout se for definido
-            if (homeShootoutScore !== undefined) {
-              updatedScores.homeScoreP = homeShootoutScore
-            }
-
-            if (awayShootoutScore !== undefined) {
-              updatedScores.awayScoreP = awayShootoutScore
+            // Se o placar não for mais empate, limpa shootouts
+            if (
+              updatedScores.homeScore !== null &&
+              updatedScores.awayScore !== null &&
+              updatedScores.homeScore !== updatedScores.awayScore
+            ) {
+              updatedScores.homeScoreP = null
+              updatedScores.awayScoreP = null
+            } else {
+              // Atualiza o placar de Shootout se for definido
+              if (homeShootoutScore !== undefined) {
+                updatedScores.homeScoreP = homeShootoutScore
+              }
+              if (awayShootoutScore !== undefined) {
+                updatedScores.awayScoreP = awayShootoutScore
+              }
             }
 
             return {
@@ -301,7 +342,6 @@ export default function SimulatorPage() {
 
     const updatedStandingsObj = calculateStandings(updatedRounds, teams, leagueData?.standings || [])
     let updatedStandings = Object.values(updatedStandingsObj).flat()
-    // Deduplicar por id (mantendo a primeira ocorrência, que já foi ordenada por pontos)
     const seenIds = new Set<string>()
     updatedStandings = updatedStandings.filter((s) => {
       if (seenIds.has(s.id)) return false
@@ -311,15 +351,140 @@ export default function SimulatorPage() {
     setStandings(updatedStandings)
 
     // Salvar dados simulados no localStorage para uso nos playoffs
-    saveSimulatedStandings(updatedStandings)
-    saveSimulatedRounds(updatedRounds)
+    saveSimulatedStandings(updatedStandings, leagueData?.id)
+    saveSimulatedRounds(updatedRounds, leagueData?.id)
     saveSimulatedTeams(teams)
+  }
+
+  // Verifica se há alguma alteração de placar em relação aos dados oficiais da API
+  const hasModifications = useMemo(() => {
+    if (!leagueData || !rounds.length) return false
+    return rounds.some((round) => {
+      const origRound = leagueData.rounds.find((r) => r.id === round.id)
+      if (!origRound) return false
+      return round.matches.some((match) => {
+        const origMatch = origRound.matches.find((m) => m.id === match.id)
+        if (!origMatch) return false
+        return (
+          match.scores.homeScore !== origMatch.scores.homeScore ||
+          match.scores.awayScore !== origMatch.scores.awayScore ||
+          match.scores.homeScoreP !== origMatch.scores.homeScoreP ||
+          match.scores.awayScoreP !== origMatch.scores.awayScoreP
+        )
+      })
+    })
+  }, [rounds, leagueData])
+
+  const handleResetSimulation = () => {
+    clearSimulatedData()
+    if (leagueData) {
+      setRounds(leagueData.rounds)
+      let parsedStandings: any[] = []
+      if (Array.isArray(leagueData.standings)) {
+        parsedStandings = leagueData.standings
+      } else if (leagueData.standings && typeof leagueData.standings === 'object') {
+        parsedStandings = Object.values(leagueData.standings).flat()
+      }
+      setStandings(parsedStandings as any[])
+      setPreviousStandings([])
+    }
+    toast.success("Resultados oficiais restaurados!")
+  }
+
+  const handleSimulateRemaining = () => {
+    if (!rounds.length || !leagueData) return
+
+    setPreviousStandings(standings)
+
+    const hasUnplayed = rounds.some((r) =>
+      r.matches.some((m) => m.status !== "ended" || m.scores.homeScore === null)
+    )
+
+    const updatedRounds = rounds.map((round) => ({
+      ...round,
+      matches: round.matches.map((match) => {
+        // Se houver partidas não finalizadas oficialmente, simula apenas elas.
+        // Se todas já estiverem finalizadas, permite simular para testes/previsões!
+        if (hasUnplayed && match.status === "ended") return match
+
+        const homeScore = Math.floor(Math.random() * 5) + 1
+        const awayScore = Math.floor(Math.random() * 5) + 1
+        let homeScoreP: number | null = null
+        let awayScoreP: number | null = null
+
+        // Na Kings League não há empate: quem empata vai para Shootout
+        if (homeScore === awayScore) {
+          const homeWins = Math.random() > 0.5
+          homeScoreP = homeWins ? 3 : 2
+          awayScoreP = homeWins ? 2 : 3
+        }
+
+        return {
+          ...match,
+          scores: {
+            ...match.scores,
+            homeScore,
+            awayScore,
+            homeScoreP,
+            awayScoreP,
+          },
+        }
+      }),
+    }))
+
+    setRounds(updatedRounds)
+
+    const updatedStandingsObj = calculateStandings(updatedRounds, teams, leagueData.standings || [])
+    let updatedStandings = Object.values(updatedStandingsObj).flat()
+    const seenIds = new Set<string>()
+    updatedStandings = updatedStandings.filter((s) => {
+      if (seenIds.has(s.id)) return false
+      seenIds.add(s.id)
+      return true
+    })
+    setStandings(updatedStandings)
+
+    saveSimulatedStandings(updatedStandings, leagueData.id)
+    saveSimulatedRounds(updatedRounds, leagueData.id)
+    saveSimulatedTeams(teams)
+    toast.success("Placares previstos com sucesso!")
+  }
+
+  const handleShare = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href)
+      toast.success("Link copiado para a área de transferência!")
+    }
   }
 
   const handleTeamSelect = (teamId: string) => {
     setSelectedTeam(teamId)
   }
+
   const groupedStandings = useMemo(() => {
+    const hasTwoGroups = Boolean(
+      standings.some((s: any) => s.groupName === 'A') &&
+      standings.some((s: any) => s.groupName === 'B')
+    )
+
+    if (!hasTwoGroups) {
+      // Tabela única regular (Split sem grupos)
+      const sorted = [...standings].sort((a: any, b: any) => {
+        const rankA = Number(a.rank ?? 0)
+        const rankB = Number(b.rank ?? 0)
+        if (rankA > 0 && rankB > 0 && rankA !== rankB) return rankA - rankB
+
+        if ((b.points ?? 0) !== (a.points ?? 0)) return (b.points ?? 0) - (a.points ?? 0)
+        if ((b.won ?? 0) !== (a.won ?? 0)) return (b.won ?? 0) - (a.won ?? 0)
+        const gdA = a.goalDifference ?? ((a.goalsFor ?? 0) - (a.goalsAgainst ?? 0))
+        const gdB = b.goalDifference ?? ((b.goalsFor ?? 0) - (b.goalsAgainst ?? 0))
+        if (gdB !== gdA) return gdB - gdA
+        if ((b.goalsFor ?? 0) !== (a.goalsFor ?? 0)) return (b.goalsFor ?? 0) - (a.goalsFor ?? 0)
+        return String(a.name ?? "").localeCompare(String(b.name ?? ""))
+      })
+      return [{ groupName: "Regular", standings: sorted }]
+    }
+
     const groups: Record<string, any[]> = {}
     standings.forEach((s: any) => {
       const g = s.groupName || s.group || "A"
@@ -335,7 +500,7 @@ export default function SimulatorPage() {
     orderedKeys.push(...middle)
     if (keys.includes('B')) orderedKeys.push('B')
 
-    // Preserva a ordenação oficial/calculada por rank (inclui critérios de desempate)
+    // Preserva a ordenação oficial/calculada por rank
     orderedKeys.forEach((k) => {
       const arr = groups[k] || []
       arr.sort((a: any, b: any) => {
@@ -357,6 +522,20 @@ export default function SimulatorPage() {
     return orderedKeys.map((groupName) => ({ groupName, standings: groups[groupName] }))
   }, [standings])
 
+  const handleTogglePlayoffs = () => {
+    setShowPlayoffs((prev) => {
+      const next = !prev;
+      if (next && typeof window !== "undefined") {
+        setTimeout(() => {
+          const el = document.getElementById("matches-section");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 60);
+      }
+      return next;
+    });
+  };
 
   if (loading) {
     return <LoadingState />
@@ -367,14 +546,14 @@ export default function SimulatorPage() {
 
   if (isEmptyLeagueData) {
     return (
-      <main className="bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] min-h-screen text-white">
+      <main className="min-h-screen bg-[#040405] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black">
         <Header
           loading={loading}
           selectedTeam={selectedTeam}
           onTeamSelect={handleTeamSelect}
           setActiveTab={setActiveTab}
         />
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 py-8 max-w-7xl flex-1 flex flex-col">
           <EmptyLeagueState />
         </div>
         <Footer />
@@ -387,7 +566,7 @@ export default function SimulatorPage() {
   }
 
   return (
-    <main className="bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#121212] min-h-screen text-white">
+    <main className="min-h-screen bg-[#040405] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black">
       <Header
         loading={loading}
         selectedTeam={selectedTeam}
@@ -395,13 +574,35 @@ export default function SimulatorPage() {
         setActiveTab={setActiveTab}
       />
 
-      <div className="container mx-auto px-4">
-        <div className="pt-4 pb-2">
-          <TeamCarousel
-            teams={leagueData?.teams || []}
-            onTeamSelect={handleTeamSelect}
-            className="mb-6"
-            loading={loading}
+      <div className="container mx-auto px-2.5 sm:px-4 py-2.5 sm:py-3.5 max-w-7xl flex-1 flex flex-col">
+        {/* Header Compacto de Transmissão / Streamer */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 sm:gap-4 mb-2.5 sm:mb-3.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-center flex-shrink-0">
+              <KingsLeagueLogo width={18} height={22} className="drop-shadow-[0_0_8px_rgba(244,175,35,0.4)]" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base sm:text-lg md:text-xl font-black text-white tracking-tight leading-none truncate">
+                  Simulador <span className="text-[var(--team-primary,#F4AF23)]">Kings League Brasil</span>
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-zinc-900/60 border border-zinc-800 text-zinc-400 select-none">
+                  <span className={cn("w-1.5 h-1.5 rounded-full", hasModifications ? "bg-amber-400 animate-pulse shadow-[0_0_6px_rgba(251,191,36,0.8)]" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]")} />
+                  {hasModifications ? "Simulação Ativa" : "Oficial"}
+                </span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 hidden xs:block truncate">
+                5 jogos por rodada • Classificação recalculada em tempo real
+              </p>
+            </div>
+          </div>
+
+          <SimulatorControls
+            onReset={handleResetSimulation}
+            showPlayoffs={showPlayoffs}
+            onTogglePlayoffs={handleTogglePlayoffs}
+            onShare={handleShare}
+            hasModifications={hasModifications}
           />
         </div>
 
@@ -419,6 +620,7 @@ export default function SimulatorPage() {
         <MainContent
           rounds={rounds}
           teams={teams}
+          standings={standings}
           groupedStandings={groupedStandings}
           previousStandings={previousStandings}
           selectedTeam={selectedTeam}
@@ -426,6 +628,8 @@ export default function SimulatorPage() {
           onScoreUpdate={handleScoreUpdate}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          showPlayoffs={showPlayoffs}
+          onTogglePlayoffs={handleTogglePlayoffs}
         />
       </div>
       <Footer />
@@ -441,3 +645,4 @@ export default function SimulatorPage() {
     </main>
   )
 }
+
