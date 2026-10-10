@@ -1,22 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Calendar, ChevronRight } from "lucide-react"
-import type { Round, Team } from "@/types/kings-league"
+import { useEffect, useState, useMemo } from "react"
+import { Calendar, ChevronRight, Swords } from "lucide-react"
+import type { Round, Team, TeamStanding } from "@/types/kings-league"
 import { RoundSelector } from "@/components/matches/round-selector"
 import { DateGroup } from "@/components/matches/date-group"
 import { DateFormatter } from "@/lib/date-formatter"
-import { useTeamTheme } from "@/contexts/team-theme-context"
 import { cn } from "@/lib/utils"
 import { PlayoffBracketView } from "@/components/playoffs/playoff-bracket-view"
 import { generatePlayoffBracket } from "@/lib/generate-playoff-bracket"
 import { calculateStandings } from "@/lib/calculate-standings"
 import { getSimulatedPlayoffs, getSimulatedStandings } from "@/lib/simulated-data-manager"
-import { useMemo } from "react"
 
 interface MatchesTableProps {
   rounds: Round[]
   teams: Record<string, Team>
+  standings?: TeamStanding[]
   onScoreUpdate: (
     roundId: number,
     matchId: number,
@@ -25,57 +24,99 @@ interface MatchesTableProps {
     homeShootoutScore?: number,
     awayShootoutScore?: number
   ) => void
+  showPlayoffs?: boolean
+  onTogglePlayoffs?: () => void
 }
 
-export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTableProps) {
-  const [showPlayoffs, setShowPlayoffs] = useState(false)
+export default function MatchesTable({
+  rounds,
+  teams,
+  standings,
+  onScoreUpdate,
+  showPlayoffs: externalShowPlayoffs,
+  onTogglePlayoffs: externalTogglePlayoffs,
+}: MatchesTableProps) {
+  const [internalShowPlayoffs, setInternalShowPlayoffs] = useState(false)
+  const showPlayoffs = externalShowPlayoffs !== undefined ? externalShowPlayoffs : internalShowPlayoffs
+  const handleTogglePlayoffs = () => {
+    if (externalTogglePlayoffs) {
+      externalTogglePlayoffs()
+    } else {
+      setInternalShowPlayoffs((prev) => !prev)
+    }
+  }
   const [selectedRound, setSelectedRound] = useState<string>("")
   const [scores, setScores] = useState<Record<string, { home: string; away: string; shootoutWinner: string | null }>>({})
   const [showShootout, setShowShootout] = useState<Record<string, boolean>>({})
   const [isClient, setIsClient] = useState(false)
-  const { favoriteTeam } = useTeamTheme()
 
-  // Build playoff bracket safely (client-only localStorage fallback). Use useMemo to avoid accessing localStorage on server.
+  // Build playoff bracket reliably using standings first
   const playoffBracket = useMemo(() => {
     let bracket: any = null
     try {
-      if (rounds.length > 0 && teams && Object.keys(teams).length >= 7) {
-        // Try to build playoff bracket from available standings on rounds or by calculating standings
-        const lastRound = rounds[rounds.length - 1]
-        let standingsArray: any[] = []
-        if (lastRound && (lastRound as any).standings && Array.isArray((lastRound as any).standings) && (lastRound as any).standings.length >= 7) {
-          standingsArray = (lastRound as any).standings
-        } else {
-          // Calculate standings from rounds as a fallback
-          try {
-            const standingsObj = calculateStandings(rounds, teams, [])
-            standingsArray = Object.values(standingsObj).flat()
-          } catch (e) {
-            standingsArray = []
-          }
-        }
-
+      if (standings && standings.length >= 7 && teams && Object.keys(teams).length >= 7) {
+        bracket = generatePlayoffBracket(standings, teams, rounds)
+      } else if (rounds.length > 0 && teams && Object.keys(teams).length >= 7) {
+        const standingsObj = calculateStandings(rounds, teams, [])
+        let standingsArray = Object.values(standingsObj).flat()
+        const seen = new Set<string>()
+        standingsArray = standingsArray.filter((s) => {
+          if (seen.has(s.id)) return false
+          seen.add(s.id)
+          return true
+        })
         if (standingsArray.length >= 7) {
-          bracket = generatePlayoffBracket(standingsArray as any[], teams)
+          bracket = generatePlayoffBracket(standingsArray, teams, rounds)
         }
       }
+    } catch (e) {
+      console.warn("Could not generate playoff bracket:", e)
+    }
 
-      // If not possible yet, try to read simulated playoffs/standings from localStorage (client-only)
-      if (!bracket && typeof window !== "undefined") {
+    if (!bracket && typeof window !== "undefined") {
+      try {
         const simulated = getSimulatedPlayoffs()
         if (simulated) return simulated
 
         const simStandings = getSimulatedStandings()
         if (simStandings && Array.isArray(simStandings) && simStandings.length >= 7) {
-          try {
-            bracket = generatePlayoffBracket(simStandings as any[], teams)
-          } catch { }
+          bracket = generatePlayoffBracket(simStandings, teams, rounds)
         }
-      }
-    } catch { }
+      } catch {}
+    }
 
     return bracket
-  }, [rounds, teams])
+  }, [standings, rounds, teams])
+
+  // Mapeamento confiável de times para seus respectivos grupos (apenas quando houver grupos A e B)
+  const teamGroupMap = useMemo(() => {
+    const hasGroups =
+      Boolean(standings?.some((s) => s.groupName === 'A' || s.groupName === 'B')) ||
+      Boolean(rounds?.some((r) => r.matches?.some((m) => m.groupName === 'A' || m.groupName === 'B')));
+
+    if (!hasGroups) {
+      return {};
+    }
+
+    const map: Record<string, string> = {};
+    if (standings && standings.length > 0) {
+      standings.forEach((s) => {
+        const g = s.groupName || (s as any).group;
+        if (g && (g === 'A' || g === 'B')) {
+          map[s.id] = g;
+        }
+      });
+    }
+    rounds.forEach((r) => {
+      r.matches.forEach((m) => {
+        if (m.groupName === 'A' || m.groupName === 'B') {
+          if (!map[m.participants.homeTeamId]) map[m.participants.homeTeamId] = m.groupName;
+          if (!map[m.participants.awayTeamId]) map[m.participants.awayTeamId] = m.groupName;
+        }
+      });
+    });
+    return map;
+  }, [standings, rounds]);
 
   useEffect(() => {
     setIsClient(true)
@@ -147,7 +188,9 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
   // When user selects a round, ensure we exit playoffs view
   const handleRoundSelectAndExitPlayoffs = (roundId: string) => {
     setSelectedRound(roundId)
-    setShowPlayoffs(false)
+    if (showPlayoffs) {
+      handleTogglePlayoffs()
+    }
   }
 
   const handleScoreChange = (
@@ -157,21 +200,33 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
     value: string
   ) => {
     const matchKey = `${roundId}-${matchId}`
+    const currentMatch = scores[matchKey] ?? { home: "", away: "", shootoutWinner: null }
+    const newHome = team === "home" ? value : currentMatch.home
+    const newAway = team === "away" ? value : currentMatch.away
+    const isTie = newHome !== "" && newAway !== "" && newHome === newAway
 
-    setScores((prev) => {
-      const currentMatch = prev[matchKey] ?? { home: "", away: "", shootoutWinner: null }
-      const updated = { ...prev, [matchKey]: { ...currentMatch, [team]: value } }
+    setScores((prev) => ({
+      ...prev,
+      [matchKey]: {
+        home: newHome,
+        away: newAway,
+        shootoutWinner: isTie ? currentMatch.shootoutWinner : null,
+      },
+    }))
 
-      const updatedMatch = updated[matchKey]
-      if (updatedMatch.home && updatedMatch.away && updatedMatch.home === updatedMatch.away) {
-        setShowShootout((s) => ({ ...s, [matchKey]: true }))
-      }
+    setShowShootout((s) => ({ ...s, [matchKey]: isTie }))
 
-      return updated
-    })
+    const homeNum = newHome === "" ? null : Number(newHome)
+    const awayNum = newAway === "" ? null : Number(newAway)
 
-    const score = value === "" ? "" : Number(value)
-    onScoreUpdate(roundId, matchId, team === "home" ? score : null, team === "away" ? score : null)
+    onScoreUpdate(
+      roundId,
+      matchId,
+      homeNum,
+      awayNum,
+      isTie && currentMatch.shootoutWinner === "home" ? 5 : isTie && currentMatch.shootoutWinner === "away" ? 3 : undefined,
+      isTie && currentMatch.shootoutWinner === "home" ? 3 : isTie && currentMatch.shootoutWinner === "away" ? 5 : undefined
+    )
   }
 
   const handleShootoutWinner = (roundId: number, matchId: number, winner: "home" | "away" | null) => {
@@ -192,66 +247,66 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[var(--team-primary,#F4AF23)]/10 border border-[#F4AF23]/20">
-            <Calendar className="w-5 h-5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
+    <div className="space-y-2.5 sm:space-y-3">
+      {/* Header da Seção de Jogos */}
+      <div className="flex items-center justify-between gap-2 pb-2 border-b border-zinc-800/80">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-1.5 rounded-lg bg-[var(--team-primary,#F4AF23)]/10 border border-[var(--team-primary,#F4AF23)]/20 shadow-sm flex-shrink-0">
+            {showPlayoffs ? (
+              <Swords className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
+            ) : (
+              <Calendar className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
+            )}
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Partidas</h2>
-            <p className="text-sm text-gray-500">Simule os resultados</p>
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-sm sm:text-base font-black text-white tracking-tight truncate">
+              {showPlayoffs ? "Mata-Mata (Playoffs)" : (currentRound?.name || "Partidas")}
+            </h2>
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-zinc-900/60 text-zinc-400 border border-zinc-800 flex-shrink-0">
+              {showPlayoffs ? "Playoffs" : "5 Jogos"}
+            </span>
           </div>
         </div>
 
-        {canShowPlayoffsButton && (
-          <button
-            onClick={() => setShowPlayoffs(true)}
-            aria-label="Ver playoffs"
-            className={cn(
-              "hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full",
-              "bg-[var(--team-primary,#F4AF23)] text-black",
-              "transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:shadow-[var(--team-primary)]/25",
-              "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50"
-            )}
-          >
-            <span>Playoffs</span>
-            <ChevronRight className="w-4 h-4" aria-hidden="true" />
-          </button>
+        {/* Status pill quando nos playoffs */}
+        {showPlayoffs && (
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--team-primary,#F4AF23)]/10 border border-[var(--team-primary,#F4AF23)]/25 text-[10px] font-bold text-[var(--team-primary,#F4AF23)] select-none">
+            <Swords className="w-3 h-3" />
+            <span>Chaveamento</span>
+          </div>
         )}
       </div>
 
-      {/* Round Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1">
-          <RoundSelector rounds={rounds} selectedRound={selectedRound} onRoundSelect={handleRoundSelectAndExitPlayoffs} />
-        </div>
-
-        {canShowPlayoffsButton && (
-          <button
-            onClick={() => setShowPlayoffs(true)}
-            aria-label="Ver playoffs"
-            className={cn(
-              "sm:hidden flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-full",
-              "bg-[var(--team-primary,#F4AF23)] text-black",
-              "transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:shadow-[var(--team-primary)]/25",
-              "focus:outline-none focus:ring-2 focus:ring-[var(--team-primary)]/50"
-            )}
-          >
-            <span>Ver Playoffs</span>
-            <ChevronRight className="w-4 h-4" aria-hidden="true" />
-          </button>
-        )}
+      {/* Seletor de Rodadas com Liquid Glass */}
+      <div className="pt-0">
+        <RoundSelector 
+          rounds={rounds} 
+          selectedRound={selectedRound} 
+          onRoundSelect={handleRoundSelectAndExitPlayoffs}
+          showPlayoffs={showPlayoffs}
+        />
       </div>
 
-      {/* Matches or Playoffs */}
+      {/* Partidas ou Chaveamento de Playoffs */}
       {showPlayoffs ? (
-        <div className="mt-8">
-          <PlayoffBracketView bracket={playoffBracket} teams={teams} onBracketUpdate={() => { }} />
+        <div className="pt-1">
+          {playoffBracket ? (
+            <PlayoffBracketView
+              bracket={playoffBracket}
+              teams={teams}
+              hasTwoGroups={Boolean(standings?.some((s) => s.groupName === 'A') && standings?.some((s) => s.groupName === 'B'))}
+              onBracketUpdate={() => { }}
+            />
+          ) : (
+            <div className="py-12 text-center rounded-2xl border border-zinc-800 bg-[#09090d]/80 p-6">
+              <Swords className="w-8 h-8 text-[var(--team-primary,#F4AF23)] mx-auto mb-2 opacity-80" />
+              <p className="text-sm font-bold text-white mb-1">Gerando Chaveamento de Mata-Mata...</p>
+              <p className="text-xs text-zinc-400">Aguardando dados dos times para montar os confrontos.</p>
+            </div>
+          )}
         </div>
       ) : currentRound ? (
-        <div className="space-y-6" role="region" aria-label="Partidas da rodada">
+        <div className="space-y-2 sm:space-y-2.5" role="region" aria-label="Partidas da rodada">
           {Object.entries(getMatchesByDate(currentRound)).map(([date, matches]) => (
             <DateGroup
               key={date}
@@ -259,20 +314,20 @@ export default function MatchesTable({ rounds, teams, onScoreUpdate }: MatchesTa
               matches={matches}
               round={currentRound}
               teams={teams}
+              teamGroupMap={teamGroupMap}
               scores={scores}
               showShootout={showShootout}
               onScoreChange={handleScoreChange}
               onShootoutWinnerSelect={handleShootoutWinner}
-              favoriteTeam={favoriteTeam}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-16">
-          <div className="inline-flex p-4 rounded-2xl bg-white/5 border border-white/10 mb-4">
-            <Calendar className="w-8 h-8 text-gray-600" aria-hidden="true" />
+          <div className="inline-flex p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 mb-3">
+            <Calendar className="w-7 h-7 text-zinc-500" aria-hidden="true" />
           </div>
-          <p className="text-gray-500 text-sm">Selecione uma rodada para visualizar as partidas</p>
+          <p className="text-zinc-400 text-sm">Selecione uma rodada para visualizar as partidas</p>
         </div>
       )}
     </div>
