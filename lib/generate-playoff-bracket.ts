@@ -139,16 +139,21 @@ export function applyOfficialPlayoffsToBracket(
   const updatedBracket = JSON.parse(JSON.stringify(bracket)) as PlayoffBracket;
 
   let qfOfficial: any[] = [];
+  let playInOfficial: any[] = [];
+  const playInTurns: any[][] = [];
   let sfOfficial: any[] = [];
   let finalOfficial: any | null = null;
 
   for (const turn of officialPlayoffs as any[]) {
-    const turnName = String(turn?.name || "").toLowerCase();
+    const turnName = String(turn?.name || turn?.turnName || turn?.displayName || "").toLowerCase();
     const matches = Array.isArray(turn?.matches) ? turn.matches : [];
 
-    if (turnName.includes("quarta")) {
+    if (/(quarta|cuart|quarter|qf)/i.test(turnName)) {
       qfOfficial = matches;
-    } else if (turnName.includes("semi")) {
+    } else if (turnName.includes("play") || turnName.includes("repesc")) {
+      playInOfficial = [...playInOfficial, ...matches];
+      playInTurns.push(matches);
+    } else if (/(semi|sf)/i.test(turnName)) {
       sfOfficial = matches;
     } else if (turnName.includes("final")) {
       finalOfficial = matches[0] || null;
@@ -175,16 +180,21 @@ export function applyOfficialPlayoffsToBracket(
   const fillMatch = (targetMatch: PlayoffMatch | undefined, officialMatch: any) => {
     if (!targetMatch || !officialMatch) return;
 
-    const homeId = officialMatch.participants?.homeTeamId ? String(officialMatch.participants.homeTeamId) : null;
-    const awayId = officialMatch.participants?.awayTeamId ? String(officialMatch.participants.awayTeamId) : null;
+    const homeId = (officialMatch.participants?.homeTeamId ?? officialMatch.homeTeamId)
+      ? String(officialMatch.participants?.homeTeamId ?? officialMatch.homeTeamId)
+      : null;
+    const awayId = (officialMatch.participants?.awayTeamId ?? officialMatch.awayTeamId)
+      ? String(officialMatch.participants?.awayTeamId ?? officialMatch.awayTeamId)
+      : null;
 
     if (homeId) targetMatch.homeTeamId = homeId;
     if (awayId) targetMatch.awayTeamId = awayId;
 
-    const hs = officialMatch.scores?.homeScore;
-    const as = officialMatch.scores?.awayScore;
-    const hp = officialMatch.scores?.homeScoreP;
-    const ap = officialMatch.scores?.awayScoreP;
+    const score = officialMatch.scores ?? officialMatch.score ?? officialMatch.result ?? {};
+    const hs = score.homeScore ?? score.home;
+    const as = score.awayScore ?? score.away;
+    const hp = score.homeScoreP ?? score.homePenalty;
+    const ap = score.awayScoreP ?? score.awayPenalty;
 
     if (hs !== null && hs !== undefined) targetMatch.homeScore = Number(hs);
     if (as !== null && as !== undefined) targetMatch.awayScore = Number(as);
@@ -203,13 +213,36 @@ export function applyOfficialPlayoffsToBracket(
     if (winner) targetMatch.winnerId = winner;
 
     targetMatch.youtubeUrl = officialMatch.metaInformation?.youtube_url || officialMatch.metaInformation?.live_link || undefined;
-    targetMatch.status = officialMatch.status || (hs !== null && as !== null ? "ended" : undefined);
+    const hasOfficialScore = hs !== null && hs !== undefined && as !== null && as !== undefined;
+    targetMatch.status = officialMatch.status || (hasOfficialScore ? "ended" : undefined);
   };
 
   if (updatedBracket.quarterfinals) {
-    if (qfOfficial[0]) fillMatch(updatedBracket.quarterfinals[0], qfOfficial[0]);
-    if (qfOfficial[1]) fillMatch(updatedBracket.quarterfinals[1], qfOfficial[1]);
-    if (qfOfficial[2]) fillMatch(updatedBracket.quarterfinals[2], qfOfficial[2]);
+    qfOfficial.forEach((match, index) => fillMatch(updatedBracket.quarterfinals[index], match));
+  }
+  if (updatedBracket.playIns) {
+    const officialCount = playInOfficial.length;
+    while (updatedBracket.playIns.length < officialCount) {
+      const index = updatedBracket.playIns.length + 1;
+      updatedBracket.playIns.push({
+        id: `pi${index}`,
+        stage: "playin",
+        matchNumber: index,
+        homeTeamId: null,
+        awayTeamId: null,
+        homeScore: null,
+        awayScore: null,
+        homeScoreP: null,
+        awayScoreP: null,
+        winnerId: null,
+        nextMatchId: null,
+        order: index,
+      });
+    }
+    playInOfficial.forEach((match, index) => fillMatch(updatedBracket.playIns[index], match));
+    updatedBracket.playInRounds = playInTurns.length > 0
+      ? splitPlayInMatches(updatedBracket.playIns, playInTurns)
+      : [updatedBracket.playIns];
   }
 
   if (updatedBracket.semifinals) {
@@ -222,6 +255,28 @@ export function applyOfficialPlayoffsToBracket(
   }
 
   return updatedBracket;
+}
+
+function splitPlayInMatches(
+  playIns: PlayoffMatch[],
+  turns: any[][]
+): PlayoffMatch[][] {
+  const rounds: PlayoffMatch[][] = [];
+  let offset = 0;
+
+  for (const turn of turns) {
+    const size = Array.isArray(turn) ? turn.length : 0;
+    if (size > 0) {
+      rounds.push(playIns.slice(offset, offset + size));
+      offset += size;
+    }
+  }
+
+  if (offset < playIns.length) {
+    rounds.push(playIns.slice(offset));
+  }
+
+  return rounds.length > 0 ? rounds : [playIns];
 }
 
 /**
@@ -383,6 +438,7 @@ export function generatePlayoffBracket(
     };
 
     const baseBracket = {
+      playIns: [],
       quarterfinals,
       semifinals,
       final
@@ -416,8 +472,47 @@ export function generatePlayoffBracket(
   const fifthPlace = sortedStandings[4];
   const sixthPlace = sortedStandings[5];
   const seventhPlace = sortedStandings[6];
+  // A liga pode ter 10 ou mais times e ainda assim não usar repescagem.
+  // O formato deve vir da fase oficial, não da quantidade de clubes.
+  const hasPlayIn = Array.isArray(officialPlayoffs) && officialPlayoffs.some((turn: any) => {
+    const name = String(turn?.name || turn?.turnName || turn?.displayName || "").toLowerCase();
+    return name.includes("play-in") || name.includes("play in") || name.includes("playin") || name.includes("repesc");
+  });
+  const playInMatches: PlayoffMatch[] = hasPlayIn
+    ? [
+      {
+        id: "pi1", stage: "playin", matchNumber: 1, homeTeamId: sortedStandings[6].id, awayTeamId: sortedStandings[9].id,
+        homeScore: null, awayScore: null, homeScoreP: null, awayScoreP: null, winnerId: null,
+        nextMatchId: "qf1", order: 1,
+      },
+      {
+        id: "pi2", stage: "playin", matchNumber: 2, homeTeamId: sortedStandings[7].id, awayTeamId: sortedStandings[8].id,
+        homeScore: null, awayScore: null, homeScoreP: null, awayScoreP: null, winnerId: null,
+        nextMatchId: "qf1", order: 2,
+      },
+    ]
+    : [];
 
-  const quarterfinals: PlayoffMatch[] = [
+  const quarterfinals: PlayoffMatch[] = hasPlayIn
+    ? [
+    {
+      id: "qf1", stage: "quarterfinal", matchNumber: 1, homeTeamId: secondPlace.id, awayTeamId: null,
+      homeScore: null, awayScore: null, homeScoreP: null, awayScoreP: null, winnerId: null, nextMatchId: "sf1", order: 1
+    },
+    {
+      id: "qf2", stage: "quarterfinal", matchNumber: 2, homeTeamId: thirdPlace.id, awayTeamId: sixthPlace.id,
+      homeScore: null, awayScore: null, homeScoreP: null, awayScoreP: null, winnerId: null, nextMatchId: "sf1", order: 2
+    },
+    {
+      id: "qf3", stage: "quarterfinal", matchNumber: 3, homeTeamId: fourthPlace.id, awayTeamId: fifthPlace.id,
+      homeScore: null, awayScore: null, homeScoreP: null, awayScoreP: null, winnerId: null, nextMatchId: "sf2", order: 3
+    },
+    {
+      id: "qf4", stage: "quarterfinal", matchNumber: 4, homeTeamId: null, awayTeamId: firstPlace.id,
+      homeScore: null, awayScore: null, homeScoreP: null, awayScoreP: null, winnerId: null, nextMatchId: "sf2", order: 4
+    },
+  ]
+    : [
     {
       id: "qf1",
       stage: "quarterfinal",
@@ -509,16 +604,44 @@ export function generatePlayoffBracket(
   };
 
   const baseBracket = {
+    playIns: playInMatches,
+    playInRounds: hasPlayIn ? [playInMatches] : [],
     quarterfinals,
     semifinals,
     final
   };
 
   if (officialPlayoffs && Array.isArray(officialPlayoffs) && officialPlayoffs.length > 0) {
-    return applyOfficialPlayoffsToBracket(baseBracket, officialPlayoffs);
+    const officialBracket = applyOfficialPlayoffsToBracket(baseBracket, officialPlayoffs);
+    if (hasPlayIn) {
+      return keepTopSeedOutOfQuarterfinals(officialBracket, firstPlace.id);
+    }
+    return officialBracket;
+  }
+
+  if (hasPlayIn) {
+    return keepTopSeedOutOfQuarterfinals(baseBracket, firstPlace.id);
   }
 
   return baseBracket;
+}
+
+function keepTopSeedOutOfQuarterfinals(
+  bracket: PlayoffBracket,
+  topSeedId: string
+): PlayoffBracket {
+  const sanitized = JSON.parse(JSON.stringify(bracket)) as PlayoffBracket;
+
+  sanitized.quarterfinals = sanitized.quarterfinals.filter(
+    (match) => match.homeTeamId !== topSeedId && match.awayTeamId !== topSeedId
+  );
+
+  const semifinalOne = sanitized.semifinals.find((match) => match.id === "sf1");
+  if (semifinalOne) {
+    semifinalOne.homeTeamId = topSeedId;
+  }
+
+  return sanitized;
 }
 
 /**
@@ -530,21 +653,25 @@ export function updatePlayoffBracket(
   homeScore: number,
   awayScore: number,
   homeScoreP?: number | null,
-  awayScoreP?: number | null
+  awayScoreP?: number | null,
+  leagueId?: string
 ): PlayoffBracket {
   const newBracket = JSON.parse(JSON.stringify(bracket)) as PlayoffBracket;
   
   // Encontrar a partida a ser atualizada
   let match: PlayoffMatch | undefined;
-  let stage: 'quarterfinals' | 'semifinals' | 'final' | undefined;
-  
-  if (matchId.startsWith('qf')) {
+  let stage: 'playIns' | 'quarterfinals' | 'semifinals' | 'final' | undefined;
+
+  match = newBracket.playIns?.find(m => m.id === matchId);
+  if (match) stage = 'playIns';
+
+  if (!match && matchId.startsWith('qf')) {
     match = newBracket.quarterfinals.find(m => m.id === matchId);
     stage = 'quarterfinals';
-  } else if (matchId.startsWith('sf')) {
+  } else if (!match && matchId.startsWith('sf')) {
     match = newBracket.semifinals.find(m => m.id === matchId);
     stage = 'semifinals';
-  } else if (matchId === 'final') {
+  } else if (!match && matchId === 'final') {
     match = newBracket.final;
     stage = 'final';
   }
@@ -552,7 +679,12 @@ export function updatePlayoffBracket(
   if (!match || !stage) {
     throw new Error(`Partida não encontrada: ${matchId}`);
   }
-  
+
+  // No México, as quartas ficam bloqueadas quando todos os confrontos oficiais estão definidos.
+  if (isMexicoQuarterfinalsLocked(newBracket, matchId, leagueId)) {
+    throw new Error("As quartas de final do México já foram definidas e não podem ser alteradas.");
+  }
+
   // Guardar o vencedor anterior e seu próximo jogo
   const previousWinnerId = match.winnerId;
   const nextMatchId = match.nextMatchId;
@@ -585,6 +717,7 @@ export function updatePlayoffBracket(
   // Se o vencedor mudou e há um próximo jogo, atualizar a próxima partida
   if (previousWinnerId !== newWinnerId && nextMatchId) {
     const nextMatch = 
+      newBracket.quarterfinals.find(m => m.id === nextMatchId) ||
       newBracket.semifinals.find(m => m.id === nextMatchId) || 
       (nextMatchId === 'final' ? newBracket.final : undefined);
     
@@ -594,7 +727,9 @@ export function updatePlayoffBracket(
       // Determinar qual posição específica deve ser atualizada baseado na partida de origem
       let targetPosition: 'home' | 'away' | null = null;
       
-      if (match.stage === 'quarterfinal') {
+      if (match.stage === 'playin') {
+        targetPosition = matchId === "pi1" ? "away" : "home";
+      } else if (match.stage === 'quarterfinal') {
         const qfNumber = parseInt(matchId.replace('qf', ''));
         if (qfNumber === 1) {
           targetPosition = 'away'; // QF1 → SF1 away
@@ -602,6 +737,8 @@ export function updatePlayoffBracket(
           targetPosition = 'home'; // QF2 → SF2 home
         } else if (qfNumber === 3) {
           targetPosition = 'away'; // QF3 → SF2 away
+        } else if (qfNumber === 4) {
+          targetPosition = 'home'; // QF4 → SF2 home
         }
       } else if (match.stage === 'semifinal') {
         const sfNumber = parseInt(matchId.replace('sf', ''));
@@ -622,7 +759,10 @@ export function updatePlayoffBracket(
       // Adicionar o novo vencedor na próxima partida, se houver
       if (newWinnerId) {
         // Determinar a posição correta baseado na partida de origem (sem remover times já posicionados)
-        if (match.stage === 'quarterfinal') {
+        if (match.stage === 'playin') {
+          if (matchId === "pi1") nextMatch.awayTeamId = newWinnerId;
+          if (matchId === "pi2") nextMatch.homeTeamId = newWinnerId;
+        } else if (match.stage === 'quarterfinal') {
           const qfNumber = parseInt(matchId.replace('qf', ''));
           
           if (qfNumber === 1) {
@@ -635,6 +775,8 @@ export function updatePlayoffBracket(
           } else if (qfNumber === 3) {
             // Vencedor de QF3 vai para SF2 awayTeamId
             nextMatch.awayTeamId = newWinnerId;
+          } else if (qfNumber === 4) {
+            nextMatch.homeTeamId = newWinnerId;
           }
         } else if (match.stage === 'semifinal') {
           const sfNumber = parseInt(matchId.replace('sf', ''));
@@ -678,4 +820,21 @@ export function updatePlayoffBracket(
   }
   
   return newBracket;
+}
+
+export function isPlayoffMatchFinished(match: PlayoffMatch): boolean {
+  const status = String(match.status || "").toLowerCase();
+  return /^(ended|finished|complete|completed|final|after[_ -]?penalties)$/.test(status)
+    || Boolean(match.winnerId);
+}
+
+export function isMexicoQuarterfinalsLocked(
+  bracket: PlayoffBracket,
+  matchId: string,
+  leagueId?: string
+): boolean {
+  if (leagueId !== "mexico" || !matchId.startsWith("qf")) return false;
+  return bracket.quarterfinals.length > 0 && bracket.quarterfinals.every(
+    (match) => Boolean(match.homeTeamId && match.awayTeamId)
+  );
 }
