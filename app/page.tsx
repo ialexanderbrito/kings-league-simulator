@@ -11,54 +11,21 @@ import {
   Layers,
   Play,
   Trophy,
-  Dices
+  Dices,
+  Flame
 } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { Team } from "@/types/kings-league"
 import { MicroSimulator } from "@/components/micro-simulator"
-import { getProxyImageUrl } from "@/lib/utils"
+import { getProxyImageUrl, cn } from "@/lib/utils"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
+import { useLeague } from "@/contexts/league-context"
+import { useLocale } from "@/contexts/locale-context"
 
 // Valor inicial fixo para o contador de simulações
 const INITIAL_SIMULATIONS_COUNT = 98547
-
-// 4 Ferramentas essenciais curadas de acesso direto (sem links duplicados)
-const ESSENTIAL_TOOLS = [
-  {
-    title: "Simulador de Rodadas",
-    subtitle: "Projete todos os jogos e cruze os Playoffs",
-    href: "/simulator",
-    icon: Play,
-    badge: "Principal",
-    accent: "text-amber-400"
-  },
-  {
-    title: "Tabela & Classificação",
-    subtitle: "Pontos, vitórias e saldo em tempo real",
-    href: "/standings",
-    icon: Table,
-    badge: "Ao Vivo",
-    accent: "text-yellow-400"
-  },
-  {
-    title: "Tier List dos Times",
-    subtitle: "Ranqueie os clubes da liga e compartilhe",
-    href: "/tier-list",
-    icon: Trophy,
-    badge: "Comunidade",
-    accent: "text-amber-300"
-  },
-  {
-    title: "12a0",
-    subtitle: "Campanha, cartas especiais e desafios",
-    href: "/12a0",
-    icon: Dices,
-    badge: "Modo",
-    accent: "text-orange-400"
-  }
-]
 
 export default function HomePage() {
   const [teams, setTeams] = useState<Team[]>([])
@@ -66,6 +33,15 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false)
   const [simulationsCount, setSimulationsCount] = useState(INITIAL_SIMULATIONS_COUNT)
   const [hoveredClub, setHoveredClub] = useState<string | null>(null)
+  const { selectedLeague, selectedSeasonId } = useLeague()
+  const { t, locale } = useLocale()
+
+  const essentialTools = [
+    { title: t.home.simulation, subtitle: t.home.simulationSubtitle, href: "/simulator", icon: Play, badge: t.home.badgeMain, accent: "text-amber-400" },
+    { title: t.home.standings, subtitle: t.home.standingsSubtitle, href: "/standings", icon: Table, badge: t.nav.standings, accent: "text-yellow-400" },
+    { title: t.home.tier, subtitle: t.home.tierSubtitle, href: "/tier-list", icon: Trophy, badge: t.home.badgeCommunity, accent: "text-amber-300" },
+    { title: "12a0", subtitle: t.home.special, href: "/12a0", icon: Dices, badge: t.home.badgeMode, accent: "text-orange-400", brazilOnly: true },
+  ]
 
   useEffect(() => {
     setMounted(true)
@@ -78,7 +54,11 @@ export default function HomePage() {
     // Buscar dados oficiais dos times
     const fetchTeams = async () => {
       try {
-        const data = await fetchLeagueData()
+        setLoading(true)
+        const data = await fetchLeagueData({
+          seasonId: selectedSeasonId,
+          competitionId: selectedLeague.competitionId,
+        })
         if (data?.teams && Array.isArray(data.teams)) {
           setTeams(data.teams)
         }
@@ -92,7 +72,7 @@ export default function HomePage() {
     fetchTeams()
 
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedSeasonId, selectedLeague.competitionId])
 
   return (
     <main className="min-h-screen bg-[#040405] text-white flex flex-col overflow-x-hidden selection:bg-[var(--team-primary)] selection:text-black">
@@ -132,7 +112,7 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full liquid-glass-pill transition-transform duration-150 hover:scale-[1.02]">
               <KingsLeagueLogo width={16} height={20} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
               <span className="text-[11px] font-black tracking-wider uppercase text-white">
-                Kings League Brasil
+                {selectedLeague.name}
               </span>
               <div className="h-2.5 w-px bg-white/20" />
               <div className="flex items-center gap-1.5">
@@ -141,7 +121,7 @@ export default function HomePage() {
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
                 </span>
                 <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">
-                  Temporada Oficial
+                  {t.home.officialSeason}
                 </span>
               </div>
             </div>
@@ -153,24 +133,24 @@ export default function HomePage() {
               </span>
               <span>+</span>
               <strong className="text-white font-mono font-bold" suppressHydrationWarning>
-                {mounted ? simulationsCount.toLocaleString('pt-BR') : INITIAL_SIMULATIONS_COUNT.toLocaleString('pt-BR')}
+                {mounted ? simulationsCount.toLocaleString(locale) : INITIAL_SIMULATIONS_COUNT.toLocaleString(locale)}
               </strong>
-              <span>simulações</span>
+              <span>{t.home.simulations}</span>
               <span className="text-gray-600">•</span>
-              <span className="text-emerald-400 font-semibold">100% Grátis</span>
+              <span className="text-emerald-400 font-semibold">{t.home.free}</span>
             </div>
           </div>
 
           {/* Headline de Alto Impacto (Foco na dor & transformação do torcedor) */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-center tracking-tight leading-tight mb-2 max-w-2xl">
-            <span className="text-white">Descubra o Futuro do seu Time na </span>
+            <span className="text-white">{t.home.headline} </span>
             <span className="bg-gradient-to-r from-[var(--team-primary)] via-amber-300 to-[var(--team-primary)] bg-clip-text text-transparent">
               Kings League
             </span>
           </h1>
 
           <p className="text-xs sm:text-sm text-gray-300 text-center max-w-lg mb-6 font-normal leading-relaxed">
-            Simule os placares de cada rodada, veja a tabela mudar em tempo real e descubra as chances reais de classificação para os <span className="text-white font-medium">Playoffs</span> e a <span className="text-white font-medium">Final Four</span>.
+            {t.home.description}
           </p>
 
           {/* 1. Micro-Simulador Instantâneo */}
@@ -184,14 +164,17 @@ export default function HomePage() {
               <div className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[var(--team-primary)]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Ferramentas Rápidas
+                  {t.home.quickTools}
                 </span>
               </div>
-              <span className="text-[11px] text-gray-500 font-medium">Acesso direto sem enrolação</span>
+              <span className="text-[11px] text-gray-500 font-medium">{t.home.directAccess}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {ESSENTIAL_TOOLS.map((tool) => {
+            <div className={cn(
+              "grid grid-cols-1 sm:grid-cols-2 gap-3",
+              selectedLeague.id === "brazil" ? "lg:grid-cols-4" : "lg:grid-cols-3"
+            )}>
+              {essentialTools.filter((tool) => !tool.brazilOnly || selectedLeague.id === "brazil").map((tool) => {
                 const IconComponent = tool.icon
                 return (
                   <Link
@@ -219,7 +202,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="mt-3 flex items-center text-[10px] font-bold text-[var(--team-primary)] gap-1 group-hover:gap-1.5 transition-all">
-                      <span>Abrir</span>
+                      <span>{t.home.open}</span>
                       <ChevronRight className="w-3 h-3" />
                     </div>
                   </Link>
@@ -234,7 +217,7 @@ export default function HomePage() {
               <div className="flex items-center gap-1.5">
                 <Crown className="w-3.5 h-3.5 text-[var(--team-primary)]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                  Os 10 Times
+                  {teams.length} {t.teams.count}
                 </span>
               </div>
               <Link 
@@ -242,7 +225,7 @@ export default function HomePage() {
                 prefetch={true}
                 className="text-xs font-bold text-[var(--team-primary)] hover:underline inline-flex items-center gap-1"
               >
-                <span>Ver elencos</span>
+                <span>{t.common.viewRosters}</span>
                 <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
@@ -255,7 +238,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2 p-2 rounded-2xl liquid-glass border border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] justify-items-center">
-                {teams.slice(0, 10).map((team) => {
+                {teams.map((team) => {
                   const teamColor = team.firstColorHEX || "#F4AF23"
                   const isHovered = hoveredClub === team.id
 
