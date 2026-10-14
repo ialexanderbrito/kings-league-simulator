@@ -5,6 +5,7 @@ import { useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { X } from "lucide-react"
 import { getProxyImageUrl } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamDraggableProps {
   team: Team
@@ -21,6 +22,7 @@ export function TeamDraggable({
   onClick,
   onRemove,
 }: TeamDraggableProps) {
+  const { t } = useLocale()
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: team.id,
   })
@@ -73,7 +75,7 @@ export function TeamDraggable({
         <button
           type="button"
           onClick={handleRemove}
-          title="Remover do patamar"
+          title={t.tier.removeTeam}
           className="remove-team-btn capture-hide absolute -top-1.5 -right-1.5 z-30 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-red-600/90 hover:bg-red-500 text-white flex items-center justify-center shadow-md border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         >
           <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5]" />

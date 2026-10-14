@@ -17,6 +17,8 @@ import {
   ArrowDownToLine,
 } from "lucide-react"
 
+import { useLocale } from "@/contexts/locale-context"
+
 interface TierRowProps {
   tier: TierItem
   teams: Team[]
@@ -94,6 +96,7 @@ export function TierRow({
   onQuickAssign,
   onRemoveTeam,
 }: TierRowProps) {
+  const { t } = useLocale()
   const { setNodeRef, isOver } = useDroppable({
     id: tier.id,
   })
@@ -131,8 +134,8 @@ export function TierRow({
           onChange={(e) => onUpdateName(tier.id, e.target.value)}
           rows={2}
           maxLength={30}
-          title="Clique para editar o nome diretamente"
-          placeholder="Nome"
+          title={t.tier.editNameTitle}
+          placeholder={t.tier.newTier}
           style={{ color: textColor, wordBreak: 'keep-all', overflowWrap: 'normal' }}
           className={`tier-label-input w-full bg-transparent text-center font-black uppercase tracking-tight resize-none overflow-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-none outline-none focus:ring-0 select-text leading-tight cursor-text placeholder:opacity-40 break-keep hyphens-none ${
             tier.name.length > 15 ? 'text-[11px] sm:text-xs leading-snug' : 'text-xs sm:text-sm leading-tight'
@@ -158,10 +161,10 @@ export function TierRow({
             {selectedPoolTeamId ? (
               <span className="text-[var(--team-primary,#F4AF23)] font-semibold text-[11px] animate-pulse flex items-center gap-1">
                 <PlusCircle className="w-3.5 h-3.5" />
-                Toque aqui para posicionar
+                {t.tier.dragInstructions}
               </span>
             ) : (
-              <span className="opacity-40 text-[11px]">Arraste times aqui</span>
+              <span className="opacity-40 text-[11px]">{t.tier.dragInstructions}</span>
             )}
           </div>
         ) : (
@@ -187,7 +190,7 @@ export function TierRow({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0 text-zinc-400 hover:text-white hover:bg-white/10 rounded-md btn-press"
-              title="Opções da linha (cor, adicionar acima/abaixo, limpar)"
+              title={t.tier.rowColor}
             >
               <Settings className="w-3.5 h-3.5" />
             </Button>
@@ -201,7 +204,7 @@ export function TierRow({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                  Cor da Linha
+                  {t.tier.rowColor}
                 </span>
                 <label className="relative cursor-pointer">
                   <input
@@ -209,7 +212,7 @@ export function TierRow({
                     value={tier.color}
                     onChange={(e) => onUpdateColor(tier.id, e.target.value)}
                     className="absolute inset-0 opacity-0 cursor-pointer w-5 h-5"
-                    title="Cor personalizada"
+                    title={t.tier.customColor}
                   />
                   <div
                     className="w-5 h-5 rounded border border-white/20"
@@ -254,7 +257,7 @@ export function TierRow({
                 className="w-full justify-start h-7 text-xs text-zinc-300 hover:text-white hover:bg-white/10 rounded px-2"
               >
                 <ArrowUpToLine className="w-3.5 h-3.5 mr-2 text-[var(--team-primary,#F4AF23)]" />
-                Adicionar linha acima
+                {t.tier.addRowAbove}
               </Button>
 
               <Button
@@ -265,7 +268,7 @@ export function TierRow({
                 className="w-full justify-start h-7 text-xs text-zinc-300 hover:text-white hover:bg-white/10 rounded px-2"
               >
                 <ArrowDownToLine className="w-3.5 h-3.5 mr-2 text-[var(--team-primary,#F4AF23)]" />
-                Adicionar linha abaixo
+                {t.tier.addRowBelow}
               </Button>
 
               {onClearTier && teams.length > 0 && (
@@ -277,7 +280,7 @@ export function TierRow({
                   className="w-full justify-start h-7 text-xs text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 rounded px-2"
                 >
                   <RotateCcw className="w-3.5 h-3.5 mr-2" />
-                  Esvaziar times desta linha
+                  {t.tier.clearRowTeams}
                 </Button>
               )}
 
@@ -290,7 +293,7 @@ export function TierRow({
                   className="w-full justify-start h-7 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded px-2"
                 >
                   <Trash2 className="w-3.5 h-3.5 mr-2" />
-                  Excluir esta linha
+                  {t.tier.deleteRow}
                 </Button>
               )}
             </div>
@@ -304,7 +307,7 @@ export function TierRow({
           onClick={() => onMoveUp(tier.id)}
           disabled={!canMoveUp}
           className="h-6 w-6 p-0 text-zinc-500 hover:text-white hover:bg-white/10 rounded-md disabled:opacity-20 btn-press"
-          title="Mover para cima"
+          title={t.tier.moveUp}
         >
           <ChevronUp className="w-3.5 h-3.5" />
         </Button>
@@ -316,7 +319,7 @@ export function TierRow({
           onClick={() => onMoveDown(tier.id)}
           disabled={!canMoveDown}
           className="h-6 w-6 p-0 text-zinc-500 hover:text-white hover:bg-white/10 rounded-md disabled:opacity-20 btn-press"
-          title="Mover para baixo"
+          title={t.tier.moveDown}
         >
           <ChevronDown className="w-3.5 h-3.5" />
         </Button>
@@ -328,7 +331,7 @@ export function TierRow({
             size="sm"
             onClick={() => onRemove(tier.id)}
             className="h-6 w-6 p-0 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/15 rounded-md btn-press transition-colors"
-            title="Excluir esta categoria (times voltam para o banco)"
+            title={t.tier.deleteCategoryTooltip}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </Button>

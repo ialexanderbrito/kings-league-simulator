@@ -5,6 +5,7 @@ import { useDroppable } from "@dnd-kit/core"
 import { TeamDraggable } from "./team-draggable"
 import { RotateCcw, CheckCircle2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamPoolProps {
   teams: Team[]
@@ -46,6 +47,7 @@ export function TeamPool({
   onRecallAll,
   totalTeamsCount = 10,
 }: TeamPoolProps) {
+  const { t } = useLocale()
   const { setNodeRef, isOver } = useDroppable({
     id: "unassigned",
   })
@@ -60,7 +62,7 @@ export function TeamPool({
       <div className="rounded-2xl border border-white/[0.08] bg-[#09090d] p-3 sm:p-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-300">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Todos os times foram posicionados no ranking!</span>
+          <span>{t.ui.tierPlaced}</span>
         </div>
 
         {onRecallAll && (
@@ -72,7 +74,7 @@ export function TeamPool({
             className="text-xs text-zinc-400 hover:text-white h-7 px-2.5 rounded-lg border border-white/5 bg-white/[0.03] btn-press"
           >
             <RotateCcw className="w-3 h-3 mr-1.5" />
-            Recolher ao banco
+            {t.ui.reset}
           </Button>
         )}
       </div>
@@ -85,10 +87,10 @@ export function TeamPool({
       <div className="px-3.5 py-2.5 sm:px-4 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xs sm:text-sm font-bold text-white tracking-wide">
-            Times Disponíveis
+            {t.teams.league}
           </span>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-zinc-400">
-            {teams.length} restantes
+            {teams.length} {t.tier.remaining}
           </span>
         </div>
 
@@ -99,10 +101,10 @@ export function TeamPool({
             size="sm"
             onClick={onRecallAll}
             className="text-xs text-zinc-400 hover:text-white h-7 px-2 rounded-lg border border-white/5 bg-white/[0.02] btn-press"
-            title="Devolver todos os times posicionados para o banco"
+            title={t.tier.recallTooltip}
           >
             <RotateCcw className="w-3 h-3 mr-1" />
-            <span className="hidden xs:inline">Recolher todos</span>
+            <span className="hidden xs:inline">{t.tier.recallAll}</span>
           </Button>
         )}
       </div>
@@ -111,11 +113,11 @@ export function TeamPool({
       {selectedTeam && onQuickAssign && allTiers.length > 0 && (
         <div className="px-3 py-2 bg-white/[0.03] border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-zinc-400 text-[11px]">Vincular</span>
+            <span className="text-zinc-400 text-[11px]">{t.tier.link}</span>
             <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10 text-[11px]">
               {selectedTeam.name}
             </span>
-            <span className="text-zinc-400 text-[11px]">a:</span>
+            <span className="text-zinc-400 text-[11px]">{t.tier.to}:</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
@@ -138,7 +140,7 @@ export function TeamPool({
               type="button"
               onClick={() => onSelectTeam && onSelectTeam(null)}
               className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10 ml-1"
-              title="Cancelar seleção"
+              title={t.tier.cancelSelection}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -177,7 +179,7 @@ export function TeamPool({
         </div>
 
         <div className="mt-2 text-[10px] text-zinc-500 px-1">
-          Arraste os times para a tabela ou clique para vincular instantaneamente.
+          {t.tier.dragInstructions}
         </div>
       </div>
     </div>

@@ -12,7 +12,9 @@ import {
   LayoutGrid,
   Check,
 } from "lucide-react"
-import { PRESET_LISTS, PresetTemplate } from "@/lib/tier-list-manager"
+import { getPresetLists, PresetTemplate } from "@/lib/tier-list-manager"
+import { useLocale } from "@/contexts/locale-context"
+import { useMemo } from "react"
 
 interface TierControlsProps {
   onAddTier: () => void
@@ -33,6 +35,9 @@ export function TierControls({
   onShare,
   isDownloading = false,
 }: TierControlsProps) {
+  const { t, locale } = useLocale()
+  const presets = useMemo(() => getPresetLists(locale), [locale])
+
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[#09090d] p-2.5 sm:p-3 mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2">
       {/* Ações de Edição e Criação */}
@@ -43,10 +48,10 @@ export function TierControls({
           onClick={onAddTier}
           size="sm"
           className="h-8 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] hover:border-white/20 text-white text-xs font-semibold btn-press"
-          title="Adicionar uma nova categoria no final da lista"
+          title={t.tier.addRowBelow}
         >
           <Plus className="w-3.5 h-3.5 mr-1 text-[var(--team-primary,#F4AF23)]" />
-          Nova Tier
+          {t.tier.newTier}
         </Button>
 
         {/* Modelos / Presets prontos */}
@@ -58,10 +63,10 @@ export function TierControls({
                 variant="ghost"
                 size="sm"
                 className="h-8 px-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.06] text-zinc-300 hover:text-white text-xs font-medium btn-press"
-                title="Carregar modelos prontos de tiers"
+                title={t.tier.presetsTitle}
               >
                 <LayoutGrid className="w-3.5 h-3.5 mr-1 text-sky-400" />
-                Modelos
+                {t.tier.presets}
               </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -70,15 +75,15 @@ export function TierControls({
             >
               <div className="pb-2 border-b border-white/10">
                 <p className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                  Modelos de Tiers
+                  {t.tier.presetsTitle}
                 </p>
                 <p className="text-[11px] text-zinc-400">
-                  Escolha uma estrutura pré-configurada para o seu ranking.
+                  {t.tier.presetsSubtitle}
                 </p>
               </div>
 
               <div className="space-y-1.5 pt-1">
-                {PRESET_LISTS.map((preset) => (
+                {presets.map((preset) => (
                   <button
                     key={preset.id}
                     type="button"
@@ -89,7 +94,7 @@ export function TierControls({
                       {preset.name}
                     </div>
                     <div className="text-[10px] text-zinc-400 mt-0.5">
-                      {preset.description} ({preset.tiers.length} patamares)
+                      {preset.description} ({t.tier.tiersCount.replace("{count}", String(preset.tiers.length))})
                     </div>
                     {/* Mini visualização das cores do preset */}
                     <div className="flex gap-1 mt-1.5">
@@ -116,10 +121,10 @@ export function TierControls({
             variant="ghost"
             size="sm"
             className="h-8 px-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/15 text-zinc-300 hover:text-white text-xs font-medium btn-press"
-            title="Devolver todos os times para o banco sem alterar as categorias"
+            title={t.tier.clearPositions}
           >
             <RotateCcw className="w-3 h-3 mr-1 text-amber-400" />
-            Limpar Posições
+            {t.tier.clearPositions}
           </Button>
         )}
 
@@ -130,10 +135,10 @@ export function TierControls({
           variant="ghost"
           size="sm"
           className="h-8 px-2.5 rounded-xl border border-white/[0.06] hover:bg-rose-500/10 hover:border-rose-500/30 text-zinc-400 hover:text-rose-400 text-xs font-medium btn-press"
-          title="Restaurar categorias e posições originais"
+          title={t.tier.resetDefault}
         >
           <RefreshCw className="w-3 h-3 mr-1" />
-          <span className="hidden xs:inline">Resetar</span>
+          <span className="hidden xs:inline">{t.tier.resetDefault}</span>
         </Button>
       </div>
 
@@ -149,12 +154,12 @@ export function TierControls({
           {isDownloading ? (
             <>
               <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-              Baixando...
+              {t.tier.downloading}
             </>
           ) : (
             <>
               <Download className="w-3 h-3 mr-1.5 text-emerald-400" />
-              Baixar Imagem
+              {t.tier.downloadImage}
             </>
           )}
         </Button>
@@ -166,7 +171,7 @@ export function TierControls({
           className="h-8 px-3.5 rounded-xl bg-[var(--team-primary,#F4AF23)] hover:brightness-110 text-black text-xs font-bold btn-press shadow-sm shadow-[var(--team-primary,#F4AF23)]/20"
         >
           <Share2 className="w-3 h-3 mr-1.5 stroke-[2.5]" />
-          Compartilhar
+          {t.tier.share}
         </Button>
       </div>
     </div>
