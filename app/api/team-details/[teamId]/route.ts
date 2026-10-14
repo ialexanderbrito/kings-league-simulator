@@ -52,7 +52,8 @@ export async function GET(
     // Extrai staff (opcional)
     let staffData: { staffs: unknown[] } = { staffs: [] }
     if (staffResponse.status === "fulfilled") {
-      staffData = staffResponse.value
+      const value: any = staffResponse.value
+      staffData = Array.isArray(value) ? { staffs: value } : value
     }
 
     // Extrai jogadores (opcional) com normalização e fallback
@@ -63,14 +64,14 @@ export async function GET(
       console.warn(`Falha ao buscar jogadores do time ${teamId} na temporada ${seasonId}. Tentando temporada padrão...`);
       try {
         const fallbackPlayers = await kingsLeagueApi.getTeamPlayers(teamId);
-        if (Array.isArray(fallbackPlayers)) {
-          playersData = fallbackPlayers;
-        }
+        const value: any = fallbackPlayers
+        playersData = Array.isArray(value) ? value : Array.isArray(value?.players) ? value.players : []
       } catch (e) {
         console.error(`Falha ao buscar fallback de jogadores para o time ${teamId}`, e);
       }
-    } else if (playersResponse.status === "fulfilled" && Array.isArray(playersResponse.value)) {
-      playersData = playersResponse.value;
+    } else if (playersResponse.status === "fulfilled") {
+      const value: any = playersResponse.value
+      playersData = Array.isArray(value) ? value : Array.isArray(value?.players) ? value.players : []
     }
 
     if (playersData.length > 0) {

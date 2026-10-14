@@ -11,6 +11,7 @@ export async function GET(
 ) {
   try {
     const { playerId } = await params
+    const seasonId = new URL(request.url).searchParams.get("seasonId") || undefined
 
     if (!playerId) {
       return createErrorResponse(
@@ -20,7 +21,7 @@ export async function GET(
       )
     }
 
-    const playerStats = await kingsLeagueApi.getPlayerStats(playerId)
+    const playerStats = await kingsLeagueApi.getPlayerStats(playerId, seasonId)
 
     // Suporte para payload compacto via ?compact=true
     const url = new URL(request.url)
@@ -62,6 +63,8 @@ export async function GET(
         mvps: (playerStats as any).mvps,
         // reduced rankings
         rankings: compactRankings,
+        // atributos oficiais do card (average, skills, etc.)
+        metaInformation: (playerStats as any).metaInformation,
         // echo requested fields for client visibility
         _requestedFields: Array.from(importantCodes),
       }
