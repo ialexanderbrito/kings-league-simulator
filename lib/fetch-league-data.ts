@@ -1,4 +1,6 @@
 import type { LeagueData, TeamDetails, PlayerStats } from "@/types/kings-league"
+import { AVAILABLE_LEAGUES } from "@/app/api/competitions/route"
+import { isPlayoffRoundName } from "@/lib/league-format"
 
 // In-memory cache e controle de chamadas em voo no cliente
 let leagueDataCache: { data: LeagueData; timestamp: number } | null = null
@@ -6,10 +8,10 @@ let pendingLeagueDataPromise: Promise<LeagueData> | null = null
 const LEAGUE_DATA_CACHE_TTL = 3 * 60 * 1000 // 3 minutos
 
 const pendingTeamPromises = new Map<string, Promise<TeamDetails>>()
-const pendingPlayerStatsPromises = new Map<number, Promise<PlayerStats>>()
+const pendingPlayerStatsPromises = new Map<string, Promise<PlayerStats>>()
 
 // Cache para estatísticas de jogadores
-const playerStatsCache: Record<number, { data: PlayerStats, timestamp: number }> = {}
+const playerStatsCache: Record<string, { data: PlayerStats, timestamp: number }> = {}
 
 // Cache para detalhes dos times
 const teamDetailsCache: Record<string, { data: TeamDetails, timestamp: number }> = {}
@@ -34,38 +36,65 @@ function sanitizeTeamDetailsPlayers(teamId: string, teamDetails: TeamDetails): T
   return teamDetails
 }
 
-const SESSION_CACHE_KEY = "kl_league_data_cache_v2"
+// Limpeza preventiva de caches legados gravados em sessionStorage
+if (typeof window !== "undefined") {
+  try {
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith("kl_")) {
+        sessionStorage.removeItem(key)
+      }
+    })
+  } catch {}
+}
 
-export async function fetchLeagueData(options: { forceRefresh?: boolean } = {}): Promise<LeagueData> {
+const leagueDataCacheMap = new Map<string, { data: LeagueData; timestamp: number }>()
+const pendingLeagueDataPromises = new Map<string, Promise<LeagueData>>()
+
+export async function fetchLeagueData(options: {
+  forceRefresh?: boolean
+  seasonId?: number | string
+  competitionId?: number | string
+} = {}): Promise<LeagueData> {
   const now = Date.now()
 
-  // 1. Retorna do cache se válido e não forçado
-  if (!options.forceRefresh && leagueDataCache && (now - leagueDataCache.timestamp) < LEAGUE_DATA_CACHE_TTL) {
-    return leagueDataCache.data
-  }
+  let activeSeasonId = options.seasonId
+  let activeCompetitionId = options.competitionId
 
-  // 2. No navegador, recupera instantaneamente do sessionStorage (0ms de latência mesmo no 3G)
-  if (!options.forceRefresh && typeof window !== "undefined") {
+  if (!activeSeasonId && typeof window !== "undefined") {
     try {
-      const stored = sessionStorage.getItem(SESSION_CACHE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (parsed?.data && parsed?.timestamp && (now - parsed.timestamp) < LEAGUE_DATA_CACHE_TTL) {
-          leagueDataCache = parsed
-          return parsed.data
-        }
+      const savedSeason = localStorage.getItem("@kl-simulador:selectedSeason")
+      const savedLeagueId = localStorage.getItem("@kl-simulador:selectedLeague")
+      if (savedSeason) activeSeasonId = savedSeason
+      if (savedLeagueId) {
+        const found = AVAILABLE_LEAGUES.find((l) => l.id === savedLeagueId)
+        if (found) activeCompetitionId = found.competitionId
       }
     } catch {}
   }
 
-  // 3. Se já existe uma requisição em andamento, reaproveita a Promise
-  if (pendingLeagueDataPromise) {
-    return pendingLeagueDataPromise
+  const seasonKey = `${String(activeCompetitionId || "default")}_${String(activeSeasonId || "default")}`
+
+  const cached = leagueDataCacheMap.get(seasonKey)
+
+  // 1. Retorna do cache em memória se válido e não forçado
+  if (!options.forceRefresh && cached && (now - cached.timestamp) < LEAGUE_DATA_CACHE_TTL) {
+    return cached.data
   }
 
-  pendingLeagueDataPromise = (async () => {
+  // 2. Se já existe uma requisição em andamento para esta temporada, reaproveita a Promise
+  const pending = pendingLeagueDataPromises.get(seasonKey)
+  if (pending) {
+    return pending
+  }
+
+  const queryParams = new URLSearchParams()
+  if (activeSeasonId) queryParams.set("seasonId", String(activeSeasonId))
+  if (activeCompetitionId) queryParams.set("competitionId", String(activeCompetitionId))
+  const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
+
+  const fetchPromise = (async () => {
     try {
-      const response = await fetch("/api/league-data")
+      const response = await fetch(`/api/league-data${queryString}`)
 
       if (!response.ok) {
         try {
@@ -87,83 +116,67 @@ export async function fetchLeagueData(options: { forceRefresh?: boolean } = {}):
         throw new Error("Dados incompletos recebidos da API")
       }
 
-      // Filtra rodadas para remover playoffs da fase regular (Quartas, Semi, Final)
+      // Remove apenas rodadas claramente pertencentes ao mata-mata.
+      // Rodadas regulares podem vir como "R1", "Rodada 1", "Jornada 1"
+      // ou com texto adicional, por isso não devemos exigir um formato exato.
       if (Array.isArray(data.rounds)) {
         data.rounds = data.rounds.filter((round: any) => {
-          const roundName = (round.name || "").toLowerCase()
-          return !roundName.includes("quarta") &&
-                 !roundName.includes("semi") &&
-                 !roundName.includes("final")
+          const name = String(round.name || "").trim().toLowerCase()
+          if (/^(r|rodada|jornada)\s*[a-z]?$/i.test(name)) {
+            return false
+          }
+          if (Array.isArray(data.playInRounds)) {
+            data.playInRounds = data.playInRounds.filter((round: any) =>
+              /(play-?in|repescagem)/i.test(String(round.name || ""))
+            )
+          }
+          return !isPlayoffRoundName(name)
         })
       }
 
-      // Atualiza o cache local e sessionStorage
-      leagueDataCache = {
+      // Atualiza o cache local em memória
+      const entry = {
         data,
         timestamp: Date.now(),
       }
-
-      if (typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(leagueDataCache))
-        } catch {}
-      }
+      leagueDataCacheMap.set(seasonKey, entry)
 
       return data
     } catch (error: any) {
-      // Se houver falha de rede e tivermos dado anterior em cache, usa como fallback
-      if (leagueDataCache) {
-        return leagueDataCache.data
+      // Se houver falha de rede e tivermos dado anterior em cache de memória, usa como fallback
+      const stale = leagueDataCacheMap.get(seasonKey)
+      if (stale) {
+        return stale.data
       }
-      if (typeof window !== "undefined") {
-        try {
-          const stored = sessionStorage.getItem(SESSION_CACHE_KEY)
-          if (stored) {
-            const parsed = JSON.parse(stored)
-            if (parsed?.data) return parsed.data
-          }
-        } catch {}
-      }
-      throw new Error(`Falha ao carregar dados da Kings League Brasil: ${error.message}`)
+      throw new Error(`Falha ao carregar dados da Kings League: ${error.message}`)
     } finally {
-      pendingLeagueDataPromise = null
+      pendingLeagueDataPromises.delete(seasonKey)
     }
   })()
 
-  return pendingLeagueDataPromise
+  pendingLeagueDataPromises.set(seasonKey, fetchPromise)
+  return fetchPromise
 }
 
 
-export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
+export async function fetchTeamDetails(teamId: string, seasonId?: number | string): Promise<TeamDetails> {
   const now = Date.now()
-  const cachedData = teamDetailsCache[teamId]
+  const cacheKey = `${String(seasonId || "default")}_${teamId}`
+  const cachedData = teamDetailsCache[cacheKey]
   
   if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
     return cachedData.data
   }
 
-  // Recupera do sessionStorage para persistir entre recarregamentos e navegação
-  if (typeof window !== "undefined") {
-    try {
-      const stored = sessionStorage.getItem(`kl_team_details_v2_${teamId}`)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (parsed?.data && (now - parsed.timestamp) < CACHE_EXPIRY_TIME) {
-          teamDetailsCache[teamId] = parsed
-          return parsed.data
-        }
-      }
-    } catch {}
-  }
 
   // Deduplicação de requisição em andamento para o mesmo time
-  if (pendingTeamPromises.has(teamId)) {
-    return pendingTeamPromises.get(teamId)!
+  if (pendingTeamPromises.has(cacheKey)) {
+    return pendingTeamPromises.get(cacheKey)!
   }
 
   const teamPromise = (async () => {
     try {
-      const response = await fetch(`/api/team-details/${teamId}`)
+      const response = await fetch(`/api/team-details/${teamId}?seasonId=${encodeURIComponent(String(seasonId || ""))}`)
       
       if (!response.ok) {
         throw new Error(`Erro ao buscar detalhes do time: ${response.status} ${response.statusText}`)
@@ -176,7 +189,7 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
         await Promise.all(
           sanitizedTeamDetails.players.map(async (player: any) => {
             try {
-              const playerStats = await fetchPlayerStats(player.id)
+              const playerStats = await fetchPlayerStats(player.id, seasonId)
               player.stats = playerStats
             } catch (error) {
               console.warn(`Erro ao buscar estatísticas para o jogador ${player.id}:`, error)
@@ -220,61 +233,44 @@ export async function fetchTeamDetails(teamId: string): Promise<TeamDetails> {
         });
       }
       
-      // Armazenar no cache com timestamp atual
+      // Armazenar no cache em memória com timestamp atual
       const teamCacheEntry = {
         data: sanitizedTeamDetails,
         timestamp: Date.now()
       }
-      teamDetailsCache[teamId] = teamCacheEntry
-
-      if (typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem(`kl_team_details_v2_${teamId}`, JSON.stringify(teamCacheEntry))
-        } catch {}
-      }
+      teamDetailsCache[cacheKey] = teamCacheEntry
       
       return sanitizedTeamDetails
     } finally {
-      pendingTeamPromises.delete(teamId)
+      pendingTeamPromises.delete(cacheKey)
     }
   })()
 
-  pendingTeamPromises.set(teamId, teamPromise)
+  pendingTeamPromises.set(cacheKey, teamPromise)
   return teamPromise
 }
 
-export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
+export async function fetchPlayerStats(playerId: number, seasonId?: number | string): Promise<PlayerStats> {
   const now = Date.now()
-  const cachedData = playerStatsCache[playerId]
+  const statsKey = `${String(seasonId || "default")}_${playerId}`
+  const cachedData = playerStatsCache[statsKey]
   
   if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
     return cachedData.data
   }
 
-  // Recupera do sessionStorage para persistir entre recarregamentos e navegação
-  if (typeof window !== "undefined") {
-    try {
-      const stored = sessionStorage.getItem(`kl_player_stats_v2_${playerId}`)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (parsed?.data && (now - parsed.timestamp) < CACHE_EXPIRY_TIME) {
-          playerStatsCache[playerId] = parsed
-          return parsed.data
-        }
-      }
-    } catch {}
-  }
+
 
   // Deduplicação de requisições em voo para o mesmo jogador
-  if (pendingPlayerStatsPromises.has(playerId)) {
-    return pendingPlayerStatsPromises.get(playerId)!
+  if (pendingPlayerStatsPromises.has(statsKey)) {
+    return pendingPlayerStatsPromises.get(statsKey)!
   }
 
   const statsPromise = (async () => {
     try {
       // Request compact payload (server supports ?compact=true and ?fields=...)
       const fields = encodeURIComponent('PG,GOL,ASS-V,CRT-G,CRT-R,MVP')
-      const response = await fetch(`/api/player-stats/${playerId}?compact=true&fields=${fields}`)
+      const response = await fetch(`/api/player-stats/${playerId}?seasonId=${encodeURIComponent(String(seasonId || ""))}&compact=true&fields=${fields}`)
       
       if (!response.ok) {
         return {
@@ -327,18 +323,12 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
       })
     }
     
-    // Armazenar no cache com timestamp atual
+    // Armazenar no cache em memória com timestamp atual
     const playerCacheEntry = {
       data: processedStats,
       timestamp: Date.now()
     }
-    playerStatsCache[playerId] = playerCacheEntry
-
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem(`kl_player_stats_v2_${playerId}`, JSON.stringify(playerCacheEntry))
-      } catch {}
-    }
+    playerStatsCache[statsKey] = playerCacheEntry
     
     return processedStats
   } catch {
@@ -351,16 +341,61 @@ export async function fetchPlayerStats(playerId: number): Promise<PlayerStats> {
       mvps: 0
     }
   } finally {
-    pendingPlayerStatsPromises.delete(playerId)
+    pendingPlayerStatsPromises.delete(statsKey)
   }
 })()
 
-  pendingPlayerStatsPromises.set(playerId, statsPromise)
+  pendingPlayerStatsPromises.set(statsKey, statsPromise)
   return statsPromise
 }
 
 export function clearLeagueDataCache() {
-  leagueDataCache = null
+  leagueDataCacheMap.clear()
+  statsCacheMap.clear()
+  Object.keys(playerStatsCache).forEach((k) => delete playerStatsCache[k])
+  Object.keys(teamDetailsCache).forEach((k) => delete teamDetailsCache[k])
+  if (typeof window !== "undefined") {
+    try {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("kl_")) {
+          sessionStorage.removeItem(key)
+        }
+      })
+    } catch {}
+  }
 }
 
+const statsCacheMap = new Map<string, { data: any; timestamp: number }>()
 
+export async function fetchLeagueStats(options: {
+  seasonId?: number | string
+  stat?: string
+  forceRefresh?: boolean
+} = {}): Promise<any> {
+  const seasonKey = String(options.seasonId || "default")
+  const statKey = options.stat || "all"
+  const cacheKey = `kl_stats_${seasonKey}_${statKey}`
+  const now = Date.now()
+
+  if (!options.forceRefresh) {
+    const cached = statsCacheMap.get(cacheKey)
+    if (cached && (now - cached.timestamp) < LEAGUE_DATA_CACHE_TTL) {
+      return cached.data
+    }
+  }
+
+  const query = new URLSearchParams()
+  if (options.seasonId) query.set("seasonId", String(options.seasonId))
+  if (options.stat) query.set("stat", options.stat)
+
+  const res = await fetch(`/api/league-stats?${query.toString()}`)
+  if (!res.ok) {
+    throw new Error(`Falha ao buscar estatísticas da liga (status ${res.status})`)
+  }
+
+  const data = await res.json()
+  const entry = { data, timestamp: Date.now() }
+  statsCacheMap.set(cacheKey, entry)
+
+  return data
+}

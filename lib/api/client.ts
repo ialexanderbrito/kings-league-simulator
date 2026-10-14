@@ -164,20 +164,20 @@ export async function fetchFromKingsLeague<T>(
  */
 export const kingsLeagueApi = {
   /**
-   * Busca dados completos da temporada atual
+   * Busca dados completos da temporada
    */
-  getSeasonData: () =>
+  getSeasonData: (seasonId?: string, competitionId?: string) =>
     fetchFromKingsLeague<KingsLeagueSeasonResponse>(
-      `/competition/seasons/${SEASON_ID}?lang=pt`,
+      `/competition/seasons/${seasonId || SEASON_ID}?lang=pt${competitionId ? `&competitionId=${encodeURIComponent(competitionId)}` : ""}`,
       { cache: "SHORT", fullHeaders: true }
     ),
 
   /**
    * Busca dados do centro de partidas (todas as rodadas e jogos)
    */
-  getMatchCenterData: () =>
+  getMatchCenterData: (seasonId?: string, competitionId?: string) =>
     fetchFromKingsLeague<KingsLeagueMatchCenterResponse>(
-      `/competition/seasons/${SEASON_ID}/match-center-data?lang=pt`,
+      `/competition/seasons/${seasonId || SEASON_ID}/match-center-data?lang=pt${competitionId ? `&competitionId=${encodeURIComponent(competitionId)}` : ""}`,
       { cache: "SHORT" }
     ),
 
@@ -211,28 +211,55 @@ export const kingsLeagueApi = {
   /**
    * Busca lista de times registrados na temporada
    */
-  getSeasonTeams: () =>
+  getSeasonTeams: (seasonId?: string, competitionId?: string) =>
     fetchFromKingsLeague<KingsLeagueTeamResponse[]>(
-      `/competition/seasons/${SEASON_ID}/teams?lang=pt`,
+      `/competition/seasons/${seasonId || SEASON_ID}/teams?lang=pt${competitionId ? `&competitionId=${encodeURIComponent(competitionId)}` : ""}`,
       { cache: "LONG" }
     ),
 
   /**
    * Busca estatísticas de um jogador
    */
-  getPlayerStats: (playerId: string) =>
+  getPlayerStats: (playerId: string, seasonId?: string) =>
     fetchFromKingsLeague<KingsLeaguePlayerStats>(
-      `/competition/players/${playerId}/season-data/${SEASON_ID}/stats`,
+      `/competition/players/${playerId}/season-data/${seasonId || SEASON_ID}/stats`,
       { cache: "DAILY" }
     ),
 
   /**
    * Busca dados de uma partida específica (cache de 30s para jogos ao vivo)
    */
-  getMatchDetails: (matchId: string) =>
+  getMatchDetails: (matchId: string, competitionId?: string) =>
     fetchFromKingsLeague<KingsLeagueMatchDetails>(
-      `/competition/matches/${matchId}?live=true&competitionId=${COMPETITION_ID}`,
+      `/competition/matches/${matchId}?live=true&competitionId=${competitionId || COMPETITION_ID}`,
       { cache: "LIVE" }
+    ),
+
+  /**
+   * Busca lista de todas as competições/ligas oficiais
+   */
+  getCompetitions: () =>
+    fetchFromKingsLeague<any[]>(
+      `/competitions`,
+      { cache: "LONG" }
+    ),
+
+  /**
+   * Busca rankings estatísticos da temporada (GOL, PAS, MVP, GOL-S, GOL-D, FAL)
+   */
+  getPlayerStatRankings: (seasonId: string, statCode: string) =>
+    fetchFromKingsLeague<any[]>(
+      `/competition/seasons/${seasonId || SEASON_ID}/players/stats/${statCode}?orderBy=ranking&sortOrder=ASC`,
+      { cache: "SHORT" }
+    ),
+
+  /**
+   * Busca MVPs de cada rodada/jornada
+   */
+  getTurnMvps: (seasonId?: string) =>
+    fetchFromKingsLeague<any[]>(
+      `/competition/seasons/${seasonId || SEASON_ID}/players/stats/turn-mvps`,
+      { cache: "SHORT" }
     ),
 }
 
@@ -286,10 +313,15 @@ export interface KingsLeagueGroupTeam {
 
 export interface KingsLeagueTurn {
   id: number
-  turnName: string
+  turnName?: string
+  name?: string
+  shortName?: string
   ended: boolean
-  startDate: string
-  finishDate: string
+  startDate?: string
+  finishDate?: string
+  start?: string
+  finish?: string
+  matches?: KingsLeagueMatch[]
 }
 
 export type KingsLeagueMatchCenterResponse = KingsLeagueRound[]
