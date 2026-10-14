@@ -1,12 +1,16 @@
+"use client"
+
 import { Skeleton } from "@/components/ui/skeleton"
 import { Crown } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 export function StandingsTableSkeleton() {
+  const { t } = useLocale()
   const groups = [
     {
       name: "A",
       isAdvantage: true,
-      subtext: "1º na Semi • 2º-4º nas Quartas",
+      subtext: t.standings.advantageSubtext,
       ranks: [
         { badge: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300", border: "border-l-2 border-emerald-400" },
         { badge: "bg-amber-400/20 border-amber-400/40 text-amber-300", border: "border-l-2 border-amber-400" },
@@ -18,7 +22,7 @@ export function StandingsTableSkeleton() {
     {
       name: "B",
       isAdvantage: false,
-      subtext: "1º-3º nas Quartas",
+      subtext: t.standings.noAdvantageSubtext,
       ranks: [
         { badge: "bg-amber-400/20 border-amber-400/40 text-amber-300", border: "border-l-2 border-amber-400" },
         { badge: "bg-amber-400/20 border-amber-400/40 text-amber-300", border: "border-l-2 border-amber-400" },
@@ -37,16 +41,16 @@ export function StandingsTableSkeleton() {
           <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-800/60">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                Grupo {group.name}
+                {t.matches.group} {group.name}
               </span>
               {group.isAdvantage ? (
                 <span className="text-[9px] font-black text-[#34d399] bg-[#34d399]/15 px-2 py-0.5 rounded-full border border-[#34d399] flex items-center gap-1 select-none shadow-sm shadow-[#34d399]/25">
                   <Crown className="w-2.5 h-2.5 text-[#34d399]" />
-                  <span>Vantagem SC</span>
+                  <span>{t.standings.scAdvantage}</span>
                 </span>
               ) : (
                 <span className="text-[9px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-800 px-1.5 py-0.5 rounded-full select-none">
-                  3 vagas playoffs
+                  {t.standings.threePlayoffSpots}
                 </span>
               )}
             </div>
@@ -59,10 +63,10 @@ export function StandingsTableSkeleton() {
           <div className="overflow-hidden">
             <div className="grid grid-cols-[28px_1fr_48px_34px_38px] sm:grid-cols-[32px_1fr_54px_38px_42px] gap-1 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-[11px] text-zinc-500 font-semibold uppercase tracking-wider border-b border-zinc-800/80">
               <div className="text-center">#</div>
-              <div>Clube</div>
-              <div className="text-center">V-D</div>
-              <div className="text-center">SG</div>
-              <div className="text-center font-bold text-zinc-400">PTS</div>
+              <div>{t.standings.club}</div>
+              <div className="text-center">{t.standings.wl}</div>
+              <div className="text-center">{t.standings.gdAbbr}</div>
+              <div className="text-center font-bold text-zinc-400">{t.standings.pts}</div>
             </div>
 
             {/* 5 Team Rows */}
@@ -112,15 +116,15 @@ export function StandingsTableSkeleton() {
       <div className="px-3 py-2 border-t border-zinc-800/80 flex flex-wrap items-center gap-3.5 text-[10px] sm:text-[11px] text-zinc-400">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          <span className="text-zinc-300 font-semibold">1º Semifinal Direta</span>
+          <span className="text-zinc-300 font-semibold">{t.standings.directSemi}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
-          <span className="text-zinc-300 font-semibold">Quartas de Final</span>
+          <span className="text-zinc-300 font-semibold">{t.standings.quarterfinals}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
-          <span className="text-zinc-400 font-medium">Eliminados</span>
+          <span className="text-zinc-400 font-medium">{t.standings.eliminated}</span>
         </div>
       </div>
     </div>

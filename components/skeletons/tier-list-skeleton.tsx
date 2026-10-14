@@ -5,8 +5,14 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { Plus, SlidersHorizontal, RotateCcw, Download, Share2 } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
+import { useLeague } from "@/contexts/league-context"
+import { GradientTitle } from "@/components/ui/gradient-title"
 
 export function TierListSkeleton() {
+  const { t } = useLocale()
+  const { selectedLeague } = useLeague()
+
   return (
     <main className="min-h-screen bg-[#040405] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black">
       <Header loading={true} />
@@ -17,15 +23,15 @@ export function TierListSkeleton() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
             <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              TierMaker Oficial
+              {t.tier.officialMaker}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Tier List <span className="text-[var(--team-primary,#F4AF23)]">Kings League</span>
+            <GradientTitle title={t.pages.tierTitle} />
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Arraste os times para a tabela ou clique nos escudos para vincular diretamente. Clique no nome para editar.
+            {t.tier.pageDescription}
           </p>
         </div>
 
@@ -89,14 +95,14 @@ export function TierListSkeleton() {
               <div className="flex flex-col justify-center select-none">
                 <div className="flex items-center gap-2">
                   <span className="text-base sm:text-lg font-black uppercase text-white tracking-wider whitespace-nowrap leading-tight">
-                    Kings League Brasil
+                    {selectedLeague.name}
                   </span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-[var(--team-primary,#F4AF23)] text-black whitespace-nowrap shadow-sm leading-none">
-                    Tier List
+                    {t.nav.tierList}
                   </span>
                 </div>
                 <span className="text-[10px] sm:text-[11px] text-zinc-400 font-semibold uppercase tracking-wider whitespace-nowrap mt-1 leading-tight">
-                  Ranking Oficial da Comunidade
+                  {t.tier.communityRanking}
                 </span>
               </div>
             </div>
@@ -107,7 +113,7 @@ export function TierListSkeleton() {
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
                   <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-400 leading-none whitespace-nowrap">
-                    SIMULADOR OFICIAL
+                    {t.common.officialSimulator.toUpperCase()}
                   </span>
                 </div>
                 <span className="text-xs font-mono font-bold text-[var(--team-primary,#F4AF23)] leading-none tracking-tight whitespace-nowrap">
@@ -131,7 +137,7 @@ export function TierListSkeleton() {
               </div>
               <div className="flex-1 flex flex-wrap items-center gap-2 p-2.5 bg-[#0c0c11]">
                 <div className="h-full flex items-center text-xs text-zinc-600 italic px-2">
-                  Arraste os times aqui...
+                  {t.ui.dragTeams}
                 </div>
               </div>
               <div className="w-8 bg-[#08080b] border-l border-white/[0.06] shrink-0" />

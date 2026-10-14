@@ -2,8 +2,10 @@
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { Trophy, Info } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 export function FullTableSkeleton() {
+  const { t } = useLocale()
   const ranks = [
     { rank: 1, badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40", border: "border-l-2 border-emerald-400" },
     { rank: 2, badge: "bg-amber-400/20 text-amber-300 border-amber-400/40", border: "border-l-2 border-amber-400" },
@@ -38,25 +40,21 @@ export function FullTableSkeleton() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base sm:text-lg font-black text-white tracking-tight">
-                  Tabela Oficial
+                  {t.standings.officialTable}
                 </span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/[0.06] border border-white/[0.08] text-zinc-300">
-                  10 clubes
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Ao Vivo
+                  10 {t.standings.clubsCount}
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
-                Classificação por Vitórias e Derrotas (V-D) • Kings League Brazil
+                {t.standings.titleDesc}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/[0.04] border border-white/[0.08] text-zinc-300">
-              10 Times
+              10 {t.standings.teamsCount}
             </span>
           </div>
         </div>
@@ -66,16 +64,16 @@ export function FullTableSkeleton() {
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b border-white/[0.06] text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-zinc-400 bg-white/[0.01]">
-                <th className="py-3 px-3 sm:px-4 text-center w-12 sm:w-14">POS</th>
-                <th className="py-3 px-3 sm:px-4 min-w-[180px]">TIME</th>
-                <th className="py-3 px-3 text-center font-bold text-white">V - D</th>
-                <th className="py-3 px-2 sm:px-3 text-center">J</th>
-                <th className="py-3 px-2 sm:px-3 text-center">V</th>
-                <th className="py-3 px-2 sm:px-3 text-center">D</th>
-                <th className="py-3 px-2 sm:px-3 text-center">GP</th>
-                <th className="py-3 px-2 sm:px-3 text-center">GC</th>
-                <th className="py-3 px-2 sm:px-3 text-center font-semibold text-white">SG</th>
-                <th className="py-3 px-3 sm:px-4 text-center min-w-[140px]">FORMA</th>
+                <th className="py-3 px-3 sm:px-4 text-center w-12 sm:w-14">{t.standings.pos}</th>
+                <th className="py-3 px-3 sm:px-4 min-w-[180px]">{t.standings.team}</th>
+                <th className="py-3 px-3 text-center font-bold text-white">{t.standings.wl}</th>
+                <th className="py-3 px-2 sm:px-3 text-center">{t.standings.playedAbbr}</th>
+                <th className="py-3 px-2 sm:px-3 text-center">{t.standings.wonAbbr}</th>
+                <th className="py-3 px-2 sm:px-3 text-center">{t.standings.lostAbbr}</th>
+                <th className="py-3 px-2 sm:px-3 text-center">{t.standings.gfAbbr}</th>
+                <th className="py-3 px-2 sm:px-3 text-center">{t.standings.gaAbbr}</th>
+                <th className="py-3 px-2 sm:px-3 text-center font-semibold text-white">{t.standings.gdAbbr}</th>
+                <th className="py-3 px-3 sm:px-4 text-center min-w-[140px]">{t.standings.form}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04] text-xs sm:text-sm">
@@ -155,19 +153,19 @@ export function FullTableSkeleton() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-              <span className="text-zinc-300 font-semibold">1º Semifinal Direta</span>
+              <span className="text-zinc-300 font-semibold">{t.standings.directSemi}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
-              <span className="text-zinc-300 font-semibold">2º ao 7º Playoffs</span>
+              <span className="text-zinc-300 font-semibold">{t.standings.singleTableQuarters.replace('{end}', '7')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
-              <span className="text-zinc-400 font-medium">Eliminados</span>
+              <span className="text-zinc-400 font-medium">{t.standings.eliminated}</span>
             </div>
           </div>
           <span className="text-[11px] text-zinc-500 font-mono">
-            Atualizado em tempo real
+            {t.standings.realtimeUpdated}
           </span>
         </div>
       </div>

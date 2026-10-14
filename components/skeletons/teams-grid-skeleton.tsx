@@ -1,7 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Users, Crown, ChevronRight, ArrowUpRight } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 export function TeamsGridSkeleton() {
+  const { t } = useLocale()
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pb-12 sm:pb-16">
       {Array(10)
@@ -56,12 +59,9 @@ export function TeamsGridSkeleton() {
 
                   <div className="min-w-0 flex-1 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/90 flex items-center gap-1">
-                      Presidente
+                      {t.page.campaign.president}
                     </span>
                     <Skeleton className="h-4 w-28 bg-white/10 rounded" />
-                    <span className="text-[11px] text-zinc-400 font-medium truncate block">
-                      Liderança &amp; Transmissão
-                    </span>
                   </div>
                 </div>
               </div>
@@ -76,7 +76,7 @@ export function TeamsGridSkeleton() {
                 </div>
               </div>
               <div className="flex items-center gap-1 text-[var(--team-primary,#F4AF23)] font-semibold text-xs">
-                <span>Ver detalhes</span>
+                <span>{t.common.viewProfile}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </div>

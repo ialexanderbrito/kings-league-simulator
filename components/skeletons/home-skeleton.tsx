@@ -5,13 +5,18 @@ import { Footer } from "@/components/layout/footer"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Sparkles, Crown, Table, GitMerge, Layers, Users, ChevronRight, ArrowRight } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
+import { useLeague } from "@/contexts/league-context"
 
 export function HomeSkeleton() {
+  const { t } = useLocale()
+  const { selectedLeague } = useLeague()
+
   const essentialTools = [
-    { title: "Classificação & Tabela", subtitle: "Pontos, vitórias e saldo em tempo real", icon: Table, badge: "Ao Vivo", accent: "text-amber-400" },
-    { title: "Chaveamento Playoffs", subtitle: "Simule cruzamentos até a final", icon: GitMerge, badge: "Mata-Mata", accent: "text-yellow-400" },
-    { title: "Regras & Modo 12a0", subtitle: "Gol duplo, pênalti presidente e cartas", icon: Layers, badge: "Armas", accent: "text-orange-400" },
-    { title: "Times & Elencos", subtitle: "Plantéis, ratings e artilheiros", icon: Users, badge: "10 Times", accent: "text-amber-300" },
+    { title: t.home.standings, subtitle: t.home.standingsSubtitle, icon: Table, badge: t.standings.live, accent: "text-amber-400" },
+    { title: t.ui.playoff, subtitle: t.home.simulationSubtitle, icon: GitMerge, badge: t.ui.bracket, accent: "text-yellow-400" },
+    { title: "12a0", subtitle: t.home.special, icon: Layers, badge: t.page.campaign.weapons, accent: "text-orange-400" },
+    { title: t.teams.league, subtitle: t.pages.teamsDescription, icon: Users, badge: t.common.theTenTeams, accent: "text-amber-300" },
   ]
 
   return (
@@ -34,27 +39,27 @@ export function HomeSkeleton() {
           <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full liquid-glass-pill mb-3">
             <KingsLeagueLogo width={16} height={20} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
             <span className="text-[11px] font-black tracking-wider uppercase text-white">
-              Kings League Brasil
+              {selectedLeague.name}
             </span>
             <div className="h-2.5 w-px bg-white/20" />
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">
-                Temporada Oficial
+                {t.home.officialSeason}
               </span>
             </div>
           </div>
 
           {/* Headline */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-center tracking-tight leading-tight mb-2">
-            <span className="text-white">Simulador </span>
+            <span className="text-white">{t.nav.simulator} </span>
             <span className="bg-gradient-to-r from-[var(--team-primary,#F4AF23)] via-amber-300 to-[var(--team-primary,#F4AF23)] bg-clip-text text-transparent">
               Kings League
             </span>
           </h1>
 
           <p className="text-xs sm:text-sm text-gray-400 text-center max-w-md mb-6 font-normal">
-            Simule partidas instantaneamente, preveja os playoffs e acesse as ferramentas oficiais.
+            {t.home.description}
           </p>
 
           {/* Micro-Simulator Skeleton */}
@@ -62,9 +67,9 @@ export function HomeSkeleton() {
             <div className="liquid-glass-gold p-4 sm:p-5 rounded-2xl relative overflow-hidden space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-amber-300 font-bold">
-                  Simulação Rápida
+                  {t.common.quickSimulation}
                 </span>
-                <span className="text-[10px] text-zinc-400 font-medium">1 Clique</span>
+                <span className="text-[10px] text-zinc-400 font-medium">{t.common.oneClick}</span>
               </div>
 
               {/* Matchup */}
@@ -101,10 +106,10 @@ export function HomeSkeleton() {
               <div className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Ferramentas Rápidas
+                  {t.home.quickTools}
                 </span>
               </div>
-              <span className="text-[11px] text-gray-500 font-medium">Acesso direto sem enrolação</span>
+              <span className="text-[11px] text-gray-500 font-medium">{t.home.directAccess}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -134,7 +139,7 @@ export function HomeSkeleton() {
                     </div>
 
                     <div className="mt-3 flex items-center text-[10px] font-bold text-[var(--team-primary,#F4AF23)] gap-1">
-                      <span>Abrir</span>
+                      <span>{t.home.open}</span>
                       <ChevronRight className="w-3 h-3" />
                     </div>
                   </div>
@@ -149,11 +154,11 @@ export function HomeSkeleton() {
               <div className="flex items-center gap-1.5">
                 <Crown className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                  Os 10 Times
+                  {t.common.theTenTeams}
                 </span>
               </div>
               <span className="text-xs font-bold text-[var(--team-primary,#F4AF23)] inline-flex items-center gap-1">
-                <span>Ver elencos</span>
+                <span>{t.common.viewRosters}</span>
                 <ArrowRight className="w-3 h-3" />
               </span>
             </div>

@@ -1,7 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Calendar } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 export function MatchesTableSkeleton() {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-2.5 sm:space-y-3">
       {/* Header da Seção de Jogos */}
@@ -13,7 +16,7 @@ export function MatchesTableSkeleton() {
           <div className="flex items-center gap-2 min-w-0">
             <Skeleton className="h-4 sm:h-5 w-24 bg-white/10 rounded-md" />
             <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-zinc-900/60 text-zinc-400 border border-zinc-800 flex-shrink-0">
-              5 Jogos
+              {t.matches.fiveMatches}
             </span>
           </div>
         </div>
