@@ -6,15 +6,20 @@ import {
   createErrorResponse,
   createOptionsHandler,
   COMPETITION_ID,
+  SEASON_ID,
   KINGS_LEAGUE_SIMPLE_HEADERS,
   type KingsLeagueSeasonResponse,
   type KingsLeagueMatchCenterResponse,
   type KingsLeagueRound,
+  type KingsLeagueTurn,
   type KingsLeagueMatch,
   type KingsLeaguePhase,
   type KingsLeagueGroup,
   type KingsLeagueGroupTeam,
 } from "@/lib/api"
+import { AVAILABLE_LEAGUES } from "@/app/api/competitions/route"
+import { isPlayoffRoundName } from "@/lib/league-format"
+import { getKingsCupBrazil2026MockRounds, getKingsCupBrazil2026MockStandings } from "@/lib/mock-kings-cup-brazil-2026-schedule"
 // Tipos auxiliares para dados internos
 interface ApiStanding {
   team: {
@@ -84,14 +89,39 @@ function transformMatch(match: KingsLeagueMatch): Match {
 /**
  * Transforma dados de rodada da API externa para o formato interno
  */
-function transformRound(round: KingsLeagueRound): Round {
+function transformRound(round: KingsLeagueRound | KingsLeagueTurn): Round {
+  const source = round as KingsLeagueRound & KingsLeagueTurn
   return {
-    id: round.id,
-    name: round.turnName.replace("Jornada", "Rodada"),
-    ended: !!round.ended,
-    startDate: round.startDate,
-    finishDate: round.finishDate,
-    matches: Array.isArray(round.matches) ? round.matches.map(transformMatch) : [],
+    id: source.id,
+    name: (source.turnName || source.name || `Rodada ${source.shortName || source.id}`).replace("Jornada", "Rodada"),
+    ended: !!source.ended,
+    startDate: source.startDate || source.start || "",
+    finishDate: source.finishDate || source.finish || "",
+    matches: Array.isArray(source.matches) ? source.matches.map(transformMatch) : [],
+  }
+}
+
+function isRegularRoundName(value: unknown): boolean {
+  const name = String(value || "").trim().toLowerCase()
+  if (!name) return true
+  if (/^(r|rodada|jornada)\s*[a-z]?$/i.test(name)) return false
+  return !isPlayoffRoundName(name)
+}
+
+function isPlayInRoundName(value: unknown): boolean {
+  return /(play-?in|repescagem)/i.test(String(value || "").trim())
+}
+
+function mergeRounds(existing: Round, incoming: Round): Round {
+  const matchesById = new Map(existing.matches.map((match) => [match.id, match]))
+  incoming.matches.forEach((match) => {
+    const previous = matchesById.get(match.id)
+    matchesById.set(match.id, previous ? { ...previous, ...match, scores: { ...previous.scores, ...match.scores } } : match)
+  })
+  return {
+    ...existing,
+    ...incoming,
+    matches: Array.from(matchesById.values()),
   }
 }
 
@@ -155,14 +185,14 @@ function extractStandingsFromGroup(
 /**
  * Busca dados atualizados de partidas específicas
  */
-async function fetchOfficialMatchData(matchIds: number[]): Promise<Map<number, OfficialMatchData>> {
+async function fetchOfficialMatchData(matchIds: number[], compId?: string): Promise<Map<number, OfficialMatchData>> {
   const officialById = new Map<number, OfficialMatchData>()
   const batches = chunk(matchIds, 10)
 
   for (const batch of batches) {
     const promises = batch.map(async (id) => {
       try {
-        const url = `/competition/matches/${id}?live=true&competitionId=${COMPETITION_ID}`
+        const url = `/competition/matches/${id}?live=true&competitionId=${compId || COMPETITION_ID}`
         const json = await fetchFromKingsLeague<any>(url, {
           noCache: true,
         })
@@ -287,15 +317,93 @@ function getMatchIdsNeedingUpdate(rounds: Round[]): number[] {
 
 export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const seasonId = searchParams.get("seasonId") || undefined
+    const competitionId = searchParams.get("competitionId") || undefined
+    const effectiveCompetitionId = competitionId || String(COMPETITION_ID)
+    const configuredLeague = AVAILABLE_LEAGUES.find(
+      (league) => String(league.competitionId) === String(effectiveCompetitionId)
+    )
+    const effectiveSeasonId = seasonId || String(configuredLeague?.activeSeasonId || SEASON_ID)
+    const configuredSeason = configuredLeague?.seasons.find(
+      (season) => String(season.id) === String(effectiveSeasonId)
+    )
+
     // Busca dados da temporada, partidas e lista oficial de times em paralelo
-    const [seasonData, matchesData, seasonTeams] = await Promise.all([
-      kingsLeagueApi.getSeasonData(),
-      kingsLeagueApi.getMatchCenterData(),
-      kingsLeagueApi.getSeasonTeams().catch(() => []),
+    const [seasonData, matchesData, initialSeasonTeams] = await Promise.all([
+      kingsLeagueApi.getSeasonData(effectiveSeasonId, effectiveCompetitionId),
+      kingsLeagueApi.getMatchCenterData(effectiveSeasonId, effectiveCompetitionId),
+      kingsLeagueApi.getSeasonTeams(effectiveSeasonId, effectiveCompetitionId).catch(() => []),
     ])
+    let seasonTeams = initialSeasonTeams
+
+    // A Kings Cup ainda pode não listar seus times mesmo com as equipes da liga
+    // já definidas. Reaproveita os escudos da temporada anterior para o mock.
+    if (String(effectiveCompetitionId) === "17" && String(effectiveSeasonId) === "69") {
+      const currentTeams = Array.isArray(seasonTeams)
+        ? seasonTeams
+        : (seasonTeams as any)?.teams ?? []
+
+      if (currentTeams.length < 10) {
+        const previousTeamsResponse = await kingsLeagueApi.getSeasonTeams("61", "17").catch(() => [])
+        const previousSeasonTeams = Array.isArray(previousTeamsResponse)
+          ? previousTeamsResponse
+          : (previousTeamsResponse as any)?.teams ?? []
+        if (previousSeasonTeams.length >= 10) {
+          seasonTeams = previousSeasonTeams
+        }
+      }
+    }
 
     // Transforma rodadas (aceita matchesData vazio/undefined)
     let rounds: Round[] = Array.isArray(matchesData) ? matchesData.map(transformRound) : []
+
+    // Algumas respostas da API entregam as rodadas completas apenas dentro
+    // de phases[].groups[].turns. Mescla essa fonte sem duplicar partidas.
+    const phaseTurns = (seasonData?.phases || [])
+      .flatMap((phase) => phase.groups || [])
+      .flatMap((group) => group.turns || [])
+      .filter((turn) => Array.isArray(turn.matches))
+
+    const regularTurns = (seasonData?.phases || [])
+      .filter((phase) => !isPlayoffRoundName(`${phase.name || ""} ${phase.displayName || ""}`) && !/(knockout|mata-?mata|postseason)/i.test(`${phase.name || ""} ${phase.displayName || ""}`))
+      .flatMap((phase) => phase.groups || [])
+      .flatMap((group) => group.turns || [])
+      .filter((turn) => Array.isArray(turn.matches))
+      .filter((turn) => isRegularRoundName(turn.turnName || turn.name))
+      .map((turn) => transformRound(turn))
+
+    const playInRoundsByKey = new Map<string, Round>()
+    const allCandidateRounds = [
+      ...(Array.isArray(matchesData) ? matchesData : []),
+      ...phaseTurns,
+    ].map(transformRound)
+    allCandidateRounds
+      .filter((round) => isPlayInRoundName(round.name))
+      .forEach((round) => {
+        const key = `playin-${round.id}-${round.name.toLowerCase()}`
+        const existing = playInRoundsByKey.get(key)
+        playInRoundsByKey.set(key, existing ? mergeRounds(existing, round) : round)
+      })
+
+    const roundsByKey = new Map<string, Round>()
+    for (const round of [...rounds, ...regularTurns]) {
+      if (!isRegularRoundName(round.name)) continue
+      const normalizedName = round.name
+        .toLowerCase()
+        .replace(/jornada/g, "rodada")
+        .replace(/\s+/g, " ")
+        .trim()
+      const roundNumber = normalizedName.match(/\d+/)?.[0]
+      const key = roundNumber ? `round-${roundNumber}` : `name-${normalizedName}`
+      const existing = roundsByKey.get(key)
+      roundsByKey.set(key, existing ? mergeRounds(existing, round) : round)
+    }
+    rounds = Array.from(roundsByKey.values()).sort((a, b) => {
+      const roundA = Number(a.name.match(/\d+/)?.[0] || a.id)
+      const roundB = Number(b.name.match(/\d+/)?.[0] || b.id)
+      return roundA - roundB
+    })
 
     // Encontra fases (aceita nomes em inglês ou traduzidos)
     const isGroupPhase = (p: KingsLeaguePhase) => {
@@ -307,7 +415,7 @@ export async function GET(request: Request) {
     const isPlayoffsPhase = (p: KingsLeaguePhase) => {
       const name = String(p.name || "").toLowerCase()
       const display = String((p as any).displayName || "").toLowerCase()
-      return name.includes("playoff") || name.includes("playoffs") || display.includes("playoff") || display.includes("playoffs")
+      return isPlayoffRoundName(`${name} ${display}`) || /(knockout|mata-?mata|postseason)/i.test(`${name} ${display}`)
     }
 
     let groupStagePhase = seasonData?.phases?.find(isGroupPhase)
@@ -391,6 +499,22 @@ export async function GET(request: Request) {
       })
     }
 
+    // Agenda provisória da Kings Cup Brazil (temporada 69). Assim que a API
+    // disponibilizar qualquer partida oficial, ela passa a ser a fonte usada.
+    if (
+      String(effectiveCompetitionId) === "17" &&
+      String(effectiveSeasonId) === "69" &&
+      rounds.every((round) => round.matches.length === 0)
+    ) {
+      const mockRounds = getKingsCupBrazil2026MockRounds(effectiveSeasonId || "", Object.values(teamsMap))
+      if (mockRounds) rounds = mockRounds
+
+      if (aggregatedStandings.length === 0) {
+        const mockStandings = getKingsCupBrazil2026MockStandings(effectiveSeasonId || "", Object.values(teamsMap))
+        if (mockStandings) aggregatedStandings.push(...mockStandings)
+      }
+    }
+
     // Consolida standings para evitar duplicatas
     const standingsMap: Record<string, TeamStanding> = {}
     aggregatedStandings.forEach((st) => {
@@ -402,24 +526,38 @@ export async function GET(request: Request) {
 
     const leagueData: LeagueData = {
       id: seasonData?.id ?? 0,
-      name: seasonData?.name ?? "",
-      displayName: seasonData?.displayName ?? "",
+      name: configuredSeason?.name ?? seasonData?.name ?? "",
+      displayName: configuredSeason?.displayName ?? seasonData?.displayName ?? "",
       teams: Object.values(teamsMap),
       standings: Object.values(standingsMap),
       rounds,
+      playInRounds: Array.from(playInRoundsByKey.values()),
     }
 
     // Extrai turnos dos playoffs
-    let playoffsTurns: unknown[] = []
-    if (playoffsPhase?.groups?.[0]?.turns) {
-      playoffsTurns = playoffsPhase.groups[0].turns
-    }
+    const playoffTurnSources = (seasonData?.phases || [])
+      .flatMap((phase) => [
+        ...(Array.isArray((phase as any).turns) ? (phase as any).turns : []),
+        ...(phase.groups || []).flatMap((group) => group.turns || []),
+      ])
+      .filter((turn) => Array.isArray(turn.matches))
+      .filter((turn) => isPlayoffRoundName(turn.turnName || turn.name || turn.displayName))
+
+    // Algumas competições expõem os turnos diretamente na fase; outras os
+    // colocam em groups[]. A união evita perder placares oficiais do México.
+    const fallbackPlayoffTurns = playoffsPhase
+      ? [
+        ...(Array.isArray((playoffsPhase as any).turns) ? (playoffsPhase as any).turns : []),
+        ...(playoffsPhase.groups || []).flatMap((group) => group.turns || []),
+      ]
+      : []
+    const playoffsTurns = playoffTurnSources.length > 0 ? playoffTurnSources : fallbackPlayoffTurns
 
     // Busca e mescla dados oficiais APENAS para partidas ativamente em andamento (ao vivo)
     try {
       const matchIdsToFetch = getMatchIdsNeedingUpdate(rounds)
       if (matchIdsToFetch.length > 0) {
-        const officialById = await fetchOfficialMatchData(matchIdsToFetch)
+        const officialById = await fetchOfficialMatchData(matchIdsToFetch, effectiveCompetitionId)
         rounds = mergeOfficialData(rounds, officialById)
       }
     } catch {
