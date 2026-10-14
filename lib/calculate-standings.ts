@@ -195,16 +195,35 @@ export function calculateStandings(
   // Montar standings por grupo tomando os totais globais para cada time que pertence ao grupo
   const standingsByGroup: Record<string, TeamStanding[]> = {}
 
-  Object.entries(groupMatches).forEach(([group, groupRounds]) => {
+  const standingsGroups = hasTwoGroups
+    ? ["A", "B"]
+    : Array.from(new Set(initialStandings.map((s) => (s as any).groupName || (s as any).group).filter(Boolean)))
+  const targetGroups = standingsGroups.length > 0
+    ? standingsGroups.filter((g) => String(g).toLowerCase() !== "challenger")
+    : ["Regular"]
+
+  targetGroups.forEach((group) => {
     const teamIds = new Set<string>()
-    groupRounds.forEach((r) => r.matches.forEach((m) => {
-      teamIds.add(m.participants.homeTeamId)
-      teamIds.add(m.participants.awayTeamId)
-    }))
-    // também adicionar times que o initialStandings declara pertencer ao grupo
+
+    // Times que o initialStandings declara pertencer ao grupo
     initialStandings.forEach((s) => {
-      const g = hasTwoGroups ? ((s as any).groupName || (s as any).group || '') : "Regular"
+      const g = hasTwoGroups ? ((s as any).groupName || (s as any).group || "") : "Regular"
       if (String(g) === group) teamIds.add(s.id)
+    })
+
+    // Times identificados pelas partidas do grupo
+    rounds.forEach((r) => {
+      r.matches.forEach((m) => {
+        if (hasTwoGroups) {
+          if (m.groupName === group) {
+            teamIds.add(m.participants.homeTeamId)
+            teamIds.add(m.participants.awayTeamId)
+          }
+        } else {
+          teamIds.add(m.participants.homeTeamId)
+          teamIds.add(m.participants.awayTeamId)
+        }
+      })
     })
 
     const list: TeamStanding[] = []
