@@ -6,6 +6,7 @@ import { AlertCircle, RefreshCw, Home, Bug } from "lucide-react"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 export interface ErrorStateProps {
   title?: string
@@ -23,10 +24,15 @@ export function ErrorState({
   homeHref = "/",
 }: ErrorStateProps) {
   const [isRetrying, setIsRetrying] = useState(false)
+  const { t } = useLocale()
 
-  const isNotFound = typeof error === "string" && error.toLowerCase().includes("não encontrado")
-  const displayTitle = title || (isNotFound ? "Item não encontrado" : "Falha ao carregar dados")
-  const displayMessage = error || "Não foi possível carregar as informações necessárias no momento."
+  const isNotFound =
+    typeof error === "string" &&
+    (error.toLowerCase().includes("não encontrado") ||
+      error.toLowerCase().includes("not found") ||
+      error.toLowerCase().includes("no encontrado"))
+  const displayTitle = title || (isNotFound ? t.errors.notFound : t.errors.load)
+  const displayMessage = error || t.errors.message
 
   const handleRetry = () => {
     if (!onRetry) return
@@ -50,7 +56,7 @@ export function ErrorState({
         {/* Status Pill Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-6 text-[11px] font-semibold uppercase tracking-wider text-amber-400/90 border border-amber-400/20">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-          {isNotFound ? "Consulta Indisponível" : "Instabilidade Temporária"}
+          {isNotFound ? t.errors.unavailable : t.errors.temporary}
         </div>
 
         {/* Minimal Liquid Icon */}
@@ -75,7 +81,7 @@ export function ErrorState({
               className="w-full sm:w-auto h-11 px-5 rounded-xl bg-gradient-to-r from-[var(--team-primary,#F4AF23)] to-amber-500 hover:from-amber-400 hover:to-[var(--team-primary,#F4AF23)] text-zinc-950 font-bold shadow-lg shadow-amber-500/10 transition-transform duration-150 btn-press disabled:opacity-70"
             >
               <RefreshCw className={cn("w-4 h-4 mr-2", isRetrying && "animate-spin")} aria-hidden="true" />
-              {isRetrying ? "Recarregando..." : "Tentar novamente"}
+              {isRetrying ? t.common.reloading : t.common.retry}
             </Button>
           )}
 
@@ -86,7 +92,7 @@ export function ErrorState({
           >
             <Link href={homeHref} className="flex items-center justify-center gap-2">
               <Home className="w-4 h-4" aria-hidden="true" />
-              <span>Início</span>
+              <span>{t.common.home}</span>
             </Link>
           </Button>
         </div>
@@ -97,7 +103,7 @@ export function ErrorState({
             <details className="group text-left">
               <summary className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors duration-150 select-none">
                 <Bug className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Detalhes técnicos</span>
+                <span>{t.common.technicalDetails}</span>
               </summary>
               <div className="mt-2.5 relative">
                 <pre className="p-3 rounded-xl bg-black/40 border border-white/5 text-[11px] font-mono text-zinc-400 overflow-x-auto scrollbar-minimal max-h-28 text-left leading-normal whitespace-pre-wrap break-all">
