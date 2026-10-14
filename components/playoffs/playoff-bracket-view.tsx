@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { PlayoffBracket, Team } from "@/types/kings-league";
+import { PlayoffBracket, PlayoffMatch, Team } from "@/types/kings-league";
 import { PlayoffMatchCard } from "./playoff-match-card";
 import { ChampionBanner } from "./champion-banner";
-import { updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
+import { isMexicoQuarterfinalsLocked, isPlayoffMatchFinished, updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
 import { Info } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useLocale } from "@/contexts/locale-context";
 
 
 interface PlayoffBracketViewProps {
@@ -11,9 +13,11 @@ interface PlayoffBracketViewProps {
   teams: Record<string, Team>;
   onBracketUpdate: (updatedBracket: PlayoffBracket) => void;
   hasTwoGroups?: boolean;
+  leagueId?: string;
 }
 
-export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGroups = false }: PlayoffBracketViewProps) {
+export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGroups = false, leagueId }: PlayoffBracketViewProps) {
+  const { t } = useLocale();
   const [localBracket, setLocalBracket] = useState<PlayoffBracket | null>(bracket ?? null);
 
   useEffect(() => setLocalBracket(bracket ?? null), [bracket]);
@@ -22,12 +26,17 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
   if (!localBracket) {
     return (
       <div className="p-4 text-sm text-muted-foreground">
-        Bracket não disponível
+        {t.playoffs.notAvailable}
       </div>
     );
   }
 
   const quarterfinals = useMemo(() => localBracket.quarterfinals || [], [localBracket]);
+  const playInRounds = useMemo(() => {
+    const rounds = localBracket.playInRounds?.filter((round) => round.length > 0) || [];
+    return rounds.length > 0 ? rounds : (localBracket.playIns?.length ? [localBracket.playIns] : []);
+  }, [localBracket]);
+  const hasPlayIn = playInRounds.length > 0;
   const semifinals = useMemo(() => localBracket.semifinals || [], [localBracket]);
   const finalMatch = useMemo(() => localBracket.final || null, [localBracket]);
 
@@ -35,19 +44,14 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
   const handleWinnerSelect = (matchId: string, winner: "home" | "away" | null) => {
     // Partidas já encerradas oficialmente não podem ter vencedor alterado
     const allMatches = [
+      ...(localBracket?.playIns || []),
       ...(localBracket?.quarterfinals || []),
       ...(localBracket?.semifinals || []),
       ...(localBracket?.final ? [localBracket.final] : [])
     ];
     const target = allMatches.find(m => m.id === matchId);
-    if (
-      target && (
-        target.status === "ended" ||
-        target.status?.toLowerCase() === "ended" ||
-        target.status?.toLowerCase() === "finished" ||
-        (target.homeScore !== null && target.awayScore !== null && target.homeScore !== undefined && target.awayScore !== undefined)
-      )
-    ) {
+    if (isMexicoQuarterfinalsLocked(localBracket, matchId, leagueId)) return;
+    if (target && isPlayoffMatchFinished(target)) {
       return;
     }
 
@@ -61,7 +65,7 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
     const homeScore = winner === "home" ? 2 : 1;
     const awayScore = winner === "away" ? 2 : 1;
     try {
-      const updated = updatePlayoffBracket(localBracket, matchId, homeScore, awayScore, null, null);
+      const updated = updatePlayoffBracket(localBracket, matchId, homeScore, awayScore, null, null, leagueId);
       setLocalBracket(updated);
       onBracketUpdate(updated);
     } catch (err) {
@@ -72,6 +76,19 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
 
   // Campeão
   const champion = finalMatch && finalMatch.winnerId ? teams[finalMatch.winnerId] : null;
+  const columns = [
+    ...playInRounds.map((matches, roundIndex) => ({
+      title: t.playoffs.playIn,
+      matches,
+      stage: "playin" as const,
+      playInRound: roundIndex,
+    })),
+    { title: t.playoffs.quarterfinals, matches: quarterfinals, stage: "quarterfinal" as const },
+    { title: t.playoffs.semifinals, matches: semifinals, stage: "semifinal" as const },
+    { title: t.playoffs.grandFinal, matches: finalMatch ? [finalMatch] : [], stage: "final" as const },
+  ];
+  const quarterfinalColumnIndex = playInRounds.length;
+  const semifinalColumnIndex = quarterfinalColumnIndex + 1;
 
   return (
     <div className="w-full">
@@ -84,151 +101,108 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
         />
       )}
 
-      {/* Mobile scroll hint */}
-      <div className="flex md:hidden items-center justify-between px-1 pb-2 text-[10px] text-zinc-400 select-none">
-        <span className="font-semibold uppercase tracking-wider text-zinc-500">Chaveamento Eliminatório</span>
-        <span className="flex items-center gap-1 text-[var(--team-primary,#F4AF23)] font-semibold">
-          Deslize para ver tudo →
-        </span>
-      </div>
-
-      {/* Bracket grid com linhas e headers de fase */}
-      <div className="relative overflow-x-auto pb-4 scrollbar-minimal">
-        {/* Headers das fases */}
-        <div className="grid grid-cols-[1fr,24px,1fr,24px,1fr] sm:grid-cols-[1fr,36px,1fr,36px,1fr] min-w-[760px] lg:min-w-0 mb-3 px-1">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/80">
-            <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Quartas de Final</span>
-            <span className="text-[10px] text-zinc-500 font-mono">6 Times</span>
-          </div>
-          <div className="flex items-center justify-center pb-2 border-b border-zinc-800/80 text-zinc-600 text-xs select-none">
-            →
-          </div>
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/80">
-            <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Semifinais</span>
-            <span className="text-[10px] text-[var(--team-primary)] font-semibold">1º colocado entra</span>
-          </div>
-          <div className="flex items-center justify-center pb-2 border-b border-zinc-800/80 text-zinc-600 text-xs select-none">
-            →
-          </div>
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/80">
-            <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Grande Final</span>
-            <span className="text-[10px] text-[var(--team-primary)] font-bold">Decisão</span>
-          </div>
-        </div>
-
-        {/* Grid com 6 linhas exatas e 5 colunas (Partidas + Conectores contínuos) */}
-        <div className="grid grid-cols-[1fr,24px,1fr,24px,1fr] sm:grid-cols-[1fr,36px,1fr,36px,1fr] grid-rows-6 min-w-[760px] lg:min-w-0 min-h-[460px] sm:min-h-[500px] gap-y-3">
-          {/* Quartas 1: 4º vs 5º (Linhas 1-2) */}
-          <div className="col-start-1 row-start-1 row-span-2 flex items-center">
-            {quarterfinals[0] && (
-              <PlayoffMatchCard
-                match={quarterfinals[0]}
-                teams={teams}
-                onWinnerSelect={handleWinnerSelect}
-                selectedWinner={quarterfinals[0].winnerId ? (quarterfinals[0].winnerId === quarterfinals[0].homeTeamId ? "home" : "away") : null}
-                stage="quarterfinal"
-                isLive={Boolean(quarterfinals[0].homeScore !== null || quarterfinals[0].awayScore !== null) && !quarterfinals[0].winnerId}
-                hasTwoGroups={hasTwoGroups}
+      <div className="w-full pb-4">
+        <div className={cn(
+          "relative grid w-full grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:items-start lg:gap-0",
+          playInRounds.length === 2
+            ? "lg:grid-cols-[repeat(5,minmax(180px,1fr))]"
+            : playInRounds.length === 1
+              ? "lg:grid-cols-[repeat(4,minmax(190px,1fr))]"
+              : "lg:grid-cols-[repeat(3,minmax(220px,1fr))]"
+        )}>
+          {columns.map((column, index) => (
+              <section key={`${column.title}-${index}`} className="relative z-10 flex min-w-0 flex-col items-center lg:px-2">
+                <div className="flex min-h-8 w-full items-start justify-center gap-2 border-b border-zinc-800/80 pb-3 text-center">
+                  <span className="min-w-0 text-[11px] font-bold uppercase leading-tight tracking-wider text-zinc-300">{column.title}</span>
+                  <span className="shrink-0 text-[10px] leading-tight text-zinc-500">{column.matches.length || "—"}</span>
+                </div>
+                <div className="relative h-[600px] w-full">
+                  {column.matches.map((match) => (
+                    <div
+                      key={match.id}
+                      className={cn(
+                        "absolute inset-x-0 flex justify-center",
+                        column.stage === "playin" && (
+                          playInRounds.length === 2
+                            ? ((column as { playInRound?: number }).playInRound === 0
+                              ? (match.order === 1 ? "top-[48px]" : "top-[348px]")
+                              : "top-[198px]")
+                            : (match.order === 1 ? "top-[48px]" : match.order === 2 ? "top-[248px]" : "top-[448px]")
+                        ),
+                        column.stage === "quarterfinal" && (
+                          match.id === "qf1"
+                            ? "top-[48px]"
+                            : match.id === "qf2"
+                              ? "top-[248px]"
+                              : "top-[448px]"
+                        ),
+                        column.stage === "semifinal" && (match.id === "sf1" ? "top-[48px]" : "top-[348px]"),
+                        column.stage === "final" && "top-[198px]"
+                      )}
+                    >
+                      <PlayoffMatchCard
+                        match={match}
+                        teams={teams}
+                        onWinnerSelect={handleWinnerSelect}
+                        selectedWinner={match.winnerId ? (match.winnerId === match.homeTeamId ? "home" : "away") : null}
+                        stage={column.stage}
+                        isLive={Boolean(match.homeScore !== null || match.awayScore !== null) && !match.winnerId}
+                        hasTwoGroups={hasTwoGroups}
+                        isLocked={isMexicoQuarterfinalsLocked(localBracket, match.id, leagueId)}
+                      />
+                    </div>
+                  ))}
+                </div>
+            </section>
+          ))}
+          {playInRounds.slice(0, -1).map((round, index) => (
+            <div
+              key={`playin-connector-${index}`}
+              className="pointer-events-none absolute top-8 z-0 hidden h-[632px] lg:block"
+              style={{ left: `${((index + 1) / columns.length) * 100}%`, width: "2rem", transform: "translateX(-50%)" }}
+              aria-hidden="true"
+            >
+              <PlayInConnector
+                firstWinner={Boolean(round[0]?.winnerId)}
+                secondWinner={Boolean(round[1]?.winnerId)}
+                nextReady={Boolean(playInRounds[index + 1]?.[0]?.homeTeamId && playInRounds[index + 1]?.[0]?.awayTeamId)}
               />
-            )}
-          </div>
-
-          {/* Quartas 2: 3º vs 6º (Linhas 3-4) */}
-          <div className="col-start-1 row-start-3 row-span-2 flex items-center">
-            {quarterfinals[1] && (
-              <PlayoffMatchCard
-                match={quarterfinals[1]}
-                teams={teams}
-                onWinnerSelect={handleWinnerSelect}
-                selectedWinner={quarterfinals[1].winnerId ? (quarterfinals[1].winnerId === quarterfinals[1].homeTeamId ? "home" : "away") : null}
-                stage="quarterfinal"
-                isLive={Boolean(quarterfinals[1].homeScore !== null || quarterfinals[1].awayScore !== null) && !quarterfinals[1].winnerId}
-                hasTwoGroups={hasTwoGroups}
+            </div>
+          ))}
+          {hasPlayIn && (
+            <div
+              className="pointer-events-none absolute top-8 z-0 hidden h-[632px] lg:block"
+              style={{ left: `${(quarterfinalColumnIndex / columns.length) * 100}%`, width: "2rem", transform: "translateX(-50%)" }}
+              aria-hidden="true"
+            >
+              <PlayInToQuarterConnector
+                matches={playInRounds[playInRounds.length - 1]}
+                quarterfinals={quarterfinals}
               />
-            )}
-          </div>
-
-          {/* Quartas 3: 2º vs 7º (Linhas 5-6) */}
-          <div className="col-start-1 row-start-5 row-span-2 flex items-center">
-            {quarterfinals[2] && (
-              <PlayoffMatchCard
-                match={quarterfinals[2]}
-                teams={teams}
-                onWinnerSelect={handleWinnerSelect}
-                selectedWinner={quarterfinals[2].winnerId ? (quarterfinals[2].winnerId === quarterfinals[2].homeTeamId ? "home" : "away") : null}
-                stage="quarterfinal"
-                isLive={Boolean(quarterfinals[2].homeScore !== null || quarterfinals[2].awayScore !== null) && !quarterfinals[2].winnerId}
-                hasTwoGroups={hasTwoGroups}
-              />
-            )}
-          </div>
-
-          {/* Conector 1: Quartas -> Semifinais (Linhas 1-6 contínuas) */}
-          <div className="col-start-2 row-start-1 row-span-6 relative w-full h-full py-1">
+            </div>
+          )}
+          <div
+            className="pointer-events-none absolute top-8 z-0 hidden h-[632px] lg:block"
+            style={{ left: `${((quarterfinalColumnIndex + 1) / columns.length) * 100}%`, width: "2rem", transform: "translateX(-50%)" }}
+            aria-hidden="true"
+          >
             <QuarterToSemiConnector
               qf1Winner={Boolean(quarterfinals[0]?.winnerId)}
               qf2Winner={Boolean(quarterfinals[1]?.winnerId)}
               qf3Winner={Boolean(quarterfinals[2]?.winnerId)}
-              sf2Ready={Boolean(quarterfinals[1]?.winnerId && quarterfinals[2]?.winnerId)}
+              sf2Ready={Boolean(semifinals[1]?.homeTeamId && semifinals[1]?.awayTeamId)}
             />
           </div>
-
-          {/* Semifinal 1: 1º vs Venc. QF1 (Linhas 1-2, alinhada com QF1) */}
-          <div className="col-start-3 row-start-1 row-span-2 flex items-center">
-            {semifinals[0] && (
-              <PlayoffMatchCard
-                match={semifinals[0]}
-                teams={teams}
-                onWinnerSelect={handleWinnerSelect}
-                selectedWinner={semifinals[0].winnerId ? (semifinals[0].winnerId === semifinals[0].homeTeamId ? "home" : "away") : null}
-                stage="semifinal"
-                isLive={Boolean(semifinals[0].homeScore !== null || semifinals[0].awayScore !== null) && !semifinals[0].winnerId}
-                hasTwoGroups={hasTwoGroups}
-              />
-            )}
-          </div>
-
-          {/* Semifinal 2: Venc. QF2 vs Venc. QF3 (Linhas 4-5, centralizada entre QF2 e QF3) */}
-          <div className="col-start-3 row-start-4 row-span-2 flex items-center">
-            {semifinals[1] && (
-              <PlayoffMatchCard
-                match={semifinals[1]}
-                teams={teams}
-                onWinnerSelect={handleWinnerSelect}
-                selectedWinner={semifinals[1].winnerId ? (semifinals[1].winnerId === semifinals[1].homeTeamId ? "home" : "away") : null}
-                stage="semifinal"
-                isLive={Boolean(semifinals[1].homeScore !== null || semifinals[1].awayScore !== null) && !semifinals[1].winnerId}
-                hasTwoGroups={hasTwoGroups}
-              />
-            )}
-          </div>
-
-          {/* Conector 2: Semifinais -> Grande Final (Linhas 1-6 contínuas) */}
-          <div className="col-start-4 row-start-1 row-span-6 relative w-full h-full py-1">
+          <div
+            className="pointer-events-none absolute top-8 z-0 hidden h-[632px] lg:block"
+            style={{ left: `${((semifinalColumnIndex + 1) / columns.length) * 100}%`, width: "2rem", transform: "translateX(-50%)" }}
+            aria-hidden="true"
+          >
             <SemiToFinalConnector
               sf1Winner={Boolean(semifinals[0]?.winnerId)}
               sf2Winner={Boolean(semifinals[1]?.winnerId)}
-              finalReady={Boolean(semifinals[0]?.winnerId && semifinals[1]?.winnerId)}
+              finalReady={Boolean(finalMatch?.homeTeamId && finalMatch?.awayTeamId)}
             />
-          </div>
-
-          {/* Grande Final (Linhas 2-4, centralizada entre SF1 e SF2) */}
-          <div className="col-start-5 row-start-2 row-span-3 flex items-center">
-            {finalMatch ? (
-              <PlayoffMatchCard
-                match={finalMatch}
-                teams={teams}
-                onWinnerSelect={handleWinnerSelect}
-                selectedWinner={finalMatch.winnerId ? (finalMatch.winnerId === finalMatch.homeTeamId ? "home" : "away") : null}
-                stage="final"
-                isLive={Boolean(finalMatch.homeScore !== null || finalMatch.awayScore !== null) && !finalMatch.winnerId}
-                hasTwoGroups={hasTwoGroups}
-              />
-            ) : (
-              <div className="w-full rounded-2xl border border-zinc-800 bg-[#09090d]/60 backdrop-blur-md p-6 text-center text-xs text-zinc-500">
-                Aguardando definição das semifinais
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -238,11 +212,108 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
         <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-[#09090d]/60 backdrop-blur-md px-4 py-3 text-xs text-zinc-400">
           <Info className="h-4 w-4 text-[var(--team-primary)] flex-shrink-0" />
           <span>
-            Clique no seletor de vencedor (<strong>1</strong> ou <strong>2</strong>) de cada jogo para avançar o time na chave. {hasTwoGroups ? "O chaveamento segue a classificação dos grupos." : "O 1º colocado avança diretamente à Semifinal 1, enquanto os times classificados de 2º a 7º disputam as Quartas de Final."}
+            {t.playoffs.instructions} {hasTwoGroups ? t.playoffs.instructionsGroups : hasPlayIn ? t.playoffs.instructionsPlayIn : t.playoffs.instructionsStandard}
           </span>
         </div>
       </div>
     </div>
+  );
+}
+
+interface PlayInConnectorProps {
+  firstWinner: boolean;
+  secondWinner: boolean;
+  nextReady: boolean;
+}
+
+function PlayInConnector({ firstWinner, secondWinner, nextReady }: PlayInConnectorProps) {
+  return (
+    <svg
+      className="h-full w-full overflow-visible"
+      viewBox="0 0 40 600"
+      preserveAspectRatio="none"
+      fill="none"
+    >
+      <path
+        d="M 0 100 H 14 Q 20 100 20 106 V 244 Q 20 250 26 250 H 38"
+        stroke={firstWinner ? "#F4AF23" : "rgba(255,255,255,0.18)"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <path
+        d="M 0 400 H 14 Q 20 400 20 394 V 256 Q 20 250 26 250 H 38"
+        stroke={secondWinner ? "#F4AF23" : "rgba(255,255,255,0.18)"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <circle
+        cx="38"
+        cy="250"
+        r="2.5"
+        fill={nextReady || firstWinner || secondWinner ? "#F4AF23" : "rgba(255,255,255,0.3)"}
+      />
+    </svg>
+  );
+}
+
+function PlayInToQuarterConnector({
+  matches,
+  quarterfinals,
+}: {
+  matches: PlayoffMatch[];
+  quarterfinals: PlayoffMatch[];
+}) {
+  const sourcePositions = matches.length === 1
+    ? [250]
+    : matches.length === 2
+      ? [100, 400]
+      : [100, 300, 500];
+  const targetPositions = matches.length === 1
+    ? [100]
+    : matches.length === 2
+      ? [100, 500]
+      : [100, 300, 500];
+
+  return (
+    <svg
+      className="h-full w-full overflow-visible"
+      viewBox="0 0 40 600"
+      preserveAspectRatio="none"
+      fill="none"
+    >
+      {matches.map((match, index) => {
+        const sourceY = sourcePositions[index] ?? sourcePositions[sourcePositions.length - 1];
+        const targetY = targetPositions[index] ?? targetPositions[targetPositions.length - 1];
+        const targetMatch = index === 1 && matches.length === 2
+          ? quarterfinals.find((quarterfinal) => quarterfinal.id === "qf4")
+          : quarterfinals[index];
+        const isActive = Boolean(match.winnerId);
+        const isReady = Boolean(targetMatch?.homeTeamId && targetMatch?.awayTeamId);
+
+        return (
+          <g key={match.id}>
+            <path
+              d={sourceY === targetY
+                ? `M 0 ${sourceY} H 38`
+                : `M 0 ${sourceY} H 14 Q 20 ${sourceY} 20 ${sourceY + (targetY > sourceY ? 6 : -6)} V ${targetY + (targetY > sourceY ? -6 : 6)} Q 20 ${targetY} 26 ${targetY} H 38`}
+              stroke={isActive ? "#F4AF23" : "rgba(255,255,255,0.18)"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+            <circle
+              cx="38"
+              cy={targetY}
+              r="2.5"
+              fill={isReady || isActive ? "#F4AF23" : "rgba(255,255,255,0.3)"}
+            />
+          </g>
+        );
+      })}
+    </svg>
   );
 }
 
@@ -380,6 +451,8 @@ function findAndClearMatch(bracket: PlayoffBracket, matchId: string): any {
   }
   const q = bracket.quarterfinals.find(x => x.id === matchId);
   if (q) { q.homeScore = null; q.awayScore = null; q.homeScoreP = null; q.awayScoreP = null; q.winnerId = null; return q; }
+  const pi = bracket.playIns?.find(x => x.id === matchId);
+  if (pi) { pi.homeScore = null; pi.awayScore = null; pi.homeScoreP = null; pi.awayScoreP = null; pi.winnerId = null; return pi; }
   const s = bracket.semifinals.find(x => x.id === matchId);
   if (s) { s.homeScore = null; s.awayScore = null; s.homeScoreP = null; s.awayScoreP = null; s.winnerId = null; return s; }
   return null;

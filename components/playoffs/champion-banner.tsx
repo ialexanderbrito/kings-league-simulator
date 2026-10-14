@@ -5,6 +5,8 @@ import confetti from "canvas-confetti";
 import { Crown, Sparkles, Trophy, PartyPopper } from "lucide-react";
 import { Team, PlayoffMatch } from "@/types/kings-league";
 import { getProxyImageUrl, cn } from "@/lib/utils";
+import { useLocale } from "@/contexts/locale-context";
+import { AppleEmoji } from "@/components/ui/apple-emoji";
 
 interface ChampionBannerProps {
   champion: Team;
@@ -13,6 +15,7 @@ interface ChampionBannerProps {
 }
 
 export function ChampionBanner({ champion, finalMatch, teams }: ChampionBannerProps) {
+  const { t } = useLocale()
   // Runner-up (vice-campeão)
   const runnerUpId = finalMatch
     ? finalMatch.homeTeamId === champion.id
@@ -158,7 +161,7 @@ export function ChampionBanner({ champion, finalMatch, teams }: ChampionBannerPr
                 />
                 <img
                   src={getProxyImageUrl(champion.logo?.url)}
-                  alt={`Escudo oficial do ${champion.name}`}
+                  alt={`${t.playoffs.officialShield} ${champion.name}`}
                   className="relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.8)] drop-shadow-[0_0_36px_rgba(var(--team-primary-rgb,244,175,35),0.35)] select-none"
                   loading="lazy"
                   crossOrigin="anonymous"
@@ -171,7 +174,7 @@ export function ChampionBanner({ champion, finalMatch, teams }: ChampionBannerPr
               {/* Pill Badge Superior: Liquid Glass Pill */}
               <div className="liquid-glass-pill inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[var(--team-primary,#F4AF23)] border border-[var(--team-primary,#F4AF23)]/20 shadow-sm">
                 <Sparkles className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" />
-                <span>Campeão dos Playoffs • Kings League</span>
+                <span>{t.ui.champion}</span>
               </div>
 
               {/* Nome do Campeão */}
@@ -186,7 +189,7 @@ export function ChampionBanner({ champion, finalMatch, teams }: ChampionBannerPr
               <div className="pt-1 flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs sm:text-sm text-zinc-300">
                 <div className="liquid-glass inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/[0.06] text-zinc-200">
                   <Trophy className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)] shrink-0" />
-                  <span className="font-semibold text-zinc-100">Vencedor da Grande Final</span>
+                  <span className="font-semibold text-zinc-100">{t.ui.finalWinner}</span>
 
                   {runnerUp && hasFinalScores && (
                     <>
@@ -217,16 +220,16 @@ export function ChampionBanner({ champion, finalMatch, teams }: ChampionBannerPr
                     "hover:bg-[rgba(var(--team-primary-rgb,244,175,35),0.16)] hover:border-[var(--team-primary,#F4AF23)]/50",
                     "cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--team-primary,#F4AF23)]/40"
                   )}
-                  title="Soltar nova chuva de confetes"
-                  aria-label="Comemorar com confetes"
+                  title={t.ui.celebrate}
+                  aria-label={t.ui.celebrate}
                 >
                   <PartyPopper className="w-3.5 h-3.5 stroke-[2.2]" />
-                  <span>Comemorar</span>
-                  <span className="text-[11px] font-mono text-zinc-400">🎉</span>
+                  <span>{t.ui.celebrate}</span>
+                  <AppleEmoji emoji="🎉" size="sm" alt="" />
                 </button>
 
                 <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-zinc-500">
-                  🏆 Conquista Histórica
+                  <AppleEmoji emoji="TROPHY" size="sm" alt="" /> {t.ui.historicAchievement}
                 </span>
               </div>
             </div>

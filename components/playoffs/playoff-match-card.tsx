@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { TeamDisplay } from "@/components/matches/team-display";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
+import { useLocale } from "@/contexts/locale-context";
+import { isPlayoffMatchFinished } from "@/lib/generate-playoff-bracket";
 
 interface PlayoffMatchCardProps {
   match: PlayoffMatch;
@@ -13,9 +15,10 @@ interface PlayoffMatchCardProps {
     winner: "home" | "away" | null
   ) => void;
   selectedWinner: "home" | "away" | null;
-  stage: "quarterfinal" | "semifinal" | "final";
+  stage: "playin" | "quarterfinal" | "semifinal" | "final";
   isLive?: boolean;
   hasTwoGroups?: boolean;
+  isLocked?: boolean;
 }
 
 export function PlayoffMatchCard({
@@ -26,7 +29,9 @@ export function PlayoffMatchCard({
   stage,
   isLive = false,
   hasTwoGroups = false,
+  isLocked = false,
 }: PlayoffMatchCardProps) {
+  const { t, locale } = useLocale();
   const homeTeam = match.homeTeamId ? teams[match.homeTeamId] : null;
   const awayTeam = match.awayTeamId ? teams[match.awayTeamId] : null;
 
@@ -34,41 +39,52 @@ export function PlayoffMatchCard({
   const getStageInfo = () => {
     switch (match.id) {
       case "qf1":
-        return { label: "Quartas 1" }
+        return { label: `${t.playoffs.quartersAbbr} 1` }
       case "qf2":
-        return { label: "Quartas 2" }
+        return { label: `${t.playoffs.quartersAbbr} 2` }
       case "qf3":
-        return { label: "Quartas 3" }
+        return { label: `${t.playoffs.quartersAbbr} 3` }
+      case "qf4":
+        return { label: `${t.playoffs.quartersAbbr} 4` }
+      case "pi1":
+      case "pi2":
+        return { label: t.playoffs.playIn }
       case "sf1":
-        return { label: "Semifinal 1" }
+        return { label: t.playoffs.semifinal1 }
       case "sf2":
-        return { label: "Semifinal 2" }
+        return { label: t.playoffs.semifinal2 }
       case "final":
-        return { label: "Grande Final" }
+        return { label: t.playoffs.grandFinal }
       default:
         return {
-          label: stage === 'quarterfinal' ? 'Quartas' : stage === 'semifinal' ? 'Semifinal' : 'Final',
+          label: stage === 'playin' ? t.playoffs.playIn : stage === 'quarterfinal' ? t.playoffs.quartersAbbr : stage === 'semifinal' ? t.playoffs.semiAbbr : t.playoffs.finalAbbr,
         }
     }
   }
 
   const getPlaceholder = (side: "home" | "away") => {
     if (match.id === "sf1" && side === "away") {
-      return { title: "Venc. Quartas 1" }
+      return { title: t.playoffs.winnerQuarter1 }
+    }
+    if (match.id === "qf1" && side === "away") {
+      return { title: t.playoffs.winnerPlayIn1 }
+    }
+    if (match.id === "qf4" && side === "home") {
+      return { title: t.playoffs.winnerPlayIn2 }
     }
     if (match.id === "sf2" && side === "home") {
-      return { title: "Venc. Quartas 2" }
+      return { title: t.playoffs.winnerQuarter2 }
     }
     if (match.id === "sf2" && side === "away") {
-      return { title: "Venc. Quartas 3" }
+      return { title: t.playoffs.winnerQuarter3 }
     }
     if (match.id === "final" && side === "home") {
-      return { title: "Venc. Semifinal 1" }
+      return { title: t.playoffs.winnerSemi1 }
     }
     if (match.id === "final" && side === "away") {
-      return { title: "Venc. Semifinal 2" }
+      return { title: t.playoffs.winnerSemi2 }
     }
-    return { title: "A definir" }
+    return { title: t.playoffs.tbd }
   }
 
   const hasWinner = selectedWinner !== null;
@@ -77,25 +93,21 @@ export function PlayoffMatchCard({
 
   const stageInfo = getStageInfo()
 
-  const isEnded = Boolean(
-    match.status === "ended" ||
-    match.status?.toLowerCase() === "ended" ||
-    match.status?.toLowerCase() === "finished" ||
-    (match.homeScore !== null && match.awayScore !== null && match.homeScore !== undefined && match.awayScore !== undefined)
-  );
-  const hasScores = match.homeScore !== null && match.awayScore !== null && match.homeScore !== undefined && match.awayScore !== undefined;
+  const isEnded = isPlayoffMatchFinished(match);
+  const isReadOnly = isEnded || isLocked;
+  const hasScores = match.homeScore !== null && match.awayScore !== null && match.homeScore !== undefined && match.awayScore !== undefined && (isEnded || Boolean(match.winnerId));
 
   return (
     <article
       className={cn(
-        "relative rounded-2xl p-2.5 sm:p-3 border transition-[border-color,box-shadow,background-color] duration-150 w-full select-none",
+        "relative h-[116px] w-full max-w-[330px] rounded-2xl border p-2.5 select-none transition-[border-color,box-shadow,background-color] duration-150 sm:h-[120px] sm:p-3",
         "bg-[#09090d]/90 backdrop-blur-md border-zinc-800 shadow-sm",
-        isEnded ? "pointer-events-none cursor-default" : "hover:border-zinc-700",
+        isReadOnly ? "pointer-events-none cursor-default" : "hover:border-zinc-700",
         hasWinner && "border-zinc-800"
       )}
-      aria-label={homeTeam && awayTeam ? `Partida: ${homeTeam.name} vs ${awayTeam.name}` : "Partida dos playoffs"}
+      aria-label={homeTeam && awayTeam ? `${t.playoffs.matchLabel}: ${homeTeam.name} vs ${awayTeam.name}` : t.playoffs.playoffMatch}
     >
-      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] items-center gap-2 sm:gap-2.5 w-full">
+      <div className="grid h-full w-full grid-cols-[minmax(0,1fr)_96px_minmax(0,1fr)] items-center gap-1.5 sm:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] sm:gap-2">
         {/* Time da casa */}
         {homeTeam ? (
           <div className="flex items-center gap-2 justify-end">
@@ -104,6 +116,7 @@ export function PlayoffMatchCard({
               isWinner={isHomeWinner}
               position="left"
               showShootout={false}
+              compact
             />
           </div>
         ) : (
@@ -120,7 +133,7 @@ export function PlayoffMatchCard({
         )}
 
         {/* Área central - Placar ou Seletor de vencedor */}
-        <div className="flex flex-col items-center px-1 sm:px-1.5 min-w-[80px] sm:min-w-[96px]">
+        <div className="flex min-w-0 flex-col items-center px-1 sm:px-1.5">
           {/* Badge de Ao Vivo */}
           {isLive && (
             <Badge
@@ -131,7 +144,7 @@ export function PlayoffMatchCard({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
               </span>
-              <span className="font-bold uppercase tracking-wider text-[8px]">Ao Vivo</span>
+              <span className="font-bold uppercase tracking-wider text-[8px]">{t.matches.live}</span>
             </Badge>
           )}
 
@@ -142,7 +155,7 @@ export function PlayoffMatchCard({
             </span>
             {isEnded && (
               <span className="text-[8px] font-mono font-bold uppercase text-zinc-500 bg-zinc-900/80 px-1 py-0.2 rounded border border-zinc-800">
-                FIM
+                {t.matches.ended}
               </span>
             )}
           </div>
@@ -152,12 +165,12 @@ export function PlayoffMatchCard({
             <div 
               className={cn(
                 "flex flex-col items-center select-none",
-                isEnded ? "cursor-default pointer-events-none" : "cursor-pointer group/score"
+                isReadOnly ? "cursor-default pointer-events-none" : "cursor-pointer group/score"
               )}
               onClick={isEnded ? undefined : () => {
                 onWinnerSelect(match.id, selectedWinner === "home" ? "away" : "home");
               }}
-              title={isEnded ? undefined : "Clique para alternar vencedor na simulação"}
+              title={isEnded ? undefined : t.playoffs.toggleWinner}
             >
               <div className="flex items-center gap-1 sm:gap-1.5">
                 <span
@@ -195,18 +208,18 @@ export function PlayoffMatchCard({
               {/* Botão Time da Casa */}
               <button
                 type="button"
-                onClick={isEnded ? undefined : () => onWinnerSelect(match.id, selectedWinner === "home" ? null : "home")}
-                disabled={isEnded}
-                aria-disabled={isEnded}
+                onClick={isReadOnly ? undefined : () => onWinnerSelect(match.id, selectedWinner === "home" ? null : "home")}
+                disabled={isReadOnly}
+                aria-disabled={isReadOnly}
                 className={cn(
                   "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-[background-color,border-color,transform,box-shadow] duration-150 active:scale-[0.92] border",
                   isHomeWinner
-                    ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black font-black shadow-[0_0_12px_rgba(244,175,35,0.4)]"
-                    : "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white",
-                  isEnded && "cursor-not-allowed opacity-80 pointer-events-none select-none"
+                    ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black font-black shadow-[0_0_12px_rgba(244,175,35,0.4)] hover:bg-[#ffc13b] hover:border-[#ffc13b]"
+                    : "bg-zinc-900/80 border-zinc-800 hover:border-[var(--team-primary,#F4AF23)]/50 text-zinc-400 hover:text-[var(--team-primary,#F4AF23)] hover:bg-zinc-800",
+                  isReadOnly && "cursor-not-allowed opacity-80 pointer-events-none select-none"
                 )}
-                aria-label={`Selecionar ${homeTeam.name} como vencedor`}
-                title={isEnded ? undefined : isHomeWinner ? "Desmarcar vencedor" : `Marcar ${homeTeam.name} como vencedor`}
+                aria-label={t.playoffs.selectWinner.replace("{team}", homeTeam.name)}
+                title={isReadOnly ? (isLocked ? t.playoffs.quartersLocked : undefined) : isHomeWinner ? t.playoffs.unmarkWinner : t.playoffs.markWinner.replace("{team}", homeTeam.name)}
               >
                 {isHomeWinner ? (
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -220,18 +233,18 @@ export function PlayoffMatchCard({
               {/* Botão Time Visitante */}
               <button
                 type="button"
-                onClick={isEnded ? undefined : () => onWinnerSelect(match.id, selectedWinner === "away" ? null : "away")}
-                disabled={isEnded}
-                aria-disabled={isEnded}
+                onClick={isReadOnly ? undefined : () => onWinnerSelect(match.id, selectedWinner === "away" ? null : "away")}
+                disabled={isReadOnly}
+                aria-disabled={isReadOnly}
                 className={cn(
                   "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-[background-color,border-color,transform,box-shadow] duration-150 active:scale-[0.92] border",
                   isAwayWinner
-                    ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black font-black shadow-[0_0_12px_rgba(244,175,35,0.4)]"
-                    : "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white",
-                  isEnded && "cursor-not-allowed opacity-80 pointer-events-none select-none"
+                    ? "bg-[var(--team-primary)] border-[var(--team-primary)] text-black font-black shadow-[0_0_12px_rgba(244,175,35,0.4)] hover:bg-[#ffc13b] hover:border-[#ffc13b]"
+                    : "bg-zinc-900/80 border-zinc-800 hover:border-[var(--team-primary,#F4AF23)]/50 text-zinc-400 hover:text-[var(--team-primary,#F4AF23)] hover:bg-zinc-800",
+                  isReadOnly && "cursor-not-allowed opacity-80 pointer-events-none select-none"
                 )}
-                aria-label={`Selecionar ${awayTeam.name} como vencedor`}
-                title={isEnded ? undefined : isAwayWinner ? "Desmarcar vencedor" : `Marcar ${awayTeam.name} como vencedor`}
+                aria-label={t.playoffs.selectWinner.replace("{team}", awayTeam.name)}
+                title={isReadOnly ? (isLocked ? t.playoffs.quartersLocked : undefined) : isAwayWinner ? t.playoffs.unmarkWinner : t.playoffs.markWinner.replace("{team}", awayTeam.name)}
               >
                 {isAwayWinner ? (
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -242,7 +255,7 @@ export function PlayoffMatchCard({
             </div>
           ) : (
             <p className="text-[10px] text-zinc-500 text-center font-medium">
-              Aguardando
+              {t.playoffs.waiting}
             </p>
           )}
         </div>
@@ -255,6 +268,7 @@ export function PlayoffMatchCard({
               isWinner={isAwayWinner}
               position="right"
               showShootout={false}
+              compact
             />
           </div>
         ) : (
@@ -273,4 +287,3 @@ export function PlayoffMatchCard({
     </article>
   );
 }
-
