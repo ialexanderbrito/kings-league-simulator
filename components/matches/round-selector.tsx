@@ -3,12 +3,16 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Round } from "@/types/kings-league";
+import { useLocale } from "@/contexts/locale-context";
+import { isRoundComplete } from "@/lib/regular-season";
 
 interface RoundSelectorProps {
   rounds: Round[];
+  playInRounds?: Round[];
   selectedRound: string;
   onRoundSelect: (roundId: string) => void;
   showPlayoffs?: boolean;
+  canShowPlayoffs?: boolean;
 }
 
 export const RoundSelector: FC<RoundSelectorProps> = ({
@@ -17,37 +21,30 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
   onRoundSelect,
   showPlayoffs = false,
 }) => {
-  const isRoundComplete = (round: Round): boolean => {
-    if (!round.ended) return false;
-    if (round.matches.some(match => match.status === 'inPlay1H' || match.status === 'inPlay2H')) {
-      return false;
-    }
-    return round.matches.every(
-      match =>
-        match.scores.homeScore !== null &&
-        match.scores.awayScore !== null
-    );
-  };
+  const { t } = useLocale()
+
+  const regularRounds = rounds
+    .filter((round) => /\d/.test(round.name))
+    .map((round) => ({ round, label: `R${round.name.match(/\d+/)?.[0] ?? ""}` }));
 
   return (
     <ScrollArea className="w-full">
       <div
         className="flex items-center gap-1.5 sm:gap-2 pb-2 px-0.5"
         role="tablist"
-        aria-label="Seletor de rodadas da Kings League"
+        aria-label={t.ui.roundSelector}
       >
-        {rounds.map((round) => {
+        {regularRounds.map(({ round, label }) => {
           const roundComplete = isRoundComplete(round);
-          const isSelected = !showPlayoffs && selectedRound === round.id.toString();
-          const roundNumber = round.name.replace(/\D/g, '');
-
+          const selectionId = round.id.toString();
+          const isSelected = !showPlayoffs && selectedRound === selectionId;
           return (
             <button
-              key={round.id}
-              onClick={() => onRoundSelect(round.id.toString())}
+              key={selectionId}
+              onClick={() => onRoundSelect(selectionId)}
               role="tab"
               aria-selected={isSelected}
-              aria-label={`Rodada ${roundNumber}${roundComplete ? ' - Concluída' : ''}`}
+              aria-label={`${label}${roundComplete ? ` - ${t.matches.ended}` : ''}`}
               className={cn(
                 "relative flex items-center justify-center min-w-[40px] sm:min-w-[46px] h-8 sm:h-9 px-2.5 sm:px-3",
                 "text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap btn-press",
@@ -58,7 +55,7 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
                 roundComplete && !isSelected && "text-zinc-500"
               )}
             >
-              <span>{`R${roundNumber}`}</span>
+              <span>{label}</span>
               {roundComplete && (
                 <Check
                   className={cn(
@@ -80,3 +77,4 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
     </ScrollArea>
   );
 };
+

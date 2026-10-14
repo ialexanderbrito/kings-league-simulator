@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/contexts/locale-context";
 
 interface MatchScoreInputProps {
   value: string;
@@ -14,6 +15,7 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
   teamName,
   disabled = false
 }) => {
+  const { t } = useLocale();
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -57,7 +59,7 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
           onScoreChange(numericValue);
         }
       }}
-      aria-label={`Placar do ${teamName}`}
+      aria-label={t.matches.scoreOf.replace("{team}", teamName)}
       disabled={disabled}
     />
   );

@@ -1,5 +1,6 @@
 import { FC } from "react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/contexts/locale-context";
 
 interface MatchScoreDisplayProps {
   homeScore: number | null;
@@ -16,6 +17,7 @@ export const MatchScoreDisplay: FC<MatchScoreDisplayProps> = ({
   awayScorePenalty,
   winner,
 }) => {
+  const { t } = useLocale()
   return (
     <div className="flex flex-col items-center" role="status" aria-live="polite">
       <div className="flex items-center justify-center gap-2">
@@ -25,7 +27,7 @@ export const MatchScoreDisplay: FC<MatchScoreDisplayProps> = ({
           "transition-colors duration-200",
           winner === 'home' && "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
         )}
-          aria-label={`Placar casa: ${homeScore}`}
+          aria-label={`${t.matches.homeTeam}: ${homeScore}`}
         >
           {homeScore}
         </div>
@@ -36,7 +38,7 @@ export const MatchScoreDisplay: FC<MatchScoreDisplayProps> = ({
           "transition-colors duration-200",
           winner === 'away' && "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
         )}
-          aria-label={`Placar visitante: ${awayScore}`}
+          aria-label={`${t.matches.awayTeam}: ${awayScore}`}
         >
           {awayScore}
         </div>
@@ -45,7 +47,7 @@ export const MatchScoreDisplay: FC<MatchScoreDisplayProps> = ({
       {homeScorePenalty !== null && awayScorePenalty !== null && (
         <div
           className="flex items-center mt-2 px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800"
-          aria-label="Resultado do Shootout"
+          aria-label={t.ui.shootout}
         >
           <span className="text-xs text-zinc-500 font-medium mr-1.5">SO:</span>
           <span className={cn(

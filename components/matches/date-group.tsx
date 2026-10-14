@@ -3,6 +3,7 @@ import { Calendar as DateIcon } from "lucide-react";
 import { Round, Team } from "@/types/kings-league";
 import { DateFormatter } from "@/lib/date-formatter";
 import { MatchCard } from "./match-card";
+import { useLocale } from "@/contexts/locale-context";
 
 interface DateGroupProps {
   date: string;
@@ -40,6 +41,8 @@ export const DateGroup: FC<DateGroupProps> = ({
   onScoreChange,
   onShootoutWinnerSelect,
 }) => {
+  const { t, locale } = useLocale();
+
   return (
     <div className="space-y-1.5">
       {/* Date Header - Minimalista e elegante */}
@@ -47,14 +50,14 @@ export const DateGroup: FC<DateGroupProps> = ({
         <span className="flex items-center gap-1.5">
           <DateIcon className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
           <span>
-            {DateFormatter.getWeekdayName(date)
-              ? `${DateFormatter.getWeekdayName(date)}, ${DateFormatter.formatDateDisplay(date)}`
-              : DateFormatter.formatDateDisplay(date)
+            {DateFormatter.getWeekdayName(date, locale)
+              ? `${DateFormatter.getWeekdayName(date, locale)}, ${DateFormatter.formatDateDisplay(date, locale)}`
+              : DateFormatter.formatDateDisplay(date, locale)
             }
           </span>
         </span>
         <span className="text-[10px] text-zinc-500 font-mono">
-          {matches.length} {matches.length === 1 ? "jogo" : "jogos"}
+          {matches.length} {matches.length === 1 ? t.matches.match : t.matches.matches}
         </span>
       </div>
 
@@ -76,7 +79,7 @@ export const DateGroup: FC<DateGroupProps> = ({
               round={round}
               teams={teams}
               teamGroupMap={teamGroupMap}
-              formatDate={DateFormatter.formatMatchDate}
+              formatDate={(d) => DateFormatter.formatMatchDate(d, locale)}
               currentScores={currentScores}
               showShootout={showShootoutInputs}
               onScoreChange={onScoreChange}

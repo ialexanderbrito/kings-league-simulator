@@ -4,6 +4,7 @@ import { cn, getProxyImageUrl } from "@/lib/utils";
 import { Round, Team } from "@/types/kings-league";
 import { MatchScoreInput } from "./match-score-input";
 import { ShootoutSelector } from "./shootout-selector";
+import { useLocale } from "@/contexts/locale-context";
 
 interface MatchCardProps {
   match: Round["matches"][0];
@@ -41,6 +42,7 @@ export const MatchCard: FC<MatchCardProps> = ({
   onScoreChange,
   onShootoutWinnerSelect,
 }) => {
+  const { t } = useLocale();
   const homeTeam = teams[match.participants.homeTeamId];
   const awayTeam = teams[match.participants.awayTeamId];
   const isMatchEnded = match.status === "ended" || match.status?.toLowerCase() === "ended" || match.status?.toLowerCase() === "finished";
@@ -112,7 +114,7 @@ export const MatchCard: FC<MatchCardProps> = ({
           </span>
         ) : (
           <span className="px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider text-zinc-400 bg-zinc-900/60 border border-zinc-800 text-[8px] sm:text-[9px]">
-            {matchGroup === "Playoffs" ? "Playoffs" : (matchGroup === "A" || matchGroup === "B") ? `Grupo ${matchGroup}` : "Fase Regular"}
+            {matchGroup === "Playoffs" ? t.matches.playoffsMatch : (matchGroup === "A" || matchGroup === "B") ? `${t.matches.group} ${matchGroup}` : t.matches.regularPhase}
           </span>
         )}
 
@@ -120,14 +122,14 @@ export const MatchCard: FC<MatchCardProps> = ({
           {isLiveMatch ? (
             <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/25">
               <Radio className="w-2 h-2 text-red-500 animate-pulse" />
-              <span className="text-[8px] font-black tracking-wider text-red-400 uppercase">AO VIVO</span>
+              <span className="text-[8px] font-black tracking-wider text-red-400 uppercase">{t.matches.live}</span>
             </span>
           ) : isMatchEnded ? (
             <span className={cn(
               "text-[8px] font-mono font-bold uppercase tracking-wider",
               isChallenger ? "text-[#34d399]" : "text-zinc-500"
             )}>
-              FIM
+              {t.matches.ended}
             </span>
           ) : (
             <time className={cn(
@@ -154,14 +156,14 @@ export const MatchCard: FC<MatchCardProps> = ({
               )}
               title={homeTeam?.name}
             >
-              {homeTeam?.name || "Casa"}
+              {homeTeam?.name || t.matches.homeTeam}
             </span>
             {homeGroup && (
               <span className={cn(
                 "text-[8px] sm:text-[9px] font-mono font-bold uppercase",
                 isChallenger ? "text-[#34d399]" : "text-zinc-500"
               )}>
-                Gr. {homeGroup}
+                {t.matches.groupAbbr} {homeGroup}
               </span>
             )}
           </div>
@@ -191,14 +193,14 @@ export const MatchCard: FC<MatchCardProps> = ({
             <MatchScoreInput
               value={currentScores?.home !== undefined ? currentScores.home : (homeScore !== null ? String(homeScore) : "")}
               onScoreChange={(value) => onScoreChange(round.id, match.id, "home", value)}
-              teamName={homeTeam?.name || "Casa"}
+              teamName={homeTeam?.name || t.matches.homeTeam}
               disabled={isMatchEnded}
             />
             <span className="text-zinc-600 text-xs font-black select-none px-0.5">×</span>
             <MatchScoreInput
               value={currentScores?.away !== undefined ? currentScores.away : (awayScore !== null ? String(awayScore) : "")}
               onScoreChange={(value) => onScoreChange(round.id, match.id, "away", value)}
-              teamName={awayTeam?.name || "Fora"}
+              teamName={awayTeam?.name || t.matches.awayTeam}
               disabled={isMatchEnded}
             />
           </div>
@@ -239,14 +241,14 @@ export const MatchCard: FC<MatchCardProps> = ({
               )}
               title={awayTeam?.name}
             >
-              {awayTeam?.name || "Fora"}
+              {awayTeam?.name || t.matches.awayTeam}
             </span>
             {awayGroup && (
               <span className={cn(
                 "text-[8px] sm:text-[9px] font-mono font-bold uppercase",
                 isChallenger ? "text-[#34d399]" : "text-zinc-500"
               )}>
-                Gr. {awayGroup}
+                {t.matches.groupAbbr} {awayGroup}
               </span>
             )}
           </div>

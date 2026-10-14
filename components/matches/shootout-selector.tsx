@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { useLocale } from "@/contexts/locale-context";
 
 interface ShootoutSelectorProps {
   homeTeamShortName: string;
@@ -17,11 +18,13 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
   onWinnerSelect,
   disabled = false
 }) => {
+  const { t } = useLocale();
+
   return (
     <div
       className="inline-flex gap-1.5 items-center px-2 py-1 rounded-xl bg-zinc-900/80 border border-zinc-800 backdrop-blur-sm select-none"
       role="group"
-      aria-label="Seletor de vencedor no Shootout"
+      aria-label={t.matches.shootoutSelectorAria}
     >
       <button
         className={cn(
@@ -35,9 +38,9 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
         )}
         onClick={() => !disabled && onWinnerSelect(selectedWinner === "home" ? null : "home")}
         disabled={disabled}
-        aria-label={`${homeTeamShortName} vence no Shootout`}
+        aria-label={`${homeTeamShortName} ${t.matches.winsInShootout}`}
         aria-pressed={selectedWinner === "home"}
-        title={`${homeTeamShortName} vence no Shootout`}
+        title={`${homeTeamShortName} ${t.matches.winsInShootout}`}
       >
         {selectedWinner === "home" ? (
           <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />
@@ -62,9 +65,9 @@ export const ShootoutSelector: FC<ShootoutSelectorProps> = ({
         )}
         onClick={() => !disabled && onWinnerSelect(selectedWinner === "away" ? null : "away")}
         disabled={disabled}
-        aria-label={`${awayTeamShortName} vence no Shootout`}
+        aria-label={`${awayTeamShortName} ${t.matches.winsInShootout}`}
         aria-pressed={selectedWinner === "away"}
-        title={`${awayTeamShortName} vence no Shootout`}
+        title={`${awayTeamShortName} ${t.matches.winsInShootout}`}
       >
         {selectedWinner === "away" ? (
           <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />
