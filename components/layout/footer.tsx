@@ -3,9 +3,13 @@
 import Link from "next/link"
 import { ArrowUpRight, Github } from "lucide-react"
 import KingsLeagueLogo from "@/components/kings-league-logo"
+import { useLocale } from "@/contexts/locale-context"
+import { useLeague } from "@/contexts/league-context"
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
+  const { t } = useLocale()
+  const { selectedLeague } = useLeague()
 
   return (
     <footer className="relative mt-8 sm:mt-10 pb-8 sm:pb-10 pt-2 sm:pt-3 w-full overflow-hidden select-none">
@@ -33,57 +37,57 @@ export function Footer() {
             <Link
               href="/"
               className="group inline-flex items-center gap-2.5 transition-[transform,opacity] duration-150 ease-out active:scale-[0.97]"
-              aria-label="Ir para a página inicial"
+              aria-label={t.accessibility.home}
             >
               <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)] group-hover:border-[var(--team-primary,#F4AF23)]/40 transition-colors duration-150">
                 <KingsLeagueLogo size={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
               </div>
               <div className="flex flex-col text-left">
                 <span className="text-xs sm:text-sm font-black text-white tracking-tight leading-none group-hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-150">
-                  Kings League <span className="text-[var(--team-primary,#F4AF23)]">Simulador</span>
+                  Kings League <span className="text-[var(--team-primary,#F4AF23)]">{t.nav.simulator}</span>
                 </span>
                 <span className="text-[10px] text-zinc-500 font-medium tracking-wide uppercase mt-0.5">
-                  Brasil • Split 2026
+                  {selectedLeague.name} • Split {currentYear}
                 </span>
               </div>
             </Link>
 
             {/* Links Essenciais Minimalistas */}
-            <nav aria-label="Navegação do rodapé" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+            <nav aria-label={t.footer.navigation} className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
               <Link
                 href="/standings"
                 prefetch={true}
                 className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
               >
-                Classificação
+                {t.footer.standings}
               </Link>
               <Link
                 href="/simulator"
                 prefetch={true}
                 className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
               >
-                Simulador
+                {t.footer.simulator}
               </Link>
               <Link
                 href="/teams"
                 prefetch={true}
                 className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
               >
-                Times
+                {t.footer.teams}
               </Link>
               <Link
                 href="/termos-de-uso"
                 prefetch={true}
                 className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
               >
-                Termos
+                {t.footer.terms}
               </Link>
               <Link
                 href="/politica-de-privacidade"
                 prefetch={true}
                 className="transition-[color,transform] duration-150 ease-out hover:text-white active:scale-[0.96]"
               >
-                Privacidade
+                {t.footer.privacy}
               </Link>
             </nav>
 
@@ -95,7 +99,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.14] text-zinc-400 hover:text-white flex items-center justify-center transition-[transform,color,background-color,border-color] duration-150 ease-out active:scale-[0.95]"
-                  aria-label="Código no GitHub"
+                  aria-label={t.footer.github}
                 >
                   <Github className="w-4 h-4" />
                 </a>
@@ -104,7 +108,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.14] text-zinc-400 hover:text-white flex items-center justify-center transition-[transform,color,background-color,border-color] duration-150 ease-out active:scale-[0.95]"
-                  aria-label="Perfil no X / Twitter"
+                  aria-label={t.footer.twitter}
                 >
                   <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -119,7 +123,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.16] text-[11px] font-medium text-zinc-300 hover:text-white transition-[transform,color,background-color,border-color] duration-150 ease-out active:scale-[0.96]"
               >
-                <span>por</span>
+                <span>{t.common.by}</span>
                 <span className="font-semibold text-white group-hover:text-[var(--team-primary,#F4AF23)] transition-colors duration-150">
                   ialexanderbrito
                 </span>
@@ -131,10 +135,10 @@ export function Footer() {
           {/* Bottom Bar: Disclaimer Legal Minimalista em Linha Única */}
           <div className="pt-3 border-t border-white/[0.05] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-zinc-500 leading-relaxed text-center sm:text-left">
             <p>
-              © {currentYear} Kings League Simulador. Projeto independente de fãs, sem vínculo oficial com a Kings League ou Kosmos.
+              © {currentYear} Kings League Simulator. {t.common.independentProject}
             </p>
             <p className="text-zinc-600 sm:text-zinc-500 text-[10px] sm:text-[11px] shrink-0">
-              Marcas registradas pertencem aos seus titulares.
+              {t.common.trademarks}
             </p>
           </div>
         </div>
