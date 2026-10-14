@@ -1,7 +1,7 @@
 export class DateFormatter {
-  static formatMatchDate(dateString: string): string {
+  static formatMatchDate(dateString: string, locale: string = "pt-BR"): string {
     if (!dateString || dateString.trim() === '') {
-      return "Horário não definido";
+      return locale === "en" ? "Time TBD" : locale === "es" ? "Horario no definido" : "Horário não definido";
     }
 
     if (typeof window === 'undefined') {
@@ -10,7 +10,8 @@ export class DateFormatter {
 
     try {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat("pt-BR", {
+      const intlLocale = locale === "en" ? "en-US" : locale === "es" ? "es-ES" : "pt-BR";
+      return new Intl.DateTimeFormat(intlLocale, {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
@@ -21,9 +22,9 @@ export class DateFormatter {
     }
   }
 
-  static formatDateForGrouping(dateString: string): string {
+  static formatDateForGrouping(dateString: string, locale: string = "pt-BR"): string {
     if (!dateString || dateString.trim() === '') {
-      return 'Data não definida';
+      return locale === "en" ? "Date TBD" : locale === "es" ? "Fecha no definida" : "Data não definida";
     }
 
     if (typeof window === 'undefined') {
@@ -38,9 +39,9 @@ export class DateFormatter {
     }
   }
 
-  static formatDateDisplay(dateString: string): string {
+  static formatDateDisplay(dateString: string, locale: string = "pt-BR"): string {
     if (!dateString || dateString.trim() === '') {
-      return "Data ainda não foram definidas";
+      return locale === "en" ? "Date not defined" : locale === "es" ? "Fecha no definida" : "Data ainda não definida";
     }
 
     if (typeof window === 'undefined') {
@@ -50,8 +51,9 @@ export class DateFormatter {
     try {
       const [year, month, day] = dateString.split('-').map(Number);
       const date = new Date(year, month - 1, day, 12, 0, 0);
+      const intlLocale = locale === "en" ? "en-US" : locale === "es" ? "es-ES" : "pt-BR";
 
-      return new Intl.DateTimeFormat("pt-BR", {
+      return new Intl.DateTimeFormat(intlLocale, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric"
@@ -61,7 +63,7 @@ export class DateFormatter {
     }
   }
 
-  static getWeekdayName(dateString: string): string {
+  static getWeekdayName(dateString: string, locale: string = "pt-BR"): string {
     if (!dateString || dateString.trim() === '') {
       return "";
     }
@@ -73,7 +75,9 @@ export class DateFormatter {
     try {
       const [year, month, day] = dateString.split('-').map(Number);
       const date = new Date(year, month - 1, day, 12, 0, 0);
-      return new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", "");
+      const intlLocale = locale === "en" ? "en-US" : locale === "es" ? "es-ES" : "pt-BR";
+      const formatted = new Intl.DateTimeFormat(intlLocale, { weekday: "short" }).format(date).replace(".", "");
+      return formatted.charAt(0).toUpperCase() + formatted.slice(1);
     } catch (error) {
       return "";
     }
