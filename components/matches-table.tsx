@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useRef } from "react"
 import { Calendar, ChevronRight, Swords } from "lucide-react"
 import type { Round, Team, TeamStanding } from "@/types/kings-league"
 import { RoundSelector } from "@/components/matches/round-selector"
@@ -10,11 +10,15 @@ import { cn } from "@/lib/utils"
 import { PlayoffBracketView } from "@/components/playoffs/playoff-bracket-view"
 import { generatePlayoffBracket } from "@/lib/generate-playoff-bracket"
 import { calculateStandings } from "@/lib/calculate-standings"
-import { getSimulatedPlayoffs, getSimulatedStandings } from "@/lib/simulated-data-manager"
+import { getSimulatedPlayoffs, getSimulatedStandings, saveSimulatedPlayoffs } from "@/lib/simulated-data-manager"
+import { areAllRoundsComplete, getActiveRound } from "@/lib/regular-season"
+import { isPlayoffRoundName } from "@/lib/league-format"
+import { useLocale } from "@/contexts/locale-context"
 
 interface MatchesTableProps {
   rounds: Round[]
   teams: Record<string, Team>
+  dataKey?: string
   standings?: TeamStanding[]
   onScoreUpdate: (
     roundId: number,
@@ -27,17 +31,23 @@ interface MatchesTableProps {
   showPlayoffs?: boolean
   onTogglePlayoffs?: () => void
   playoffs?: any[]
+  playInRounds?: Round[]
+  leagueId?: string
 }
 
 export default function MatchesTable({
   rounds,
   teams,
+  dataKey,
   standings,
   onScoreUpdate,
   showPlayoffs: externalShowPlayoffs,
   onTogglePlayoffs: externalTogglePlayoffs,
   playoffs,
+  playInRounds = [],
+  leagueId,
 }: MatchesTableProps) {
+  const { t } = useLocale()
   const [internalShowPlayoffs, setInternalShowPlayoffs] = useState(false)
   const showPlayoffs = externalShowPlayoffs !== undefined ? externalShowPlayoffs : internalShowPlayoffs
   const handleTogglePlayoffs = () => {
@@ -52,6 +62,30 @@ export default function MatchesTable({
   const [showShootout, setShowShootout] = useState<Record<string, boolean>>({})
   const [isClient, setIsClient] = useState(false)
   const [customBracket, setCustomBracket] = useState<any>(null)
+  const shouldSelectActiveRound = useRef(true)
+  const regularSeasonComplete = areAllRoundsComplete(rounds)
+  const selectableRounds = useMemo(
+    () =>
+      rounds.filter((round) => {
+        const name = String(round.name || "").toLowerCase()
+        return (
+          /\d/.test(name) &&
+          !isPlayoffRoundName(name)
+        )
+      }),
+    [rounds]
+  )
+
+  useEffect(() => {
+    shouldSelectActiveRound.current = true
+    setSelectedRound("")
+  }, [dataKey])
+
+  useEffect(() => {
+    if (externalShowPlayoffs === undefined && regularSeasonComplete) {
+      setInternalShowPlayoffs(true)
+    }
+  }, [externalShowPlayoffs, regularSeasonComplete])
 
   useEffect(() => {
     setCustomBracket(null)
@@ -59,22 +93,22 @@ export default function MatchesTable({
 
   // Build playoff bracket reliably using standings first and official playoffs
   const playoffBracket = useMemo(() => {
-    if (customBracket) return customBracket
+    if (regularSeasonComplete && customBracket) return customBracket
 
     let bracket: any = null
     try {
-      if (standings && standings.length >= 7 && teams && Object.keys(teams).length >= 7) {
+      if (regularSeasonComplete && standings && standings.length >= 7 && teams && Object.keys(teams).length >= 7) {
         bracket = generatePlayoffBracket(standings, teams, rounds, playoffs)
-      } else if (rounds.length > 0 && teams && Object.keys(teams).length >= 7) {
+      } else if (regularSeasonComplete && rounds.length > 0 && teams && Object.keys(teams).length >= 7) {
         const standingsObj = calculateStandings(rounds, teams, [])
-        let standingsArray = Object.values(standingsObj).flat()
+        let standingsArray = (Object.values(standingsObj).flat() as TeamStanding[])
         const seen = new Set<string>()
-        standingsArray = standingsArray.filter((s) => {
+        standingsArray = standingsArray.filter((s: TeamStanding) => {
           if (seen.has(s.id)) return false
           seen.add(s.id)
           return true
         })
-        if (standingsArray.length >= 7) {
+        if (regularSeasonComplete && standingsArray.length >= 7) {
           bracket = generatePlayoffBracket(standingsArray, teams, rounds, playoffs)
         }
       }
@@ -85,17 +119,17 @@ export default function MatchesTable({
     if (!bracket && typeof window !== "undefined") {
       try {
         const simulated = getSimulatedPlayoffs()
-        if (simulated) return simulated
+        if (regularSeasonComplete && simulated) return simulated
 
         const simStandings = getSimulatedStandings()
-        if (simStandings && Array.isArray(simStandings) && simStandings.length >= 7) {
+        if (regularSeasonComplete && simStandings && Array.isArray(simStandings) && simStandings.length >= 7) {
           bracket = generatePlayoffBracket(simStandings, teams, rounds, playoffs)
         }
       } catch {}
     }
 
     return bracket
-  }, [standings, rounds, teams, playoffs, customBracket])
+  }, [standings, rounds, teams, playoffs, customBracket, regularSeasonComplete])
 
   // Mapeamento confiável de times para seus respectivos grupos (apenas quando houver grupos A e B)
   const teamGroupMap = useMemo(() => {
@@ -136,7 +170,7 @@ export default function MatchesTable({
     const initialScores: Record<string, { home: string; away: string; shootoutWinner: string | null }> = {}
     const initialShowShootout: Record<string, boolean> = {}
 
-    rounds.forEach((round) => {
+    ;[...rounds, ...playInRounds].forEach((round) => {
       round.matches.forEach((match) => {
         const matchKey = `${round.id}-${match.id}`
         const shootoutWinner =
@@ -162,25 +196,37 @@ export default function MatchesTable({
 
     setScores(initialScores)
     setShowShootout(initialShowShootout)
-  }, [rounds])
+  }, [rounds, playInRounds])
 
-  // Select default round (first unfinished or last)
+  // Seleciona a rodada ativa (primeira que ainda não acabou) para a liga/temporada atual, preservando a escolha manual.
   useEffect(() => {
-    if (rounds.length > 0 && !selectedRound) {
-      const firstUnfinishedRound = rounds.find((round) => {
-        return !round.ended || round.matches.some((m) => m.scores.homeScore === null || m.scores.awayScore === null)
-      })
+    const availableRoundIds = new Set([
+      ...rounds.map((round) => String(round.id)),
+      ...playInRounds.map((round) => `playin-${round.id}`),
+    ])
 
-      if (firstUnfinishedRound) setSelectedRound(String(firstUnfinishedRound.id))
-      else setSelectedRound(String(rounds[rounds.length - 1].id))
+    const activeRound = getActiveRound(selectableRounds)
+    const defaultRoundId = activeRound
+      ? String(activeRound.id)
+      : (selectableRounds.length > 0
+          ? String(selectableRounds[selectableRounds.length - 1].id)
+          : (playInRounds.length > 0 ? `playin-${playInRounds[0].id}` : ""))
+
+    if (shouldSelectActiveRound.current && defaultRoundId) {
+      shouldSelectActiveRound.current = false
+      setSelectedRound(defaultRoundId)
+      return
     }
-  }, [rounds, selectedRound])
+
+    if (selectedRound && availableRoundIds.has(selectedRound)) return
+
+    if (defaultRoundId) {
+      setSelectedRound(defaultRoundId)
+    }
+  }, [rounds, playInRounds, selectedRound, selectableRounds])
 
   const currentRound = rounds.find((r) => String(r.id) === selectedRound)
-
-  // Show Playoffs button only when the last round (9th) is selected and a bracket exists
-  const isLastRoundSelected = rounds.length === 9 && selectedRound && Number(selectedRound) === rounds[rounds.length - 1].id
-  const canShowPlayoffsButton = isLastRoundSelected && !!playoffBracket
+    || playInRounds.find((r) => `playin-${r.id}` === selectedRound)
 
   const getMatchesByDate = (round: Round) => {
     const matchesByDate: Record<string, typeof round.matches> = {}
@@ -194,8 +240,14 @@ export default function MatchesTable({
 
   const handleRoundSelect = (roundId: string) => setSelectedRound(roundId)
 
-  // When user selects a round, ensure we exit playoffs view
+  // Quando o usuário seleciona uma rodada, sai dos playoffs (a menos que tenha clicado em "playoffs")
   const handleRoundSelectAndExitPlayoffs = (roundId: string) => {
+    if (roundId === "playoffs") {
+      if (!showPlayoffs) {
+        handleTogglePlayoffs()
+      }
+      return
+    }
     setSelectedRound(roundId)
     if (showPlayoffs) {
       handleTogglePlayoffs()
@@ -208,7 +260,7 @@ export default function MatchesTable({
     team: "home" | "away",
     value: string
   ) => {
-    const targetRound = rounds.find((r) => r.id === roundId)
+    const targetRound = [...rounds, ...playInRounds].find((r) => r.id === roundId)
     const targetMatch = targetRound?.matches.find((m) => m.id === matchId)
     const isEnded = targetMatch?.status?.toLowerCase() === "ended" || targetMatch?.status?.toLowerCase() === "finished"
     if (isEnded) return
@@ -244,7 +296,7 @@ export default function MatchesTable({
   }
 
   const handleShootoutWinner = (roundId: number, matchId: number, winner: "home" | "away" | null) => {
-    const targetRound = rounds.find((r) => r.id === roundId)
+    const targetRound = [...rounds, ...playInRounds].find((r) => r.id === roundId)
     const targetMatch = targetRound?.matches.find((m) => m.id === matchId)
     const isEnded = targetMatch?.status?.toLowerCase() === "ended" || targetMatch?.status?.toLowerCase() === "finished"
     if (isEnded) return
@@ -279,10 +331,10 @@ export default function MatchesTable({
           </div>
           <div className="flex items-center gap-2 min-w-0">
             <h2 className="text-sm sm:text-base font-black text-white tracking-tight truncate">
-              {showPlayoffs ? "Mata-Mata (Playoffs)" : (currentRound?.name || "Partidas")}
+              {showPlayoffs ? t.matches.playoffsMatch : (selectedRound.startsWith("playin-") ? t.playoffs.playIn : (currentRound?.name || t.ui.matches))}
             </h2>
             <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-zinc-900/60 text-zinc-400 border border-zinc-800 flex-shrink-0">
-              {showPlayoffs ? "Playoffs" : "5 Jogos"}
+              {showPlayoffs ? t.ui.playoff : `${currentRound?.matches?.length || 5} ${currentRound?.matches?.length === 1 ? t.matches.match : t.matches.matches}`}
             </span>
           </div>
         </div>
@@ -291,7 +343,7 @@ export default function MatchesTable({
         {showPlayoffs && (
           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--team-primary,#F4AF23)]/10 border border-[var(--team-primary,#F4AF23)]/25 text-[10px] font-bold text-[var(--team-primary,#F4AF23)] select-none">
             <Swords className="w-3 h-3" />
-            <span>Chaveamento</span>
+            <span>{t.ui.bracket}</span>
           </div>
         )}
       </div>
@@ -300,9 +352,11 @@ export default function MatchesTable({
       <div className="pt-0">
         <RoundSelector 
           rounds={rounds} 
+          playInRounds={playInRounds}
           selectedRound={selectedRound} 
           onRoundSelect={handleRoundSelectAndExitPlayoffs}
           showPlayoffs={showPlayoffs}
+          canShowPlayoffs={regularSeasonComplete || !!playoffBracket}
         />
       </div>
 
@@ -314,6 +368,7 @@ export default function MatchesTable({
               bracket={playoffBracket}
               teams={teams}
               hasTwoGroups={Boolean(standings?.some((s) => s.groupName === 'A') && standings?.some((s) => s.groupName === 'B'))}
+              leagueId={leagueId}
               onBracketUpdate={(updated) => {
                 setCustomBracket(updated)
                 try {
@@ -324,13 +379,13 @@ export default function MatchesTable({
           ) : (
             <div className="py-12 text-center rounded-2xl border border-zinc-800 bg-[#09090d]/80 p-6">
               <Swords className="w-8 h-8 text-[var(--team-primary,#F4AF23)] mx-auto mb-2 opacity-80" />
-              <p className="text-sm font-bold text-white mb-1">Gerando Chaveamento de Mata-Mata...</p>
-              <p className="text-xs text-zinc-400">Aguardando dados dos times para montar os confrontos.</p>
+              <p className="text-sm font-bold text-white mb-1">{t.matches.bracketGenerating}</p>
+              <p className="text-xs text-zinc-400">{t.matches.bracketWaiting}</p>
             </div>
           )}
         </div>
       ) : currentRound ? (
-        <div className="space-y-2 sm:space-y-2.5" role="region" aria-label="Partidas da rodada">
+        <div className="space-y-2 sm:space-y-2.5" role="region" aria-label={t.matches.roundMatchesRegion}>
           {Object.entries(getMatchesByDate(currentRound)).map(([date, matches]) => (
             <DateGroup
               key={date}
@@ -351,11 +406,9 @@ export default function MatchesTable({
           <div className="inline-flex p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 mb-3">
             <Calendar className="w-7 h-7 text-zinc-500" aria-hidden="true" />
           </div>
-          <p className="text-zinc-400 text-sm">Selecione uma rodada para visualizar as partidas</p>
+          <p className="text-zinc-400 text-sm">{t.matches.selectRound}</p>
         </div>
       )}
     </div>
   )
 }
-
-
