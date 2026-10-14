@@ -7,6 +7,7 @@ export interface LeagueData {
   teams: Team[]
   standings: TeamStanding[]
   rounds: Round[]
+  playInRounds?: Round[]
   playoffs?: any[]
 }
 
@@ -171,6 +172,7 @@ export interface Player {
     url: string
   }
   metaInformation?: {
+    fantasyName?: string
     duels?: string
     injury?: string
     skills?: string
@@ -188,6 +190,7 @@ export interface Player {
     goalkeeperPassing?: string
     status?: string
     jerseyNumber?: string
+    [key: string]: any
   } | null
   category?: "wildcard" | "draft" | null
   stats?: PlayerStats
@@ -196,7 +199,7 @@ export interface Player {
 // Tipos para os playoffs
 export interface PlayoffMatch {
   id: string;
-  stage: 'quarterfinal' | 'semifinal' | 'final';
+  stage: 'playin' | 'quarterfinal' | 'semifinal' | 'final';
   matchNumber: number;
   homeTeamId: string | null;
   awayTeamId: string | null;
@@ -212,6 +215,8 @@ export interface PlayoffMatch {
 }
 
 export interface PlayoffBracket {
+  playIns: PlayoffMatch[];
+  playInRounds?: PlayoffMatch[][];
   quarterfinals: PlayoffMatch[];
   semifinals: PlayoffMatch[];
   final: PlayoffMatch | undefined;
