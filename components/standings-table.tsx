@@ -5,6 +5,8 @@ import { cn, getProxyImageUrl } from "@/lib/utils"
 import { ChevronUp, ChevronDown, Crown } from "lucide-react"
 import { useMemo } from "react"
 import { determineChallengerAdvantage } from "@/lib/generate-playoff-bracket"
+import type { LeagueQualification } from "@/lib/league-format"
+import { useLocale } from "@/contexts/locale-context"
 
 interface GroupedStandings {
   groupName: string;
@@ -16,11 +18,13 @@ interface StandingsTableProps {
   onTeamSelect: (teamId: string) => void;
   previousStandings?: TeamStanding[];
   rounds?: Round[];
+  qualification?: LeagueQualification;
 }
 
 
 export default function StandingsTable(props: StandingsTableProps) {
-  const { groupedStandings, onTeamSelect, previousStandings, rounds } = props;
+  const { t } = useLocale();
+  const { groupedStandings, onTeamSelect, previousStandings, rounds, qualification = { playoffEnd: 7 } } = props;
 
   const hasTwoGroups = groupedStandings.some(g => g.groupName === 'A') && groupedStandings.some(g => g.groupName === 'B');
 
@@ -77,6 +81,31 @@ export default function StandingsTable(props: StandingsTableProps) {
     if (hasTwoGroups) {
       const isAdvantageGroup = groupName === advantageGroup;
 
+      if (qualification.groupFormat === "lastChance") {
+        if (positionInGroup === 1) {
+          return {
+            badge: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black',
+            border: 'border-l-2 border-emerald-400'
+          };
+        }
+        if (positionInGroup === 2) {
+          return {
+            badge: 'bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black',
+            border: 'border-l-2 border-amber-400'
+          };
+        }
+        if (positionInGroup <= 4) {
+          return {
+            badge: 'bg-sky-400/20 text-sky-300 border border-sky-400/40 font-black',
+            border: 'border-l-2 border-sky-400'
+          };
+        }
+        return {
+          badge: 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold',
+          border: 'border-l-2 border-rose-500/40'
+        };
+      }
+
       if (isAdvantageGroup) {
         if (positionInGroup === 1) {
           return { 
@@ -119,10 +148,28 @@ export default function StandingsTable(props: StandingsTableProps) {
         border: 'border-l-2 border-emerald-400'
       };
     }
-    if (positionInGroup >= 2 && positionInGroup <= 7) {
+    if (
+      positionInGroup >= 2 &&
+      positionInGroup <= qualification.playoffEnd &&
+      !(qualification.playInStart !== undefined &&
+        qualification.playInEnd !== undefined &&
+        positionInGroup >= qualification.playInStart &&
+        positionInGroup <= qualification.playInEnd)
+    ) {
       return { 
         badge: 'bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black',
         border: 'border-l-2 border-amber-400'
+      };
+    }
+    if (
+      qualification.playInStart !== undefined &&
+      qualification.playInEnd !== undefined &&
+      positionInGroup >= qualification.playInStart &&
+      positionInGroup <= qualification.playInEnd
+    ) {
+      return {
+        badge: 'bg-sky-400/20 text-sky-300 border border-sky-400/40 shadow-sm shadow-sky-400/15 font-black',
+        border: 'border-l-2 border-sky-400'
       };
     }
     if (positionInGroup >= 8) {
@@ -149,20 +196,20 @@ export default function StandingsTable(props: StandingsTableProps) {
               )}>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                    Grupo {group.groupName}
+                    {t.matches.group} {group.groupName}
                   </span>
                   {hasTwoGroups && (
                     isAdvantageGroup ? (
                       <span className="text-[9px] font-black text-[#34d399] bg-[#34d399]/15 px-2 py-0.5 rounded-full border border-[#34d399] flex items-center gap-1 select-none shadow-sm shadow-[#34d399]/25">
                         <Crown className="w-2.5 h-2.5 text-[#34d399]" />
-                        <span>Vantagem SC</span>
+                        <span>{t.standings.scAdvantage}</span>
                         {challengerInfo && (
                           <span className="font-mono opacity-80">({group.groupName === 'A' ? challengerInfo.groupAWins : challengerInfo.groupBWins}V)</span>
                         )}
                       </span>
                     ) : (
                       <span className="text-[9px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-800 px-1.5 py-0.5 rounded-full select-none">
-                        3 vagas playoffs
+                        {t.standings.threePlayoffSpots}
                       </span>
                     )
                   )}
@@ -170,7 +217,9 @@ export default function StandingsTable(props: StandingsTableProps) {
 
                 {hasTwoGroups && (
                   <span className="text-[9px] text-zinc-500 font-medium hidden sm:inline">
-                    {isAdvantageGroup ? "1º na Semi • 2º-4º nas Quartas" : "1º-3º nas Quartas"}
+                    {qualification.groupFormat === "lastChance"
+                      ? t.standings.lastChanceSubtext
+                      : isAdvantageGroup ? t.standings.advantageSubtext : t.standings.noAdvantageSubtext}
                   </span>
                 )}
               </div>
@@ -181,10 +230,10 @@ export default function StandingsTable(props: StandingsTableProps) {
               {/* Header Row */}
               <div className="grid grid-cols-[28px_1fr_48px_34px_38px] sm:grid-cols-[32px_1fr_54px_38px_42px] gap-1 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-[11px] text-zinc-500 font-semibold uppercase tracking-wider border-b border-zinc-800/80">
                 <div className="text-center">#</div>
-                <div>Clube</div>
-                <div className="text-center">V-D</div>
-                <div className="text-center">SG</div>
-                <div className="text-center font-bold text-zinc-400">PTS</div>
+                <div>{t.standings.club}</div>
+                <div className="text-center">{t.standings.wl}</div>
+                <div className="text-center">{t.standings.gdAbbr}</div>
+                <div className="text-center font-bold text-zinc-400">{t.standings.pts}</div>
               </div>
 
               {/* Team Rows */}
@@ -206,7 +255,7 @@ export default function StandingsTable(props: StandingsTableProps) {
                         "hover:bg-white/[0.04] active:bg-white/[0.07]",
                         posStyle?.border
                       )}
-                      title={`Ver página do time ${team.name}`}
+                      title={`${t.standings.viewTeamPage} ${team.name}`}
                     >
                       {/* Position */}
                       <div className="flex items-center justify-center">
@@ -292,18 +341,29 @@ export default function StandingsTable(props: StandingsTableProps) {
       <div className="px-3 py-2 border-t border-zinc-800/80 flex flex-wrap items-center gap-3.5 text-[10px] sm:text-[11px] text-zinc-400">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          <span className="text-zinc-300 font-semibold">1º Semifinal Direta</span>
+          <span className="text-zinc-300 font-semibold">{t.standings.directSemi}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
-          <span className="text-zinc-300 font-semibold">{hasTwoGroups ? "Quartas de Final" : "2º ao 7º Playoffs"}</span>
+          <span className="text-zinc-300 font-semibold">
+            {hasTwoGroups
+              ? qualification.groupFormat === "lastChance" ? t.standings.quartersAndLastChance : t.standings.quarterfinals
+              : t.standings.singleTableQuarters.replace("{end}", String(qualification.playoffEnd))}
+          </span>
         </div>
+        {qualification.playInStart !== undefined && !hasTwoGroups && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+            <span className="text-zinc-300 font-semibold">
+              {t.standings.playIn.replace("{start}", String(qualification.playInStart)).replace("{end}", String(qualification.playInEnd))}
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
-          <span className="text-zinc-400 font-medium">Eliminados</span>
+          <span className="text-zinc-400 font-medium">{t.standings.eliminated}</span>
         </div>
       </div>
     </div>
   );
 }
-

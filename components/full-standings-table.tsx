@@ -5,6 +5,7 @@ import type { TeamStanding, Team, TeamDetails, Round } from "@/types/kings-leagu
 import { cn, getProxyImageUrl } from "@/lib/utils"
 import { Trophy, ChevronUp, ChevronDown, ArrowUpRight, Shield, Info, HelpCircle, Crown } from "lucide-react"
 import { determineChallengerAdvantage } from "@/lib/generate-playoff-bracket"
+import { useLocale } from "@/contexts/locale-context"
 
 export interface MatchFormItem {
   type: "V" | "D"
@@ -43,6 +44,13 @@ export interface FullStandingsTableProps {
   winnerGroupName?: string
   winsByGroup?: Record<string, number>
   rounds?: Round[]
+  qualification?: {
+    playoffEnd: number
+    playInStart?: number
+    playInEnd?: number
+    groupFormat?: "brazil" | "lastChance"
+  }
+  hasLiveMatches?: boolean
 }
 
 export default function FullStandingsTable({
@@ -53,7 +61,10 @@ export default function FullStandingsTable({
   positionChangesMap = new Map(),
   onTeamSelect,
   rounds,
+  qualification = { playoffEnd: 7 },
+  hasLiveMatches = false,
 }: FullStandingsTableProps) {
+  const { t } = useLocale()
   const [selectedGroupIndex, setSelectedGroupIndex] = useState<number>(0)
   const [showRules, setShowRules] = useState(false)
 
@@ -90,51 +101,91 @@ export default function FullStandingsTable({
   //   1º ao 3º -> Playoffs / Quartas (dourado/âmbar)
   //   4º e 5º -> Eliminados (vermelho/rosa)
   const getPositionStyle = (groupName: string, positionInGroup: number) => {
-    if (hasTwoGroups) {
-      const isAdvantageGroup = groupName === advantageGroup
+    const playInStart = qualification.playInStart
+    const playInEnd = qualification.playInEnd
 
-      if (isAdvantageGroup) {
-        if (positionInGroup === 1) {
-          return {
-            badge:
-              "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20 font-black",
-            bar: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]",
-            border: "border-l-2 border-emerald-400",
-          }
+    if (hasTwoGroups && qualification.groupFormat === "lastChance") {
+      if (positionInGroup === 1) {
+        return {
+          badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black",
+          bar: "bg-emerald-400",
+          border: "border-l-2 border-emerald-400",
         }
-        if (positionInGroup >= 2 && positionInGroup <= 4) {
-          return {
-            badge:
-              "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black",
-            bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
-            border: "border-l-2 border-amber-400",
-          }
+      }
+      if (positionInGroup === 2) {
+        return {
+          badge: "bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black",
+          bar: "bg-amber-400",
+          border: "border-l-2 border-amber-400",
         }
-        if (positionInGroup >= 5) {
-          return {
-            badge:
-              "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
-            bar: "bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]",
-            border: "border-l-2 border-rose-500/40",
-          }
+      }
+      if (positionInGroup <= 4) {
+        return {
+          badge: "bg-sky-400/20 text-sky-300 border border-sky-400/40 font-black",
+          bar: "bg-sky-400",
+          border: "border-l-2 border-sky-400",
         }
-      } else {
-        if (positionInGroup >= 1 && positionInGroup <= 3) {
-          return {
-            badge:
-              "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black",
-            bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
-            border: "border-l-2 border-amber-400",
-          }
+      }
+      return {
+        badge: "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
+        bar: "bg-rose-500/80",
+        border: "border-l-2 border-rose-500/40",
+      }
+    }
+
+    if (hasTwoGroups && qualification.groupFormat !== "lastChance") {
+      if (positionInGroup === 1) {
+        return {
+          badge:
+            "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20 font-black",
+          bar: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]",
+          border: "border-l-2 border-emerald-400",
         }
-        if (positionInGroup >= 4) {
-          return {
-            badge:
-              "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
-            bar: "bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]",
-            border: "border-l-2 border-rose-500/40",
-          }
+      }
+
+      if (positionInGroup === 2) {
+        return {
+          badge:
+            "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black",
+          bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
+          border: "border-l-2 border-amber-400",
         }
+      }
+      if (positionInGroup >= 3 && positionInGroup <= 4) {
+        return {
+          badge:
+            "bg-sky-400/20 text-sky-300 border border-sky-400/40 shadow-sm shadow-sky-400/15 font-black",
+          bar: "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]",
+          border: "border-l-2 border-sky-400",
+        }
+      }
+      return {
+        badge:
+          "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
+        bar: "bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]",
+        border: "border-l-2 border-rose-500/40",
+      }
+    }
+
+    if (hasTwoGroups && qualification.groupFormat === "brazil") {
+      if (positionInGroup === 1) {
+        return {
+          badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black",
+          bar: "bg-emerald-400",
+          border: "border-l-2 border-emerald-400",
+        }
+      }
+      if (positionInGroup <= 4) {
+        return {
+          badge: "bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black",
+          bar: "bg-amber-400",
+          border: "border-l-2 border-amber-400",
+        }
+      }
+      return {
+        badge: "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
+        bar: "bg-rose-500/80",
+        border: "border-l-2 border-rose-500/40",
       }
     }
 
@@ -147,12 +198,29 @@ export default function FullStandingsTable({
         border: "border-l-2 border-emerald-400",
       }
     }
-    if (positionInGroup >= 2 && positionInGroup <= 7) {
+    if (
+      positionInGroup >= 2 &&
+      positionInGroup <= qualification.playoffEnd &&
+      !(playInStart !== undefined && playInEnd !== undefined && positionInGroup >= playInStart && positionInGroup <= playInEnd)
+    ) {
       return {
         badge:
           "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black",
         bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
         border: "border-l-2 border-amber-400",
+      }
+    }
+    if (
+      playInStart !== undefined &&
+      playInEnd !== undefined &&
+      positionInGroup >= playInStart &&
+      positionInGroup <= playInEnd
+    ) {
+      return {
+        badge:
+          "bg-sky-400/20 text-sky-300 border border-sky-400/40 shadow-sm shadow-sky-400/15 font-black",
+        bar: "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]",
+        border: "border-l-2 border-sky-400",
       }
     }
     if (positionInGroup >= 8) {
@@ -185,14 +253,14 @@ export default function FullStandingsTable({
                       : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
                   )}
                 >
-                  Grupo {group.groupName}
+                  {t.matches.group} {group.groupName}
                 </button>
               )
             })}
           </div>
 
           <span className="text-xs text-zinc-400 font-medium">
-            Mostrando Grupo {groupedStandings[selectedGroupIndex]?.groupName}
+            {t.standings.showingGroup} {groupedStandings[selectedGroupIndex]?.groupName}
           </span>
         </div>
       )}
@@ -225,14 +293,14 @@ export default function FullStandingsTable({
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
                       {!hasTwoGroups || group.groupName === "Regular" || (group.groupName === "A" && groupedStandings.length === 1)
-                        ? "Tabela Oficial"
-                        : `Grupo ${group.groupName}`}
+                        ? t.standings.officialTable
+                        : `${t.matches.group} ${group.groupName}`}
                     </h2>
                     {hasTwoGroups && (
                       isAdvantageGroup ? (
                         <span className="text-[10px] font-black text-[#34d399] bg-[#34d399]/15 px-2.5 py-0.5 rounded-full border border-[#34d399]/40 flex items-center gap-1 select-none shadow-sm shadow-[#34d399]/25">
                           <Crown className="w-3 h-3 text-[#34d399]" />
-                          <span>Vantagem SC</span>
+                          <span>{t.standings.scAdvantage}</span>
                           {challengerInfo && (
                             <span className="font-mono opacity-80">
                               ({group.groupName === "A" ? challengerInfo.groupAWins : challengerInfo.groupBWins}V)
@@ -241,22 +309,26 @@ export default function FullStandingsTable({
                         </span>
                       ) : (
                         <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-800 px-2 py-0.5 rounded-full select-none">
-                          3 vagas playoffs
+                          {t.standings.threePlayoffSpots}
                         </span>
                       )
                     )}
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
+                    {hasLiveMatches && <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Ao Vivo
-                    </span>
+                      {t.standings.live}
+                    </span>}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-[11px] text-zinc-400 font-medium">
-                      Classificação por Vitórias e Derrotas (V-D) • Kings League Brazil
+                      {t.standings.titleDesc}
                     </p>
                     {hasTwoGroups && (
                       <span className="text-[11px] text-zinc-500 font-medium hidden sm:inline">
-                        • {isAdvantageGroup ? "1º na Semi • 2º-4º nas Quartas" : "1º-3º nas Quartas"}
+                        • {qualification.groupFormat === "lastChance"
+                          ? t.standings.lastChanceSubtext
+                          : isAdvantageGroup
+                            ? t.standings.advantageSubtext
+                            : t.standings.noAdvantageSubtext}
                       </span>
                     )}
                   </div>
@@ -267,7 +339,7 @@ export default function FullStandingsTable({
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-zinc-300 bg-white/[0.03] border border-white/[0.06]">
                   <Shield className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-                  <strong className="text-white">{group.standings.length}</strong> Times
+                  <strong className="text-white">{group.standings.length}</strong> {t.standings.teamsCount}
                 </span>
               </div>
             </div>
@@ -278,49 +350,49 @@ export default function FullStandingsTable({
                 <thead>
                   <tr className="border-b border-white/[0.06] bg-white/[0.01] text-[11px] font-black tracking-wider uppercase text-zinc-400">
                     <th scope="col" className="py-3.5 pl-5 pr-2 w-14 text-center font-bold">
-                      POS
+                      {t.standings.pos}
                     </th>
                     <th scope="col" className="py-3.5 px-3 min-w-[190px] sm:min-w-[230px] font-bold">
-                      TIME
+                      {t.standings.team}
                     </th>
-                    <th scope="col" className="py-3.5 px-2.5 w-24 text-center font-black text-white" title="Vitórias - Derrotas">
-                      V - D
+                    <th scope="col" className="py-3.5 px-2.5 w-24 text-center font-black text-white" title={t.standings.winLossTooltip}>
+                      {t.standings.wl}
                     </th>
-                    <th scope="col" className="py-3.5 px-2 w-12 text-center font-bold" title="Partidas Jogadas">
-                      J
+                    <th scope="col" className="py-3.5 px-2 w-12 text-center font-bold" title={t.standings.playedTooltip}>
+                      {t.standings.playedAbbr}
                     </th>
-                    <th scope="col" className="py-3.5 px-2 w-12 text-center font-bold hidden sm:table-cell" title="Vitórias">
-                      V
+                    <th scope="col" className="py-3.5 px-2 w-12 text-center font-bold hidden sm:table-cell" title={t.standings.wonTooltip}>
+                      {t.standings.wonAbbr}
                     </th>
-                    <th scope="col" className="py-3.5 px-2 w-12 text-center font-bold hidden sm:table-cell" title="Derrotas">
-                      D
-                    </th>
-                    <th
-                      scope="col"
-                      className="py-3.5 px-2 w-12 text-center font-bold hidden lg:table-cell"
-                      title="Gols Pró (Marcados)"
-                    >
-                      GP
+                    <th scope="col" className="py-3.5 px-2 w-12 text-center font-bold hidden sm:table-cell" title={t.standings.lostTooltip}>
+                      {t.standings.lostAbbr}
                     </th>
                     <th
                       scope="col"
                       className="py-3.5 px-2 w-12 text-center font-bold hidden lg:table-cell"
-                      title="Gols Contra (Sofridos)"
+                      title={t.standings.gfTooltip}
                     >
-                      GC
+                      {t.standings.gfAbbr}
                     </th>
-                    <th scope="col" className="py-3.5 px-2.5 w-14 text-center font-bold" title="Saldo de Gols (GP - GC)">
-                      SG
+                    <th
+                      scope="col"
+                      className="py-3.5 px-2 w-12 text-center font-bold hidden lg:table-cell"
+                      title={t.standings.gaTooltip}
+                    >
+                      {t.standings.gaAbbr}
+                    </th>
+                    <th scope="col" className="py-3.5 px-2.5 w-14 text-center font-bold" title={t.standings.gdTooltip}>
+                      {t.standings.gdAbbr}
                     </th>
                     <th
                       scope="col"
                       className="py-3.5 px-3 w-36 text-center font-bold hidden md:table-cell"
-                      title="Últimas Partidas (Forma Recente)"
+                      title={t.standings.recentMatchesTooltip}
                     >
-                      FORMA
+                      {t.standings.form}
                     </th>
                     <th scope="col" className="py-3.5 pr-5 pl-1 w-10 text-center">
-                      <span className="sr-only">Ações</span>
+                      <span className="sr-only">{t.standings.actions}</span>
                     </th>
                   </tr>
                 </thead>
@@ -350,7 +422,7 @@ export default function FullStandingsTable({
                         onClick={() => onTeamSelect(teamId)}
                         role="button"
                         tabIndex={0}
-                        aria-label={`Ver time ${team.name}`}
+                        aria-label={`${t.standings.viewTeam} ${team.name}`}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault()
@@ -416,7 +488,7 @@ export default function FullStandingsTable({
                                 src={getProxyImageUrl(
                                   typeof team.logo === "string" ? team.logo : team.logo?.url
                                 )}
-                                alt={`Escudo ${team.name}`}
+                                alt={`${t.playoffs.officialShield} ${team.name}`}
                                 className="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
                                 loading="lazy"
                                 crossOrigin="anonymous"
@@ -436,7 +508,7 @@ export default function FullStandingsTable({
 
                               {presidentName && (
                                 <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-medium hidden sm:block">
-                                  Pres: <span className="text-zinc-300">{presidentName}</span>
+                                  {t.teamPage.presAbbr}: <span className="text-zinc-300">{presidentName}</span>
                                 </p>
                               )}
                             </div>
@@ -506,7 +578,7 @@ export default function FullStandingsTable({
                               formItems.map((item, idx) => (
                                 <span
                                   key={idx}
-                                  title={`${item.label === "V" ? "Vitória" : "Derrota"} • ${item.score} vs ${item.oppName} (${item.roundName})${item.isShootout ? " [Shootout]" : ""}`}
+                                  title={`${item.label === "V" ? t.standings.victory : t.standings.defeat} • ${item.score} vs ${item.oppName} (${item.roundName})${item.isShootout ? " [Shootout]" : ""}`}
                                   className={cn(
                                     "w-5 h-5 rounded-md text-[9px] font-black flex items-center justify-center transition-transform hover:scale-115 shadow-xs cursor-help select-none",
                                     item.type === "V"
@@ -540,15 +612,29 @@ export default function FullStandingsTable({
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-zinc-300">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-                  <span className="text-zinc-300 font-semibold">1º Semifinal Direta</span>
+                  <span className="text-zinc-300 font-semibold">{t.standings.directSemi}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
-                  <span className="text-zinc-300 font-semibold">{hasTwoGroups ? "Quartas de Final" : "2º ao 7º Playoffs"}</span>
+                  <span className="text-zinc-300 font-semibold">
+                    {hasTwoGroups
+                      ? qualification.groupFormat === "lastChance"
+                        ? t.standings.quartersAndLastChance
+                        : t.standings.quarterfinals
+                      : t.standings.singleTableQuarters.replace("{end}", String(qualification.playoffEnd))}
+                  </span>
                 </div>
+                {qualification.playInStart !== undefined && !hasTwoGroups && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+                    <span className="text-zinc-300 font-semibold">
+                      {t.standings.playIn.replace("{start}", String(qualification.playInStart)).replace("{end}", String(qualification.playInEnd))}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
-                  <span className="text-zinc-400 font-medium">Eliminados</span>
+                  <span className="text-zinc-400 font-medium">{t.standings.eliminated}</span>
                 </div>
               </div>
 
@@ -559,7 +645,7 @@ export default function FullStandingsTable({
                 className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors duration-150 text-[11px] font-semibold"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
-                {showRules ? "Ocultar regras" : "Ver regras e desempate"}
+                {showRules ? t.standings.hideRules : t.standings.showRules}
               </button>
             </div>
 
@@ -568,37 +654,37 @@ export default function FullStandingsTable({
               <div className="px-5 py-4 sm:px-6 sm:py-5 border-t border-white/[0.06] bg-black/40 space-y-3 animate-in fade-in duration-200">
                 <div className="flex items-center gap-2 text-xs font-bold text-white uppercase tracking-wider">
                   <Info className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-                  <span>Regulamento Oficial da Kings League Brazil</span>
+                  <span>{t.standings.officialRegulations}</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] space-y-1">
                     <span className="text-[10px] uppercase font-bold text-emerald-400 block">
-                      Sem Empates (Vitória ou Derrota)
+                      {t.standings.noDrawsTitle}
                     </span>
                     <p className="text-zinc-300 text-xs leading-relaxed">
-                      Todas as partidas têm um vencedor definido. Jogos empatados no tempo regular vão diretamente para a disputa de <strong>Shootouts 1v1</strong>.
+                      {t.standings.noDrawsDesc}
                     </p>
                   </div>
 
                   <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] space-y-1">
                     <span className="text-[10px] uppercase font-bold text-amber-400 block">
-                      Critérios Oficiais de Desempate
+                      {t.standings.tiebreakerTitle}
                     </span>
                     <p className="text-zinc-300 text-xs leading-relaxed">
-                      1. Vitórias (V) &gt; 2. Saldo de Gols (SG) &gt; 3. Gols Marcados (GP) &gt; 4. Menor número de Gols Sofridos (GC) &gt; 5. Confronto Direto.
+                      {t.standings.tiebreakerDesc}
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-1 text-[11px] text-zinc-400 flex flex-wrap gap-x-4 gap-y-1">
-                  <span><strong>V - D:</strong> Vitórias e Derrotas</span>
-                  <span><strong>J:</strong> Jogos Disputados</span>
-                  <span><strong>V:</strong> Vitórias</span>
-                  <span><strong>D:</strong> Derrotas</span>
-                  <span><strong>GP:</strong> Gols Pró</span>
-                  <span><strong>GC:</strong> Gols Contra</span>
-                  <span><strong>SG:</strong> Saldo de Gols</span>
+                  <span><strong>V - D:</strong> {t.ui.wins} / {t.ui.losses}</span>
+                  <span><strong>J:</strong> {t.ui.matches}</span>
+                  <span><strong>V:</strong> {t.ui.wins}</span>
+                  <span><strong>D:</strong> {t.ui.losses}</span>
+                  <span><strong>GP:</strong> {t.ui.scored}</span>
+                  <span><strong>GC:</strong> {t.ui.conceded}</span>
+                  <span><strong>SG:</strong> {t.ui.difference}</span>
                 </div>
               </div>
             )}
