@@ -1,47 +1,57 @@
 import { TierListData, TierListState, TierItem } from "@/types/kings-league";
 import LZString from "lz-string";
+import { Locale, messages } from "@/locales/types";
 
 // Chave para armazenamento no localStorage
 const TIER_LIST_KEY = '@kl-simulador:tierList';
 
+function getTierListKey(scope = "default"): string {
+  return `${TIER_LIST_KEY}:${scope}`;
+}
+
 // Configuração padrão das tiers
-export const DEFAULT_TIERS: TierItem[] = [
-  {
-    id: 'tier-1',
-    name: 'Campeão',
-    color: '#FFD700', // Dourado
-    teams: []
-  },
-  {
-    id: 'tier-2',
-    name: 'Semifinal',
-    color: '#C0C0C0', // Prata
-    teams: []
-  },
-  {
-    id: 'tier-3',
-    name: 'Playoffs',
-    color: '#CD7F32', // Bronze
-    teams: []
-  },
-  {
-    id: 'tier-4',
-    name: 'Pode Surpreender',
-    color: '#4CAF50', // Verde
-    teams: []
-  },
-  {
-    id: 'tier-5',
-    name: 'Pior Campanha',
-    color: '#F44336', // Vermelho
-    teams: []
-  }
-];
+export function getDefaultTiers(locale: Locale = 'pt-BR'): TierItem[] {
+  const t = (messages[locale] || messages['pt-BR']).tier;
+  return [
+    {
+      id: 'tier-1',
+      name: t.presetKingsLeagueTier1,
+      color: '#FFD700', // Dourado
+      teams: []
+    },
+    {
+      id: 'tier-2',
+      name: t.presetKingsLeagueTier2,
+      color: '#C0C0C0', // Prata
+      teams: []
+    },
+    {
+      id: 'tier-3',
+      name: t.presetKingsLeagueTier3,
+      color: '#CD7F32', // Bronze
+      teams: []
+    },
+    {
+      id: 'tier-4',
+      name: t.presetKingsLeagueTier4,
+      color: '#4CAF50', // Verde
+      teams: []
+    },
+    {
+      id: 'tier-5',
+      name: t.presetKingsLeagueTier5,
+      color: '#F44336', // Vermelho
+      teams: []
+    }
+  ];
+}
+
+export const DEFAULT_TIERS: TierItem[] = getDefaultTiers('pt-BR');
 
 /**
  * Salva a tier list no localStorage
  */
-export function saveTierList(data: TierListData): void {
+export function saveTierList(data: TierListData, scope = "default"): void {
   if (typeof window === 'undefined') return;
   
   const stateWithTimestamp: TierListState = {
@@ -49,15 +59,15 @@ export function saveTierList(data: TierListData): void {
     timestamp: Date.now()
   };
   
-  localStorage.setItem(TIER_LIST_KEY, JSON.stringify(stateWithTimestamp));
+  localStorage.setItem(getTierListKey(scope), JSON.stringify(stateWithTimestamp));
 }
 
 /**
  * Obtém a tier list do localStorage
  */
-export function getTierList(): TierListState | null {
+export function getTierList(scope = "default"): TierListState | null {
   if (typeof window === 'undefined') return null;
-  const data = localStorage.getItem(TIER_LIST_KEY);
+  const data = localStorage.getItem(getTierListKey(scope));
   if (!data) return null;
   
   try {
@@ -71,17 +81,17 @@ export function getTierList(): TierListState | null {
 /**
  * Limpa a tier list do localStorage
  */
-export function clearTierList(): void {
+export function clearTierList(scope = "default"): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(TIER_LIST_KEY);
+  localStorage.removeItem(getTierListKey(scope));
 }
 
 /**
  * Verifica se existe uma tier list salva
  */
-export function hasSavedTierList(): boolean {
+export function hasSavedTierList(scope = "default"): boolean {
   if (typeof window === 'undefined') return false;
-  return !!localStorage.getItem(TIER_LIST_KEY);
+  return !!localStorage.getItem(getTierListKey(scope));
 }
 
 // Mapa de cores comuns para códigos curtos (economia de bytes)
@@ -249,9 +259,9 @@ export function createNewTier(id: string, index: number): TierItem {
 /**
  * Obtém tier list inicial com tiers padrão e todos os times não atribuídos
  */
-export function getInitialTierListData(allTeamIds: string[]): TierListData {
+export function getInitialTierListData(allTeamIds: string[], locale: Locale = 'pt-BR'): TierListData {
   return {
-    tiers: DEFAULT_TIERS,
+    tiers: getDefaultTiers(locale),
     unassigned: allTeamIds
   };
 }
@@ -388,46 +398,51 @@ export interface PresetTemplate {
   tiers: { name: string; color: string }[];
 }
 
-export const PRESET_LISTS: PresetTemplate[] = [
-  {
-    id: 'kings-league',
-    name: 'Kings League Oficial',
-    description: 'Campeão até Pior Campanha',
-    tiers: [
-      { name: 'Campeão', color: '#FFD700' },
-      { name: 'Semifinal', color: '#C0C0C0' },
-      { name: 'Playoffs', color: '#CD7F32' },
-      { name: 'Pode Surpreender', color: '#10B981' },
-      { name: 'Pior Campanha', color: '#EF4444' },
-    ]
-  },
-  {
-    id: 'classic-s-f',
-    name: 'Clássico S ao F',
-    description: 'S, A, B, C, D, E, F',
-    tiers: [
-      { name: 'S', color: '#FF7F7F' },
-      { name: 'A', color: '#FFBF7F' },
-      { name: 'B', color: '#FFDF7F' },
-      { name: 'C', color: '#FFFF7F' },
-      { name: 'D', color: '#BFFF7F' },
-      { name: 'E', color: '#7FFFFF' },
-      { name: 'F', color: '#7FBFFF' },
-    ]
-  },
-  {
-    id: 'tournament',
-    name: 'Termômetro da Temporada',
-    description: 'Favorito, Na Briga, Decepção...',
-    tiers: [
-      { name: 'Favorito ao Título', color: '#FFD700' },
-      { name: 'Classificação Direta', color: '#10B981' },
-      { name: 'Na Briga', color: '#3B82F6' },
-      { name: 'Precisa Melhorar', color: '#F59E0B' },
-      { name: 'Decepção', color: '#EF4444' },
-    ]
-  }
-];
+export function getPresetLists(locale: Locale = 'pt-BR'): PresetTemplate[] {
+  const t = (messages[locale] || messages['pt-BR']).tier;
+  return [
+    {
+      id: 'kings-league',
+      name: t.presetKingsLeagueTitle,
+      description: t.presetKingsLeagueDesc,
+      tiers: [
+        { name: t.presetKingsLeagueTier1, color: '#FFD700' },
+        { name: t.presetKingsLeagueTier2, color: '#C0C0C0' },
+        { name: t.presetKingsLeagueTier3, color: '#CD7F32' },
+        { name: t.presetKingsLeagueTier4, color: '#10B981' },
+        { name: t.presetKingsLeagueTier5, color: '#EF4444' },
+      ]
+    },
+    {
+      id: 'classic-s-f',
+      name: t.presetClassicTitle,
+      description: t.presetClassicDesc,
+      tiers: [
+        { name: 'S', color: '#FF7F7F' },
+        { name: 'A', color: '#FFBF7F' },
+        { name: 'B', color: '#FFDF7F' },
+        { name: 'C', color: '#FFFF7F' },
+        { name: 'D', color: '#BFFF7F' },
+        { name: 'E', color: '#7FFFFF' },
+        { name: 'F', color: '#7FBFFF' },
+      ]
+    },
+    {
+      id: 'tournament',
+      name: t.presetTournamentTitle,
+      description: t.presetTournamentDesc,
+      tiers: [
+        { name: t.presetTournamentTier1, color: '#FFD700' },
+        { name: t.presetTournamentTier2, color: '#10B981' },
+        { name: t.presetTournamentTier3, color: '#3B82F6' },
+        { name: t.presetTournamentTier4, color: '#F59E0B' },
+        { name: t.presetTournamentTier5, color: '#EF4444' },
+      ]
+    }
+  ];
+}
+
+export const PRESET_LISTS: PresetTemplate[] = getPresetLists('pt-BR');
 
 /**
  * Aplica um preset de tiers, devolvendo todos os times para o banco
@@ -450,6 +465,5 @@ export function applyPreset(data: TierListData, preset: PresetTemplate): TierLis
     unassigned: uniqueTeamIds,
   };
 }
-
 
 

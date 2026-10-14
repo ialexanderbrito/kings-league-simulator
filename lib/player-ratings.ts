@@ -290,34 +290,28 @@ export function getCalibratedPlayerOverall(player: Player): number {
   // 4. Se tiver atributos detalhados, calcula média ponderada fiel
   const weightedStats = calculatePositionWeightedRating(player)
   const statsBonus = calculateStatsBonus(player.stats)
+  const rawAverage = player.metaInformation?.average ? Number(player.metaInformation.average) : null
+  const hasValidRawAverage = rawAverage !== null && !isNaN(rawAverage) && rawAverage > 50
 
-  if (weightedStats !== null) {
-    let calibrated = weightedStats + statsBonus
+  if (weightedStats !== null || hasValidRawAverage) {
+    // Se tiver ambos, harmoniza dando peso ao maior valor oficial
+    const baseOverall = weightedStats !== null && hasValidRawAverage
+      ? Math.round(Math.max(weightedStats, rawAverage) * 0.7 + Math.min(weightedStats, rawAverage) * 0.3)
+      : (weightedStats ?? rawAverage!)
 
-    // Ajuste de curva: Wildcards com atributos têm piso de qualidade garantido
+    let calibrated = baseOverall + statsBonus
+
+    // Ajuste de curva equilibrado para estrelas e atletas regulares
     if (isWildcard) {
-      calibrated = Math.max(86, Math.min(93, calibrated))
+      calibrated = Math.max(85, Math.min(97, calibrated))
     } else {
-      calibrated = Math.max(73, Math.min(86, calibrated))
+      calibrated = Math.max(72, Math.min(94, calibrated))
     }
 
     return calibrated
   }
 
-  // 5. Se tiver `average` oficial da API, calibrar com segurança
-  const rawAverage = player.metaInformation?.average ? Number(player.metaInformation.average) : null
-  if (rawAverage && !isNaN(rawAverage) && rawAverage > 71) {
-    let scaled = rawAverage + statsBonus
-    if (isWildcard) {
-      // Wildcards escalam entre 87 e 92 se tiverem boa média
-      scaled = Math.max(86, Math.min(93, Math.round(86 + (rawAverage - 72) * 0.5)))
-    } else {
-      scaled = Math.max(74, Math.min(86, Math.round(scaled)))
-    }
-    return scaled
-  }
-
-  // 6. Fallback determinístico elegante por ID para atletas da base ou do draft sem atributos
+  // 5. Fallback determinístico elegante por ID para atletas da base ou do draft sem atributos
   if (isWildcard) {
     // Wildcards sem stats cadastrados na API recebem notas de destaque consistentes (86 a 91)
     return getDeterministicHash(player.id, 86, 91)
@@ -325,4 +319,38 @@ export function getCalibratedPlayerOverall(player: Player): number {
 
   // Jogadores comuns de draft recebem notas sólidas e realistas (75 a 84)
   return getDeterministicHash(player.id, 75, 84)
+}
+
+export interface PlayerAttributes {
+  overall: number
+  skills: number
+  shooting: number
+  passing: number
+  defence: number
+  physical: number
+  duels: number
+  average: number | null
+  fantasyName: string
+  jerseyNumber: string | null
+}
+
+/**
+ * Retorna os atributos oficiais formatados prontos para cards FIFA/Kama Football
+ */
+export function getPlayerAttributes(player: Player): PlayerAttributes {
+  const meta = player.metaInformation || {}
+  const overall = getCalibratedPlayerOverall(player)
+
+  return {
+    overall,
+    skills: parseAttribute(meta.skills, Math.round(overall * 0.95)),
+    shooting: parseAttribute(meta.shooting, Math.round(overall * 0.92)),
+    passing: parseAttribute(meta.passing, Math.round(overall * 0.94)),
+    defence: parseAttribute(meta.defence, Math.round(overall * 0.90)),
+    physical: parseAttribute(meta.physical, Math.round(overall * 0.93)),
+    duels: parseAttribute(meta.duels, Math.round(overall * 0.93)),
+    average: meta.average ? Number(meta.average) : null,
+    fantasyName: (meta as any).fantasyName || player.shortName || "",
+    jerseyNumber: (meta as any).jerseyNumber || null,
+  }
 }
