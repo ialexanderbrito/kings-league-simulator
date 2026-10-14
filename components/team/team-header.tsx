@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Instagram, TwitchIcon, Youtube, User } from "lucide-react"
 import type { Team, TeamDetails } from "@/types/kings-league"
 import { getProxyImageUrl } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamHeaderProps {
   team: Team
@@ -10,6 +11,7 @@ interface TeamHeaderProps {
 }
 
 export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
+  const { t, locale } = useLocale()
   const president = teamDetails?.staff?.find((member) => member.role === "president")
   const coach = teamDetails?.staff?.find((member) => member.role === "coach")
 
@@ -53,7 +55,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
               {teamDetails?.logo ? (
                 <img
                   src={getProxyImageUrl(teamDetails.logo.url)}
-                  alt={`Logo do ${team.name}`}
+                  alt={`${t.common.officialShield} ${team.name}`}
                   className="w-full h-full object-contain"
                   loading="eager"
                   crossOrigin="anonymous"
@@ -76,20 +78,20 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                 <div
                   className="w-5 h-5 rounded-full border border-border"
                   style={{ backgroundColor: team.firstColorHEX }}
-                  aria-label="Cor principal do time"
-                  title="Cor principal"
+                  aria-label={t.teamPage.teamColorsTitle}
+                  title={t.common.teamColors}
                 />
                 <div
                   className="w-5 h-5 rounded-full border border-border"
                   style={{ backgroundColor: team.secondColorHEX }}
-                  aria-label="Cor secundária do time"
-                  title="Cor secundária"
+                  aria-label={t.teamPage.teamColorsTitle}
+                  title={t.common.teamColors}
                 />
               </div>
 
               {/* Redes Sociais */}
               {socialLinks.length > 0 && (
-                <nav aria-label="Redes sociais do time" className="flex items-center gap-2">
+                <nav aria-label={t.teamPage.socialLinksAria} className="flex items-center gap-2">
                   {socialLinks.map((link) => {
                     const Icon = link.icon
                     return (
@@ -99,7 +101,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label={`${link.label} do ${team.name}`}
+                        aria-label={`${link.label} • ${team.name}`}
                       >
                         <Icon className="w-4 h-4" aria-hidden="true" />
                       </a>
@@ -137,7 +139,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                     )}
                   </div>
                   <div className="hidden sm:block">
-                    <div className="text-xs text-muted-foreground">Presidente</div>
+                    <div className="text-xs text-muted-foreground">{t.page.campaign.president}</div>
                     <div className="text-sm font-semibold text-foreground">{president.shortName}</div>
                   </div>
                 </div>
@@ -167,7 +169,7 @@ export function TeamHeader({ team, teamDetails }: TeamHeaderProps) {
                     )}
                   </div>
                   <div className="hidden sm:block">
-                    <div className="text-xs text-muted-foreground">Técnico</div>
+                    <div className="text-xs text-muted-foreground">{t.ui.coach}</div>
                     <div className="text-sm font-semibold text-foreground">{coach.shortName}</div>
                   </div>
                 </div>

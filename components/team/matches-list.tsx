@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Youtube, Calendar, Timer } from "lucide-react"
 import { Team } from "@/types/kings-league"
 import { cn, getProxyImageUrl } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 interface MatchesListProps {
   teamId: string
@@ -30,10 +31,11 @@ interface MatchesListProps {
   loading: boolean
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, locale: string = "pt-BR"): string {
   try {
     const date = new Date(dateString)
-    return new Intl.DateTimeFormat("pt-BR", {
+    const intlLocale = locale === "en" ? "en-US" : locale === "es" ? "es-ES" : "pt-BR"
+    return new Intl.DateTimeFormat(intlLocale, {
       day: "2-digit",
       month: "short",
       hour: "2-digit",
@@ -45,6 +47,7 @@ function formatDate(dateString: string): string {
 }
 
 export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesListProps) {
+  const { t, locale } = useLocale()
   const [filter, setFilter] = useState<"all" | "wins" | "losses">("all")
 
   const pastMatches = useMemo(() => {
@@ -124,9 +127,9 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
         <div className="w-12 h-12 rounded-2xl liquid-stat-box flex items-center justify-center mb-2.5 text-zinc-500">
           <Calendar className="w-6 h-6" />
         </div>
-        <p className="text-sm font-bold text-white mb-1">Nenhuma partida registrada</p>
+        <p className="text-sm font-bold text-white mb-1">{t.ui.noMatches}</p>
         <p className="text-xs text-zinc-400 max-w-sm">
-          Os confrontos deste time na Kings League Brasil serão exibidos aqui assim que forem anunciados.
+          {t.teamPage.noMatchesAnnounced}
         </p>
       </div>
     )
@@ -145,7 +148,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
               : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
           )}
         >
-          Todos ({pastMatches.length})
+          {t.ui.total} ({pastMatches.length})
         </button>
 
         <button
@@ -158,7 +161,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          Vitórias ({totalWins})
+          {t.ui.wins} ({totalWins})
         </button>
 
         <button
@@ -171,7 +174,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
           )}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-          Derrotas ({totalLosses})
+          {t.ui.losses} ({totalLosses})
         </button>
       </div>
 
@@ -181,7 +184,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
           <div className="flex items-center gap-1.5 px-1 pt-1 pb-0.5">
             <Timer className="w-3.5 h-3.5 text-sky-400" />
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-              Próximos Confrontos ({futureMatches.length})
+              {t.teamPage.upcomingMatches} ({futureMatches.length})
             </span>
           </div>
 
@@ -209,11 +212,11 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                   {/* Top Bar: Rodada + Data/Horário */}
                   <div className="relative z-10 flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/5 text-zinc-300 border border-white/10 uppercase tracking-wider">
-                      {match.round.replace("Rodada ", "R")}
+                      {match.round.replace(/(Rodada|Jornada|Round)\s*/i, "R")}
                     </span>
 
                     <span className="text-[11px] text-zinc-400 font-medium">
-                      {formatDate(match.date)}
+                      {formatDate(match.date, locale)}
                     </span>
                   </div>
 
@@ -245,7 +248,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                         {homeTeam?.shortName || homeTeam?.name}
                       </span>
                       <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
-                        Casa
+                        {t.matches.homeTeam}
                       </span>
                     </div>
 
@@ -254,7 +257,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                       <div className="inline-flex items-center px-3 py-1 rounded-xl bg-black/60 border border-white/10 shadow-inner">
                         {isLive ? (
                           <span className="text-[10px] font-black text-rose-400 animate-pulse tracking-wider">
-                            AO VIVO
+                            {t.matches.live}
                           </span>
                         ) : (
                           <span className="text-xs font-black text-zinc-400 tracking-wider">
@@ -263,7 +266,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                         )}
                       </div>
                       <span className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mt-1">
-                        Agendado
+                        {t.teamPage.scheduled}
                       </span>
                     </div>
 
@@ -293,7 +296,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                         {awayTeam?.shortName || awayTeam?.name}
                       </span>
                       <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
-                        Fora
+                        {t.matches.awayTeam}
                       </span>
                     </div>
                   </div>
@@ -301,10 +304,10 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                   {/* Footer da Partida */}
                   <div className="relative z-10 pt-2 border-t border-white/5 flex items-center justify-between text-[10px]">
                     <span className="text-zinc-500 font-medium">
-                      {isCurrentTeamHome ? "Mando de campo" : "Visitante"}
+                      {isCurrentTeamHome ? t.teamPage.homeAdvantage : t.teamPage.awayAdvantage}
                     </span>
                     <span className="text-sky-400/80 font-semibold uppercase tracking-wider">
-                      Em breve
+                      {t.teamPage.soon}
                     </span>
                   </div>
                 </div>
@@ -319,7 +322,9 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
         {filteredPastMatches.map((match) => {
           const { isHome, isWin, isShootout, homeScore, awayScore, homeScoreP, awayScoreP, homeTeam, awayTeam } = match
 
-          const resultLabel = isShootout ? (isWin ? "V (SO)" : "D (SO)") : isWin ? "V" : "D"
+          const resultLabel = isShootout
+            ? (isWin ? `${t.standings.wonAbbr} (SO)` : `${t.standings.lostAbbr} (SO)`)
+            : isWin ? t.standings.wonAbbr : t.standings.lostAbbr
 
           return (
             <div
@@ -333,7 +338,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
               <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
                 <div className="flex items-center gap-1.5">
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/5 text-zinc-300 border border-white/10 uppercase tracking-wider">
-                    {match.round.replace("Rodada ", "R")}
+                    {match.round.replace(/(Rodada|Jornada|Round)\s*/i, "R")}
                   </span>
 
                   <span
@@ -343,7 +348,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                         ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-950/40"
                         : "bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-rose-950/40"
                     )}
-                    title={isWin ? "Vitória do time" : "Derrota do time"}
+                    title={isWin ? t.teamPage.matchWin : t.teamPage.matchDefeat}
                   >
                     <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", isWin ? "bg-emerald-400" : "bg-rose-400")} />
                     {resultLabel}
@@ -351,7 +356,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                 </div>
 
                 <span className="text-[11px] text-zinc-400 font-medium">
-                  {formatDate(match.date)}
+                  {formatDate(match.date, locale)}
                 </span>
               </div>
 
@@ -383,7 +388,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     {homeTeam?.shortName || homeTeam?.name}
                   </span>
                   <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
-                    Casa
+                    {t.matches.homeTeam}
                   </span>
                 </div>
 
@@ -420,7 +425,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     </span>
                   ) : (
                     <span className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mt-1">
-                      Finalizado
+                      {t.teamPage.finished}
                     </span>
                   )}
                 </div>
@@ -451,7 +456,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     {awayTeam?.shortName || awayTeam?.name}
                   </span>
                   <span className="text-[9px] text-zinc-500 uppercase tracking-wider mt-0.5">
-                    Fora
+                    {t.matches.awayTeam}
                   </span>
                 </div>
               </div>
@@ -459,7 +464,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
               {/* Footer do Card: Localização + YouTube Highlights */}
               <div className="relative z-10 pt-2 border-t border-white/5 flex items-center justify-between">
                 <span className="text-[10px] text-zinc-500 font-medium">
-                  {isHome ? "Mando de campo" : "Visitante"}
+                  {isHome ? t.teamPage.homeAdvantage : t.teamPage.awayAdvantage}
                 </span>
 
                 {match.metaInformation?.youtube_url ? (
@@ -468,14 +473,14 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-press inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/40 transition-[color,background-color,border-color] duration-150"
-                    title="Assistir Melhores Momentos no YouTube"
+                    title={t.teamPage.watchHighlights}
                   >
                     <Youtube className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                    <span>Gols e Lances</span>
+                    <span>{t.teamPage.watchHighlights}</span>
                   </a>
                 ) : (
                   <span className="text-[10px] text-zinc-600 font-medium">
-                    Sem vídeo
+                    {t.teamPage.noVideo}
                   </span>
                 )}
               </div>

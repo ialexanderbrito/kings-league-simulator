@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Team, TeamDetails, Round } from "@/types/kings-league"
 import { calculateAge } from "@/lib/utils"
 import { TrendingUp, Target, Shield, Users } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamStatsProps {
   team: Team
@@ -24,6 +25,7 @@ interface TeamStatsProps {
 }
 
 export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
+  const { t } = useLocale()
   const gamesPlayed = teamMatches.filter(m =>
     m.scores.homeScore !== null && m.scores.awayScore !== null
   ).length
@@ -101,29 +103,29 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
               <TrendingUp className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
             </div>
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Partidas
+              {t.ui.matches}
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pb-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-foreground" aria-label={`${gamesPlayed} jogos`}>
+              <div className="text-2xl font-bold text-foreground" aria-label={`${gamesPlayed} ${t.ui.matches.toLowerCase()}`}>
                 {gamesPlayed}
               </div>
-              <div className="text-xs text-muted-foreground">Jogos</div>
+              <div className="text-xs text-muted-foreground">{t.ui.matches}</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-green-500" aria-label={`${wins} vitórias`}>
+              <div className="text-2xl font-bold text-green-500" aria-label={`${wins} ${t.ui.wins.toLowerCase()}`}>
                 {wins}
               </div>
-              <div className="text-xs text-muted-foreground">Vitórias</div>
+              <div className="text-xs text-muted-foreground">{t.ui.wins}</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-red-500" aria-label={`${losses} derrotas`}>
+              <div className="text-2xl font-bold text-red-500" aria-label={`${losses} ${t.ui.losses.toLowerCase()}`}>
                 {losses}
               </div>
-              <div className="text-xs text-muted-foreground">Derrotas</div>
+              <div className="text-xs text-muted-foreground">{t.ui.losses}</div>
             </div>
           </div>
         </CardContent>
@@ -144,22 +146,22 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
         <CardContent className="pb-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-foreground" aria-label={`${totalPenalties} decisões no Shootout`}>
+              <div className="text-2xl font-bold text-foreground" aria-label={`${totalPenalties} Shootout`}>
                 {totalPenalties}
               </div>
-              <div className="text-xs text-muted-foreground">Total</div>
+              <div className="text-xs text-muted-foreground">{t.ui.total}</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-green-500" aria-label={`${penaltyWins} vitórias no Shootout`}>
+              <div className="text-2xl font-bold text-green-500" aria-label={`${penaltyWins} ${t.ui.wins.toLowerCase()} Shootout`}>
                 {penaltyWins}
               </div>
-              <div className="text-xs text-muted-foreground">Vitórias</div>
+              <div className="text-xs text-muted-foreground">{t.ui.wins}</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-red-500" aria-label={`${penaltyLosses} derrotas no Shootout`}>
+              <div className="text-2xl font-bold text-red-500" aria-label={`${penaltyLosses} ${t.ui.losses.toLowerCase()} Shootout`}>
                 {penaltyLosses}
               </div>
-              <div className="text-xs text-muted-foreground">Derrotas</div>
+              <div className="text-xs text-muted-foreground">{t.ui.losses}</div>
             </div>
           </div>
         </CardContent>
@@ -173,32 +175,32 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
               <Target className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
             </div>
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Gols
+              {t.teamPage.goalsForAgainst}
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pb-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-[var(--team-primary)]" aria-label={`${goalsFor} gols marcados`}>
+              <div className="text-2xl font-bold text-[var(--team-primary)]" aria-label={`${goalsFor} ${t.ui.scored.toLowerCase()}`}>
                 {goalsFor}
               </div>
-              <div className="text-xs text-muted-foreground">Marcados</div>
+              <div className="text-xs text-muted-foreground">{t.ui.scored}</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-foreground" aria-label={`${goalsAgainst} gols sofridos`}>
+              <div className="text-2xl font-bold text-foreground" aria-label={`${goalsAgainst} ${t.ui.conceded.toLowerCase()}`}>
                 {goalsAgainst}
               </div>
-              <div className="text-xs text-muted-foreground">Sofridos</div>
+              <div className="text-xs text-muted-foreground">{t.ui.conceded}</div>
             </div>
             <div className="space-y-0.5">
               <div
                 className={`text-2xl font-bold ${goalDifference > 0 ? 'text-green-500' : goalDifference < 0 ? 'text-red-500' : 'text-foreground'}`}
-                aria-label={`Saldo de ${goalDifference > 0 ? '+' : ''}${goalDifference} gols`}
+                aria-label={`${t.ui.difference}: ${goalDifference > 0 ? '+' : ''}${goalDifference}`}
               >
                 {goalDifference > 0 ? '+' : ''}{goalDifference}
               </div>
-              <div className="text-xs text-muted-foreground">Saldo</div>
+              <div className="text-xs text-muted-foreground">{t.ui.difference}</div>
             </div>
           </div>
         </CardContent>
@@ -212,29 +214,29 @@ export function TeamStats({ team, teamDetails, teamMatches }: TeamStatsProps) {
               <Users className="w-4 h-4 text-[var(--team-primary)]" aria-hidden="true" />
             </div>
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Elenco
+              {t.teamPage.registeredSquad}
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pb-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-foreground" aria-label={`${playersCount} jogadores`}>
+              <div className="text-2xl font-bold text-foreground" aria-label={`${playersCount} ${t.ui.players.toLowerCase()}`}>
                 {playersCount}
               </div>
-              <div className="text-xs text-muted-foreground">Jogadores</div>
+              <div className="text-xs text-muted-foreground">{t.ui.players}</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-[var(--team-primary)]" aria-label={`${wildcardsCount} wildcards`}>
+              <div className="text-2xl font-bold text-[var(--team-primary)]" aria-label={`${wildcardsCount} ${t.ui.wildcards.toLowerCase()}`}>
                 {wildcardsCount}
               </div>
-              <div className="text-xs text-muted-foreground">Wildcards</div>
+              <div className="text-xs text-muted-foreground">{t.ui.wildcards}</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-2xl font-bold text-foreground" aria-label={`Média de ${averageAge} anos`}>
+              <div className="text-2xl font-bold text-foreground" aria-label={`${t.ui.ageAverage}: ${averageAge}`}>
                 {averageAge}
               </div>
-              <div className="text-xs text-muted-foreground">Média Idade</div>
+              <div className="text-xs text-muted-foreground">{t.ui.ageAverage}</div>
             </div>
           </div>
         </CardContent>

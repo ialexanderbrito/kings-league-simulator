@@ -7,6 +7,7 @@ import type { Team } from "@/types/kings-league"
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamCarouselProps {
   teams: Team[]
@@ -30,6 +31,7 @@ function TeamCarouselSkeleton() {
 }
 
 export default function TeamCarousel({ teams, onTeamSelect, className, loading = false }: TeamCarouselProps) {
+  const { t } = useLocale()
   const [isLoading, setIsLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -67,13 +69,13 @@ export default function TeamCarousel({ teams, onTeamSelect, className, loading =
         repeat={2}
         className="w-full [--duration:50s] py-2"
         role="region"
-        aria-label="Times da Kings League"
+        aria-label={t.teams.league}
       >
         {teams.map((team) => (
           <button
             key={team.id}
             onClick={() => handleTeamClick(team.id)}
-            aria-label={`Ver detalhes do time ${team.name}`}
+            aria-label={`${t.common.viewTeamDetails} ${team.name}`}
             className={cn(
               "group relative mx-1.5 sm:mx-2",
               "w-14 h-14 sm:w-16 sm:h-16",

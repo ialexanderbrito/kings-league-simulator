@@ -16,6 +16,7 @@ import {
   Youtube,
   ExternalLink,
 } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 interface PlayerCardProps {
   player: Player
@@ -33,6 +34,7 @@ function parseAttr(val: string | undefined | null, fallback = 70): number {
 }
 
 export function PlayerCard({ player }: PlayerCardProps) {
+  const { t } = useLocale()
   const [showDetails, setShowDetails] = useState(false)
   const [imageError, setImageError] = useState(false)
 
@@ -42,17 +44,17 @@ export function PlayerCard({ player }: PlayerCardProps) {
     String(player?.metaInformation?.injury || "").toLowerCase() === "true"
 
   const roleMap: Record<Player["role"], string> = {
-    goalkeeper: "Goleiro",
-    defender: "Defensor",
-    midfielder: "Meio-campo",
-    forward: "Atacante",
+    goalkeeper: t.teamPage.roleGK,
+    defender: t.teamPage.roleDEF,
+    midfielder: t.teamPage.roleMID,
+    forward: t.teamPage.roleFWD,
   }
 
   const roleAbbr: Record<Player["role"], string> = {
-    goalkeeper: "GOL",
-    defender: "DEF",
-    midfielder: "MEI",
-    forward: "ATA",
+    goalkeeper: t.teamPage.roleGkAbbr,
+    defender: t.teamPage.roleDefAbbr,
+    midfielder: t.teamPage.roleMidAbbr,
+    forward: t.teamPage.roleFwdAbbr,
   }
 
   const roleStyles: Record<Player["role"], { bg: string; text: string; border: string }> = {
@@ -75,22 +77,22 @@ export function PlayerCard({ player }: PlayerCardProps) {
 
     if (player.role === "goalkeeper") {
       return [
-        { key: "DIV", label: "SAL", value: parseAttr(meta.diving) },
-        { key: "HAN", label: "MÃO", value: parseAttr(meta.handling) },
-        { key: "REF", label: "REF", value: parseAttr(meta.reflexes) },
-        { key: "POS", label: "POS", value: parseAttr(meta.anticipation) },
-        { key: "PAS", label: "PAS", value: parseAttr(meta.goalkeeperPassing || meta.passing, 68) },
-        { key: "DUE", label: "DUE", value: parseAttr(meta.duels, 70) },
+        { key: "DIV", label: t.teamPage.attrDiving, value: parseAttr(meta.diving) },
+        { key: "HAN", label: t.teamPage.attrHandling, value: parseAttr(meta.handling) },
+        { key: "REF", label: t.teamPage.attrReflexes, value: parseAttr(meta.reflexes) },
+        { key: "POS", label: t.teamPage.attrAnticipation, value: parseAttr(meta.anticipation) },
+        { key: "PAS", label: t.teamPage.attrPassing, value: parseAttr(meta.goalkeeperPassing || meta.passing, 68) },
+        { key: "DUE", label: t.teamPage.attrDuels, value: parseAttr(meta.duels, 70) },
       ]
     }
 
     return [
-      { key: "FIN", label: "FIN", value: parseAttr(meta.shooting) },
-      { key: "PAS", label: "PAS", value: parseAttr(meta.passing) },
-      { key: "TEC", label: "TEC", value: parseAttr(meta.skills) },
-      { key: "DEF", label: "DEF", value: parseAttr(meta.defence) },
-      { key: "FIS", label: "FÍS", value: parseAttr(meta.physical) },
-      { key: "DUE", label: "DUE", value: parseAttr(meta.duels) },
+      { key: "FIN", label: t.teamPage.attrShooting, value: parseAttr(meta.shooting) },
+      { key: "PAS", label: t.teamPage.attrPassing, value: parseAttr(meta.passing) },
+      { key: "TEC", label: t.teamPage.attrSkills, value: parseAttr(meta.skills) },
+      { key: "DEF", label: t.teamPage.attrDefence, value: parseAttr(meta.defence) },
+      { key: "FIS", label: t.teamPage.attrPhysical, value: parseAttr(meta.physical) },
+      { key: "DUE", label: t.teamPage.attrDuels, value: parseAttr(meta.duels) },
     ]
   }
 
@@ -106,7 +108,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         accent: "text-amber-300",
         ratingBg: "bg-amber-500/15 border-amber-400/40 text-amber-300",
         gradient: "from-amber-500/[0.12] via-amber-600/[0.04] to-transparent",
-        tierName: "Wild Card",
+        tierName: t.teamPage.tierWildcard,
         tierBadgeBg: "bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black",
       }
     }
@@ -118,7 +120,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         accent: "text-sky-300",
         ratingBg: "bg-sky-500/15 border-sky-400/40 text-sky-300",
         gradient: "from-sky-500/[0.12] via-blue-600/[0.04] to-transparent",
-        tierName: "Elite",
+        tierName: t.teamPage.tierElite,
         tierBadgeBg: "bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold",
       }
     }
@@ -130,7 +132,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         accent: "text-purple-300",
         ratingBg: "bg-purple-500/15 border-purple-400/40 text-purple-300",
         gradient: "from-purple-500/[0.12] via-violet-600/[0.04] to-transparent",
-        tierName: "Raro",
+        tierName: t.teamPage.tierRare,
         tierBadgeBg: "bg-gradient-to-r from-purple-400 to-violet-600 text-white font-bold",
       }
     }
@@ -142,7 +144,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
         accent: "text-emerald-300",
         ratingBg: "bg-emerald-500/15 border-emerald-400/35 text-emerald-300",
         gradient: "from-emerald-500/[0.10] via-emerald-600/[0.03] to-transparent",
-        tierName: "Comum",
+        tierName: t.teamPage.tierCommon,
         tierBadgeBg: "bg-gradient-to-r from-emerald-400 to-teal-600 text-white font-bold",
       }
     }
@@ -153,15 +155,16 @@ export function PlayerCard({ player }: PlayerCardProps) {
       accent: "text-zinc-300",
       ratingBg: "bg-white/5 border-white/10 text-zinc-300",
       gradient: "from-zinc-700/[0.10] via-zinc-800/[0.03] to-transparent",
-      tierName: "Draft",
+      tierName: t.teamPage.tierDraft,
       tierBadgeBg: "bg-zinc-700 text-zinc-200 font-bold",
     }
   }
 
   const cardTier = getCardTier()
 
+  const athleteFallback = t.teamPage.athlete ? t.teamPage.athlete.charAt(0).toUpperCase() + t.teamPage.athlete.slice(1) : "Atleta"
   const displayName =
-    player.metaInformation?.fantasyName || player.shortName || "Atleta"
+    player.metaInformation?.fantasyName || player.shortName || athleteFallback
   const jerseyNum =
     player.jersey || player.metaInformation?.jerseyNumber || undefined
 
@@ -179,7 +182,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
   return (
     <article
       className="group relative w-full h-full flex flex-col select-none"
-      aria-label={`Card do jogador ${displayName}`}
+      aria-label={`${t.teamPage.playerCardAria} ${displayName}`}
     >
       <div
         className={cn(
@@ -244,7 +247,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
             {isInjured && (
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 inline-flex items-center gap-1">
                 <AlertTriangle className="w-2.5 h-2.5 text-rose-400" />
-                DM
+                {t.teamPage.injuredBadge}
               </span>
             )}
           </div>
@@ -282,7 +285,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
             {displayName}
           </h3>
           <p className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider mt-0.5">
-            {age ? `${age} anos` : ""}
+            {age ? `${age} ${t.teamPage.yearsOld}` : ""}
             {age && player.height ? " • " : ""}
             {player.height ? `${player.height}cm` : ""}
             {(age || player.height) ? " • " : ""}
@@ -322,7 +325,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
           <div className="relative z-10 px-3 py-2.5 border-t border-white/5 bg-amber-500/[0.03] text-center">
             <span className="text-[10px] font-bold text-amber-300 inline-flex items-center gap-1.5 uppercase tracking-wider">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              Atleta Estrela Convidado
+              {t.teamPage.guestStarAthlete}
             </span>
           </div>
         )}
@@ -333,25 +336,25 @@ export function PlayerCard({ player }: PlayerCardProps) {
             <div className="grid grid-cols-4 gap-1 text-center">
               <div>
                 <p className="text-xs font-black text-white tabular-nums">{games}</p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">JOG</p>
+                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statMatches}</p>
               </div>
               <div>
                 <p className={cn("text-xs font-black tabular-nums", goals > 0 ? "text-emerald-400" : "text-zinc-400")}>
                   {goals}
                 </p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">GOLS</p>
+                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statGoals}</p>
               </div>
               <div>
                 <p className={cn("text-xs font-black tabular-nums", assists > 0 ? "text-sky-400" : "text-zinc-400")}>
                   {assists}
                 </p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">ASS</p>
+                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statAssists}</p>
               </div>
               <div>
                 <p className={cn("text-xs font-black tabular-nums", mvps > 0 ? "text-amber-400" : "text-zinc-400")}>
                   {mvps}
                 </p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">MVP</p>
+                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statMvp}</p>
               </div>
             </div>
           </div>
@@ -366,7 +369,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
             aria-expanded={showDetails}
           >
             <span className="font-semibold text-[10px] uppercase tracking-wider">
-              {showDetails ? "Recolher Atributos" : "Ver Detalhes & Mídia"}
+              {showDetails ? t.teamPage.collapseAttributes : t.teamPage.viewDetailsMedia}
             </span>
             {showDetails ? (
               <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
@@ -404,7 +407,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
               {(matchLink || videoLink) && (
                 <div className="pt-2 border-t border-white/5 space-y-1.5">
                   <p className="text-[9px] uppercase font-bold text-zinc-400 tracking-wider">
-                    Vídeos & Highlights
+                    {t.teamPage.videosAndHighlights}
                   </p>
                   <div className="flex flex-col gap-1">
                     {matchLink && (
@@ -416,7 +419,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
                       >
                         <span className="inline-flex items-center gap-1.5">
                           <Youtube className="w-3.5 h-3.5 text-rose-500" />
-                          <span>Partida Completa</span>
+                          <span>{t.teamPage.fullMatch}</span>
                         </span>
                         <ExternalLink className="w-3 h-3 text-zinc-400" />
                       </a>
@@ -430,7 +433,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
                       >
                         <span className="inline-flex items-center gap-1.5">
                           <Youtube className="w-3.5 h-3.5 text-rose-500" />
-                          <span>Melhores Momentos</span>
+                          <span>{t.teamPage.highlights}</span>
                         </span>
                         <ExternalLink className="w-3 h-3 text-zinc-400" />
                       </a>

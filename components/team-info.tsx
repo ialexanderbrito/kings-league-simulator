@@ -14,10 +14,12 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchTeamDetails } from "@/lib/fetch-league-data"
+import { useLeague } from "@/contexts/league-context"
 import { MatchesList } from "@/components/team/matches-list"
 import { TeamRoster } from "@/components/team/team-roster"
 import type { Team, Round, TeamDetails, TeamStanding } from "@/types/kings-league"
 import { getProxyImageUrl, cn } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamInfoProps {
   team: Team
@@ -39,23 +41,25 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
   const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { selectedSeasonId } = useLeague()
+  const { t } = useLocale()
 
   useEffect(() => {
     const loadTeamDetails = async () => {
       try {
         setLoading(true)
-        const details = await fetchTeamDetails(team.id)
+        const details = await fetchTeamDetails(team.id, selectedSeasonId)
         setTeamDetails(details)
         setError(null)
       } catch (err) {
-        setError("Não foi possível carregar todos os detalhes do time.")
+        setError(t.errors.message)
       } finally {
         setLoading(false)
       }
     }
 
     loadTeamDetails()
-  }, [team.id])
+  }, [team.id, selectedSeasonId])
 
   // Encontrar todas as partidas deste time
   const teamMatches = useMemo(() => {
@@ -65,7 +69,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         .map((match) => ({
           ...match,
           id: String(match.id),
-          round: round.name.replace("Jornada", "Rodada"),
+          round: round.name ? round.name.replace(/(Jornada|Rodada|Round)\s*/i, `${t.matches.roundPrefix} `) : `${t.matches.roundPrefix} ${round.id}`,
           roundId: String(round.id),
           ended: round.ended,
         }))
@@ -219,7 +223,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
                 ) : teamDetails?.logo?.url || team.logo?.url ? (
                   <img
                     src={getProxyImageUrl(teamDetails?.logo?.url || team.logo?.url)}
-                    alt={`Logo oficial do ${team.name}`}
+                    alt={`${t.playoffs.officialShield} ${team.name}`}
                     className="w-full h-full object-contain drop-shadow-md transition-transform duration-150 group-hover:scale-105"
                     crossOrigin="anonymous"
                   />
@@ -248,12 +252,12 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
                   <div
                     className="w-2 h-2 rounded-full border border-white/30"
                     style={{ backgroundColor: team.firstColorHEX }}
-                    title={`Cor Primária: ${team.firstColorHEX}`}
+                    title={`${t.teamPage.primaryColor}: ${team.firstColorHEX}`}
                   />
                   <div
                     className="w-2 h-2 rounded-full border border-white/30"
                     style={{ backgroundColor: team.secondColorHEX }}
-                    title={`Cor Secundária: ${team.secondColorHEX}`}
+                    title={`${t.teamPage.secondaryColor}: ${team.secondColorHEX}`}
                   />
                 </div>
 
@@ -269,7 +273,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
                           target="_blank"
                           rel="noopener noreferrer"
                           className="liquid-pill-btn w-5 h-5 rounded-md flex items-center justify-center text-zinc-400 hover:text-white btn-press"
-                          aria-label={`${link.label} do ${team.name}`}
+                          aria-label={`${link.label} - ${team.name}`}
                           title={link.label}
                         >
                           <Icon className="w-2.5 h-2.5" />
@@ -284,14 +288,14 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
                   <div className="flex items-center gap-2 text-[11px]">
                     {president && (
                       <span className="truncate max-w-[150px]" title={president.shortName}>
-                        <span className="text-zinc-500 uppercase text-[9px] mr-1 font-semibold">Pres:</span>
+                        <span className="text-zinc-500 uppercase text-[9px] mr-1 font-semibold">{t.teamPage.presAbbr}:</span>
                         <span className="text-zinc-300 font-semibold">{president.shortName}</span>
                       </span>
                     )}
                     {president && coach && <span className="text-zinc-600">•</span>}
                     {coach && (
                       <span className="truncate max-w-[120px]" title={coach.shortName}>
-                        <span className="text-zinc-500 uppercase text-[9px] mr-1 font-semibold">Téc:</span>
+                        <span className="text-zinc-500 uppercase text-[9px] mr-1 font-semibold">{t.teamPage.coachAbbr}:</span>
                         <span className="text-zinc-300 font-semibold">{coach.shortName}</span>
                       </span>
                     )}
@@ -305,8 +309,8 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
           {formGuide.length > 0 && (
             <div className="flex items-center gap-3 shrink-0 self-stretch md:self-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-2 md:pt-0 w-full md:w-auto">
               <div className="flex flex-col md:items-end">
-                <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Forma Recente</span>
-                <span className="text-[10px] text-zinc-500">Últimos {formGuide.length} jogos</span>
+                <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">{t.teamPage.recentForm}</span>
+                <span className="text-[10px] text-zinc-500">{t.teamPage.lastMatches.replace("{count}", String(formGuide.length))}</span>
               </div>
 
               {/* Pílulas de Forma V / D / SO */}
@@ -315,7 +319,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
                   <div
                     key={index}
                     className="group relative flex flex-col items-center"
-                    title={`${item.round}: ${item.scoreText} vs ${item.opponent?.shortName || "Adversário"}`}
+                    title={`${item.round}: ${item.scoreText} vs ${item.opponent?.shortName || t.common.opponent}`}
                   >
                     <div
                       className={cn(
@@ -326,7 +330,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
                         item.result === "SOL" && "bg-rose-500/20 text-rose-300 border-rose-500/40"
                       )}
                     >
-                      {item.result === "W" ? "V" : item.result === "SOW" ? "SO" : item.result === "L" ? "D" : "SO"}
+                      {item.result === "W" ? t.standings.wonAbbr : item.result === "SOW" ? "SO" : item.result === "L" ? t.standings.lostAbbr : "SO"}
                     </div>
                     <span className="text-[8px] font-bold text-zinc-500 uppercase mt-0.5">
                       {item.opponent?.shortName || `J${index + 1}`}
@@ -344,7 +348,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         {/* Card 1: Aproveitamento */}
         <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Aproveitamento</span>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.winRate}</span>
             <span className="text-xs font-black text-white tabular-nums">{winRate}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
@@ -354,15 +358,15 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
             />
           </div>
           <div className="flex justify-between items-center text-[9px] text-zinc-400 font-medium">
-            <span>{totalWins} vitórias</span>
-            <span>{totalLosses} derrotas</span>
+            <span>{totalWins} {t.ui.wins.toLowerCase()}</span>
+            <span>{totalLosses} {t.ui.losses.toLowerCase()}</span>
           </div>
         </div>
 
         {/* Card 2: Gols & Saldo */}
         <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Gols &amp; Saldo</span>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.goalsAndDiff}</span>
             <span
               className={cn(
                 "text-[9px] font-black px-1.5 py-0.2 rounded border",
@@ -385,25 +389,25 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
             />
           </div>
           <div className="flex justify-between items-center text-[9px]">
-            <span className="text-emerald-400 font-semibold">{goalsFor} pró</span>
-            <span className="text-rose-400 font-semibold">{goalsAgainst} contra</span>
+            <span className="text-emerald-400 font-semibold">{goalsFor} {t.teamPage.pro}</span>
+            <span className="text-rose-400 font-semibold">{goalsAgainst} {t.teamPage.against}</span>
           </div>
         </div>
 
         {/* Card 3: Shootouts */}
         <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Shootouts (SO)</span>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.shootoutsSO}</span>
             <span className="text-xs font-black text-white tabular-nums">{penaltyWins + penaltyLosses}</span>
           </div>
           <div className="flex items-center justify-between text-[9px]">
-            <span className="text-zinc-400">Vitórias: <strong className="text-emerald-400">{penaltyWins}</strong></span>
-            <span className="text-zinc-400">Derrotas: <strong className="text-rose-400">{penaltyLosses}</strong></span>
+            <span className="text-zinc-400">{t.ui.wins}: <strong className="text-emerald-400">{penaltyWins}</strong></span>
+            <span className="text-zinc-400">{t.ui.losses}: <strong className="text-rose-400">{penaltyLosses}</strong></span>
           </div>
           <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-white/5 pt-1">
-            <span>Conversão SO</span>
+            <span>{t.teamPage.soConversion}</span>
             <span className="text-zinc-300 font-bold">
-              {penaltyWins + penaltyLosses > 0 ? `${Math.round((penaltyWins / (penaltyWins + penaltyLosses)) * 100)}%` : "—"}
+              {penaltyWins + penaltyLosses > 0 ? `${Math.round((penaltyWins / (penaltyWins + penaltyLosses)) * 100)}%` : "-"}
             </span>
           </div>
         </div>
@@ -411,18 +415,18 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         {/* Card 4: Tabela & Plantel */}
         <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Tabela &amp; Plantel</span>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.tableAndSquad}</span>
             <span className="text-[10px] font-bold text-[var(--team-primary)]">
-              {teamStanding ? `${teamStanding.rank}º Lugar` : "Kings League"}
+              {teamStanding ? t.teamPage.rankPosition.replace("{rank}", String(teamStanding.rank)) : "Kings League"}
             </span>
           </div>
           <div className="flex items-center justify-between text-[9px]">
-            <span className="text-zinc-400">Pontos: <strong className="text-white">{teamStanding?.points || 0}</strong></span>
-            <span className="text-zinc-400">Wild Cards: <strong className="text-amber-400">{teamDetails?.players?.filter((p: any) => p.category === "wildcard").length || 0}</strong></span>
+            <span className="text-zinc-400">{t.teamPage.points}: <strong className="text-white">{teamStanding?.points || 0}</strong></span>
+            <span className="text-zinc-400">{t.teamPage.wildCardsCount} <strong className="text-amber-400">{teamDetails?.players?.filter((p: any) => p.category === "wildcard").length || 0}</strong></span>
           </div>
           <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-white/5 pt-1">
-            <span>Plantel Total</span>
-            <span className="text-zinc-300 font-bold">{playersCount} atletas</span>
+            <span>{t.teamPage.totalSquad}</span>
+            <span className="text-zinc-300 font-bold">{playersCount} {t.teamPage.athletes}</span>
           </div>
         </div>
       </section>
@@ -430,7 +434,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
       {error && (
         <Alert className="bg-yellow-500/10 border-yellow-500/30 text-white rounded-2xl">
           <AlertTriangle className="h-4 w-4 text-yellow-500" />
-          <AlertTitle className="text-yellow-500">Atenção</AlertTitle>
+          <AlertTitle className="text-yellow-500">{t.teamPage.attention}</AlertTitle>
           <AlertDescription className="text-zinc-300">{error}</AlertDescription>
         </Alert>
       )}
@@ -441,7 +445,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         <div className="flex justify-center items-center py-2 sm:py-3">
           <TabsList
             className="inline-flex h-auto p-1 rounded-full liquid-nav-track border border-white/10 bg-white/[0.03] shadow-md gap-1"
-            aria-label="Navegação entre Partidas e Elenco"
+            aria-label={t.teamPage.teamMatchesNav}
           >
             <TabsTrigger
               value="matches"
@@ -452,7 +456,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
               )}
             >
               <Calendar className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-              <span>Partidas</span>
+              <span>{t.navigation.matches}</span>
               {teamMatches.length > 0 && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-zinc-300">
                   {teamMatches.length}
@@ -469,7 +473,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
               )}
             >
               <Users className="w-3.5 h-3.5 text-[var(--team-primary)]" />
-              <span>Elenco</span>
+              <span>{t.navigation.squad}</span>
               {playersCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-zinc-300">
                   {playersCount}
@@ -495,8 +499,8 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
                 <Users className="w-4 h-4" style={{ color: team.firstColorHEX }} />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Elenco Completo</h2>
-                <p className="text-xs text-zinc-400">Atletas inscritos na Kings League Brasil</p>
+                <h2 className="text-base font-bold text-white">{t.teamPage.completeRoster}</h2>
+                <p className="text-xs text-zinc-400">{t.teamPage.rosterSubtitle}</p>
               </div>
             </div>
 
@@ -507,4 +511,3 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
     </div>
   )
 }
-

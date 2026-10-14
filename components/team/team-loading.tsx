@@ -2,8 +2,11 @@ import React from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MatchesListSkeleton } from "@/components/team/matches-list"
 import { Calendar, Users } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 export function TeamLoading() {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-3.5 sm:space-y-4">
       {/* Header Compacto Skeleton com Specular Rim */}
@@ -44,9 +47,9 @@ export function TeamLoading() {
           <div className="flex items-center gap-3 shrink-0 self-stretch md:self-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-2 md:pt-0 w-full md:w-auto">
             <div className="flex flex-col md:items-end space-y-1">
               <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                Forma Recente
+                {t.teamPage.recentForm}
               </span>
-              <span className="text-[10px] text-zinc-600">Últimos 5 jogos</span>
+              <span className="text-[10px] text-zinc-600">{t.teamPage.lastMatches.replace("{count}", "5")}</span>
             </div>
             <div className="flex gap-1">
               {Array(5)
@@ -62,10 +65,10 @@ export function TeamLoading() {
       {/* 4 Cards Compactos Skeleton em Linha Única */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
         {[
-          { label: "Jogos", value: "—", sub: "Vitórias / Derrotas" },
-          { label: "Aproveitamento", value: "—%", sub: "Desempenho Geral" },
-          { label: "Saldo de Gols", value: "—", sub: "Gols Pró / Contra" },
-          { label: "Elenco", value: "—", sub: "Plantel Inscrito" },
+          { label: t.ui.matches, value: "—", sub: `${t.ui.wins} / ${t.ui.losses}` },
+          { label: t.teamPage.winRate, value: "—%", sub: t.teamPage.overallPerformance },
+          { label: t.ui.difference, value: "—", sub: t.teamPage.goalsForAgainst },
+          { label: t.navigation.squad, value: "—", sub: t.teamPage.registeredSquad },
         ].map((item, i) => (
           <div key={i} className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
             <div className="flex justify-between items-center">
@@ -87,11 +90,11 @@ export function TeamLoading() {
           <div className="p-1 rounded-full liquid-nav-track flex gap-1 border border-white/10 shadow-md">
             <div className="h-7 px-4 rounded-full bg-white/10 flex items-center gap-2 text-white">
               <Calendar className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" />
-              <span className="text-xs font-bold">Partidas</span>
+              <span className="text-xs font-bold">{t.navigation.matches}</span>
             </div>
             <div className="h-7 px-4 rounded-full flex items-center gap-2 text-zinc-400">
               <Users className="w-3.5 h-3.5" />
-              <span className="text-xs font-bold">Elenco</span>
+              <span className="text-xs font-bold">{t.navigation.squad}</span>
             </div>
           </div>
         </div>

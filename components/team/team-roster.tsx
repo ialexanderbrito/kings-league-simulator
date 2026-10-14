@@ -19,6 +19,7 @@ import {
   RotateCcw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamRosterProps {
   players: Player[]
@@ -75,6 +76,7 @@ function getPlayerRatingTier(player: Player): Exclude<RatingFilter, "all"> {
 }
 
 export function TeamRoster({ players, loading }: TeamRosterProps) {
+  const { t } = useLocale()
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<RatingFilter>("all")
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -152,29 +154,29 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
         <RosterMetricCard
           icon={Users}
           value={totalPlayers}
-          label="Total de Atletas"
-          sublabel="Plantel Oficial"
+          label={t.teamPage.totalAthletes}
+          sublabel={t.teamPage.officialSquad}
           accentColor="zinc"
         />
         <RosterMetricCard
           icon={Star}
           value={draftedCount}
-          label="Draftados Oficial"
-          sublabel={totalPlayers > 0 ? `${Math.round((draftedCount / totalPlayers) * 100)}% do elenco` : "Draft da liga"}
+          label={t.teamPage.draftedOfficial}
+          sublabel={totalPlayers > 0 ? t.teamPage.squadRatio.replace("{ratio}", String(Math.round((draftedCount / totalPlayers) * 100))) : t.teamPage.leagueDraft}
           accentColor="sky"
         />
         <RosterMetricCard
           icon={Sparkles}
           value={wildcardCount}
-          label="Wild Cards Ativos"
-          sublabel={wildcardCount > 0 ? "Estrelas convidadas" : "Nenhum ativo"}
+          label={t.teamPage.activeWildcards}
+          sublabel={wildcardCount > 0 ? t.teamPage.guestStars : t.teamPage.noneActive}
           accentColor="amber"
         />
         <RosterMetricCard
           icon={AlertTriangle}
           value={injuredCount}
-          label="Em Recuperação"
-          sublabel={injuredCount === 0 ? "100% plantel apto" : `${injuredCount} no dep. médico`}
+          label={t.teamPage.recovering}
+          sublabel={injuredCount === 0 ? t.teamPage.fullyFit : `${injuredCount} ${t.teamPage.medicalDept}`}
           accentColor={injuredCount > 0 ? "rose" : "emerald"}
         />
       </div>
@@ -195,14 +197,14 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
-                  Filtrar Elenco
+                  {t.teamPage.filterRoster}
                 </h3>
                 <span className="text-[10px] font-mono font-bold text-zinc-400 bg-white/5 border border-white/10 px-1.5 py-0.2 rounded">
                   {filteredPlayers.length} / {totalPlayers}
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400">
-                Filtre por categoria, faixa de rating EA FC ou busque por atleta
+                {t.teamPage.filterDescription}
               </p>
             </div>
           </div>
@@ -215,7 +217,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar jogador..."
+                placeholder={t.ui.search}
                 className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-black/40 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 focus:ring-1 focus:ring-white/20 transition-all duration-150 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
               />
               {searchQuery && (
@@ -223,7 +225,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
                   type="button"
                   onClick={() => setSearchQuery("")}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-0.5 rounded transition-colors"
-                  aria-label="Limpar busca"
+                  aria-label={t.ui.clear}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -235,10 +237,10 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
                 type="button"
                 onClick={handleResetFilters}
                 className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/8 transition-colors flex items-center gap-1.5 btn-press shrink-0"
-                title="Limpar todos os filtros"
+                title={t.ui.clear}
               >
                 <RotateCcw className="w-3 h-3 text-zinc-400" />
-                <span className="hidden sm:inline">Limpar</span>
+                <span className="hidden sm:inline">{t.ui.clear}</span>
               </button>
             )}
           </div>
@@ -249,14 +251,14 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
           <FilterPill
             active={selectedRatingFilter === "all"}
             onClick={() => setSelectedRatingFilter("all")}
-            label="Todos"
+            label={t.teamPage.filterAll}
             count={tierCounts.all}
             tier="all"
           />
           <FilterPill
             active={selectedRatingFilter === "wildcard"}
             onClick={() => setSelectedRatingFilter("wildcard")}
-            label="Wild Cards"
+            label={t.teamPage.wildCardsCount}
             count={tierCounts.wildcard}
             tier="wildcard"
             icon={<Sparkles className="w-3 h-3" />}
@@ -264,7 +266,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
           <FilterPill
             active={selectedRatingFilter === "elite"}
             onClick={() => setSelectedRatingFilter("elite")}
-            label="Elite 78+"
+            label={`${t.teamPage.tierElite} 78+`}
             count={tierCounts.elite}
             tier="elite"
             dotColor="bg-sky-400"
@@ -272,7 +274,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
           <FilterPill
             active={selectedRatingFilter === "rare"}
             onClick={() => setSelectedRatingFilter("rare")}
-            label="Raro 74-77"
+            label={`${t.teamPage.tierRare} 74-77`}
             count={tierCounts.rare}
             tier="rare"
             dotColor="bg-purple-400"
@@ -280,7 +282,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
           <FilterPill
             active={selectedRatingFilter === "common"}
             onClick={() => setSelectedRatingFilter("common")}
-            label="Comum 70-73"
+            label={`${t.teamPage.tierCommon} 70-73`}
             count={tierCounts.common}
             tier="common"
             dotColor="bg-emerald-400"
@@ -288,7 +290,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
           <FilterPill
             active={selectedRatingFilter === "basic"}
             onClick={() => setSelectedRatingFilter("basic")}
-            label="Básico < 70"
+            label={`${t.teamPage.tierBasic} < 70`}
             count={tierCounts.basic}
             tier="basic"
             dotColor="bg-zinc-400"
@@ -296,7 +298,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
           <FilterPill
             active={selectedRatingFilter === "injured"}
             onClick={() => setSelectedRatingFilter("injured")}
-            label="Machucados"
+            label={t.teamPage.filterInjured}
             count={tierCounts.injured}
             tier="injured"
             icon={<AlertTriangle className="w-3 h-3 text-rose-400" />}
@@ -307,45 +309,45 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
       {/* Seções por Posição em Grid Fluido de Cards EA FC */}
       {goalkeepers.length > 0 && (
         <PositionSection
-          title="Goleiros"
-          abbr="GOL"
+          title={t.ui.goalkeeper}
+          abbr={t.teamPage.roleGkAbbr}
           players={goalkeepers}
           icon={Goal}
           color="amber"
-          description="Segurança na meta, saída rápida e reposição de bola"
+          description={t.teamPage.gkDesc}
         />
       )}
 
       {defenders.length > 0 && (
         <PositionSection
-          title="Defensores"
-          abbr="DEF"
+          title={t.ui.defenders}
+          abbr={t.teamPage.roleDefAbbr}
           players={defenders}
           icon={ShieldCheck}
           color="blue"
-          description="Solidez na marcação, duelos e cobertura defensiva"
+          description={t.teamPage.defDesc}
         />
       )}
 
       {midfielders.length > 0 && (
         <PositionSection
-          title="Meio-campistas"
-          abbr="MEI"
+          title={t.ui.midfielders}
+          abbr={t.teamPage.roleMidAbbr}
           players={midfielders}
           icon={Zap}
           color="emerald"
-          description="Criação de jogadas, ritmo, passe e transição ofensiva"
+          description={t.teamPage.midDesc}
         />
       )}
 
       {forwards.length > 0 && (
         <PositionSection
-          title="Atacantes"
-          abbr="ATA"
+          title={t.ui.forwards}
+          abbr={t.teamPage.roleFwdAbbr}
           players={forwards}
           icon={Target}
           color="rose"
-          description="Poder de finalização, drible 1v1 e presença de área"
+          description={t.teamPage.fwdDesc}
         />
       )}
 
@@ -355,9 +357,9 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-base font-bold text-white mb-1">Nenhum jogador encontrado</p>
+            <p className="text-base font-bold text-white mb-1">{t.ui.noPlayers}</p>
             <p className="text-xs text-zinc-400 max-w-sm">
-              Não encontramos atletas para o filtro ou busca selecionada. Tente alternar o filtro ou limpar os termos de busca.
+              {t.teamPage.noPlayersFiltered}
             </p>
           </div>
           <button
@@ -366,7 +368,7 @@ export function TeamRoster({ players, loading }: TeamRosterProps) {
             className="liquid-pill-btn px-4 py-2 rounded-xl text-xs font-bold text-white inline-flex items-center gap-2"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Restaurar Elenco Completo</span>
+            <span>{t.ui.reset} {t.ui.roster}</span>
           </button>
         </div>
       )}
@@ -544,6 +546,7 @@ interface PositionSectionProps {
 }
 
 function PositionSection({ title, abbr, players, icon: Icon, color, description }: PositionSectionProps) {
+  const { t } = useLocale()
   const colorStyles = {
     amber: {
       bg: "bg-amber-500/15 text-amber-400",
@@ -589,7 +592,7 @@ function PositionSection({ title, abbr, players, icon: Icon, color, description 
         </div>
 
         <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-zinc-300">
-          {players.length} {players.length === 1 ? "atleta" : "atletas"}
+          {players.length} {players.length === 1 ? t.teamPage.athlete : t.teamPage.athletes}
         </span>
       </div>
 

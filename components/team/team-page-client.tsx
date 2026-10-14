@@ -10,6 +10,8 @@ import { Footer } from "@/components/layout/footer"
 import { ErrorState } from "@/components/ui/error-state"
 import { SchemaMarkup } from "@/components/schema-markup"
 import { TeamLoading } from "@/components/team/team-loading"
+import { useLeague } from "@/contexts/league-context"
+import { useLocale } from "@/contexts/locale-context"
 import type { Team, Round, TeamStanding } from "@/types/kings-league"
 
 interface TeamPageClientProps {
@@ -18,6 +20,8 @@ interface TeamPageClientProps {
 
 export default function TeamPageClient({ teamId }: TeamPageClientProps) {
   const router = useRouter()
+  const { t } = useLocale()
+  const { selectedLeague, selectedSeasonId } = useLeague()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
@@ -27,7 +31,7 @@ export default function TeamPageClient({ teamId }: TeamPageClientProps) {
   const [standings, setStandings] = useState<TeamStanding[]>([])
   const [, setActiveTab] = useState<"matches" | "team">("matches")
 
-  // Carrega os dados da liga e do time específico (aproveitando o cache em sessionStorage)
+  // Carrega os dados da liga e do time específico (aproveitando o cache em memória)
   useEffect(() => {
     let isMounted = true
 
@@ -36,8 +40,11 @@ export default function TeamPageClient({ teamId }: TeamPageClientProps) {
         setLoading(true)
         setError(null)
 
-        // Buscar dados da liga (já cacheados no client via sessionStorage)
-        const leagueData = await fetchLeagueData()
+        // Buscar dados da liga para a temporada e competição ativas
+        const leagueData = await fetchLeagueData({
+          seasonId: selectedSeasonId,
+          competitionId: selectedLeague.competitionId,
+        })
 
         if (!isMounted) return
 
@@ -51,7 +58,7 @@ export default function TeamPageClient({ teamId }: TeamPageClientProps) {
         // Encontrar o time específico pela URL
         const currentTeam = leagueData.teams.find((t: Team) => t.id === teamId)
         if (!currentTeam) {
-          throw new Error("Time não encontrado")
+          throw new Error(t.errors.notFound)
         }
         setTeam(currentTeam)
         setRounds(leagueData.rounds)
@@ -60,8 +67,8 @@ export default function TeamPageClient({ teamId }: TeamPageClientProps) {
       } catch (err: any) {
         if (!isMounted) return
         setLoading(false)
-        setError(err.message || "Erro ao carregar dados do time. Tente novamente.")
-        setDebugInfo("Informações técnicas: " + (err.stack ? err.stack.split("\n")[0] : "Erro desconhecido"))
+        setError(err.message || t.errors.load)
+        setDebugInfo(`${t.common.technicalDetails}: ${err.stack ? err.stack.split("\n")[0] : t.simulator.unknownError}`)
       }
     }
 
@@ -70,7 +77,7 @@ export default function TeamPageClient({ teamId }: TeamPageClientProps) {
     return () => {
       isMounted = false
     }
-  }, [teamId])
+  }, [teamId, selectedSeasonId, selectedLeague.competitionId, t])
 
   const handleTeamSelect = (id: string) => {
     if (id !== teamId) {
@@ -99,7 +106,7 @@ export default function TeamPageClient({ teamId }: TeamPageClientProps) {
 
   // Renderizando o estado de erro
   if (error || !team) {
-    return <ErrorState error={error || "Time não encontrado"} debugInfo={debugInfo} onRetry={() => window.location.reload()} />
+    return <ErrorState error={error || t.errors.notFound} debugInfo={debugInfo} onRetry={() => window.location.reload()} />
   }
 
   return (
