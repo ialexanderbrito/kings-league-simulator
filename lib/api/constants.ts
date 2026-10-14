@@ -3,10 +3,10 @@
  */
 
 // ID da temporada atual da Kings League Brasil
-export const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID
+export const SEASON_ID = process.env.KINGS_LEAGUE_SEASON_ID || "69"
 
 // ID da competição Kings League Brasil
-export const COMPETITION_ID = process.env.COMPETITION_ID
+export const COMPETITION_ID = process.env.COMPETITION_ID || "17"
 
 // URL base da API da Kings League
 export const KINGS_LEAGUE_BASE_URL = "https://kingsleague.pro/api/v1"
