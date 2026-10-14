@@ -3,8 +3,10 @@
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import KingsLeagueLogo from "@/components/kings-league-logo"
+import { useLocale } from "@/contexts/locale-context"
 
 export default function Loading() {
+  const { t } = useLocale()
   return (
     <main className="min-h-screen bg-[#040405] text-white flex flex-col">
       <Header loading={true} />
@@ -15,7 +17,7 @@ export default function Loading() {
             <KingsLeagueLogo width={18} height={22} className="drop-shadow-[0_0_8px_rgba(244,175,35,0.5)]" />
           </div>
         </div>
-        <p className="text-xs text-zinc-500 font-medium animate-pulse">Carregando...</p>
+        <p className="text-xs text-zinc-500 font-medium animate-pulse">{t.ui.loading}</p>
       </div>
       <Footer />
     </main>

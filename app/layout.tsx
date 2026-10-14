@@ -1,18 +1,13 @@
 import '@/styles/globals.css'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider'
 import { TeamThemeProvider } from '@/contexts/team-theme-context'
+import { LeagueProvider } from '@/contexts/league-context'
+import { LocaleProvider } from '@/contexts/locale-context'
 import { NavigationProgressBar } from '@/components/navigation-progress-bar'
 import { ButtonTop } from "@/components/ui/button-top"
 import Script from 'next/script'
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap', // Melhoria de desempenho para carregamento de fontes
-  variable: '--font-inter'
-})
 
 // Definindo Viewport separadamente para melhor organização
 export const viewport: Viewport = {
@@ -128,7 +123,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -147,7 +142,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${inter.className} min-h-screen antialiased`} suppressHydrationWarning>
+      <body className="min-h-screen antialiased font-sans" suppressHydrationWarning>
 
         {/* Google Analytics */}
         <Script
@@ -170,19 +165,17 @@ export default function RootLayout({
           `}
         </Script>
 
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          disableTransitionOnChange
-          storageKey="kings-league-theme"
-        >
-          <TeamThemeProvider>
-            <NavigationProgressBar />
-            {children}
-            <Toaster />
-            <ButtonTop />
-          </TeamThemeProvider>
+        <ThemeProvider>
+          <LeagueProvider>
+            <LocaleProvider>
+              <TeamThemeProvider>
+                <NavigationProgressBar />
+                {children}
+                <Toaster />
+                <ButtonTop />
+              </TeamThemeProvider>
+            </LocaleProvider>
+          </LeagueProvider>
         </ThemeProvider>
 
         {/* Schema.org estruturado para mecanismos de busca */}

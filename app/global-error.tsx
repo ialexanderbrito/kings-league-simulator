@@ -17,8 +17,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     <html lang="pt-BR">
       <body className="bg-[#060608] text-white">
         <ErrorState
-          title="Falha na inicialização"
-          error={error?.message || "Ocorreu uma instabilidade crítica no carregamento do simulador."}
+          error={error?.message}
           debugInfo={error?.digest ? `Digest: ${error.digest}` : (error?.stack || null)}
           onRetry={reset}
         />
