@@ -22,10 +22,15 @@ import { LoadingState } from "@/components/ui/loading-state"
 import { ErrorState } from "@/components/ui/error-state"
 import { SchemaMarkup } from "@/components/schema-markup"
 import { SimulatorControls } from "@/components/simulator-controls"
-import KingsLeagueLogo from "@/components/kings-league-logo"
+import { AppleFlag } from "@/components/ui/apple-flag"
+import { useLeague } from "@/contexts/league-context"
+import { useLocale } from "@/contexts/locale-context"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { areAllRoundsComplete } from "@/lib/regular-season"
+import { getLeagueQualification } from "@/lib/league-format"
+import { GradientTitle } from "@/components/ui/gradient-title"
 
 export default function SimulatorPage() {
   const [leagueData, setLeagueData] = useState<LeagueData | null>(null)
@@ -40,7 +45,10 @@ export default function SimulatorPage() {
   const [usingFallback, setUsingFallback] = useState(false)
   const [activeTab, setActiveTab] = useState<"matches" | "team">("matches")
   const [showPlayoffs, setShowPlayoffs] = useState(false)
+  const [resetKey, setResetKey] = useState(0)
   const router = useRouter()
+  const { selectedLeague, selectedSeasonId, setSeason } = useLeague()
+  const { t } = useLocale()
 
   const loadData = async () => {
     try {
@@ -49,7 +57,10 @@ export default function SimulatorPage() {
       setDebugInfo(null)
       setUsingFallback(false)
 
-      const data = await fetchLeagueData()
+      const data = await fetchLeagueData({
+        seasonId: selectedSeasonId,
+        competitionId: selectedLeague.competitionId,
+      })
 
       if (data.rounds.length === 1 && data.rounds[0].matches.length === 1) {
         setUsingFallback(true)
@@ -67,6 +78,7 @@ export default function SimulatorPage() {
       const savedRounds = getSimulatedRounds(data.id)
       const savedStandings = getSimulatedStandings(data.id)
 
+      let effectiveRounds = data.rounds
       if (savedRounds && savedRounds.length > 0) {
         // Enriquecer savedRounds garantindo groupName oficial nas partidas
         const enrichedRounds = savedRounds.map((sr) => {
@@ -82,6 +94,7 @@ export default function SimulatorPage() {
             }),
           };
         });
+        effectiveRounds = enrichedRounds;
         setRounds(enrichedRounds);
       } else {
         setRounds(data.rounds);
@@ -99,17 +112,22 @@ export default function SimulatorPage() {
         setStandings(parsedStandings as any[])
       }
 
+      // Se a liga/temporada estiver nos playoffs (fase regular completa ou playoffs oficiais), abre direto nos playoffs
+      const isPlayoffsStage = (effectiveRounds.length > 0 && areAllRoundsComplete(effectiveRounds)) ||
+        (effectiveRounds.length === 0 && Array.isArray(data.playoffs) && data.playoffs.length > 0);
+      setShowPlayoffs(isPlayoffsStage);
+
       setLoading(false)
     } catch (err: any) {
       setLoading(false)
-      setError(err.message || "Erro ao carregar dados. Tente novamente.")
-      setDebugInfo("Informações técnicas: " + (err.stack ? err.stack.split("\n")[0] : "Erro desconhecido"))
+      setError(err.message || t.errors.load)
+      setDebugInfo(`${t.simulator.technicalInfo}: ` + (err.stack ? err.stack.split("\n")[0] : t.simulator.unknownError))
     }
   }
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [selectedSeasonId, selectedLeague.competitionId])
 
   // Refs para evitar stale closures no intervalo
   const roundsRef = useRef(rounds);
@@ -290,7 +308,7 @@ export default function SimulatorPage() {
     const hScore = parseScore(homeScore)
     const aScore = parseScore(awayScore)
 
-    const updatedRounds = rounds.map((round) => {
+    const updateRoundCollection = (sourceRounds: Round[]) => sourceRounds.map((round) => {
       if (round.id === roundId) {
         const updatedMatches = round.matches.map((match) => {
           if (match.id === matchId) {
@@ -337,8 +355,13 @@ export default function SimulatorPage() {
       }
       return round
     })
+    const updatedRounds = updateRoundCollection(rounds)
+    const updatedPlayInRounds = updateRoundCollection(leagueData?.playInRounds ?? [])
 
     setRounds(updatedRounds)
+    if (updatedPlayInRounds.some((round, index) => round !== (leagueData?.playInRounds ?? [])[index])) {
+      setLeagueData((current) => current ? { ...current, playInRounds: updatedPlayInRounds } : current)
+    }
 
     const updatedStandingsObj = calculateStandings(updatedRounds, teams, leagueData?.standings || [])
     let updatedStandings = Object.values(updatedStandingsObj).flat()
@@ -387,8 +410,13 @@ export default function SimulatorPage() {
       }
       setStandings(parsedStandings as any[])
       setPreviousStandings([])
+
+      const isPlayoffsStage = (leagueData.rounds.length > 0 && areAllRoundsComplete(leagueData.rounds)) ||
+        (leagueData.rounds.length === 0 && Array.isArray(leagueData.playoffs) && leagueData.playoffs.length > 0)
+      setShowPlayoffs(isPlayoffsStage)
+      setResetKey((k) => k + 1)
     }
-    toast.success("Resultados oficiais restaurados!")
+    toast.success(t.simulator.officialResultsReset)
   }
 
   const handleSimulateRemaining = () => {
@@ -447,13 +475,13 @@ export default function SimulatorPage() {
     saveSimulatedStandings(updatedStandings, leagueData.id)
     saveSimulatedRounds(updatedRounds, leagueData.id)
     saveSimulatedTeams(teams)
-    toast.success("Placares previstos com sucesso!")
+    toast.success(t.simulator.scoresPredicted)
   }
 
   const handleShare = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href)
-      toast.success("Link copiado para a área de transferência!")
+      toast.success(t.tier.linkCopied)
     }
   }
 
@@ -537,12 +565,31 @@ export default function SimulatorPage() {
     });
   };
 
+  const regularSeasonComplete = areAllRoundsComplete(rounds)
+  const hasPlayoffsData = Array.isArray(leagueData?.playoffs) && leagueData.playoffs.length > 0
+  const canShowPlayoffs = regularSeasonComplete || hasPlayoffsData
+
+  useEffect(() => {
+    if (!canShowPlayoffs) setShowPlayoffs(false)
+  }, [canShowPlayoffs])
+
   if (loading) {
     return <LoadingState />
   }
 
-  // Handle empty league data (no teams, rounds, or standings)
-  const isEmptyLeagueData = leagueData?.rounds.length === 0 || leagueData?.standings.length === 0
+  if (error) {
+    return <ErrorState error={error} debugInfo={debugInfo} onRetry={() => window.location.reload()} />
+  }
+
+  // Só considera a liga vazia depois que a consulta terminou com sucesso.
+  const normalizedStandings = Array.isArray(leagueData?.standings)
+    ? leagueData.standings
+    : leagueData?.standings && typeof leagueData.standings === "object"
+      ? Object.values(leagueData.standings).flat()
+      : []
+  const isEmptyLeagueData = Boolean(
+    leagueData && leagueData.rounds.length === 0 && normalizedStandings.length === 0
+  )
 
   if (isEmptyLeagueData) {
     return (
@@ -561,10 +608,6 @@ export default function SimulatorPage() {
     );
   }
 
-  if (error) {
-    return <ErrorState error={error} debugInfo={debugInfo} onRetry={() => window.location.reload()} />
-  }
-
   return (
     <main className="min-h-screen bg-[#040405] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black">
       <Header
@@ -574,45 +617,65 @@ export default function SimulatorPage() {
         setActiveTab={setActiveTab}
       />
 
-      <div className="container mx-auto px-2.5 sm:px-4 py-2.5 sm:py-3.5 max-w-7xl flex-1 flex flex-col">
-        {/* Header Compacto de Transmissão / Streamer */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 sm:gap-4 mb-2.5 sm:mb-3.5">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-center flex-shrink-0">
-              <KingsLeagueLogo width={18} height={22} className="drop-shadow-[0_0_8px_rgba(244,175,35,0.4)]" />
-            </div>
+      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl flex-1 flex flex-col">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-base sm:text-lg md:text-xl font-black text-white tracking-tight leading-none truncate">
-                  Simulador <span className="text-[var(--team-primary,#F4AF23)]">Kings League Brasil</span>
-                </h1>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-zinc-900/60 border border-zinc-800 text-zinc-400 select-none">
-                  <span className={cn("w-1.5 h-1.5 rounded-full", hasModifications ? "bg-amber-400 animate-pulse shadow-[0_0_6px_rgba(251,191,36,0.8)]" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]")} />
-                  {hasModifications ? "Simulação Ativa" : "Oficial"}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
+                <AppleFlag country={selectedLeague.countryIso} emoji={selectedLeague.flag} size={14} />
+                <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
+                  {t.home.officialSeason} • {selectedLeague.name}
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 hidden xs:block truncate">
-                5 jogos por rodada • Classificação recalculada em tempo real
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+                  <GradientTitle title={t.pages.simulatorTitle} />
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-white/[0.04] border border-white/10 text-zinc-400 select-none">
+                  <span className={cn("w-1.5 h-1.5 rounded-full", hasModifications ? "bg-amber-400 animate-pulse" : "bg-emerald-400")} />
+                  {hasModifications ? t.pages.simulationActive : t.pages.official}
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+                {t.pages.simulatorDescription}
               </p>
             </div>
-          </div>
 
-          <SimulatorControls
-            onReset={handleResetSimulation}
-            showPlayoffs={showPlayoffs}
-            onTogglePlayoffs={handleTogglePlayoffs}
-            onShare={handleShare}
-            hasModifications={hasModifications}
-          />
+            <SimulatorControls
+              onReset={handleResetSimulation}
+              showPlayoffs={showPlayoffs}
+              onTogglePlayoffs={handleTogglePlayoffs}
+              onShare={handleShare}
+              hasModifications={hasModifications}
+              canShowPlayoffs={canShowPlayoffs}
+            />
+          </div>
         </div>
+
+        {rounds.length === 0 && (
+          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-bold text-amber-300">
+                  {t.simulator.matchesNotStartedTitle}
+                </h4>
+                <p className="text-xs text-zinc-300 mt-0.5">
+                  {t.simulator.matchesNotStartedDesc.replace("{season}", leagueData?.name || selectedLeague.name)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {usingFallback && (
           <Alert className="mb-6 bg-[#332700] border-[#F4AF23] text-white">
             <AlertTriangle className="h-4 w-4 text-[#F4AF23]" />
-            <AlertTitle className="text-[#F4AF23]">Usando dados de demonstração</AlertTitle>
+            <AlertTitle className="text-[#F4AF23]">{t.ui.noData}</AlertTitle>
             <AlertDescription>
-              Não foi possível acessar todos os dados da API da Kings League. Estamos usando dados parciais para que
-              você possa testar o simulador.
+              {t.simulator.fallbackDesc}
             </AlertDescription>
           </Alert>
         )}
@@ -620,6 +683,7 @@ export default function SimulatorPage() {
         <MainContent
           rounds={rounds}
           teams={teams}
+          dataKey={leagueData ? `${leagueData.id}-${selectedLeague.competitionId}-${resetKey}` : undefined}
           standings={standings}
           groupedStandings={groupedStandings}
           previousStandings={previousStandings}
@@ -631,6 +695,9 @@ export default function SimulatorPage() {
           showPlayoffs={showPlayoffs}
           onTogglePlayoffs={handleTogglePlayoffs}
           playoffs={leagueData?.playoffs}
+          playInRounds={leagueData?.playInRounds}
+          qualification={getLeagueQualification(selectedLeague.id)}
+          leagueId={selectedLeague.id}
         />
       </div>
       <Footer />
@@ -646,4 +713,3 @@ export default function SimulatorPage() {
     </main>
   )
 }
-

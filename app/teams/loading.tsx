@@ -4,8 +4,11 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { TeamsGridSkeleton } from "@/components/skeletons/teams-grid-skeleton"
 import KingsLeagueLogo from "@/components/kings-league-logo"
+import { useLocale } from "@/contexts/locale-context"
+import { GradientTitle } from "@/components/ui/gradient-title"
 
 export default function Loading() {
+  const { t } = useLocale()
   return (
     <main className="min-h-screen bg-[#060608] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black relative">
       <Header loading={true} />
@@ -26,12 +29,12 @@ export default function Loading() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
             <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              Temporada Oficial • Kings League Brasil
+              Kings League
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Times &amp; <span className="text-[var(--team-primary,#F4AF23)]">Presidentes</span>
+            <GradientTitle title={t.pages.teamsTitle} />
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">

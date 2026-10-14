@@ -11,9 +11,16 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { ButtonTop } from "@/components/ui/button-top"
 import KingsLeagueLogo from "@/components/kings-league-logo"
+import { useLeague } from "@/contexts/league-context"
+import { AppleFlag } from "@/components/ui/apple-flag"
+import { getLeagueQualification } from "@/lib/league-format"
+import { useLocale } from "@/contexts/locale-context"
+import { GradientTitle } from "@/components/ui/gradient-title"
 
 export default function StandingsPage() {
   const router = useRouter()
+  const { selectedLeague, selectedSeasonId } = useLeague()
+  const { t } = useLocale()
   const [loading, setLoading] = useState(true)
   const [standings, setStandings] = useState<TeamStanding[]>([])
   const [teams, setTeams] = useState<Record<string, Team>>({})
@@ -24,11 +31,16 @@ export default function StandingsPage() {
 
   // Carregar dados da liga e detalhes dos clubes
   useEffect(() => {
+    let isMounted = true
+
     const loadData = async () => {
       try {
         setLoading(true)
-        const leagueData = await fetchLeagueData()
-        if (!leagueData) return
+        const leagueData = await fetchLeagueData({
+          seasonId: selectedSeasonId,
+          competitionId: selectedLeague.competitionId,
+        })
+        if (!isMounted || !leagueData) return
 
         const { rounds: loadedRounds, teams: loadedTeams, standings: loadedStandings } = leagueData
 
@@ -121,12 +133,16 @@ export default function StandingsPage() {
       } catch (error) {
         console.error("Erro ao carregar classificação da Kings League:", error)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     loadData()
-  }, [])
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedSeasonId, selectedLeague.competitionId])
 
   // Calcular a Forma Recente (Últimos jogos: estritamente V ou D)
   const teamFormMap = useMemo(() => {
@@ -147,7 +163,7 @@ export default function StandingsPage() {
         if (m.scores.homeScore !== null && m.scores.awayScore !== null) {
           finishedMatches.push({
             match: m,
-            roundName: round.name || `Rodada ${round.id}`,
+            roundName: round.name || `${t.matches.roundPrefix} ${round.id}`,
             date: m.date ? new Date(m.date).getTime() : (round.id || 1) * 1000,
           })
         }
@@ -171,7 +187,7 @@ export default function StandingsPage() {
         const oppScoreP = isHome ? awayScoreP : homeScoreP
         const oppId = isHome ? awayId : homeId
         const oppTeam = teams[oppId]
-        const oppName = oppTeam?.shortName || oppTeam?.name || "Adversário"
+        const oppName = oppTeam?.shortName || oppTeam?.name || t.common.opponent
         const oppLogo = typeof oppTeam?.logo === "string" ? oppTeam.logo : oppTeam?.logo?.url
 
         // Em caso de Shootout: quem fez mais gols no shootout venceu (V), o outro perdeu (D)
@@ -355,18 +371,18 @@ export default function StandingsPage() {
           {/* Header da Página - Padrão Oficial */}
           <div className="mb-6 sm:mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
-              <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+              <AppleFlag country={selectedLeague.countryIso} emoji={selectedLeague.flag} size={14} />
               <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-                Temporada Oficial • Kings League Brasil
+                {t.home.officialSeason} • {selectedLeague.name}
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-              Classificação <span className="text-[var(--team-primary,#F4AF23)]">Kings League</span>
+              <GradientTitle title={t.pages.standingsTitle} />
             </h1>
 
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Classificação oficial baseada em Vitórias e Derrotas (V-D), saldo de gols e zonas de classificação.
+              {t.pages.standingsDescription}
             </p>
           </div>
 
@@ -424,18 +440,18 @@ export default function StandingsPage() {
         {/* Header da Página - Padrão Oficial */}
         <div className="mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
-            <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+            <AppleFlag country={selectedLeague.countryIso} emoji={selectedLeague.flag} size={14} />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              Temporada Oficial • Kings League Brasil
+              {t.home.officialSeason} • {selectedLeague.name}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Classificação <span className="text-[var(--team-primary,#F4AF23)]">Kings League</span>
+            <GradientTitle title={t.pages.standingsTitle} />
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Classificação oficial baseada em Vitórias e Derrotas (V-D), saldo de gols e zonas de classificação.
+            {t.pages.standingsDescription}
           </p>
         </div>
 
@@ -449,6 +465,11 @@ export default function StandingsPage() {
             positionChangesMap={positionChangesMap}
             onTeamSelect={handleTeamSelect}
             rounds={rounds}
+            qualification={getLeagueQualification(selectedLeague.id)}
+            hasLiveMatches={rounds.some((round) => round.matches.some((match) => {
+              const status = String(match.status || "").toLowerCase()
+              return status.includes("inplay") || status.includes("live") || status.includes("in_progress")
+            }))}
           />
         </div>
       </div>

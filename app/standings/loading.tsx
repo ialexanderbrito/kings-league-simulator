@@ -5,7 +5,15 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 
+import { useLocale } from "@/contexts/locale-context"
+import { useLeague } from "@/contexts/league-context"
+import { AppleFlag } from "@/components/ui/apple-flag"
+import { GradientTitle } from "@/components/ui/gradient-title"
+
 export default function Loading() {
+  const { t } = useLocale()
+  const { selectedLeague } = useLeague()
+
   return (
     <main className="min-h-screen bg-[#060608] text-white flex flex-col selection:bg-[var(--team-primary)] selection:text-black relative">
       <Header loading={true} />
@@ -25,18 +33,18 @@ export default function Loading() {
         {/* Header da Página - Padrão Oficial */}
         <div className="mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
-            <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+            <AppleFlag country={selectedLeague.countryIso} emoji={selectedLeague.flag} size={14} />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              Temporada Oficial • Kings League Brasil
+              {t.home.officialSeason} • {selectedLeague.name}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Classificação <span className="text-[var(--team-primary,#F4AF23)]">Kings League</span>
+            <GradientTitle title={t.pages.standingsTitle} />
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Classificação oficial baseada em Vitórias e Derrotas (V-D), saldo de gols e zonas de classificação.
+            {t.pages.standingsDescription}
           </p>
         </div>
 

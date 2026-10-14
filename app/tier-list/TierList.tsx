@@ -41,8 +41,15 @@ import { Footer } from "@/components/layout/footer"
 import { snapdom } from "@zumer/snapdom"
 import { toast } from "sonner"
 import KingsLeagueLogo from "@/components/kings-league-logo"
+import { useLeague } from "@/contexts/league-context"
+import { useLocale } from "@/contexts/locale-context"
+import { AppleEmoji } from "@/components/ui/apple-emoji"
+import { GradientTitle } from "@/components/ui/gradient-title"
 
 export default function TierList() {
+  const { selectedLeague, selectedSeasonId } = useLeague()
+  const { t, locale } = useLocale()
+  const tierScope = `${selectedLeague.id}-${selectedSeasonId}`
   const [teams, setTeams] = useState<Team[]>([])
   const [tierListData, setTierListData] = useState<TierListData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -69,9 +76,17 @@ export default function TierList() {
 
   // Carregar times da API via cache compartilhado
   useEffect(() => {
+    let isMounted = true
+
     async function loadTeams() {
       try {
-        const leagueData = await fetchLeagueData()
+        setLoading(true)
+        const leagueData = await fetchLeagueData({
+          seasonId: selectedSeasonId,
+          competitionId: selectedLeague.competitionId,
+        })
+        if (!isMounted) return
+
         const teamsArray = Array.isArray(leagueData?.teams) ? leagueData.teams : []
         const sortedTeams = [...teamsArray].sort((a: Team, b: Team) =>
           (a.name || "").localeCompare(b.name || "")
@@ -79,12 +94,18 @@ export default function TierList() {
         setTeams(sortedTeams)
       } catch (error) {
         console.error('Erro ao carregar times:', error)
-        toast.error('Erro ao carregar times. Tente novamente mais tarde.')
+        toast.error(t.tier.loadError)
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
 
     loadTeams()
-  }, [])
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedSeasonId, selectedLeague.competitionId, t])
 
   // Carregar tier list salva ou da URL
   useEffect(() => {
@@ -103,32 +124,43 @@ export default function TierList() {
         if (decodedData) {
           setTierListData(decodedData)
           setLoading(false)
-          toast.success('Tier list carregada do link!')
+          toast.success(t.tier.loadedFromLink)
           return
         }
       }
     }
 
     // Senão, carregar do localStorage
-    const savedData = getTierList()
+    const savedData = getTierList(tierScope)
     if (savedData) {
+      const validIds = new Set(allTeamIds)
+      const assignedIds = new Set<string>()
       setTierListData({
-        tiers: savedData.tiers,
-        unassigned: savedData.unassigned,
+        tiers: savedData.tiers.map((tier) => ({
+          ...tier,
+          teams: tier.teams.filter((id) => validIds.has(id) && !assignedIds.has(id)),
+        })).map((tier) => {
+          tier.teams.forEach((id) => assignedIds.add(id))
+          return tier
+        }),
+        unassigned: Array.from(new Set([
+          ...savedData.unassigned.filter((id) => validIds.has(id)),
+          ...allTeamIds.filter((id) => !assignedIds.has(id)),
+        ])),
       })
     } else {
-      setTierListData(getInitialTierListData(allTeamIds))
+      setTierListData(getInitialTierListData(allTeamIds, locale))
     }
 
     setLoading(false)
-  }, [teams])
+  }, [teams, tierScope])
 
   // Salvar automaticamente no localStorage
   useEffect(() => {
     if (tierListData && !loading) {
-      saveTierList(tierListData)
+      saveTierList(tierListData, tierScope)
     }
-  }, [tierListData, loading])
+  }, [tierListData, loading, tierScope])
 
   // Handlers de drag and drop
   const handleDragStart = (event: DragStartEvent) => {
@@ -233,7 +265,7 @@ export default function TierList() {
       tiers: [...tierListData.tiers, newTier],
     })
 
-    toast.success('Nova categoria adicionada!')
+    toast.success(t.tier.added)
   }
 
   // Remover tier
@@ -250,7 +282,7 @@ export default function TierList() {
     }
 
     setTierListData(newData)
-    toast.success('Categoria removida!')
+    toast.success(t.tier.removed)
   }
 
   // Adicionar tier imediatamente acima
@@ -258,7 +290,7 @@ export default function TierList() {
     if (!tierListData) return
     const newData = addTierAbove(tierListData, tierId)
     setTierListData(newData)
-    toast.success('Nova categoria adicionada acima!')
+    toast.success(t.tier.addedAbove)
   }
 
   // Adicionar tier imediatamente abaixo
@@ -266,7 +298,7 @@ export default function TierList() {
     if (!tierListData) return
     const newData = addTierBelow(tierListData, tierId)
     setTierListData(newData)
-    toast.success('Nova categoria adicionada abaixo!')
+    toast.success(t.tier.addedBelow)
   }
 
   // Esvaziar times de uma tier específica
@@ -274,7 +306,7 @@ export default function TierList() {
     if (!tierListData) return
     const newData = clearTierTeams(tierListData, tierId)
     setTierListData(newData)
-    toast.success('Times desta categoria voltaram para o banco!')
+    toast.success(t.tier.teamsReturned)
   }
 
   // Aplicar modelo pronto
@@ -283,7 +315,7 @@ export default function TierList() {
     const newData = applyPreset(tierListData, preset)
     setTierListData(newData)
     setSelectedPoolTeamId(null)
-    toast.success(`Modelo "${preset.name}" aplicado!`)
+    toast.success(t.tier.presetApplied.replace('{preset}', preset.name))
   }
 
   // Atualizar nome da tier diretamente
@@ -334,7 +366,7 @@ export default function TierList() {
     const newData = resetTeamsToPool(tierListData)
     setTierListData(newData)
     setSelectedPoolTeamId(null)
-    toast.success('Todos os times voltaram para o banco!')
+    toast.success(t.tier.allTeamsReturned)
   }
 
   // Resetar tudo para o padrão
@@ -342,17 +374,17 @@ export default function TierList() {
     if (!teams.length) return
 
     const allTeamIds = teams.map((t) => t.id)
-    const newData = getInitialTierListData(allTeamIds)
+    const newData = getInitialTierListData(allTeamIds, locale)
 
     setTierListData(newData)
-    clearTierList()
+    clearTierList(tierScope)
     setSelectedPoolTeamId(null)
 
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', window.location.pathname)
     }
 
-    toast.success('Tier list restaurada para o padrão original!')
+    toast.success(t.tier.resetSuccess)
   }
 
   // Baixar como imagem PNG limpa em alta resolução
@@ -360,7 +392,7 @@ export default function TierList() {
     if (!tierListRef.current) return
 
     setIsDownloading(true)
-    const toastId = toast.loading('Gerando imagem em alta resolução...')
+    const toastId = toast.loading(t.tier.downloadingHighRes)
 
     try {
       // Ativar modo de captura (mostra cabeçalho oficial e marca d'água, oculta botões de edição)
@@ -390,10 +422,10 @@ export default function TierList() {
 
       setTimeout(() => URL.revokeObjectURL(url), 2000)
 
-      toast.success('Imagem baixada com sucesso!', { id: toastId })
+      toast.success(t.tier.imageDownloaded, { id: toastId })
     } catch (error) {
       console.error('Erro ao gerar imagem:', error)
-      toast.error('Erro ao gerar imagem. Tente novamente.', { id: toastId })
+      toast.error(t.tier.imageError, { id: toastId })
     } finally {
       tierListRef.current?.classList.remove('capture-mode')
       setIsDownloading(false)
@@ -403,16 +435,16 @@ export default function TierList() {
   // Compartilhar via link
   const handleShare = async () => {
     if (!tierListData) {
-      toast.error('Nenhuma tier list para compartilhar')
+      toast.error(t.tier.noTierToShare)
       return
     }
 
-    const toastId = toast.loading('Gerando link...')
+    const toastId = toast.loading(t.tier.generatingLink)
 
     try {
       const encoded = encodeTierListToURL(tierListData)
       if (!encoded) {
-        toast.error('Erro ao gerar link', { id: toastId })
+        toast.error(t.tier.linkError, { id: toastId })
         return
       }
 
@@ -421,11 +453,11 @@ export default function TierList() {
       if (typeof navigator !== 'undefined' && navigator.share) {
         try {
           await navigator.share({
-            title: 'Minha Tier List Kings League Brasil',
-            text: 'Confira meu ranking de times da Kings League Brasil!',
+            title: t.tier.shareTitle.replace('{league}', selectedLeague.name),
+            text: t.tier.shareText.replace('{league}', selectedLeague.name),
             url: url,
           })
-          toast.success('Compartilhado com sucesso!', { id: toastId })
+          toast.success(t.tier.shareSuccess, { id: toastId })
           return
         } catch (shareError: unknown) {
           if (shareError instanceof Error && shareError.name === 'AbortError') {
@@ -436,10 +468,10 @@ export default function TierList() {
       }
 
       await navigator.clipboard.writeText(url)
-      toast.success('Link copiado para a área de transferência!', { id: toastId })
+      toast.success(t.tier.linkCopied, { id: toastId })
     } catch (error) {
       console.error('Erro ao compartilhar:', error)
-      toast.error('Erro ao copiar link', { id: toastId })
+      toast.error(t.tier.linkError, { id: toastId })
     }
   }
 
@@ -470,7 +502,7 @@ export default function TierList() {
           setActiveTab={() => {}}
         />
         <div className="flex items-center justify-center py-24">
-          <p className="text-zinc-400 text-sm">Erro ao carregar a tier list.</p>
+          <p className="text-zinc-400 text-sm">{t.errors.load}</p>
         </div>
         <Footer />
       </main>
@@ -494,15 +526,15 @@ export default function TierList() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
             <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              TierMaker Oficial
+              {t.tier.officialMaker}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Tier List <span className="text-[var(--team-primary,#F4AF23)]">Kings League</span>
+            <GradientTitle title={t.pages.tierTitle} />
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Arraste os times para a tabela ou clique nos escudos para vincular diretamente. Clique no nome para editar.
+            {t.pages.tierDescription}
           </p>
         </div>
 
@@ -558,14 +590,14 @@ export default function TierList() {
                 <div className="flex flex-col justify-center select-none min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm sm:text-lg font-black uppercase text-white tracking-wider leading-tight">
-                      Kings League Brasil
+                      {selectedLeague.name}
                     </span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[var(--team-primary,#F4AF23)] text-black whitespace-nowrap shadow-sm leading-none">
-                      Tier List
+                      {t.nav.tierList}
                     </span>
                   </div>
                   <span className="text-[10px] sm:text-[11px] text-zinc-400 font-semibold uppercase tracking-wider truncate mt-0.5 leading-tight">
-                    Ranking Oficial da Comunidade
+                    {t.tier.communityRanking}
                   </span>
                 </div>
               </div>
@@ -576,7 +608,7 @@ export default function TierList() {
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
                     <span className="text-[8px] sm:text-[9px] font-mono uppercase tracking-widest text-zinc-400 leading-none whitespace-nowrap">
-                      SIMULADOR OFICIAL
+                      {t.common.officialSimulator.toUpperCase()}
                     </span>
                   </div>
                   <span className="text-[11px] sm:text-xs font-mono font-bold text-[var(--team-primary,#F4AF23)] leading-none tracking-tight whitespace-nowrap">
@@ -620,16 +652,16 @@ export default function TierList() {
             {/* Marca d'água / Assinatura oficial no rodapé */}
             <div className="px-4 py-3 sm:px-6 sm:py-3.5 bg-[#050508] border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between text-xs gap-2.5 sm:gap-4 select-none text-center sm:text-left">
               <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-center sm:justify-start">
-                <span className="text-sm leading-none drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]">👑</span>
+                <AppleEmoji emoji="CROWN" size="sm" alt="" />
                 <span className="text-zinc-400 font-medium text-xs">
-                  Crie sua tier list em:
+                  {t.tier.createYourTierAt}
                 </span>
                 <span className="font-mono font-bold text-xs text-[var(--team-primary,#F4AF23)] bg-white/[0.04] border border-white/10 px-2 sm:px-2.5 py-0.5 rounded break-all sm:break-normal">
                   klsimulator.vercel.app/tier-list
                 </span>
               </div>
               <div className="text-[10px] sm:text-[11px] text-zinc-500 font-semibold uppercase tracking-wider">
-                Kings League Brasil • Simulador Oficial
+                {selectedLeague.name} • {t.common.officialSimulator}
               </div>
             </div>
           </div>

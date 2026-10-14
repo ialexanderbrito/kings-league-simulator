@@ -12,7 +12,14 @@ import { cn, getProxyImageUrl } from "@/lib/utils"
 import { Users, Crown, ChevronRight, ArrowUpRight, Trophy } from "lucide-react"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 
+import { useLeague } from "@/contexts/league-context"
+import { useLocale } from "@/contexts/locale-context"
+import { AppleFlag } from "@/components/ui/apple-flag"
+import { GradientTitle } from "@/components/ui/gradient-title"
+
 export default function Teams() {
+  const { selectedLeague, selectedSeasonId } = useLeague()
+  const { t } = useLocale()
   const [loading, setLoading] = useState(true)
   const [teams, setTeams] = useState<Team[]>([])
   const [teamDetails, setTeamDetails] = useState<Record<string, TeamDetails>>({})
@@ -20,39 +27,48 @@ export default function Teams() {
   const [standings, setStandings] = useState<TeamStanding[]>([])
 
   useEffect(() => {
+    let isMounted = true
+
     const loadData = async () => {
       try {
-        const leagueData = await fetchLeagueData()
+        setLoading(true)
+        const leagueData = await fetchLeagueData({
+          seasonId: selectedSeasonId,
+          competitionId: selectedLeague.competitionId,
+        })
+        if (!isMounted) return
+
         if (leagueData?.teams) {
           setTeams(leagueData.teams)
           setStandings(leagueData.standings || [])
-          setLoading(false)
 
-          // Lê detalhes apenas do cache local existente para economizar requisições de rede e cotas da Vercel
-          if (typeof window !== "undefined") {
-            const cachedDetails: Record<string, TeamDetails> = {}
-            leagueData.teams.forEach((t) => {
-              try {
-                const stored = sessionStorage.getItem(`kl_team_details_v2_${t.id}`)
-                if (stored) {
-                  const parsed = JSON.parse(stored)
-                  if (parsed?.data) cachedDetails[t.id] = parsed.data
-                }
-              } catch {}
+          const details = await Promise.allSettled(
+            leagueData.teams.map(async (team) => {
+              const response = await fetch(`/api/team-details/${team.id}?seasonId=${encodeURIComponent(String(selectedSeasonId))}`)
+              if (!response.ok) throw new Error(`Falha ao carregar o elenco do time ${team.id}`)
+              return [team.id, await response.json()] as const
             })
-            if (Object.keys(cachedDetails).length > 0) {
-              setTeamDetails(cachedDetails)
-            }
-          }
+          )
+          if (!isMounted) return
+          const loadedDetails: Record<string, TeamDetails> = {}
+          details.forEach((result) => {
+            if (result.status === "fulfilled") loadedDetails[result.value[0]] = result.value[1]
+          })
+          setTeamDetails(loadedDetails)
         }
       } catch (error) {
         console.error("Erro ao carregar dados da liga:", error)
-        setLoading(false)
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
 
     loadData()
-  }, [])
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedSeasonId, selectedLeague.competitionId])
 
   const handleTeamSelect = (teamId: string) => {
     setSelectedTeam(teamId)
@@ -88,18 +104,18 @@ export default function Teams() {
         {/* Header da Página - Padrão Oficial Kings League */}
         <div className="mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
-            <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+            <AppleFlag country={selectedLeague.countryIso} emoji={selectedLeague.flag} size={14} />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              Temporada Oficial • Kings League Brasil
+              {t.home.officialSeason} • {selectedLeague.name}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Times &amp; <span className="text-[var(--team-primary,#F4AF23)]">Presidentes</span>
+            <GradientTitle title={t.pages.teamsTitle} />
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            As 10 identidades oficiais e as lideranças que comandam os esquadrões da Kings League.
+            {t.pages.teamsDescription.replace("clubes oficiais", `${teams.length} ${t.teams.count}`)}
           </p>
         </div>
 
@@ -135,6 +151,7 @@ interface TeamCardProps {
 }
 
 function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
+  const { t } = useLocale()
   const router = useRouter()
 
   const president =
@@ -156,7 +173,7 @@ function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
       )}
       role="button"
       tabIndex={0}
-      aria-label={`Ver detalhes do time ${team.name}`}
+      aria-label={`${t.common.viewTeamDetails} ${team.name}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -186,7 +203,7 @@ function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
             <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl p-2.5 bg-white/[0.04] border border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform duration-200 ease-out">
               <img
                 src={getProxyImageUrl(team.logo?.url)}
-                alt={`Escudo ${team.name}`}
+                alt={`${t.common.officialShield} ${team.name}`}
                 className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
                 loading="lazy"
                 crossOrigin="anonymous"
@@ -225,7 +242,7 @@ function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
               {president?.image?.url ? (
                 <img
                   src={getProxyImageUrl(president.image.url)}
-                  alt={president.shortName || "Presidente"}
+                  alt={president.shortName || t.page.campaign.president}
                   className="w-full h-full object-cover"
                   loading="lazy"
                   crossOrigin="anonymous"
@@ -242,13 +259,10 @@ function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
 
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/90 flex items-center gap-1">
-                Presidente
+                {t.page.campaign.president}
               </span>
               <p className="text-sm font-bold text-white truncate leading-snug mt-0.5">
-                {president ? (president.shortName || `${president.firstName} ${president.lastName}`) : "A Definir"}
-              </p>
-              <p className="text-[11px] text-zinc-400 font-medium truncate">
-                Liderança &amp; Transmissão
+                {president ? (president.shortName || `${president.firstName} ${president.lastName}`) : t.common.toDefine}
               </p>
             </div>
           </div>
@@ -260,10 +274,10 @@ function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 font-medium">
             <Users className="w-3.5 h-3.5 text-zinc-500" />
-            <span>{playersCount} atletas</span>
+            <span>{playersCount} {t.teamPage.athletes}</span>
           </div>
           {/* Swatch de Cores do Time */}
-          <div className="flex items-center -space-x-1" title="Cores do time">
+          <div className="flex items-center -space-x-1" title={t.common.teamColors}>
             <div
               className="w-2.5 h-2.5 rounded-full border border-black/40"
               style={{ backgroundColor: team.firstColorHEX }}
@@ -276,12 +290,10 @@ function TeamCard({ team, teamDetails, standing, isSelected }: TeamCardProps) {
         </div>
 
         <span className="font-semibold text-zinc-400 group-hover:text-white transition-colors duration-150 flex items-center gap-1">
-          Ver perfil
+          {t.common.viewProfile}
           <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-150" />
         </span>
       </div>
     </article>
   )
 }
-
-
