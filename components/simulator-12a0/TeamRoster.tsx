@@ -3,6 +3,7 @@ import { Player } from "@/types/kings-league"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getPlayerOverall, getProxyImageUrl, cn } from "@/lib/utils"
 import { Crown, Sparkles, Check, Ban } from "lucide-react"
+import { useLocale } from "@/contexts/locale-context"
 
 interface TeamRosterProps {
   validPlayers: Player[]
@@ -23,13 +24,14 @@ export function TeamRoster({
   selectedPlayerIds = [],
   fullRoles = [],
 }: TeamRosterProps) {
+  const { t } = useLocale()
   if (validPlayers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center h-full">
         <div className="w-10 h-10 rounded-full bg-white/[0.04] flex items-center justify-center mb-2">
           <Sparkles className="w-5 h-5 text-white/30" />
         </div>
-        <p className="text-zinc-400 text-xs font-medium">Nenhum jogador encontrado para este time.</p>
+        <p className="text-zinc-400 text-xs font-medium">{t.ui.noPlayers}</p>
       </div>
     )
   }
@@ -42,10 +44,10 @@ export function TeamRoster({
   }
 
   const roleLabels: Record<string, { label: string; style: string }> = {
-    goalkeeper: { label: "GOL", style: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
-    defender: { label: "ZAG", style: "text-blue-300 bg-blue-400/10 border-blue-400/20" },
-    midfielder: { label: "MEI", style: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
-    forward: { label: "ATA", style: "text-rose-300 bg-rose-400/10 border-rose-400/20" },
+    goalkeeper: { label: t.teamPage.roleGkAbbr, style: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
+    defender: { label: t.teamPage.roleDefAbbr, style: "text-blue-300 bg-blue-400/10 border-blue-400/20" },
+    midfielder: { label: t.teamPage.roleMidAbbr, style: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
+    forward: { label: t.teamPage.roleFwdAbbr, style: "text-rose-300 bg-rose-400/10 border-rose-400/20" },
   }
 
   // Ordenar por função e depois por overall decrescente
@@ -125,7 +127,7 @@ export function TeamRoster({
                         {player.shortName}
                       </span>
                       {isWildcard && (
-                        <span title="Wild Card / Estrela" className="inline-flex text-amber-400">
+                        <span title="Wild Card / Star" className="inline-flex text-amber-400">
                           <Crown className="w-3 h-3 fill-amber-400" />
                         </span>
                       )}
@@ -137,12 +139,12 @@ export function TeamRoster({
                       </span>
                       {isAlreadySelected && (
                         <span className="text-[9px] font-medium text-emerald-400 flex items-center gap-0.5">
-                          <Check className="w-2.5 h-2.5" /> Escalado
+                          <Check className="w-2.5 h-2.5" /> {t.ui.selected}
                         </span>
                       )}
                       {isRoleFull && !isAlreadySelected && (
                         <span className="text-[9px] font-medium text-zinc-500 flex items-center gap-0.5">
-                          <Ban className="w-2.5 h-2.5" /> Posição cheia
+                          <Ban className="w-2.5 h-2.5" /> {t.ui.roleFull}
                         </span>
                       )}
                     </div>

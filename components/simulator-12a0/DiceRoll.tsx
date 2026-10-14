@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dices, RefreshCw } from "lucide-react"
 import { getProxyImageUrl, cn } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 export interface Challenge {
   id: string
@@ -20,6 +21,7 @@ interface DiceRollProps {
 }
 
 export function DiceRoll({ onChallengeSelect, availableChallenges, className }: DiceRollProps) {
+  const { t } = useLocale()
   const [isRolling, setIsRolling] = useState(false)
   const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null)
 
@@ -27,7 +29,6 @@ export function DiceRoll({ onChallengeSelect, availableChallenges, className }: 
     if (availableChallenges.length === 0 || isRolling) return
 
     setIsRolling(true)
-
     let rolls = 0
     const maxRolls = 10
     const interval = setInterval(() => {
@@ -49,7 +50,7 @@ export function DiceRoll({ onChallengeSelect, availableChallenges, className }: 
     <div className={cn("flex flex-col items-center justify-center p-5 liquid-glass-panel rounded-2xl border border-white/[0.08] w-full", className)}>
       <div className="text-center mb-4 min-h-[90px] flex flex-col justify-center items-center w-full">
         <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-2">
-          Time Sorteado
+          {t.page.campaign.drawnTeam}
         </span>
 
         {currentChallenge ? (
@@ -79,7 +80,7 @@ export function DiceRoll({ onChallengeSelect, availableChallenges, className }: 
           </div>
         ) : (
           <div className="text-zinc-500 text-xs italic">
-            Role o dado para sortear um time da Kings League
+            {t.page.campaign.rollDicePrompt}
           </div>
         )}
       </div>
@@ -91,7 +92,7 @@ export function DiceRoll({ onChallengeSelect, availableChallenges, className }: 
         className="btn-press w-full max-w-xs gap-2 font-black text-xs uppercase tracking-wider rounded-xl h-11 disabled:opacity-50"
       >
         {isRolling ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Dices className="w-4 h-4" />}
-        {isRolling ? "Sorteando..." : "Rolar Dado"}
+        {isRolling ? t.page.campaign.rolling : t.page.campaign.rollDice}
       </Button>
     </div>
   )

@@ -22,12 +22,15 @@ export default function Loading() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
             <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              Modo Oficial • Desafio 12 a 0
+              Modo Oficial • Desafio 12a0
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Desafio <span className="text-[var(--team-primary,#F4AF23)]">12 a 0</span>
+            Desafio{" "}
+            <span className="bg-gradient-to-r from-[var(--team-primary)] via-amber-300 to-[var(--team-primary)] bg-clip-text text-transparent">
+              12a0
+            </span>
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
             Sorteie times da Kings League, escolha um craque por rodada para o seu 7 ideal e dispute a campanha pelo título invicto.

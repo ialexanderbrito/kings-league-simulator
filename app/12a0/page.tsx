@@ -1,8 +1,11 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
+import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { useLeague } from "@/contexts/league-context"
+import { useLocale } from "@/contexts/locale-context"
 import { Pitch } from "@/components/simulator-12a0/Pitch"
 import { Challenge } from "@/components/simulator-12a0/DiceRoll"
 import { TeamRoster } from "@/components/simulator-12a0/TeamRoster"
@@ -14,14 +17,14 @@ import { CampaignUI } from "@/components/simulator-12a0/CampaignUI"
 import { SimulatedTeam } from "@/lib/match-simulator"
 import { useToast } from "@/hooks/use-toast"
 import { fetchLeagueData } from "@/lib/fetch-league-data"
-import { 
-  Trophy, 
-  RotateCcw, 
-  Shield, 
-  Swords, 
-  Sparkles, 
-  Dices, 
-  CheckCircle2, 
+import {
+  Trophy,
+  RotateCcw,
+  Shield,
+  Swords,
+  Sparkles,
+  Dices,
+  CheckCircle2,
   ArrowRight,
   Loader2
 } from "lucide-react"
@@ -41,16 +44,62 @@ type Difficulty = "Clássico" | "Lendas"
 type GamePhase = "draft" | "simulation" | "finished"
 
 export default function DozeAZeroPage() {
+  const { selectedLeague, setLeague } = useLeague()
+  const { t, locale } = useLocale()
   const { toast } = useToast()
   const [gamePhase, setGamePhase] = useState<GamePhase>("draft")
   const [formation, setFormation] = useState<Formation>(formations[0])
   const [playStyle, setPlayStyle] = useState<PlayStyle>("Equilibrado")
   const [difficulty, setDifficulty] = useState<Difficulty>("Clássico")
-  
+
+  const styleLabels: Record<PlayStyle, string> = {
+    "Defensivo": t.page.campaign.styleDefensive,
+    "Equilibrado": t.page.campaign.styleBalanced,
+    "Ofensivo": t.page.campaign.styleOffensive,
+  }
+  const diffLabels: Record<Difficulty, string> = {
+    "Clássico": t.page.campaign.diffClassic,
+    "Lendas": t.page.campaign.diffLegends,
+  }
+
+  if (selectedLeague.id !== "brazil") {
+    return (
+      <div className="min-h-screen bg-[#070709] text-white flex flex-col justify-between">
+        <Header loading={false} />
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 sm:p-8 rounded-3xl bg-white/[0.03] border border-white/10 text-center space-y-4 backdrop-blur-xl shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center mx-auto text-amber-400">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white">{t.ui.exclusive12a0}</h1>
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              {t.ui.onlyBrazil}
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+              <Button
+                onClick={() => setLeague("brazil")}
+                className="w-full bg-[var(--team-primary,#F4AF23)] hover:bg-[var(--team-primary,#F4AF23)]/90 text-black font-bold text-xs rounded-xl"
+              >
+                {t.ui.switchBrazil}
+              </Button>
+              <Link
+                href="/simulator"
+                className="w-full inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-colors"
+              >
+                {t.ui.goSimulator}
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null)
   const [activePlayerToPlace, setActivePlayerToPlace] = useState<Player | null>(null)
   const [selectedPlayers, setSelectedPlayers] = useState<Record<string, Player | null>>({})
-  
+
   const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null)
   const [isSpinning, setIsSpinning] = useState(false)
   const [spinChallenge, setSpinChallenge] = useState<Challenge | null>(null)
@@ -77,7 +126,7 @@ export default function DozeAZeroPage() {
 
   const getTeamDisplayData = (originalName: string, comp: string): { name: string, presidents?: string, overrideTeamId?: string, overrideSeasonId?: string, overrideLogo?: string } => {
     const name = originalName.toLowerCase();
-    
+
     if (name.includes("capim")) {
       if (comp === "KC Brazil") return { name: "Capim FC", presidents: "Jon Vlogs + Luva de Pedreiro", overrideSeasonId: "33" };
       return { name: "Capim FC", presidents: "Jon Vlogs + Luva de Pedreiro" };
@@ -119,26 +168,26 @@ export default function DozeAZeroPage() {
     }
     if (name.includes("dibrados") || name.includes("elite")) {
       if (comp === "Split 2") return { name: "Dibrados FC", presidents: "Allan Stag + Lucas Tylty" };
-      if (comp === "Split 1") return { 
-        name: "FC Real Elite", 
+      if (comp === "Split 1") return {
+        name: "FC Real Elite",
         presidents: "Ludmilla + Allan Stag",
         overrideTeamId: "166",
         overrideLogo: "https://kingsleague-cdn.kama.football/account/production/team/94906999.png",
         overrideSeasonId: "33"
       };
-      if (comp === "KC Brazil") return { 
-        name: "FC Real Elite", 
+      if (comp === "KC Brazil") return {
+        name: "FC Real Elite",
         presidents: "Ludmilla + Whindersson Nunes + Lucas Freestyle",
         overrideTeamId: "166",
         overrideLogo: "https://kingsleague-cdn.kama.football/account/production/team/94906999.png",
         overrideSeasonId: "33"
       };
     }
-    
+
     if (comp === "KC Brazil" && !name.includes("furia") && !name.includes("g3x")) {
-       return { name: originalName, presidents: undefined, overrideSeasonId: "33" };
+      return { name: originalName, presidents: undefined, overrideSeasonId: "33" };
     }
-    
+
     return { name: originalName, presidents: undefined };
   }
 
@@ -153,7 +202,7 @@ export default function DozeAZeroPage() {
             "Split 1": "33",
             "Split 2": "61"
           }
-          const loadedChallenges = data.teams.flatMap((t: any) => 
+          const loadedChallenges = data.teams.flatMap((t: any) =>
             comps.map((comp) => {
               const display = getTeamDisplayData(t.name, comp);
               return {
@@ -190,7 +239,7 @@ export default function DozeAZeroPage() {
       setValidPlayers([])
 
       try {
-        const url = currentChallenge!.seasonId 
+        const url = currentChallenge!.seasonId
           ? `/api/team-details/${currentChallenge!.teamId}?seasonId=${currentChallenge!.seasonId}`
           : `/api/team-details/${currentChallenge!.teamId}`;
         const res = await fetch(url)
@@ -201,7 +250,7 @@ export default function DozeAZeroPage() {
         console.error("Erro ao carregar jogadores do time", e)
       }
     }
-    
+
     loadTeamPlayers()
   }, [currentChallenge, teamDetailsCache])
 
@@ -222,26 +271,26 @@ export default function DozeAZeroPage() {
     const slot = formation.slots.find(s => s.id === slotId)
     if (slot) {
       if (slot.role === "goalkeeper" && activePlayerToPlace.role !== "goalkeeper") {
-        toast({ title: "Posição Inválida", description: "Este atleta não é um goleiro!", variant: "destructive" })
+        toast({ title: t.ui.positionInvalid, description: `${t.ui.goalkeeper}: ${t.ui.positionInvalid.toLowerCase()}`, variant: "destructive" })
         return
       }
       if (slot.role === "defender" && activePlayerToPlace.role !== "defender") {
-        toast({ title: "Posição Inválida", description: "Este atleta não é um defensor!", variant: "destructive" })
+        toast({ title: t.ui.positionInvalid, description: `${t.ui.defenders}: ${t.ui.positionInvalid.toLowerCase()}`, variant: "destructive" })
         return
       }
       if (slot.role === "midfielder" && activePlayerToPlace.role !== "midfielder") {
-        toast({ title: "Posição Inválida", description: "Este atleta não é um meio-campista!", variant: "destructive" })
+        toast({ title: t.ui.positionInvalid, description: `${t.ui.midfielders}: ${t.ui.positionInvalid.toLowerCase()}`, variant: "destructive" })
         return
       }
       if (slot.role === "forward" && activePlayerToPlace.role !== "forward") {
-        toast({ title: "Posição Inválida", description: "Este atleta não é um atacante!", variant: "destructive" })
+        toast({ title: t.ui.positionInvalid, description: `${t.ui.forwards}: ${t.ui.positionInvalid.toLowerCase()}`, variant: "destructive" })
         return
       }
     }
 
     const isAlreadySelected = Object.values(selectedPlayers).some(p => p?.id === activePlayerToPlace.id)
     if (isAlreadySelected) {
-      toast({ title: "Jogador Duplicado", description: "Este atleta já está escalado no time!", variant: "destructive" })
+      toast({ title: t.ui.duplicatePlayer, description: t.ui.selected, variant: "destructive" })
       return
     }
 
@@ -249,7 +298,7 @@ export default function DozeAZeroPage() {
       ...prev,
       [slotId]: activePlayerToPlace
     }))
-    
+
     setActivePlayerToPlace(null)
     setActiveSlotId(null)
     setCurrentChallenge(null)
@@ -260,11 +309,11 @@ export default function DozeAZeroPage() {
 
     const sourceSlot = formation.slots.find(s => s.id === sourceId);
     const targetSlot = formation.slots.find(s => s.id === targetId);
-    
+
     if (!sourceSlot || !targetSlot) return;
 
     if (sourceSlot.role !== targetSlot.role) {
-      toast({ title: "Posição Incompatível", description: "Trocas só são permitidas entre jogadores da mesma função (ex: Defesa com Defesa).", variant: "destructive" });
+      toast({ title: t.ui.incompatiblePosition, description: t.ui.roleFull, variant: "destructive" });
       return;
     }
 
@@ -282,7 +331,7 @@ export default function DozeAZeroPage() {
   const selectedList = Object.values(selectedPlayers).filter(Boolean) as Player[]
   const attackPlayers = selectedList.filter(p => p.role === "forward" || p.role === "midfielder")
   const defensePlayers = selectedList.filter(p => p.role === "defender" || p.role === "goalkeeper")
-  
+
   const attackScore = getAverage(attackPlayers)
   const defenseScore = getAverage(defensePlayers)
   const teamScore = getAverage(selectedList)
@@ -302,7 +351,7 @@ export default function DozeAZeroPage() {
     setRollsLeft(difficulty === "Clássico" ? 3 : 1)
     setDrawnChallenges([])
     setValidPlayers([])
-    toast({ title: "Escalação Reiniciada", description: "Você pode montar uma nova formação do zero." })
+    toast({ title: t.ui.lineupReset, description: t.ui.reset })
   }
 
   const handleStartNewDraft = () => {
@@ -321,8 +370,8 @@ export default function DozeAZeroPage() {
     setCampaignData(null)
     setGamePhase("draft")
     toast({
-      title: "Novo Draft 7v7 Iniciado",
-      description: "Monte um novo elenco do zero para a sua próxima campanha!"
+      title: t.page.campaign.toastNewDraft,
+      description: t.page.campaign.toastNewDraftDesc
     })
   }
 
@@ -361,17 +410,17 @@ export default function DozeAZeroPage() {
       available = list
       setDrawnChallenges([])
     }
-    
+
     const uniqueTeamNames = Array.from(new Set(available.map(c => c.teamName)))
     const randomlySelectedName = uniqueTeamNames[Math.floor(Math.random() * uniqueTeamNames.length)]
-    
+
     const teamVariants = available.filter(c => c.teamName === randomlySelectedName)
     return teamVariants[Math.floor(Math.random() * teamVariants.length)]
   }
 
   const startSimulation = async () => {
     setGamePhase("simulation")
-    
+
     let finalAttackScore = typeof attackScore === "number" ? attackScore : 80;
     let finalDefenseScore = typeof defenseScore === "number" ? defenseScore : 80;
 
@@ -399,7 +448,7 @@ export default function DozeAZeroPage() {
 
     const userSimTeam: SimulatedTeam = {
       id: "user-team",
-      name: teamNameInput.trim() || "SEU TIME",
+      name: teamNameInput.trim() || t.page.campaign.yourTeam,
       logo: GENERIC_LOGOS[selectedLogoIndex],
       competition: "SELEÇÃO 12a0",
       overall: typeof teamScore === "number" ? teamScore : 80,
@@ -413,7 +462,7 @@ export default function DozeAZeroPage() {
     const shuffledChallenges = [...challenges].sort(() => Math.random() - 0.5)
     const selectedNames = new Set<string>()
     const uniqueChallengesPool = []
-    
+
     for (const c of shuffledChallenges) {
       if (!selectedNames.has(c.teamName)) {
         selectedNames.add(c.teamName)
@@ -423,29 +472,29 @@ export default function DozeAZeroPage() {
     }
 
     const opponents: SimulatedTeam[] = []
-    
+
     for (const challenge of uniqueChallengesPool) {
       let players: Player[] = []
       if (teamDetailsCache[challenge.id]) {
         players = teamDetailsCache[challenge.id].players || []
       } else {
         try {
-          const url = challenge.seasonId 
+          const url = challenge.seasonId
             ? `/api/team-details/${challenge.teamId}?seasonId=${challenge.seasonId}`
             : `/api/team-details/${challenge.teamId}`;
           const res = await fetch(url)
           const data = await res.json()
-          setTeamDetailsCache(prev => ({...prev, [challenge.id]: data}))
+          setTeamDetailsCache(prev => ({ ...prev, [challenge.id]: data }))
           players = data.players || []
         } catch (e) {
           console.error("Failed to fetch opponent players", e)
         }
       }
-      
+
       const randomStyles = ["Defensivo", "Equilibrado", "Ofensivo"] as const;
       const opponentStyle = randomStyles[Math.floor(Math.random() * randomStyles.length)];
       const oppOverall = getAverage(players) === "?" ? 75 : getAverage(players) as number;
-      
+
       opponents.push({
         id: challenge.id,
         name: challenge.teamName,
@@ -468,10 +517,10 @@ export default function DozeAZeroPage() {
       <Header
         loading={loading}
         selectedTeam={null}
-        onTeamSelect={() => {}}
-        setActiveTab={() => {}}
+        onTeamSelect={() => { }}
+        setActiveTab={() => { }}
       />
-      
+
       {/* Background Ambient Glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-b from-amber-500/[0.04] via-amber-500/[0.01] to-transparent blur-3xl" />
@@ -483,15 +532,18 @@ export default function DozeAZeroPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
             <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
             <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              Modo Oficial • Desafio 12 a 0
+              {t.common.officialSimulator} • {t.page.campaign.challenge} 12a0
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Desafio <span className="text-[var(--team-primary,#F4AF23)]">12 a 0</span>
+            {t.page.campaign.challenge}{" "}
+            <span className="bg-gradient-to-r from-[var(--team-primary)] via-amber-300 to-[var(--team-primary)] bg-clip-text text-transparent">
+              12a0
+            </span>
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Sorteie times da Kings League, escolha um craque por rodada para o seu 7 ideal e dispute a campanha pelo título invicto.
+            {t.page.campaign.allRounds}
           </p>
         </div>
 
@@ -509,10 +561,10 @@ export default function DozeAZeroPage() {
                           <CheckCircle2 className="w-7 h-7 text-amber-400" />
                         </div>
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 mb-1.5">
-                          <CheckCircle2 className="w-3 h-3" /> Esquadrão Escalado
+                          <CheckCircle2 className="w-3 h-3" /> {t.page.campaign.confirmed}
                         </div>
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight">Equipe Pronta!</h2>
-                        <p className="text-xs text-zinc-400 font-medium mt-1">Os 7 titulares foram confirmados para a disputa.</p>
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight">{t.page.campaign.ready}</h2>
+                        <p className="text-xs text-zinc-400 font-medium mt-1">{t.page.campaign.confirmed}</p>
                       </div>
 
                       {/* Card de Identidade do Clube */}
@@ -526,13 +578,13 @@ export default function DozeAZeroPage() {
                             />
                           </div>
                           <div className="min-w-0">
-                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Seu Time</span>
+                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">{t.page.campaign.yourTeam}</span>
                             <h3 className="text-base font-black text-white uppercase truncate leading-tight">
-                              {teamNameInput || "SEU TIME"}
+                              {teamNameInput || t.page.campaign.yourTeam}
                             </h3>
                             {presidentNameInput && (
                               <p className="text-[10px] text-zinc-400 font-medium truncate mt-0.5">
-                                Pres. {presidentNameInput}
+                                {t.page.campaign.president}: {presidentNameInput}
                               </p>
                             )}
                             <div className="flex items-center gap-1.5 mt-1">
@@ -540,7 +592,7 @@ export default function DozeAZeroPage() {
                                 {formation.name.replace(" (Falso 9)", "")}
                               </span>
                               <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
-                                {playStyle}
+                                {styleLabels[playStyle]}
                               </span>
                             </div>
                           </div>
@@ -552,20 +604,20 @@ export default function DozeAZeroPage() {
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800 shrink-0 border border-amber-400/30">
                                 {topPlayer.image?.url ? (
-                                   <img
-                                     src={getProxyImageUrl(topPlayer.image.url)}
-                                     alt={topPlayer.shortName}
-                                     className="w-full h-full object-cover object-top"
-                                   />
+                                  <img
+                                    src={getProxyImageUrl(topPlayer.image.url)}
+                                    alt={topPlayer.shortName}
+                                    className="w-full h-full object-cover object-top"
+                                  />
                                 ) : (
-                                   <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-amber-400">
-                                     ★
-                                   </div>
+                                  <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-amber-400">
+                                    ★
+                                  </div>
                                 )}
                               </div>
                               <div className="min-w-0 text-left">
                                 <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                                  <Sparkles className="w-2.5 h-2.5" /> Destaque do Time
+                                  <Sparkles className="w-2.5 h-2.5" /> {t.page.campaign.starPlayer}
                                 </span>
                                 <div className="text-xs font-bold text-white truncate">{topPlayer.shortName}</div>
                               </div>
@@ -580,12 +632,12 @@ export default function DozeAZeroPage() {
                       {/* Parâmetros do Desafio */}
                       <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3 text-left space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-zinc-400 font-medium">Modo de Jogo:</span>
-                          <span className="text-white font-bold">{difficulty}</span>
+                          <span className="text-zinc-400 font-medium">{t.page.campaign.gameMode}:</span>
+                          <span className="text-white font-bold">{diffLabels[difficulty]}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-zinc-400 font-medium">Status da Campanha:</span>
-                          <span className="text-emerald-400 font-bold">Pronto para o Pontapé</span>
+                          <span className="text-zinc-400 font-medium">{t.page.campaign.campaignStatus}:</span>
+                          <span className="text-emerald-400 font-bold">{t.page.campaign.readyKickoff}</span>
                         </div>
                       </div>
                     </div>
@@ -598,7 +650,7 @@ export default function DozeAZeroPage() {
                         onClick={handleResetDraft}
                         className="btn-press w-full h-11 text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-xl border border-white/[0.08]"
                       >
-                        <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reiniciar Escalação
+                        <RotateCcw className="w-3.5 h-3.5 mr-2" /> {t.page.campaign.resetLineup}
                       </Button>
                     </div>
                   </div>
@@ -609,13 +661,13 @@ export default function DozeAZeroPage() {
                       <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto shadow-inner">
                         <Dices className="w-7 h-7 text-amber-400" />
                       </div>
-                      <h3 className="text-xl font-bold text-white">Próxima Rodada</h3>
+                      <h3 className="text-xl font-bold text-white">{t.page.campaign.nextRound}</h3>
                       <p className="text-xs text-zinc-400 max-w-xs mx-auto">
-                        Você já escalou <span className="text-amber-400 font-bold">{filledCount}</span> de <span className="text-white font-bold">{formation.slots.length}</span> jogadores. Sorteie o próximo time para preencher sua escalação.
+                        {t.page.campaign.draftedOf.replace("{count}", String(filledCount)).replace("{total}", String(formation.slots.length))}
                       </p>
                     </div>
 
-                    <Button 
+                    <Button
                       variant="brand"
                       onClick={() => {
                         if (challenges.length > 0 && !isSpinning) {
@@ -626,7 +678,7 @@ export default function DozeAZeroPage() {
                       disabled={isSpinning}
                       className="btn-press w-full h-12 text-xs font-black uppercase tracking-wider rounded-xl disabled:opacity-50"
                     >
-                      <Dices className="w-4 h-4 mr-2" /> SORTEAR PRÓXIMO TIME
+                      <Dices className="w-4 h-4 mr-2" /> {t.page.campaign.rollNextTeam}
                     </Button>
                   </div>
                 ) : (
@@ -636,7 +688,7 @@ export default function DozeAZeroPage() {
                       {/* Formação */}
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 block">
-                          Formação Tática
+                          {t.page.campaign.tacticalFormation}
                         </span>
                         <div className="grid grid-cols-3 gap-1.5">
                           {formations.map((f) => (
@@ -668,7 +720,7 @@ export default function DozeAZeroPage() {
                       {/* Estilo de Jogo */}
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 block">
-                          Postura em Campo
+                          {t.page.campaign.pitchPosture}
                         </span>
                         <div className="grid grid-cols-3 gap-1.5">
                           {(["Defensivo", "Equilibrado", "Ofensivo"] as PlayStyle[]).map((style) => (
@@ -686,7 +738,7 @@ export default function DozeAZeroPage() {
                                 hasStarted && playStyle !== style && "opacity-30 cursor-not-allowed"
                               )}
                             >
-                              {style}
+                              {styleLabels[style]}
                             </button>
                           ))}
                         </div>
@@ -695,7 +747,7 @@ export default function DozeAZeroPage() {
                       {/* Dificuldade */}
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 block">
-                          Modo de Jogo
+                          {t.page.campaign.gameMode}
                         </span>
                         <div className="grid grid-cols-2 gap-1.5">
                           {(["Clássico", "Lendas"] as Difficulty[]).map((diff) => (
@@ -713,7 +765,7 @@ export default function DozeAZeroPage() {
                                 hasStarted && difficulty !== diff && "opacity-30 cursor-not-allowed"
                               )}
                             >
-                              {diff}
+                              {diffLabels[diff]}
                             </button>
                           ))}
                         </div>
@@ -722,14 +774,14 @@ export default function DozeAZeroPage() {
                       {/* Nome do Time */}
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 block">
-                          Nome da Sua Equipe
+                          {t.page.campaign.yourTeam}
                         </span>
                         <input
                           type="text"
                           maxLength={18}
                           value={teamNameInput}
                           onChange={(e) => setTeamNameInput(e.target.value.toUpperCase())}
-                          placeholder="SEU TIME"
+                          placeholder={t.page.campaign.yourTeam.toUpperCase()}
                           className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3.5 py-2 text-white font-bold text-xs uppercase tracking-wider placeholder:text-zinc-600 outline-none focus:border-amber-400/60 focus:bg-white/[0.05] transition-all"
                         />
                       </div>
@@ -737,7 +789,7 @@ export default function DozeAZeroPage() {
                       {/* Nome do Presidente */}
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 block">
-                          Presidente da Equipe
+                          {t.page.campaign.president}
                         </span>
                         <input
                           type="text"
@@ -761,8 +813,8 @@ export default function DozeAZeroPage() {
                               onClick={() => setSelectedLogoIndex(index)}
                               className={cn(
                                 "aspect-square rounded-xl flex items-center justify-center border transition-all p-2 select-none active:scale-[0.94]",
-                                selectedLogoIndex === index 
-                                  ? "bg-amber-400 border-amber-300 shadow-[0_2px_10px_rgba(245,158,11,0.4)]" 
+                                selectedLogoIndex === index
+                                  ? "bg-amber-400 border-amber-300 shadow-[0_2px_10px_rgba(245,158,11,0.4)]"
                                   : "bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12]"
                               )}
                             >
@@ -778,7 +830,7 @@ export default function DozeAZeroPage() {
                     </div>
 
                     <div className="pt-4 border-t border-white/[0.06]">
-                      <Button 
+                      <Button
                         variant="brand"
                         onClick={() => {
                           if (challenges.length > 0 && !isSpinning) {
@@ -789,7 +841,7 @@ export default function DozeAZeroPage() {
                         disabled={isSpinning}
                         className="btn-press w-full h-12 text-xs font-black uppercase tracking-wider rounded-xl disabled:opacity-50"
                       >
-                        <Dices className="w-4 h-4 mr-2" /> SORTEAR PRIMEIRO TIME
+                        <Dices className="w-4 h-4 mr-2" /> {t.page.campaign.rollFirstTeam}
                       </Button>
                     </div>
                   </div>
@@ -802,7 +854,7 @@ export default function DozeAZeroPage() {
                     {isSpinning && spinChallenge ? (
                       <div className="w-full flex flex-col items-center justify-center">
                         <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                          <Loader2 className="w-3 h-3 animate-spin" /> SORTEANDO TIME...
+                          <Loader2 className="w-3 h-3 animate-spin" /> {t.page.campaign.drawingTeam}
                         </span>
                         <div className="flex items-center justify-center gap-3 opacity-60">
                           {spinChallenge.logo && (
@@ -827,7 +879,7 @@ export default function DozeAZeroPage() {
                             </div>
                           )}
                           <div className="text-left min-w-0">
-                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Time Sorteado</span>
+                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">{t.page.campaign.team}</span>
                             <h2 className="text-lg font-black uppercase text-white leading-tight truncate">{currentChallenge.teamName}</h2>
                             {currentChallenge.presidents && (
                               <p className="text-[10px] text-zinc-400 truncate leading-snug">{currentChallenge.presidents}</p>
@@ -845,13 +897,15 @@ export default function DozeAZeroPage() {
                   {/* Botões de Re-sorteio */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1.5 px-1">
-                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Re-sortear</span>
-                      <span className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">{rollsLeft} disponíveis</span>
+                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{t.page.campaign.drawAgain}</span>
+                      <span className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">
+                        {t.page.campaign.rollsAvailable.replace("{count}", String(rollsLeft))}
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="glass" 
+                      <Button
+                        variant="glass"
                         disabled={rollsLeft <= 0 || isSpinning}
                         onClick={() => {
                           if (rollsLeft > 0 && !isSpinning) {
@@ -866,10 +920,10 @@ export default function DozeAZeroPage() {
                         }}
                         className="font-bold text-[10px] h-9 rounded-xl uppercase disabled:opacity-30"
                       >
-                        <RotateCcw className="w-3 h-3 mr-1.5" /> Outro Time
+                        <RotateCcw className="w-3 h-3 mr-1.5" /> {t.page.campaign.anotherTeam}
                       </Button>
-                      <Button 
-                        variant="glass" 
+                      <Button
+                        variant="glass"
                         disabled={rollsLeft <= 0 || isSpinning}
                         onClick={() => {
                           if (rollsLeft > 0 && !isSpinning) {
@@ -884,7 +938,7 @@ export default function DozeAZeroPage() {
                         }}
                         className="font-bold text-[10px] h-9 rounded-xl uppercase disabled:opacity-30"
                       >
-                        <RotateCcw className="w-3 h-3 mr-1.5" /> Outra Copa
+                        <RotateCcw className="w-3 h-3 mr-1.5" /> {t.page.campaign.anotherCup}
                       </Button>
                     </div>
                   </div>
@@ -895,10 +949,10 @@ export default function DozeAZeroPage() {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                         {activePlayerToPlace ? (
                           <span className="text-amber-300 font-black animate-pulse flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-400" /> Clique no campo para escalar {activePlayerToPlace.shortName}
+                            <Sparkles className="w-3 h-3 text-amber-400" /> {t.page.campaign.clickPitchToLineup.replace("{player}", activePlayerToPlace.shortName)}
                           </span>
                         ) : (
-                          "Selecione um jogador"
+                          t.page.campaign.selectAPlayer
                         )}
                       </span>
                     </div>
@@ -907,10 +961,10 @@ export default function DozeAZeroPage() {
                       {validPlayers.length === 0 || isSpinning ? (
                         <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
                           <div className="w-7 h-7 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Carregando Elenco...</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">{t.page.campaign.loadingRoster}</span>
                         </div>
                       ) : (
-                        <TeamRoster 
+                        <TeamRoster
                           validPlayers={validPlayers}
                           onPlayerSelect={handlePlayerSelectFromRoster}
                           disabled={isComplete}
@@ -947,7 +1001,7 @@ export default function DozeAZeroPage() {
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4">
                     <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                      Box Score
+                      {t.page.campaign.boxScore}
                     </span>
                     <span className="text-xs font-black text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
                       {filledCount}/{formation.slots.length}
@@ -957,19 +1011,19 @@ export default function DozeAZeroPage() {
                   {/* Métricas Principais Liquid */}
                   <div className="grid grid-cols-3 gap-2 mb-4">
                     <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-2.5 text-center">
-                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-0.5">Overall</span>
+                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-0.5">{t.page.campaign.overall}</span>
                       <span className="text-xl font-black text-amber-400">
                         {difficulty === "Lendas" && !isComplete ? "?" : teamScore}
                       </span>
                     </div>
                     <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-2.5 text-center">
-                      <span className="text-[9px] font-bold text-rose-400 uppercase tracking-widest block mb-0.5">Ataque</span>
+                      <span className="text-[9px] font-bold text-rose-400 uppercase tracking-widest block mb-0.5">{t.page.campaign.attack}</span>
                       <span className="text-xl font-black text-white">
                         {difficulty === "Lendas" && !isComplete ? "?" : attackScore}
                       </span>
                     </div>
                     <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-2.5 text-center">
-                      <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Defesa</span>
+                      <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">{t.page.campaign.defense}</span>
                       <span className="text-xl font-black text-white">
                         {difficulty === "Lendas" && !isComplete ? "?" : defenseScore}
                       </span>
@@ -979,7 +1033,7 @@ export default function DozeAZeroPage() {
                   {/* Lista das 7 Posições com Status */}
                   <div className="space-y-2 mt-4">
                     <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 block mb-1">
-                      Escalação Tática
+                      {t.page.campaign.tacticalLineup}
                     </span>
 
                     {formation.slots.map(slot => {
@@ -1000,7 +1054,7 @@ export default function DozeAZeroPage() {
                               {slot.position}
                             </span>
                             <span className={cn("truncate font-semibold", player ? "text-white" : "text-zinc-600 italic")}>
-                              {player ? player.shortName : "Vazio"}
+                              {player ? player.shortName : t.page.campaign.emptySlot}
                             </span>
                           </div>
 
@@ -1026,11 +1080,11 @@ export default function DozeAZeroPage() {
                       onClick={startSimulation}
                       className="btn-press w-full h-12 text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-[var(--team-primary,#F4AF23)]/20"
                     >
-                      <Trophy className="w-4 h-4 mr-2" /> SIMULAR 12 A 0
+                      <Trophy className="w-4 h-4 mr-2" /> {t.page.campaign.simulate12a0}
                     </Button>
                   ) : (
                     <div className="text-center py-2 text-zinc-500 text-[11px] font-medium">
-                      Escale os {formation.slots.length - filledCount} atletas restantes para liberar a simulação.
+                      {t.page.campaign.lineupRemainingToUnlock.replace("{count}", String(formation.slots.length - filledCount))}
                     </div>
                   )}
                 </div>
@@ -1041,15 +1095,15 @@ export default function DozeAZeroPage() {
 
         {/* Fase de Simulação da Campanha */}
         {gamePhase === "simulation" && campaignData && (
-          <CampaignUI 
-            userTeam={campaignData.userTeam} 
-            otherTeams={campaignData.otherTeams} 
-            difficulty={difficulty} 
+          <CampaignUI
+            userTeam={campaignData.userTeam}
+            otherTeams={campaignData.otherTeams}
+            difficulty={difficulty}
             onResetToDraft={handleStartNewDraft}
           />
         )}
       </div>
-      
+
       <Footer />
     </main>
   )

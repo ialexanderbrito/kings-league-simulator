@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getProxyImageUrl, cn } from "@/lib/utils";
-import { 
-  Trophy, 
-  Swords, 
-  HeartCrack, 
-  Loader2, 
+import {
+  Trophy,
+  Swords,
+  HeartCrack,
+  Loader2,
   Settings2,
   ChevronDown,
   ChevronUp,
@@ -31,14 +31,15 @@ import KingsLeagueLogo from "@/components/kings-league-logo";
 import { AppleEmoji } from "@/components/ui/apple-emoji";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  SimulatedTeam, 
-  TeamStanding, 
-  generateSchedule, 
-  createInitialStandings, 
-  updateStandingsWithMatch, 
-  sortStandings, 
-  simulateDetailedMatch, 
+import { useLocale } from "@/contexts/locale-context";
+import {
+  SimulatedTeam,
+  TeamStanding,
+  generateSchedule,
+  createInitialStandings,
+  updateStandingsWithMatch,
+  sortStandings,
+  simulateDetailedMatch,
   DetailedMatchResult,
   ShootoutKick,
   MatchEvent
@@ -73,21 +74,22 @@ const TeamLogo = ({ logo, className }: { logo?: string, className?: string }) =>
 };
 
 export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }: CampaignUIProps) {
+  const { t } = useLocale();
   const [phase, setPhase] = useState<CampaignPhase>("overview");
   const [currentRound, setCurrentRound] = useState(1);
   const [standings, setStandings] = useState<Record<string, TeamStanding>>({});
   const [schedule, setSchedule] = useState<{ round: number; matches: { home: SimulatedTeam; away: SimulatedTeam }[] }[]>([]);
-  
+
   const [playedMatches, setPlayedMatches] = useState<MatchResultDisplay[]>([]);
   const [expandedMatchIndex, setExpandedMatchIndex] = useState<number | null>(null);
-  
+
   const [playoffStage, setPlayoffStage] = useState<PlayoffStage>(null);
   const [playoffOpponent, setPlayoffOpponent] = useState<SimulatedTeam | null>(null);
 
   const [isSimulating, setIsSimulating] = useState(false);
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [finalViewTab, setFinalViewTab] = useState<"summary" | "standings">("summary");
-  
+
   const [simMode, setSimMode] = useState<SimMode>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem("simulator_sim_mode");
@@ -95,7 +97,7 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
     }
     return "manual";
   });
-  
+
   const [simSpeed, setSimSpeed] = useState<SimSpeed>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem("simulator_sim_speed");
@@ -142,13 +144,13 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
     setTimeout(() => {
       const roundData = schedule[currentRound - 1];
       const newStandings = { ...standings };
-      
+
       let userMatchDetails: MatchResultDisplay | null = null;
 
       for (const match of roundData.matches) {
         // Bônus da IA progressivo conforme o campeonato avança (2% por rodada)
         const diffMultiplier = 1.0 + ((currentRound - 1) * 0.02);
-        
+
         const result = simulateDetailedMatch(match.home, match.away, {
           userTeamId: userTeam.id,
           difficultyMultiplier: diffMultiplier,
@@ -199,10 +201,10 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
   const generatePlayoffOpponent = (stage: PlayoffStage, sortedTable?: TeamStanding[]) => {
     const table = sortedTable || sortStandings(standings);
     let opponentId = "";
-    
+
     if (stage === "quarterfinals") {
       const userPos = table.findIndex(r => r.teamId === userTeam.id) + 1;
-      const opponentPos = 9 - userPos; 
+      const opponentPos = 9 - userPos;
       opponentId = table[opponentPos - 1]?.teamId;
     } else if (stage === "semifinals") {
       // Na semifinal, o adversário é um dos 4 primeiros colocados da fase regular
@@ -284,8 +286,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
       .map(m => {
         const myScore = m.isHome ? m.result.homeScore : m.result.awayScore;
         const opScore = m.isHome ? m.result.awayScore : m.result.homeScore;
-        const soText = m.result.homeShootoutScore !== undefined 
-          ? ` (${m.isHome ? m.result.homeShootoutScore : m.result.awayShootoutScore}-${m.isHome ? m.result.awayShootoutScore : m.result.homeShootoutScore} SO)` 
+        const soText = m.result.homeShootoutScore !== undefined
+          ? ` (${m.isHome ? m.result.homeShootoutScore : m.result.awayShootoutScore}-${m.isHome ? m.result.awayShootoutScore : m.result.homeShootoutScore} SO)`
           : '';
         return {
           roundLabel: m.roundLabel.includes("QUARTAS") ? "Quartas" : m.roundLabel.includes("SEMIFINAL") ? "Semi" : "Final",
@@ -323,15 +325,17 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md">
             <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
             <span className="text-[11px] font-black tracking-wider uppercase text-white">
-              {phase === "playoffs_overview" || phase === "playoffs_match" 
-                ? `Mata-Mata • ${playoffStage === "quarterfinals" ? "Quartas de Final" : playoffStage === "semifinals" ? "Semifinal" : "Grande Final"}` 
-                : phase === "standings" 
-                ? "Classificação da Fase de Grupos"
-                : phase === "champion" 
-                ? "Grande Campeão" 
-                : phase === "eliminated"
-                ? "Fim da Campanha"
-                : `Fase de Grupos • Rodada ${Math.min(currentRound, schedule.length || 9)} de ${schedule.length || 9}`}
+              {phase === "playoffs_overview" || phase === "playoffs_match"
+                ? `${t.page.campaign.phasePlayoffs} • ${playoffStage === "quarterfinals" ? t.playoffs.quarterfinals : playoffStage === "semifinals" ? t.playoffs.semiAbbr : t.playoffs.grandFinal}`
+                : phase === "standings"
+                  ? t.page.campaign.phaseStandings
+                  : phase === "champion"
+                    ? t.page.campaign.phaseChampion
+                    : phase === "eliminated"
+                      ? t.page.campaign.phaseEliminated
+                      : t.page.campaign.phaseGroupRound
+                        .replace("{current}", String(Math.min(currentRound, schedule.length || 9)))
+                        .replace("{total}", String(schedule.length || 9))}
             </span>
           </div>
 
@@ -340,7 +344,7 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
             <span>{userTeam.name}</span>
           </div>
         </div>
-        
+
         {/* Dock Minimalista Liquid Glass de Controles de Simulação */}
         <div className="flex items-center gap-2 bg-[#090a0f]/90 border border-white/[0.08] rounded-2xl p-1.5 backdrop-blur-xl shadow-lg w-full md:w-auto overflow-x-auto scrollbar-none">
           {/* Segmented: Modo Manual / Auto */}
@@ -350,8 +354,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               onClick={() => handleSimModeChange("manual")}
               className={cn(
                 "px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all select-none active:scale-95",
-                simMode === "manual" 
-                  ? "bg-white/[0.12] text-white shadow-sm border border-white/[0.14]" 
+                simMode === "manual"
+                  ? "bg-white/[0.12] text-white shadow-sm border border-white/[0.14]"
                   : "text-zinc-400 hover:text-zinc-200"
               )}
             >
@@ -362,8 +366,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               onClick={() => handleSimModeChange("auto")}
               className={cn(
                 "px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all select-none active:scale-95",
-                simMode === "auto" 
-                  ? "bg-amber-400 text-black shadow-sm font-black" 
+                simMode === "auto"
+                  ? "bg-amber-400 text-black shadow-sm font-black"
                   : "text-zinc-400 hover:text-zinc-200"
               )}
             >
@@ -381,8 +385,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               onClick={() => handleSimSpeedChange("ultra")}
               className={cn(
                 "px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all select-none active:scale-95 flex items-center gap-1",
-                simSpeed === "ultra" 
-                  ? "bg-amber-400 text-black font-black shadow-sm" 
+                simSpeed === "ultra"
+                  ? "bg-amber-400 text-black font-black shadow-sm"
                   : "text-zinc-400 hover:text-zinc-200"
               )}
             >
@@ -393,8 +397,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               onClick={() => handleSimSpeedChange("fast")}
               className={cn(
                 "px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all select-none active:scale-95",
-                simSpeed === "fast" 
-                  ? "bg-white/[0.12] text-white border border-white/[0.14]" 
+                simSpeed === "fast"
+                  ? "bg-white/[0.12] text-white border border-white/[0.14]"
                   : "text-zinc-400 hover:text-zinc-200"
               )}
             >
@@ -405,8 +409,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               onClick={() => handleSimSpeedChange("normal")}
               className={cn(
                 "px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all select-none active:scale-95",
-                simSpeed === "normal" 
-                  ? "bg-white/[0.12] text-white border border-white/[0.14]" 
+                simSpeed === "normal"
+                  ? "bg-white/[0.12] text-white border border-white/[0.14]"
                   : "text-zinc-400 hover:text-zinc-200"
               )}
             >
@@ -417,8 +421,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               onClick={() => handleSimSpeedChange("slow")}
               className={cn(
                 "px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all select-none active:scale-95",
-                simSpeed === "slow" 
-                  ? "bg-white/[0.12] text-white border border-white/[0.14]" 
+                simSpeed === "slow"
+                  ? "bg-white/[0.12] text-white border border-white/[0.14]"
                   : "text-zinc-400 hover:text-zinc-200"
               )}
             >
@@ -432,11 +436,11 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
         {playedMatches.length > 0 && (
           <div className="space-y-4">
             {playedMatches.map((m, idx) => (
-              <MatchBox 
-                key={idx} 
-                match={m} 
-                userTeam={userTeam} 
-                isExpanded={expandedMatchIndex === idx} 
+              <MatchBox
+                key={idx}
+                match={m}
+                userTeam={userTeam}
+                isExpanded={expandedMatchIndex === idx}
                 onToggle={() => setExpandedMatchIndex(expandedMatchIndex === idx ? null : idx)}
                 simSpeed={simSpeed}
                 onPlaybackComplete={idx === playedMatches.length - 1 ? () => {
@@ -455,7 +459,7 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
 
         {phase === "overview" && (
           <div className="flex justify-center pt-6">
-            <Button 
+            <Button
               variant="brand"
               onClick={() => {
                 setIsPlayingBack(false);
@@ -477,7 +481,7 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
 
         {phase === "standings" && (
           <div className="animate-in fade-in duration-500 w-full space-y-6">
-            <StandingsTableFinal 
+            <StandingsTableFinal
               standings={sortedTable}
               userTeam={userTeam}
               userRank={userRank}
@@ -778,7 +782,8 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
             )}
           </div>
         )}
-      </div>
+
+      </div>
     </div>
   );
 }
@@ -841,10 +846,11 @@ function renderTimelineIcon(ev: MatchEvent) {
 }
 
 function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackComplete }: { match: MatchResultDisplay; userTeam: SimulatedTeam; isExpanded: boolean; onToggle: () => void; simSpeed: SimSpeed; onPlaybackComplete?: () => void }) {
+  const { t } = useLocale();
   const { result, opponent, isHome, roundLabel } = match;
-  
-  const allEvents = useMemo(() => [...result.homeEvents, ...result.awayEvents].sort((a,b) => a.minute - b.minute), [result]);
-  
+
+  const allEvents = useMemo(() => [...result.homeEvents, ...result.awayEvents].sort((a, b) => a.minute - b.minute), [result]);
+
   const maxMinute = useMemo(() => {
     if (allEvents.length === 0) return 40;
     return Math.max(40, ...allEvents.map(e => e.minute));
@@ -868,7 +874,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
       if (simSpeed === "fast") delay = 35;
       else if (simSpeed === "normal") delay = 100;
       else if (simSpeed === "slow") delay = 350;
-      
+
       const timer = setTimeout(() => {
         setCurrentMinute(prev => prev + 1);
       }, delay);
@@ -884,11 +890,11 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
   }, [currentMinute, maxMinute, simSpeed, isPlaybackComplete, onPlaybackComplete]);
 
   useEffect(() => {
-     if ((!isExpanded || simSpeed === "ultra") && !isPlaybackComplete) {
-        setCurrentMinute(maxMinute + 1);
-        setIsPlaybackComplete(true);
-        if (onPlaybackComplete) onPlaybackComplete();
-     }
+    if ((!isExpanded || simSpeed === "ultra") && !isPlaybackComplete) {
+      setCurrentMinute(maxMinute + 1);
+      setIsPlaybackComplete(true);
+      if (onPlaybackComplete) onPlaybackComplete();
+    }
   }, [isExpanded, isPlaybackComplete, maxMinute, simSpeed, onPlaybackComplete]);
 
   const visibleEvents = allEvents.filter(ev => ev.minute <= currentMinute);
@@ -898,11 +904,11 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
       eventsContainerRef.current.scrollTop = eventsContainerRef.current.scrollHeight;
     }
   }, [visibleEvents.length, isExpanded]);
-  
+
   let currentHomeScore = 0;
   let currentAwayScore = 0;
   const homeId = isHome ? userTeam.id : opponent.id;
-  
+
   visibleEvents.forEach(ev => {
     if (ev.type === "goal" || ev.type === "matchball" || (ev.type === "carta" && (ev.metadata?.includes("convertido") || ev.metadata?.includes("Adv. Errou = Gol"))) || (ev.type === "penalti_presidente" && ev.metadata?.includes("(GOL)"))) {
       const val = ev.pointsAdded !== undefined ? ev.pointsAdded : (ev.metadata?.includes("Gol Dobrado") ? 2 : 1);
@@ -919,7 +925,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
 
   const displayMyScore = isPlaybackComplete ? finalMyScore : (isHome ? currentHomeScore : currentAwayScore);
   const displayOpScore = isPlaybackComplete ? finalOpScore : (isHome ? currentAwayScore : currentHomeScore);
-  
+
   let myShootoutScore: number | undefined;
   let opShootoutScore: number | undefined;
 
@@ -959,9 +965,9 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
   // Filter visible events based on active tab
   const filteredEvents = useMemo(() => {
     if (activeFilter === "goals") {
-      return visibleEvents.filter(ev => 
-        ev.type === "goal" || 
-        ev.type === "matchball" || 
+      return visibleEvents.filter(ev =>
+        ev.type === "goal" ||
+        ev.type === "matchball" ||
         (ev.type === "penalti_presidente" && (ev.isSuccess || ev.metadata?.includes("GOL"))) ||
         (ev.type === "carta" && (ev.isSuccess || ev.metadata?.includes("convertido") || ev.metadata?.includes("Gol")))
       );
@@ -976,9 +982,9 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
   }, [visibleEvents, activeFilter]);
 
   // Counts for filters
-  const goalsCount = visibleEvents.filter(ev => 
-    ev.type === "goal" || 
-    ev.type === "matchball" || 
+  const goalsCount = visibleEvents.filter(ev =>
+    ev.type === "goal" ||
+    ev.type === "matchball" ||
     (ev.type === "penalti_presidente" && (ev.isSuccess || ev.metadata?.includes("GOL"))) ||
     (ev.type === "carta" && (ev.isSuccess || ev.metadata?.includes("convertido") || ev.metadata?.includes("Gol")))
   ).length;
@@ -989,7 +995,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
     <div className={`animate-in fade-in slide-in-from-bottom-2 duration-300 w-full transition-all ${!isExpanded ? "opacity-90 hover:opacity-100" : ""}`}>
       <div className={`bg-[#0a0b0f]/85 backdrop-blur-xl border ${isExpanded ? "border-white/[0.14] shadow-xl shadow-black/50" : "border-white/[0.06] shadow-md shadow-black/20"} rounded-2xl overflow-hidden transition-all`}>
         {/* MATCH HEADER */}
-        <div 
+        <div
           className={`px-4 sm:px-5 py-3 flex justify-between items-center ${isExpanded ? "bg-white/[0.02]" : "bg-transparent"} hover:bg-white/[0.03] transition-colors cursor-pointer select-none`}
           onClick={onToggle}
         >
@@ -1010,7 +1016,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <div className="flex flex-col items-end">
               <div className="flex items-center gap-1 sm:gap-2">
@@ -1030,7 +1036,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                 </div>
               )}
             </div>
-            
+
             <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border ${outcomeBadgeStyles[outcome]} text-xs font-black uppercase transition-transform active:scale-95`}>
               {outcome === "playing" ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" /> : outcome === "win" ? "V" : outcome === "loss" ? "D" : "E"}
             </div>
@@ -1044,7 +1050,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
         {/* ACCORDION CONTENT: LANCE A LANCE & SHOOTOUTS */}
         {isExpanded && (
           <div className="px-3.5 sm:px-5 py-3 border-t border-white/[0.06] bg-black/25 animate-in slide-in-from-top-1 duration-200 space-y-3">
-            
+
             {/* FILTER BAR (Segmented Liquid Glass Pills) */}
             <div className="flex items-center justify-between flex-wrap gap-2 pb-1 border-b border-white/[0.05]">
               <div className="flex items-center gap-1 bg-black/40 border border-white/[0.06] rounded-xl p-0.5 flex-wrap">
@@ -1084,7 +1090,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                       : "text-zinc-400 hover:text-zinc-200"
                   )}
                 >
-                  Armas ({cardsCount})
+                  {t.page.campaign.weapons} ({cardsCount})
                 </button>
 
                 <button
@@ -1097,7 +1103,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                       : "text-zinc-400 hover:text-zinc-200"
                   )}
                 >
-                  Presidentes ({presCount})
+                  {t.page.campaign.team} ({presCount})
                 </button>
 
                 {hasShootout && (
@@ -1157,7 +1163,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
               </div>
 
               {/* Vertical Timeline Axis Container */}
-              <div 
+              <div
                 ref={eventsContainerRef}
                 className="relative max-h-[360px] overflow-y-auto overscroll-contain pr-1 sm:pr-2 py-2 scrollbar-minimal select-none"
               >
@@ -1197,7 +1203,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                       } else if (ev.type === "goal") {
                         eventTitle = ev.metadata?.includes("Gol Dobrado") ? "Gol Dobrado" : "Gol";
                       } else if (ev.type === "penalti_presidente") {
-                        eventTitle = "Pênalti Pres.";
+                        eventTitle = t.page.campaign.presidentPenalty;
                       } else if (ev.type === "carta") {
                         eventTitle = ev.cardType ? `Arma: ${ev.cardType}` : "Arma Secreta";
                       } else if (ev.metadata?.includes("Cartão Vermelho") || ev.metadata?.includes("Expulsão")) {
@@ -1378,7 +1384,7 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                     {result.shootoutKicks?.map((kick, sIdx) => {
                       const isUserTeamKick = kick.teamId === userTeam.id;
                       const playerName = kick.player?.shortName || (kick.player as any)?.fullName || (kick.player as any)?.name || kick.description.split(" converteu")[0].split(" errou")[0];
-                      const currentSO = isHome 
+                      const currentSO = isHome
                         ? `${kick.scoreAfter.home}-${kick.scoreAfter.away}`
                         : `${kick.scoreAfter.away}-${kick.scoreAfter.home}`;
 
@@ -1413,8 +1419,8 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                                 {/* Ícone do Lance em Nó Circular Mínimo */}
                                 <div className={cn(
                                   "w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#0d0e14] border flex items-center justify-center shrink-0 shadow-sm transition-colors",
-                                  kick.isGoal 
-                                    ? "border-emerald-500/40 text-emerald-400" 
+                                  kick.isGoal
+                                    ? "border-emerald-500/40 text-emerald-400"
                                     : "border-rose-500/40 text-rose-400"
                                 )}>
                                   {kick.isGoal ? (
@@ -1442,8 +1448,8 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                                 {/* Ícone do Lance em Nó Circular Mínimo */}
                                 <div className={cn(
                                   "w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#0d0e14] border flex items-center justify-center shrink-0 shadow-sm transition-colors",
-                                  kick.isGoal 
-                                    ? "border-emerald-500/40 text-emerald-400" 
+                                  kick.isGoal
+                                    ? "border-emerald-500/40 text-emerald-400"
                                     : "border-rose-500/40 text-rose-400"
                                 )}>
                                   {kick.isGoal ? (
@@ -1524,6 +1530,7 @@ export function StandingsTableFinal({
   userTeam: SimulatedTeam;
   userRank: number;
 }) {
+  const { t } = useLocale();
   return (
     <div className="liquid-glass-panel rounded-3xl p-5 sm:p-7 border border-white/[0.08] overflow-hidden shadow-2xl backdrop-blur-2xl">
       {/* Header */}
@@ -1534,21 +1541,21 @@ export function StandingsTableFinal({
           </div>
           <div>
             <h2 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
-              Classificação Final da Fase de Grupos
+              {t.page.campaign.finalStandingsTitle}
             </h2>
             <p className="text-[10px] text-zinc-400 uppercase tracking-widest mt-0.5">
-              9 Rodadas Disputadas • G-7 Classifica para o Mata-Mata
+              {t.page.campaign.finalStandingsSubtitle}
             </p>
           </div>
         </div>
 
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[11px] font-bold text-zinc-300">
-          <span className="text-zinc-500 uppercase tracking-wider text-[10px]">Sua Posição:</span>
+          <span className="text-zinc-500 uppercase tracking-wider text-[10px]">{t.page.campaign.position}:</span>
           <span className={cn(
             "font-black uppercase",
             userRank === 1 ? "text-emerald-400" : userRank <= 7 ? "text-amber-400" : "text-rose-400"
           )}>
-            {userRank}º Lugar {userRank === 1 ? "(Semifinal Direta)" : userRank <= 7 ? "(Playoffs)" : "(Eliminado)"}
+            {userRank}º {t.page.campaign.position} {userRank === 1 ? `(${t.page.campaign.directSemifinal})` : userRank <= 7 ? `(${t.page.campaign.playoffs})` : `(${t.page.campaign.eliminated})`}
           </span>
         </div>
       </div>
@@ -1581,19 +1588,19 @@ export function StandingsTableFinal({
                     pos === 1
                       ? "border-l-4 border-l-emerald-500"
                       : pos <= 7
-                      ? "border-l-4 border-l-amber-400"
-                      : "border-l-4 border-l-rose-500",
+                        ? "border-l-4 border-l-amber-400"
+                        : "border-l-4 border-l-rose-500",
                     isUser
                       ? pos === 1
                         ? "bg-emerald-500/[0.12] border-emerald-500/50 shadow-[inset_0_1px_0_0_rgba(16,185,129,0.25)]"
                         : pos <= 7
-                        ? "bg-amber-400/[0.12] border-amber-400/50 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.25)]"
-                        : "bg-rose-500/[0.12] border-rose-500/50 shadow-[inset_0_1px_0_0_rgba(244,63,94,0.25)]"
+                          ? "bg-amber-400/[0.12] border-amber-400/50 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.25)]"
+                          : "bg-rose-500/[0.12] border-rose-500/50 shadow-[inset_0_1px_0_0_rgba(244,63,94,0.25)]"
                       : pos === 1
-                      ? "bg-emerald-500/[0.03] border-white/[0.04] hover:bg-emerald-500/[0.08]"
-                      : pos <= 7
-                      ? "bg-amber-400/[0.03] border-white/[0.04] hover:bg-amber-400/[0.08]"
-                      : "bg-rose-500/[0.02] border-white/[0.04] hover:bg-rose-500/[0.06]"
+                        ? "bg-emerald-500/[0.03] border-white/[0.04] hover:bg-emerald-500/[0.08]"
+                        : pos <= 7
+                          ? "bg-amber-400/[0.03] border-white/[0.04] hover:bg-amber-400/[0.08]"
+                          : "bg-rose-500/[0.02] border-white/[0.04] hover:bg-rose-500/[0.06]"
                   )}
                 >
                   {/* Position Badge */}
@@ -1620,17 +1627,17 @@ export function StandingsTableFinal({
                       <div className="flex items-center gap-2 min-w-0">
                         <span className={cn(
                           "text-xs sm:text-sm uppercase tracking-wide truncate",
-                          isUser 
-                            ? pos === 1 
-                              ? "text-emerald-300 font-black" 
-                              : pos <= 7 
-                              ? "text-amber-300 font-black" 
-                              : "text-rose-300 font-black"
+                          isUser
+                            ? pos === 1
+                              ? "text-emerald-300 font-black"
+                              : pos <= 7
+                                ? "text-amber-300 font-black"
+                                : "text-rose-300 font-black"
                             : pos === 1
-                            ? "text-emerald-200/90 font-bold"
-                            : pos <= 7
-                            ? "text-zinc-100 font-semibold"
-                            : "text-zinc-300 font-medium"
+                              ? "text-emerald-200/90 font-bold"
+                              : pos <= 7
+                                ? "text-zinc-100 font-semibold"
+                                : "text-zinc-300 font-medium"
                         )}>
                           {isUser ? userTeam.name : row.teamName}
                         </span>
@@ -1640,8 +1647,8 @@ export function StandingsTableFinal({
                             pos === 1
                               ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                               : pos <= 7
-                              ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
-                              : "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                                ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                                : "bg-rose-500/20 text-rose-300 border-rose-500/30"
                           )}>
                             VOCÊ
                           </span>
@@ -1692,7 +1699,7 @@ export function StandingsTableFinal({
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold">
-                        Eliminado
+                        {t.page.campaign.eliminated}
                       </span>
                     )}
                   </div>
@@ -1716,7 +1723,7 @@ export function StandingsTableFinal({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
-            <span className="text-zinc-200">8º ao 10º: Eliminados</span>
+            <span className="text-zinc-200">{t.page.campaign.eliminated}</span>
           </div>
         </div>
 
@@ -1756,8 +1763,8 @@ function PlayoffStageTracker({
                 st.isCurrent
                   ? "bg-amber-400 text-black shadow-sm font-black"
                   : st.isPast
-                  ? "bg-white/[0.06] text-emerald-400 border border-emerald-500/20"
-                  : "text-zinc-500"
+                    ? "bg-white/[0.06] text-emerald-400 border border-emerald-500/20"
+                    : "text-zinc-500"
               )}
             >
               {st.isPast && <Check className="w-3 h-3 text-emerald-400 shrink-0" />}
@@ -1785,6 +1792,7 @@ function PlayoffArenaCard({
   isSimulating: boolean;
   onSimulate: () => void;
 }) {
+  const { t } = useLocale();
   const stageTitle = stage === "quarterfinals" ? "Quartas de Final" : stage === "semifinals" ? "Semifinal" : "Grande Final";
 
   const userWins = playedMatches.filter(m => (m.isHome && m.result.winner === "home") || (!m.isHome && m.result.winner === "away")).length;
@@ -1799,7 +1807,7 @@ function PlayoffArenaCard({
           <span>{stageTitle}</span>
         </div>
         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest hidden sm:block">
-          Jogo Único Eliminatório • Shootouts em Caso de Empate
+          {t.page.campaign.shootoutFinal}
         </span>
       </div>
 
@@ -1990,6 +1998,7 @@ export function CampaignSummary({
   onViewStandings?: () => void;
 }) {
   const { toast } = useToast();
+  const { t } = useLocale();
 
   const wins = playedMatches.filter(m => (m.isHome && m.result.winner === "home") || (!m.isHome && m.result.winner === "away")).length;
   const totalMatches = playedMatches.length;
@@ -2030,46 +2039,46 @@ export function CampaignSummary({
   const presRate = presTotal > 0 ? Math.round((presGoals / presTotal) * 100) : 0;
 
   // Placement label
-  let placementLabel = "Fase de Grupos";
+  let placementLabel = t.common.regularPhase;
   let placementBadgeClass = "bg-white/[0.06] text-zinc-400 border-white/10";
   let PlacementIcon = Shield;
 
   if (isChampion) {
-    placementLabel = "Campeão da Kings League";
+    placementLabel = t.ui.champion;
     placementBadgeClass = "bg-amber-400/20 text-amber-300 border-amber-400/30";
     PlacementIcon = Crown;
   } else if (playoffStage === "final") {
-    placementLabel = "Vice-Campeão (Finalista)";
+    placementLabel = t.playoffs.finalAbbr;
     placementBadgeClass = "bg-zinc-300/20 text-zinc-200 border-zinc-300/30";
     PlacementIcon = Medal;
   } else if (playoffStage === "semifinals") {
-    placementLabel = "Semifinalista";
+    placementLabel = t.playoffs.semiAbbr;
     placementBadgeClass = "bg-amber-500/15 text-amber-300 border-amber-500/25";
     PlacementIcon = Award;
   } else if (playoffStage === "quarterfinals") {
-    placementLabel = "Quartas de Final";
+    placementLabel = t.playoffs.quarterfinals;
     placementBadgeClass = "bg-amber-400/10 text-amber-300 border-amber-400/20";
     PlacementIcon = Swords;
   } else if (groupRank) {
-    placementLabel = `${groupRank}º Lugar (Fase de Grupos)`;
+    placementLabel = `${groupRank}º ${t.page.campaign.position} (${t.common.regularPhase})`;
     placementBadgeClass = "bg-rose-500/15 text-rose-300 border-rose-500/30";
     PlacementIcon = Shield;
   }
 
   const handleShare = () => {
-    const text = `👑 Kings League Brasil - Campanha no Simulador 12 a 0:
-⚽ Time: ${userTeam?.name || "Meu Time"}
-🏆 Resultado: ${placementLabel}
-📊 Cartel: ${wins}V - ${losses}D (${winRate}% de aproveitamento)
-🎯 Gols: ${goalsFor} Pró / ${goalsAgainst} Sofridos (Saldo: ${goalDiff > 0 ? `+${goalDiff}` : goalDiff})
-👑 Pênalti do Presidente: ${presGoals}/${presTotal} convertidos (${presRate}%)
-Simule também: https://kings-league-simulator.vercel.app/12a0`;
+    const text = `👑 Kings League - 12a0:
+⚽ ${t.page.campaign.team}: ${userTeam?.name || t.page.campaign.yourTeam}
+🏆 ${t.standings.officialTable}: ${placementLabel}
+📊 ${t.teamPage.winRate}: ${wins} - ${losses} (${winRate}%)
+🎯 ${t.teamPage.goalsAndDiff}: ${goalsFor} / ${goalsAgainst} (${goalDiff > 0 ? `+${goalDiff}` : goalDiff})
+👑 ${t.page.campaign.presidentPenalty}: ${presGoals}/${presTotal} (${presRate}%)
+${t.page.campaign.quickSim}: https://kings-league-simulator.vercel.app/12a0`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       toast({
-        title: "Resumo Copiado!",
-        description: "As estatísticas da sua campanha foram copiadas para a área de transferência.",
+        title: t.page.campaign.copied,
+        description: t.page.campaign.copiedDescription,
       });
     }
   };
@@ -2099,11 +2108,11 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
               )}
               <div>
                 <h3 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight">
-                  {userTeam?.name || "Sua Equipe"}
+                  {userTeam?.name || t.page.campaign.yourTeam}
                 </h3>
                 {userTeam?.presidents && (
                   <span className="text-xs text-zinc-400 block mt-0.5">
-                    Presidentes: {userTeam.presidents}
+                    {t.page.campaign.presidents}: {userTeam.presidents}
                   </span>
                 )}
               </div>
@@ -2113,15 +2122,15 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
           {/* Record Pill */}
           <div className="liquid-glass-pill rounded-2xl px-6 py-4 flex flex-col items-center text-center border border-white/10">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
-              Registro Oficial
+              {t.home.officialSeason}
             </span>
             <div className="text-3xl sm:text-4xl font-black text-white tabular-nums tracking-tight">
-              <span className="text-emerald-400">{wins}V</span>
+              <span className="text-emerald-400">{wins}{t.standings.wonTooltip.slice(0, 1)}</span>
               <span className="text-zinc-600 mx-2">-</span>
-              <span className="text-rose-400">{losses}D</span>
+              <span className="text-rose-400">{losses}{t.standings.lostTooltip.slice(0, 1)}</span>
             </div>
             <span className="text-[11px] font-bold text-amber-400 mt-1 uppercase tracking-wider">
-              {winRate}% de Aproveitamento
+              {winRate}% {t.teamPage.winRate}
             </span>
           </div>
         </div>
@@ -2129,12 +2138,12 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
 
       {/* 4 Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Aproveitamento */}
+        {/* Card 1: Win Rate */}
         <div className="liquid-glass-card rounded-2xl p-5 border border-white/[0.08] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                Aproveitamento
+                {t.teamPage.winRate}
               </span>
               <Award className="w-4 h-4 text-amber-400" />
             </div>
@@ -2142,12 +2151,12 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
               {winRate}%
             </div>
             <span className="text-xs text-zinc-400 font-medium">
-              Taxa de Vitórias
+              {t.teamPage.winRate}
             </span>
           </div>
           <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-bold">
-            <span className="text-emerald-400">{wins} Vitórias</span>
-            <span className="text-rose-400">{losses} Derrotas</span>
+            <span className="text-emerald-400">{wins} {t.ui.wins}</span>
+            <span className="text-rose-400">{losses} {t.ui.losses}</span>
           </div>
         </div>
 
@@ -2156,7 +2165,7 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                Gols & Saldo
+                {t.teamPage.goalsAndDiff}
               </span>
               <Target className="w-4 h-4 text-emerald-400" />
             </div>
@@ -2167,12 +2176,12 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
               {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
             </div>
             <span className="text-xs text-zinc-400 font-medium">
-              Saldo de Gols (SG)
+              {t.standings.gdTooltip}
             </span>
           </div>
           <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-bold">
-            <span className="text-zinc-300">{goalsFor} GP ({avgGoalsFor}/j)</span>
-            <span className="text-zinc-500">{goalsAgainst} GC</span>
+            <span className="text-zinc-300">{goalsFor} {t.standings.gfTooltip.slice(0, 2)} ({avgGoalsFor}/j)</span>
+            <span className="text-zinc-500">{goalsAgainst} {t.standings.gaTooltip.slice(0, 2)}</span>
           </div>
         </div>
 
@@ -2181,7 +2190,7 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                Pênalti Presidente
+                {t.page.campaign.presidentPenalty}
               </span>
               <Crown className="w-4 h-4 text-amber-400" />
             </div>
@@ -2189,12 +2198,12 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
               {presGoals}<span className="text-lg text-zinc-500 font-bold">/{presTotal}</span>
             </div>
             <span className="text-xs text-zinc-400 font-medium">
-              {presRate}% de Conversão
+              {presRate}% {t.teamPage.soConversion}
             </span>
           </div>
           <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-bold text-zinc-400">
-            <span>{presGoals} Convertidos</span>
-            <span>{presMisses} Perdidos</span>
+            <span>{presGoals} {t.teamPage.matchWin}</span>
+            <span>{presMisses} {t.teamPage.matchDefeat}</span>
           </div>
         </div>
 
@@ -2203,7 +2212,7 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                Partidas
+                {t.ui.matches}
               </span>
               <Flame className="w-4 h-4 text-orange-400" />
             </div>
@@ -2211,12 +2220,12 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
               {totalMatches}
             </div>
             <span className="text-xs text-zinc-400 font-medium">
-              Duelos Disputados
+              {t.matches.matches}
             </span>
           </div>
           <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-bold text-zinc-400">
-            <span>0 Empates</span>
-            <span className="text-amber-400">Regras Kings</span>
+            <span>0 {t.page.campaign.draws}</span>
+            <span className="text-amber-400">{t.page.campaign.rules}</span>
           </div>
         </div>
       </div>
@@ -2230,7 +2239,7 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
             className="btn-press px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl shadow-lg shadow-amber-400/25 h-12 w-full sm:w-auto"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Jogar Novamente
+            {t.page.campaign.drawAgain}
           </Button>
         )}
 
@@ -2244,7 +2253,7 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
             )}
           >
             <Shield className="w-4 h-4 mr-2" />
-            Novo Draft 7v7
+            {t.page.campaign.toastNewDraft}
           </Button>
         )}
 
@@ -2255,7 +2264,7 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
             className="btn-press px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl border border-white/10 hover:bg-white/[0.08] h-12 w-full sm:w-auto"
           >
             <Trophy className="w-4 h-4 mr-2" />
-            Ver Tabela da Liga
+            {t.standings.officialTable}
           </Button>
         )}
 
@@ -2265,7 +2274,7 @@ Simule também: https://kings-league-simulator.vercel.app/12a0`;
           className="btn-press px-5 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl border border-white/10 hover:bg-white/[0.08] h-12 w-full sm:w-auto"
         >
           <Share2 className="w-4 h-4 mr-2" />
-          {isChampion ? "Compartilhar Título 🏆" : "Compartilhar"}
+          {isChampion ? `${t.tier.share} 🏆` : t.tier.share}
         </Button>
       </div>
     </div>
