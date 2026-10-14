@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowUp } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/contexts/locale-context"
 
 interface ButtonTopProps {
   showAtHeight?: number
@@ -10,6 +11,7 @@ interface ButtonTopProps {
 }
 
 export function ButtonTop({ showAtHeight = 300, className }: ButtonTopProps) {
+  const { t } = useLocale()
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export function ButtonTop({ showAtHeight = 300, className }: ButtonTopProps) {
   return (
     <button
       onClick={scrollToTop}
-      aria-label="Voltar ao topo"
+      aria-label={t.common.backToTop}
       aria-hidden={!isVisible}
       tabIndex={isVisible ? 0 : -1}
       className={cn(
