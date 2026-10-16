@@ -123,7 +123,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
 
   if (teamMatches.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 rounded-2xl liquid-glass-panel border border-white/8 text-center p-6">
+      <div className="flex flex-col items-center justify-center py-12 rounded-2xl liquid-glass-panel border border-zinc-800 text-center p-6">
         <div className="w-12 h-12 rounded-2xl liquid-stat-box flex items-center justify-center mb-2.5 text-zinc-500">
           <Calendar className="w-6 h-6" />
         </div>
@@ -212,7 +212,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
                   {/* Top Bar: Rodada + Data/Horário */}
                   <div className="relative z-10 flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/5 text-zinc-300 border border-white/10 uppercase tracking-wider">
-                      {match.round.replace(/(Rodada|Jornada|Round)\s*/i, "R")}
+                      {match.round.replace(/(Rodada|Jornada|Round|Matchday)\s*/i, "R")}
                     </span>
 
                     <span className="text-[11px] text-zinc-400 font-medium">
@@ -338,7 +338,7 @@ export function MatchesList({ teamId, teamMatches, teams, loading }: MatchesList
               <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
                 <div className="flex items-center gap-1.5">
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/5 text-zinc-300 border border-white/10 uppercase tracking-wider">
-                    {match.round.replace(/(Rodada|Jornada|Round)\s*/i, "R")}
+                    {match.round.replace(/(Rodada|Jornada|Round|Matchday)\s*/i, "R")}
                   </span>
 
                   <span

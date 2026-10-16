@@ -18,8 +18,9 @@ import { useLeague } from "@/contexts/league-context"
 import { MatchesList } from "@/components/team/matches-list"
 import { TeamRoster } from "@/components/team/team-roster"
 import type { Team, Round, TeamDetails, TeamStanding } from "@/types/kings-league"
-import { getProxyImageUrl, cn } from "@/lib/utils"
+import { getProxyImageUrl, cn, isWildcardPlayer } from "@/lib/utils"
 import { useLocale } from "@/contexts/locale-context"
+import { formatRoundName } from "@/lib/league-format"
 
 interface TeamInfoProps {
   team: Team
@@ -69,7 +70,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         .map((match) => ({
           ...match,
           id: String(match.id),
-          round: round.name ? round.name.replace(/(Jornada|Rodada|Round)\s*/i, `${t.matches.roundPrefix} `) : `${t.matches.roundPrefix} ${round.id}`,
+          round: formatRoundName(round.name, t.matches.roundPrefix, round.id),
           roundId: String(round.id),
           ended: round.ended,
         }))
@@ -190,6 +191,38 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
     { url: meta?.twitch_url, icon: TwitchIcon, label: "Twitch" },
   ].filter((link) => link.url)
 
+  const [currentTab, setCurrentTab] = useState<"matches" | "team">("matches")
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get("tab")
+      if (
+        tabParam === "team" ||
+        tabParam === "squad" ||
+        tabParam === "elenco" ||
+        tabParam === "players" ||
+        tabParam === "jogadores"
+      ) {
+        setCurrentTab("team")
+      }
+    }
+  }, [])
+
+  const handleTabChange = (val: string) => {
+    const nextTab = val as "matches" | "team"
+    setCurrentTab(nextTab)
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      if (nextTab === "team") {
+        url.searchParams.set("tab", "team")
+      } else {
+        url.searchParams.delete("tab")
+      }
+      window.history.replaceState({}, "", url.toString())
+    }
+  }
+
   return (
     <div className="space-y-3.5 sm:space-y-4">
       {/* Header do Time Compacto & Minimalista em Liquid Glass */}
@@ -248,7 +281,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
               {/* Cores, Redes Sociais e Staff Inline */}
               <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-zinc-400">
                 {/* Cores do Clube */}
-                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/8">
+                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-zinc-900 border border-zinc-800">
                   <div
                     className="w-2 h-2 rounded-full border border-white/30"
                     style={{ backgroundColor: team.firstColorHEX }}
@@ -307,7 +340,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
 
           {/* Lado Direito: Forma Recente Integrada ao Header (Economiza Espaço Vertical) */}
           {formGuide.length > 0 && (
-            <div className="flex items-center gap-3 shrink-0 self-stretch md:self-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-2 md:pt-0 w-full md:w-auto">
+            <div className="flex items-center gap-3 shrink-0 self-stretch md:self-auto justify-between md:justify-end border-t md:border-t-0 border-zinc-800 pt-2 md:pt-0 w-full md:w-auto">
               <div className="flex flex-col md:items-end">
                 <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">{t.teamPage.recentForm}</span>
                 <span className="text-[10px] text-zinc-500">{t.teamPage.lastMatches.replace("{count}", String(formGuide.length))}</span>
@@ -346,12 +379,12 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
       {/* 4 Cards de Métricas Sofascore Compactos em Linha Única */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
         {/* Card 1: Aproveitamento */}
-        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-zinc-800 space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.winRate}</span>
             <span className="text-xs font-black text-white tabular-nums">{winRate}%</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
             <div
               className="h-full rounded-full bg-emerald-400 transition-all duration-300"
               style={{ width: `${winRate}%` }}
@@ -364,7 +397,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         </div>
 
         {/* Card 2: Gols & Saldo */}
-        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-zinc-800 space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.goalsAndDiff}</span>
             <span
@@ -395,7 +428,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         </div>
 
         {/* Card 3: Shootouts */}
-        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-zinc-800 space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.shootoutsSO}</span>
             <span className="text-xs font-black text-white tabular-nums">{penaltyWins + penaltyLosses}</span>
@@ -404,7 +437,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
             <span className="text-zinc-400">{t.ui.wins}: <strong className="text-emerald-400">{penaltyWins}</strong></span>
             <span className="text-zinc-400">{t.ui.losses}: <strong className="text-rose-400">{penaltyLosses}</strong></span>
           </div>
-          <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-white/5 pt-1">
+          <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-zinc-800 pt-1">
             <span>{t.teamPage.soConversion}</span>
             <span className="text-zinc-300 font-bold">
               {penaltyWins + penaltyLosses > 0 ? `${Math.round((penaltyWins / (penaltyWins + penaltyLosses)) * 100)}%` : "-"}
@@ -413,7 +446,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
         </div>
 
         {/* Card 4: Tabela & Plantel */}
-        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-white/8 space-y-1.5">
+        <div className="liquid-glass-card rounded-2xl p-2.5 sm:p-3 border border-zinc-800 space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t.teamPage.tableAndSquad}</span>
             <span className="text-[10px] font-bold text-[var(--team-primary)]">
@@ -422,9 +455,9 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
           </div>
           <div className="flex items-center justify-between text-[9px]">
             <span className="text-zinc-400">{t.teamPage.points}: <strong className="text-white">{teamStanding?.points || 0}</strong></span>
-            <span className="text-zinc-400">{t.teamPage.wildCardsCount} <strong className="text-amber-400">{teamDetails?.players?.filter((p: any) => p.category === "wildcard").length || 0}</strong></span>
+            <span className="text-zinc-400">{t.teamPage.wildCardsCount} <strong className="text-amber-400">{teamDetails?.players?.filter(isWildcardPlayer).length || 0}</strong></span>
           </div>
-          <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-white/5 pt-1">
+          <div className="flex justify-between items-center text-[9px] text-zinc-500 border-t border-zinc-800 pt-1">
             <span>{t.teamPage.totalSquad}</span>
             <span className="text-zinc-300 font-bold">{playersCount} {t.teamPage.athletes}</span>
           </div>
@@ -440,7 +473,7 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
       )}
 
       {/* Navegação por Abas: Partidas vs Elenco Padronizada e Perfeitamente Alinhada */}
-      <Tabs defaultValue="matches" className="w-full">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
         {/* Barra de Sub-Navegação Centralizada sem Linha Divisória */}
         <div className="flex justify-center items-center py-2 sm:py-3">
           <TabsList
@@ -488,24 +521,13 @@ export default function TeamInfo({ team, rounds, teams, standings = [] }: TeamIn
           <MatchesList teamId={team.id} teamMatches={teamMatches} teams={teams} loading={loading} />
         </TabsContent>
 
-        {/* Conteúdo: Elenco */}
+        {/* Conteúdo: Elenco Oficial Kings League */}
         <TabsContent value="team" className="focus-visible:outline-none">
-          <div className="liquid-glass-panel rounded-2xl overflow-hidden p-4 sm:p-5 lg:p-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-white/5 mb-5">
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: team.firstColorHEX + "20" }}
-              >
-                <Users className="w-4 h-4" style={{ color: team.firstColorHEX }} />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-white">{t.teamPage.completeRoster}</h2>
-                <p className="text-xs text-zinc-400">{t.teamPage.rosterSubtitle}</p>
-              </div>
-            </div>
-
-            <TeamRoster players={teamDetails?.players || []} loading={loading} />
-          </div>
+          <TeamRoster
+            players={teamDetails?.players || []}
+            loading={loading}
+            teamColor={team.firstColorHEX}
+          />
         </TabsContent>
       </Tabs>
     </div>
