@@ -5,6 +5,7 @@ import {
   createOptionsHandler,
   type KingsLeaguePlayer,
 } from "@/lib/api"
+import { DEFAULT_PLAYER_PHOTO_URL } from "@/lib/utils"
 
 function sanitizeTeamPlayers(teamId: string, players: KingsLeaguePlayer[]): KingsLeaguePlayer[] {
   // Regra de negócio temporária: na API da competição, o presidente do Dibrados FC
@@ -77,6 +78,9 @@ export async function GET(
     if (playersData.length > 0) {
       playersData = playersData.map((player) => ({
         ...player,
+        image: player.image?.url && player.image.url.trim() !== ""
+          ? player.image
+          : { url: DEFAULT_PLAYER_PHOTO_URL },
         role: player.role || "midfielder",
         height: player.height || 175,
         stats: null,
