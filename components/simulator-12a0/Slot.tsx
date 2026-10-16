@@ -1,5 +1,5 @@
 import React from "react"
-import { cn, getPlayerOverall, getProxyImageUrl } from "@/lib/utils"
+import { cn, getPlayerOverall, getPlayerPhotoUrl } from "@/lib/utils"
 import { FormationSlot } from "@/lib/data/7a0-formations"
 import { Player } from "@/types/kings-league"
 
@@ -73,18 +73,12 @@ export function Slot({
         <div className="absolute inset-0 rounded-full overflow-hidden">
           {player ? (
             <>
-              {player.image?.url ? (
-                <img
-                  src={getProxyImageUrl(player.image.url)}
-                  alt={player.shortName}
-                  className="w-full h-full object-cover object-top"
-                  loading="eager"
-                />
-              ) : (
-                <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                  <span className="text-[10px] text-white/60 font-black tracking-wider">{slot.position}</span>
-                </div>
-              )}
+              <img
+                src={getPlayerPhotoUrl(player.image?.url)}
+                alt={player.shortName}
+                className="w-full h-full object-cover object-top"
+                loading="eager"
+              />
               {/* Subtle glass bottom vignette */}
               <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
             </>

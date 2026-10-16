@@ -1,7 +1,7 @@
 import React from "react"
 import { Player } from "@/types/kings-league"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { getPlayerOverall, getProxyImageUrl, cn } from "@/lib/utils"
+import { getPlayerOverall, getPlayerPhotoUrl, cn } from "@/lib/utils"
 import { Crown, Sparkles, Check, Ban } from "lucide-react"
 import { useLocale } from "@/contexts/locale-context"
 
@@ -105,17 +105,11 @@ export function TeamRoster({
                 <div className="flex items-center gap-2.5 min-w-0">
                   {/* Foto do Jogador / Avatar */}
                   <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800 shrink-0 border border-white/10 shadow-sm">
-                    {player.image?.url ? (
-                      <img
-                        src={getProxyImageUrl(player.image.url)}
-                        alt={player.shortName}
-                        className="w-full h-full object-cover object-top"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white/50">
-                        {roleBadge.label}
-                      </div>
-                    )}
+                    <img
+                      src={getPlayerPhotoUrl(player.image?.url)}
+                      alt={player.shortName}
+                      className="w-full h-full object-cover object-top"
+                    />
                   </div>
 
                   <div className="min-w-0">

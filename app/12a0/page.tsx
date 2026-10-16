@@ -11,7 +11,7 @@ import { Challenge } from "@/components/simulator-12a0/DiceRoll"
 import { TeamRoster } from "@/components/simulator-12a0/TeamRoster"
 import { formations, Formation } from "@/lib/data/7a0-formations"
 import { Player } from "@/types/kings-league"
-import { getPlayerOverall, getProxyImageUrl, cn } from "@/lib/utils"
+import { getPlayerOverall, getPlayerPhotoUrl, getProxyImageUrl, cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { CampaignUI } from "@/components/simulator-12a0/CampaignUI"
 import { SimulatedTeam } from "@/lib/match-simulator"
@@ -603,17 +603,11 @@ export default function DozeAZeroPage() {
                           <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800 shrink-0 border border-amber-400/30">
-                                {topPlayer.image?.url ? (
-                                  <img
-                                    src={getProxyImageUrl(topPlayer.image.url)}
-                                    alt={topPlayer.shortName}
-                                    className="w-full h-full object-cover object-top"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-amber-400">
-                                    ★
-                                  </div>
-                                )}
+                                <img
+                                  src={getPlayerPhotoUrl(topPlayer.image?.url)}
+                                  alt={topPlayer.shortName}
+                                  className="w-full h-full object-cover object-top"
+                                />
                               </div>
                               <div className="min-w-0 text-left">
                                 <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
