@@ -28,7 +28,7 @@ export const MatchScoreInput: FC<MatchScoreInputProps> = ({
       placeholder=""
       readOnly={disabled}
       className={cn(
-        "w-9 h-9 sm:w-10 sm:h-10 text-center rounded-xl font-mono text-base sm:text-lg font-black",
+        "w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 text-center rounded-lg sm:rounded-xl font-mono text-sm sm:text-lg font-black",
         "bg-[#08080c] border border-zinc-800 text-white shadow-inner",
         "transition-[border-color,box-shadow,background-color] duration-150",
         disabled

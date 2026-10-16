@@ -95,7 +95,7 @@ export const MatchCard: FC<MatchCardProps> = ({
   return (
     <div
       className={cn(
-        "relative rounded-xl border transition-[border-color,box-shadow,background-color] duration-150 group px-2 sm:px-3 py-1.5 sm:py-2",
+        "relative rounded-xl border transition-[border-color,box-shadow,background-color] duration-150 group px-2 sm:px-3 py-1.5 sm:py-2 overflow-hidden",
         isChallenger
           ? "border-2 border-[#34d399] bg-gradient-to-r from-[rgba(52,211,153,0.10)] via-[#0a0a10]/95 to-[rgba(52,211,153,0.10)] shadow-[0_0_22px_rgba(52,211,153,0.28)] ring-1 ring-[#34d399]"
           : winner
@@ -143,13 +143,13 @@ export const MatchCard: FC<MatchCardProps> = ({
       </div>
 
       {/* Grid Principal: Times e Placar */}
-      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] items-center gap-1.5 sm:gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr),auto,minmax(0,1fr)] items-center gap-1 sm:gap-2.5">
         {/* Time da Casa */}
-        <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 min-w-0">
-          <div className="flex flex-col items-end min-w-0">
+        <div className="flex items-center justify-end gap-1 sm:gap-2 min-w-0 w-full">
+          <div className="flex-1 flex flex-col items-end min-w-0 overflow-hidden">
             <span
               className={cn(
-                "font-bold text-xs sm:text-sm truncate text-right transition-colors leading-tight",
+                "block w-full font-bold text-[11px] xs:text-xs sm:text-sm truncate text-right transition-colors leading-tight",
                 winner === "home"
                   ? "text-[var(--team-primary,#F4AF23)] font-black"
                   : "text-zinc-200 group-hover:text-white"
@@ -160,7 +160,7 @@ export const MatchCard: FC<MatchCardProps> = ({
             </span>
             {homeGroup && (
               <span className={cn(
-                "text-[8px] sm:text-[9px] font-mono font-bold uppercase",
+                "text-[8px] sm:text-[9px] font-mono font-bold uppercase truncate max-w-full block",
                 isChallenger ? "text-[#34d399]" : "text-zinc-500"
               )}>
                 {t.matches.groupAbbr} {homeGroup}
@@ -169,7 +169,7 @@ export const MatchCard: FC<MatchCardProps> = ({
           </div>
           <div
             className={cn(
-              "w-7 h-7 sm:w-8 sm:h-8 rounded-lg p-1 flex-shrink-0 flex items-center justify-center transition-transform duration-150 group-hover:scale-105",
+              "w-7 h-7 sm:w-8 sm:h-8 rounded-lg p-0.5 sm:p-1 flex-shrink-0 flex items-center justify-center transition-transform duration-150 group-hover:scale-105",
               winner === "home"
                 ? "ring-1.5 ring-[var(--team-primary,#F4AF23)]/80 bg-[rgba(var(--team-primary-rgb,244,175,35),0.14)] shadow-[0_0_10px_rgba(244,175,35,0.25)]"
                 : isChallenger
@@ -212,10 +212,10 @@ export const MatchCard: FC<MatchCardProps> = ({
         </div>
 
         {/* Time Visitante */}
-        <div className="flex items-center justify-start gap-1.5 sm:gap-2.5 min-w-0">
+        <div className="flex items-center justify-start gap-1 sm:gap-2 min-w-0 w-full">
           <div
             className={cn(
-              "w-7 h-7 sm:w-8 sm:h-8 rounded-lg p-1 flex-shrink-0 flex items-center justify-center transition-transform duration-150 group-hover:scale-105",
+              "w-7 h-7 sm:w-8 sm:h-8 rounded-lg p-0.5 sm:p-1 flex-shrink-0 flex items-center justify-center transition-transform duration-150 group-hover:scale-105",
               winner === "away"
                 ? "ring-1.5 ring-[var(--team-primary,#F4AF23)]/80 bg-[rgba(var(--team-primary-rgb,244,175,35),0.14)] shadow-[0_0_10px_rgba(244,175,35,0.25)]"
                 : isChallenger
@@ -231,10 +231,10 @@ export const MatchCard: FC<MatchCardProps> = ({
               crossOrigin="anonymous"
             />
           </div>
-          <div className="flex flex-col items-start min-w-0">
+          <div className="flex-1 flex flex-col items-start min-w-0 overflow-hidden">
             <span
               className={cn(
-                "font-bold text-xs sm:text-sm truncate text-left transition-colors leading-tight",
+                "block w-full font-bold text-[11px] xs:text-xs sm:text-sm truncate text-left transition-colors leading-tight",
                 winner === "away"
                   ? "text-[var(--team-primary,#F4AF23)] font-black"
                   : "text-zinc-200 group-hover:text-white"
@@ -245,7 +245,7 @@ export const MatchCard: FC<MatchCardProps> = ({
             </span>
             {awayGroup && (
               <span className={cn(
-                "text-[8px] sm:text-[9px] font-mono font-bold uppercase",
+                "text-[8px] sm:text-[9px] font-mono font-bold uppercase truncate max-w-full block",
                 isChallenger ? "text-[#34d399]" : "text-zinc-500"
               )}>
                 {t.matches.groupAbbr} {awayGroup}

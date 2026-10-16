@@ -46,17 +46,17 @@ export const DateGroup: FC<DateGroupProps> = ({
   return (
     <div className="space-y-1.5">
       {/* Date Header - Minimalista e elegante */}
-      <div className="flex items-center justify-between px-1 text-[11px] font-semibold text-zinc-400">
-        <span className="flex items-center gap-1.5">
-          <DateIcon className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)]" aria-hidden="true" />
-          <span>
+      <div className="flex items-center justify-between gap-2 px-1 text-[11px] font-semibold text-zinc-400">
+        <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+          <DateIcon className="w-3.5 h-3.5 text-[var(--team-primary,#F4AF23)] flex-shrink-0" aria-hidden="true" />
+          <span className="truncate">
             {DateFormatter.getWeekdayName(date, locale)
               ? `${DateFormatter.getWeekdayName(date, locale)}, ${DateFormatter.formatDateDisplay(date, locale)}`
               : DateFormatter.formatDateDisplay(date, locale)
             }
           </span>
         </span>
-        <span className="text-[10px] text-zinc-500 font-mono">
+        <span className="text-[10px] text-zinc-500 font-mono flex-shrink-0">
           {matches.length} {matches.length === 1 ? t.matches.match : t.matches.matches}
         </span>
       </div>
