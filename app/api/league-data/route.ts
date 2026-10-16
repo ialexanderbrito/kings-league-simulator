@@ -19,7 +19,6 @@ import {
 } from "@/lib/api"
 import { AVAILABLE_LEAGUES } from "@/app/api/competitions/route"
 import { isPlayoffRoundName } from "@/lib/league-format"
-import { getKingsCupBrazil2026MockRounds, getKingsCupBrazil2026MockStandings } from "@/lib/mock-kings-cup-brazil-2026-schedule"
 // Tipos auxiliares para dados internos
 interface ApiStanding {
   team: {
@@ -93,7 +92,7 @@ function transformRound(round: KingsLeagueRound | KingsLeagueTurn): Round {
   const source = round as KingsLeagueRound & KingsLeagueTurn
   return {
     id: source.id,
-    name: (source.turnName || source.name || `Rodada ${source.shortName || source.id}`).replace("Jornada", "Rodada"),
+    name: (source.turnName || source.name || `Rodada ${source.shortName || source.id}`).replace(/(Jornada|Matchday)/gi, "Rodada"),
     ended: !!source.ended,
     startDate: source.startDate || source.start || "",
     finishDate: source.finishDate || source.finish || "",
@@ -104,7 +103,7 @@ function transformRound(round: KingsLeagueRound | KingsLeagueTurn): Round {
 function isRegularRoundName(value: unknown): boolean {
   const name = String(value || "").trim().toLowerCase()
   if (!name) return true
-  if (/^(r|rodada|jornada)\s*[a-z]?$/i.test(name)) return false
+  if (/^(r|rodada|jornada|matchday|round)\s*[a-z]?$/i.test(name)) return false
   return !isPlayoffRoundName(name)
 }
 
@@ -335,25 +334,7 @@ export async function GET(request: Request) {
       kingsLeagueApi.getMatchCenterData(effectiveSeasonId, effectiveCompetitionId),
       kingsLeagueApi.getSeasonTeams(effectiveSeasonId, effectiveCompetitionId).catch(() => []),
     ])
-    let seasonTeams = initialSeasonTeams
-
-    // A Kings Cup ainda pode não listar seus times mesmo com as equipes da liga
-    // já definidas. Reaproveita os escudos da temporada anterior para o mock.
-    if (String(effectiveCompetitionId) === "17" && String(effectiveSeasonId) === "69") {
-      const currentTeams = Array.isArray(seasonTeams)
-        ? seasonTeams
-        : (seasonTeams as any)?.teams ?? []
-
-      if (currentTeams.length < 10) {
-        const previousTeamsResponse = await kingsLeagueApi.getSeasonTeams("61", "17").catch(() => [])
-        const previousSeasonTeams = Array.isArray(previousTeamsResponse)
-          ? previousTeamsResponse
-          : (previousTeamsResponse as any)?.teams ?? []
-        if (previousSeasonTeams.length >= 10) {
-          seasonTeams = previousSeasonTeams
-        }
-      }
-    }
+    const seasonTeams = initialSeasonTeams
 
     // Transforma rodadas (aceita matchesData vazio/undefined)
     let rounds: Round[] = Array.isArray(matchesData) ? matchesData.map(transformRound) : []
@@ -391,7 +372,7 @@ export async function GET(request: Request) {
       if (!isRegularRoundName(round.name)) continue
       const normalizedName = round.name
         .toLowerCase()
-        .replace(/jornada/g, "rodada")
+        .replace(/(jornada|matchday|round)/gi, "rodada")
         .replace(/\s+/g, " ")
         .trim()
       const roundNumber = normalizedName.match(/\d+/)?.[0]
@@ -497,22 +478,6 @@ export async function GET(request: Request) {
           }
         })
       })
-    }
-
-    // Agenda provisória da Kings Cup Brazil (temporada 69). Assim que a API
-    // disponibilizar qualquer partida oficial, ela passa a ser a fonte usada.
-    if (
-      String(effectiveCompetitionId) === "17" &&
-      String(effectiveSeasonId) === "69" &&
-      rounds.every((round) => round.matches.length === 0)
-    ) {
-      const mockRounds = getKingsCupBrazil2026MockRounds(effectiveSeasonId || "", Object.values(teamsMap))
-      if (mockRounds) rounds = mockRounds
-
-      if (aggregatedStandings.length === 0) {
-        const mockStandings = getKingsCupBrazil2026MockStandings(effectiveSeasonId || "", Object.values(teamsMap))
-        if (mockStandings) aggregatedStandings.push(...mockStandings)
-      }
     }
 
     // Consolida standings para evitar duplicatas
