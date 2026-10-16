@@ -2,24 +2,27 @@
 
 import { useState } from "react"
 import type { Player } from "@/types/kings-league"
-import { calculateAge, cn, getProxyImageUrl, getPlayerOverall } from "@/lib/utils"
 import {
-  Shield,
-  Zap,
-  Target,
-  ChevronDown,
-  ChevronUp,
+  calculateAge,
+  cn,
+  getPlayerOverall,
+  getPlayerPhotoUrl,
+  isWildcardPlayer,
+  isInjuredPlayer,
+  DEFAULT_PLAYER_PHOTO_FALLBACK,
+} from "@/lib/utils"
+import {
   Sparkles,
   Star,
-  User,
   AlertTriangle,
-  Youtube,
-  ExternalLink,
+  ChevronRight,
 } from "lucide-react"
 import { useLocale } from "@/contexts/locale-context"
+import { PlayerModal } from "@/components/team/player-modal"
 
 interface PlayerCardProps {
   player: Player
+  teamColor?: string
 }
 
 interface AttributeItem {
@@ -33,15 +36,19 @@ function parseAttr(val: string | undefined | null, fallback = 70): number {
   return Number.isNaN(parsed) ? fallback : parsed
 }
 
-export function PlayerCard({ player }: PlayerCardProps) {
+export function PlayerCard({ player, teamColor }: PlayerCardProps) {
   const { t } = useLocale()
-  const [showDetails, setShowDetails] = useState(false)
-  const [imageError, setImageError] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [photoSrc, setPhotoSrc] = useState<string>(() =>
+    getPlayerPhotoUrl(player.image?.url)
+  )
 
-  const isWildcard =
-    player.category === "wildcard" || player?.metaInformation?.status === "Wildcard"
-  const isInjured =
-    String(player?.metaInformation?.injury || "").toLowerCase() === "true"
+  const isWildcard = isWildcardPlayer(player)
+  const isInjured = isInjuredPlayer(player)
+  const isSilhouette =
+    !player.image?.url ||
+    photoSrc.includes("default-player") ||
+    photoSrc.includes("425256146")
 
   const roleMap: Record<Player["role"], string> = {
     goalkeeper: t.teamPage.roleGK,
@@ -57,20 +64,18 @@ export function PlayerCard({ player }: PlayerCardProps) {
     forward: t.teamPage.roleFwdAbbr,
   }
 
-  const roleStyles: Record<Player["role"], { bg: string; text: string; border: string }> = {
-    goalkeeper: { bg: "bg-amber-500/20", text: "text-amber-300", border: "border-amber-500/40" },
-    defender: { bg: "bg-blue-500/20", text: "text-blue-300", border: "border-blue-500/40" },
-    midfielder: { bg: "bg-emerald-500/20", text: "text-emerald-300", border: "border-emerald-500/40" },
-    forward: { bg: "bg-rose-500/20", text: "text-rose-300", border: "border-rose-500/40" },
+  const roleStyles: Record<Player["role"], { dot: string; text: string }> = {
+    goalkeeper: { dot: "bg-amber-400", text: "text-amber-300" },
+    defender: { dot: "bg-blue-400", text: "text-blue-300" },
+    midfielder: { dot: "bg-emerald-400", text: "text-emerald-300" },
+    forward: { dot: "bg-rose-400", text: "text-rose-300" },
   }
 
   const roleStyle = roleStyles[player.role] || roleStyles.forward
   const age = player.birthDate ? calculateAge(player.birthDate) : null
-
-  // Cálculo de Overall Rating unificado e realista
   const ovr = getPlayerOverall(player)
 
-  // Atributos centrais estilo card FIFA (6 principais)
+  // 6 Atributos principais EA FC
   const getFifaStats = (): AttributeItem[] => {
     const meta = player.metaInformation
     if (!meta) return []
@@ -99,76 +104,70 @@ export function PlayerCard({ player }: PlayerCardProps) {
   const fifaStats = getFifaStats()
   const hasDetailedStats = fifaStats.length > 0
 
-  // Estilo do Card baseado no Tier / Categoria EA FC
+  // Tier e acabamento do Card em harmonia escura com o projeto Kings League
   const getCardTier = () => {
     if (isWildcard) {
       return {
-        border: "border-amber-400/35 hover:border-amber-400/60",
-        glow: "shadow-[0_8px_30px_-8px_rgba(245,158,11,0.22)]",
-        accent: "text-amber-300",
-        ratingBg: "bg-amber-500/15 border-amber-400/40 text-amber-300",
-        gradient: "from-amber-500/[0.12] via-amber-600/[0.04] to-transparent",
+        cardBorder: "border-amber-500/30 hover:border-amber-500/60 shadow-[0_10px_32px_-10px_rgba(245,158,11,0.22)]",
+        ratingText: "text-amber-300",
+        ambientGlow: "from-amber-500/12 via-amber-600/4 to-transparent",
+        spotlight: "rgba(245, 158, 11, 0.16)",
         tierName: t.teamPage.tierWildcard,
-        tierBadgeBg: "bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black",
+        tierBadgeBg: "bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold",
       }
     }
 
     if (ovr >= 78) {
       return {
-        border: "border-sky-400/35 hover:border-sky-400/60",
-        glow: "shadow-[0_8px_30px_-8px_rgba(56,189,248,0.2)]",
-        accent: "text-sky-300",
-        ratingBg: "bg-sky-500/15 border-sky-400/40 text-sky-300",
-        gradient: "from-sky-500/[0.12] via-blue-600/[0.04] to-transparent",
+        cardBorder: "border-sky-500/25 hover:border-sky-500/50 shadow-[0_10px_32px_-10px_rgba(56,189,248,0.2)]",
+        ratingText: "text-sky-300",
+        ambientGlow: "from-sky-500/12 via-blue-600/4 to-transparent",
+        spotlight: "rgba(56, 189, 248, 0.14)",
         tierName: t.teamPage.tierElite,
-        tierBadgeBg: "bg-gradient-to-r from-sky-400 to-blue-500 text-white font-bold",
+        tierBadgeBg: "bg-sky-500/15 text-sky-300 border border-sky-500/30 font-bold",
       }
     }
 
     if (ovr >= 74) {
       return {
-        border: "border-purple-400/35 hover:border-purple-400/60",
-        glow: "shadow-[0_8px_30px_-8px_rgba(192,132,252,0.2)]",
-        accent: "text-purple-300",
-        ratingBg: "bg-purple-500/15 border-purple-400/40 text-purple-300",
-        gradient: "from-purple-500/[0.12] via-violet-600/[0.04] to-transparent",
+        cardBorder: "border-purple-500/25 hover:border-purple-500/50 shadow-[0_10px_32px_-10px_rgba(192,132,252,0.18)]",
+        ratingText: "text-purple-300",
+        ambientGlow: "from-purple-500/12 via-violet-600/4 to-transparent",
+        spotlight: "rgba(192, 132, 252, 0.12)",
         tierName: t.teamPage.tierRare,
-        tierBadgeBg: "bg-gradient-to-r from-purple-400 to-violet-600 text-white font-bold",
+        tierBadgeBg: "bg-purple-500/15 text-purple-300 border border-purple-500/30 font-bold",
       }
     }
 
     if (ovr >= 70) {
       return {
-        border: "border-emerald-400/30 hover:border-emerald-400/55",
-        glow: "shadow-[0_8px_30px_-8px_rgba(52,211,153,0.18)]",
-        accent: "text-emerald-300",
-        ratingBg: "bg-emerald-500/15 border-emerald-400/35 text-emerald-300",
-        gradient: "from-emerald-500/[0.10] via-emerald-600/[0.03] to-transparent",
+        cardBorder: "border-zinc-800/80 hover:border-zinc-700 shadow-md",
+        ratingText: "text-white",
+        ambientGlow: "from-emerald-500/8 via-transparent to-transparent",
+        spotlight: "rgba(52, 211, 153, 0.10)",
         tierName: t.teamPage.tierCommon,
-        tierBadgeBg: "bg-gradient-to-r from-emerald-400 to-teal-600 text-white font-bold",
+        tierBadgeBg: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 font-semibold",
       }
     }
 
     return {
-      border: "border-zinc-700/50 hover:border-zinc-500/60",
-      glow: "shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)]",
-      accent: "text-zinc-300",
-      ratingBg: "bg-white/5 border-white/10 text-zinc-300",
-      gradient: "from-zinc-700/[0.10] via-zinc-800/[0.03] to-transparent",
-      tierName: t.teamPage.tierDraft,
-      tierBadgeBg: "bg-zinc-700 text-zinc-200 font-bold",
+      cardBorder: "border-zinc-800/80 hover:border-zinc-700 shadow-md",
+      ratingText: "text-zinc-300",
+      ambientGlow: "from-zinc-700/8 via-transparent to-transparent",
+      spotlight: "rgba(255, 255, 255, 0.05)",
+      tierName: t.teamPage.tierBasic,
+      tierBadgeBg: "bg-zinc-900 text-zinc-400 border border-zinc-800 font-semibold",
     }
   }
 
   const cardTier = getCardTier()
-
-  const athleteFallback = t.teamPage.athlete ? t.teamPage.athlete.charAt(0).toUpperCase() + t.teamPage.athlete.slice(1) : "Atleta"
+  const athleteFallback = t.teamPage.athlete
+    ? t.teamPage.athlete.charAt(0).toUpperCase() + t.teamPage.athlete.slice(1)
+    : "Atleta"
   const displayName =
     player.metaInformation?.fantasyName || player.shortName || athleteFallback
   const jerseyNum =
     player.jersey || player.metaInformation?.jerseyNumber || undefined
-
-  const hasPhoto = Boolean(player.image?.url) && !imageError
 
   const games = player.stats?.matchesPlayed || 0
   const goals = player.stats?.goalsScored || 0
@@ -176,275 +175,287 @@ export function PlayerCard({ player }: PlayerCardProps) {
   const mvps = player.stats?.mvps || 0
   const hasGameStats = games > 0 || goals > 0 || assists > 0 || mvps > 0
 
-  const matchLink = player.metaInformation?.matchLink
-  const videoLink = player.metaInformation?.videoLink
-
   return (
-    <article
-      className="group relative w-full h-full flex flex-col select-none"
-      aria-label={`${t.teamPage.playerCardAria} ${displayName}`}
-    >
-      <div
-        className={cn(
-          "liquid-fifa-card rounded-2xl relative flex flex-col h-full overflow-hidden",
-          cardTier.border,
-          cardTier.glow
-        )}
+    <>
+      <article
+        onClick={() => setIsModalOpen(true)}
+        className="group relative w-full h-full flex flex-col select-none cursor-pointer"
+        aria-label={`${t.teamPage.playerCardAria.replace("{name}", displayName)}`}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            setIsModalOpen(true)
+          }
+        }}
       >
-        {/* Ambient Gradient Glow */}
         <div
           className={cn(
-            "absolute inset-0 bg-gradient-to-br opacity-50 pointer-events-none transition-opacity duration-200",
-            cardTier.gradient
+            "liquid-fifa-card rounded-2xl relative flex flex-col h-full overflow-hidden transition-[transform,border-color,box-shadow,background-color] duration-180 ease-out",
+            cardTier.cardBorder
           )}
-        />
+        >
+          {/* Ambient Spotlight Background Sutil */}
+          <div
+            className={cn(
+              "absolute inset-0 bg-gradient-to-b opacity-60 pointer-events-none transition-opacity duration-300 group-hover:opacity-100",
+              cardTier.ambientGlow
+            )}
+            aria-hidden="true"
+          />
 
-        {/* Shimmer Elegante para Wild Card */}
-        {isWildcard && (
-          <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-            <div className="absolute -inset-full w-1/2 h-full bg-gradient-to-r from-transparent via-amber-300/10 to-transparent transform -skew-x-12 group-hover:translate-x-full transition-transform duration-700" />
-          </div>
-        )}
-
-        {/* HEADER EA FC: Overall (OVR) + Posição + Número + Tier Badge */}
-        <div className="relative z-10 px-3.5 pt-3.5 pb-1 flex items-start justify-between">
-          {/* Cluster Esquerdo: OVR & Role */}
-          <div className="flex flex-col items-center">
-            <span className="text-3xl sm:text-4xl font-black text-white tracking-tighter tabular-nums leading-none">
-              {ovr}
-            </span>
-            <span
-              className={cn(
-                "mt-1 px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border",
-                roleStyle.bg,
-                roleStyle.text,
-                roleStyle.border
-              )}
+          {/* Holographic Shimmer Diagonale para Wild Card */}
+          {isWildcard && (
+            <div
+              className="absolute inset-0 overflow-hidden pointer-events-none z-10"
+              aria-hidden="true"
             >
-              {roleAbbr[player.role]}
-            </span>
-          </div>
+              <div className="absolute -inset-full w-1/2 h-full bg-gradient-to-r from-transparent via-amber-300/10 to-transparent transform -skew-x-12 group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            </div>
+          )}
 
-          {/* Cluster Direito: Badges & Jersey */}
-          <div className="flex flex-col items-end gap-1.5">
-            <div className="flex items-center gap-1.5">
-              {jerseyNum && (
-                <span className="text-xs font-mono font-black text-zinc-400 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
-                  #{jerseyNum}
-                </span>
-              )}
+          {/* HEADER EA FC: Overall (OVR) + Posição + Número + Tier Badge */}
+          <div className="relative z-20 px-3.5 pt-3.5 pb-1 flex items-start justify-between">
+            {/* Cluster Esquerdo: OVR & Role */}
+            <div className="flex flex-col items-center">
               <span
                 className={cn(
-                  "text-[9px] px-2 py-0.5 rounded uppercase tracking-wider",
-                  cardTier.tierBadgeBg
+                  "text-3xl sm:text-4xl font-black tracking-tighter tabular-nums leading-none drop-shadow-md",
+                  cardTier.ratingText
                 )}
               >
-                {isWildcard && <Sparkles className="w-2.5 h-2.5 inline mr-1" />}
-                {cardTier.tierName}
+                {ovr}
+              </span>
+              <span className="mt-1 px-1.5 py-0.5 rounded bg-zinc-900/90 border border-zinc-800 text-[10px] font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1">
+                <span className={cn("w-1.5 h-1.5 rounded-full", roleStyle.dot)} />
+                {roleAbbr[player.role]}
               </span>
             </div>
 
-            {isInjured && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 inline-flex items-center gap-1">
-                <AlertTriangle className="w-2.5 h-2.5 text-rose-400" />
-                {t.teamPage.injuredBadge}
-              </span>
-            )}
+            {/* Cluster Direito: Badges & Jersey */}
+            <div className="flex flex-col items-end gap-1.5">
+              <div className="flex items-center gap-1.5">
+                {jerseyNum && (
+                  <span className="text-[11px] font-mono font-bold text-zinc-400 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded">
+                    #{jerseyNum}
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    "text-[9px] px-2 py-0.5 rounded uppercase tracking-wider",
+                    cardTier.tierBadgeBg
+                  )}
+                >
+                  {isWildcard && <Sparkles className="w-2.5 h-2.5 inline mr-1" />}
+                  {cardTier.tierName}
+                </span>
+              </div>
+
+              {isInjured && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30 inline-flex items-center gap-1">
+                  <AlertTriangle className="w-2.5 h-2.5 text-rose-400" />
+                  {t.teamPage.injuredBadge}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* FOTO DO JOGADOR ESTILO CUTOUT FIFA */}
-        <div className="relative h-40 sm:h-44 flex items-end justify-center overflow-hidden my-0.5">
-          {/* Gradiente de Fusão na Base para Transição Suave com o Nome */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0e14] via-[#0d0e14]/50 to-transparent z-10 pointer-events-none" />
-
-          {hasPhoto ? (
-            <img
-              src={getProxyImageUrl(player.image!.url)}
-              alt={displayName}
-              className="relative z-0 h-full w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-              loading="lazy"
-              crossOrigin="anonymous"
-              onError={() => setImageError(true)}
+          {/* FOTO DO JOGADOR ESTILO OFICIAL KINGS LEAGUE:
+              Enquadramento natural de retrato (sem zoom artificial e sem cortar a cabeça).
+              Exibe a cabeça com folga superior (headroom), ombros e uniforme oficial do time. */}
+          <div className="relative h-48 sm:h-52 flex items-center justify-center overflow-hidden my-0">
+            {/* Spotlight Volumétrico atrás do atleta */}
+            <div
+              className="absolute w-40 h-40 rounded-full blur-2xl pointer-events-none -translate-y-4"
+              style={{ background: cardTier.spotlight }}
+              aria-hidden="true"
             />
-          ) : (
-            <div className="relative z-0 w-full h-full flex flex-col items-center justify-center text-zinc-600">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 mb-1">
-                <User className="w-8 h-8" />
+
+            {/* Container da Imagem: Enquadramento natural centralizado, 100% contido sem cortar topo */}
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+              <img
+                src={photoSrc}
+                alt={displayName}
+                className="h-full w-auto max-w-full object-contain object-top drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] transition-transform duration-200 group-hover:scale-[1.02]"
+                loading="lazy"
+                onError={() => {
+                  if (photoSrc !== DEFAULT_PLAYER_PHOTO_FALLBACK) {
+                    setPhotoSrc(DEFAULT_PLAYER_PHOTO_FALLBACK)
+                  }
+                }}
+              />
+            </div>
+
+            {/* Vinheta suave na base para transição sutil com a seção do nome do atleta */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#0c0c12] via-[#0c0c12]/60 to-transparent z-20 pointer-events-none"
+              aria-hidden="true"
+            />
+          </div>
+
+          {/* NOME DO JOGADOR & METADADOS INLINE */}
+          <div className="relative z-20 px-3.5 pb-2 text-center -mt-2">
+            <h3 className="font-black text-white text-base sm:text-lg tracking-tight uppercase truncate leading-tight group-hover:text-amber-300 transition-colors duration-150">
+              {displayName}
+            </h3>
+            <p className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider mt-0.5">
+              {age ? `${age} ${t.teamPage.yearsOld}` : ""}
+              {age && player.height ? " • " : ""}
+              {player.height ? `${player.height}cm` : ""}
+              {(age || player.height) ? " • " : ""}
+              {roleMap[player.role]}
+            </p>
+          </div>
+
+          {/* GRID DOS 6 ATRIBUTOS OFICIAIS EA FC (FIN, PAS, TEC, DEF, FIS, DUE) COM BORDAS DISCRETAS ZINC */}
+          {hasDetailedStats ? (
+            <div className="relative z-20 px-3 py-2 border-t border-zinc-800 bg-black/40">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-center">
+                {/* Coluna 1: 3 Atributos */}
+                <div className="space-y-1">
+                  {fifaStats.slice(0, 3).map((st) => {
+                    const isHigh = st.value >= 80
+                    const isMid = st.value >= 74
+                    return (
+                      <div
+                        key={st.key}
+                        className="flex items-center justify-between px-2 py-0.5 rounded bg-zinc-900/60 border border-zinc-800"
+                      >
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                          {st.key}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-xs font-black tabular-nums",
+                            isHigh
+                              ? "text-emerald-400"
+                              : isMid
+                              ? "text-sky-300"
+                              : "text-zinc-200"
+                          )}
+                        >
+                          {st.value}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Coluna 2: 3 Atributos */}
+                <div className="space-y-1">
+                  {fifaStats.slice(3, 6).map((st) => {
+                    const isHigh = st.value >= 80
+                    const isMid = st.value >= 74
+                    return (
+                      <div
+                        key={st.key}
+                        className="flex items-center justify-between px-2 py-0.5 rounded bg-zinc-900/60 border border-zinc-800"
+                      >
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                          {st.key}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-xs font-black tabular-nums",
+                            isHigh
+                              ? "text-emerald-400"
+                              : isMid
+                              ? "text-sky-300"
+                              : "text-zinc-200"
+                          )}
+                        >
+                          {st.value}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-              <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                {roleMap[player.role]}
+            </div>
+          ) : (
+            <div className="relative z-20 px-3 py-2 border-t border-zinc-800 bg-amber-500/[0.03] text-center">
+              <span className="text-[10px] font-bold text-amber-300 inline-flex items-center gap-1.5 uppercase tracking-wider">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                {t.teamPage.guestStarAthlete}
               </span>
             </div>
           )}
-        </div>
 
-        {/* NOME DO JOGADOR & SUBTITLE METADADOS */}
-        <div className="relative z-10 px-3 pb-2 text-center">
-          <h3 className="font-black text-white text-base sm:text-lg tracking-tight uppercase truncate leading-tight">
-            {displayName}
-          </h3>
-          <p className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider mt-0.5">
-            {age ? `${age} ${t.teamPage.yearsOld}` : ""}
-            {age && player.height ? " • " : ""}
-            {player.height ? `${player.height}cm` : ""}
-            {(age || player.height) ? " • " : ""}
-            {roleMap[player.role]}
-          </p>
-        </div>
-
-        {/* GRID DOS 6 ATRIBUTOS OFICIAIS EA FC (FIN, PAS, TEC, DEF, FIS, DUE) */}
-        {hasDetailedStats ? (
-          <div className="relative z-10 px-3 py-2 border-t border-white/5 bg-white/[0.02]">
-            <div className="grid grid-cols-3 gap-1.5 text-center">
-              {fifaStats.map((st) => {
-                const isHigh = st.value >= 80
-                const isMid = st.value >= 74
-                return (
-                  <div
-                    key={st.key}
-                    className="flex items-center justify-center gap-1 py-1 rounded bg-white/[0.02] border border-white/5"
-                  >
-                    <span
-                      className={cn(
-                        "text-xs font-black tabular-nums",
-                        isHigh ? "text-emerald-400" : isMid ? "text-sky-400" : "text-zinc-300"
-                      )}
-                    >
-                      {st.value}
-                    </span>
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">
-                      {st.key}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="relative z-10 px-3 py-2.5 border-t border-white/5 bg-amber-500/[0.03] text-center">
-            <span className="text-[10px] font-bold text-amber-300 inline-flex items-center gap-1.5 uppercase tracking-wider">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              {t.teamPage.guestStarAthlete}
-            </span>
-          </div>
-        )}
-
-        {/* MINI STATS DO CAMPEONATO (SOFASCORE STYLE) */}
-        {hasGameStats && (
-          <div className="relative z-10 px-3 py-1.5 border-t border-white/5 bg-white/[0.01]">
-            <div className="grid grid-cols-4 gap-1 text-center">
-              <div>
-                <p className="text-xs font-black text-white tabular-nums">{games}</p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statMatches}</p>
-              </div>
-              <div>
-                <p className={cn("text-xs font-black tabular-nums", goals > 0 ? "text-emerald-400" : "text-zinc-400")}>
-                  {goals}
-                </p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statGoals}</p>
-              </div>
-              <div>
-                <p className={cn("text-xs font-black tabular-nums", assists > 0 ? "text-sky-400" : "text-zinc-400")}>
-                  {assists}
-                </p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statAssists}</p>
-              </div>
-              <div>
-                <p className={cn("text-xs font-black tabular-nums", mvps > 0 ? "text-amber-400" : "text-zinc-400")}>
-                  {mvps}
-                </p>
-                <p className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold">{t.teamPage.statMvp}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ACCORDION EXPANSÍVEL (BARRAS DETALHADAS & VÍDEOS) */}
-        <div className="mt-auto border-t border-white/5">
-          <button
-            type="button"
-            onClick={() => setShowDetails(!showDetails)}
-            className="w-full px-3 py-2 flex items-center justify-between text-xs text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-colors btn-press focus-visible:outline-none"
-            aria-expanded={showDetails}
-          >
-            <span className="font-semibold text-[10px] uppercase tracking-wider">
-              {showDetails ? t.teamPage.collapseAttributes : t.teamPage.viewDetailsMedia}
-            </span>
-            {showDetails ? (
-              <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
-            )}
-          </button>
-
-          {showDetails && (
-            <div className="px-3 pb-3 pt-2 border-t border-white/5 bg-black/30 space-y-2.5">
-              {/* Barras de Atributos */}
-              {hasDetailedStats && (
-                <div className="space-y-1.5">
-                  {fifaStats.map((st) => (
-                    <div key={st.key} className="space-y-0.5">
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-zinc-400 font-semibold uppercase">{st.label} ({st.key})</span>
-                        <span className="font-black text-white tabular-nums">{st.value}</span>
-                      </div>
-                      <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-[width] duration-300",
-                            st.value >= 80 ? "bg-emerald-400" : st.value >= 74 ? "bg-sky-400" : "bg-zinc-400"
-                          )}
-                          style={{ width: `${Math.min(100, Math.max(10, st.value))}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Links de Mídia Oficiais (Highlights e Jogos) */}
-              {(matchLink || videoLink) && (
-                <div className="pt-2 border-t border-white/5 space-y-1.5">
-                  <p className="text-[9px] uppercase font-bold text-zinc-400 tracking-wider">
-                    {t.teamPage.videosAndHighlights}
+          {/* MINI STATS DO CAMPEONATO (SOFASCORE STYLE) */}
+          {hasGameStats && (
+            <div className="relative z-20 px-3 py-1.5 border-t border-zinc-800 bg-black/20">
+              <div className="grid grid-cols-4 gap-1 text-center">
+                <div>
+                  <p className="text-xs font-black text-white tabular-nums leading-none">
+                    {games}
                   </p>
-                  <div className="flex flex-col gap-1">
-                    {matchLink && (
-                      <a
-                        href={matchLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-zinc-300 hover:text-white transition-colors"
-                      >
-                        <span className="inline-flex items-center gap-1.5">
-                          <Youtube className="w-3.5 h-3.5 text-rose-500" />
-                          <span>{t.teamPage.fullMatch}</span>
-                        </span>
-                        <ExternalLink className="w-3 h-3 text-zinc-400" />
-                      </a>
-                    )}
-                    {videoLink && (
-                      <a
-                        href={videoLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-zinc-300 hover:text-white transition-colors"
-                      >
-                        <span className="inline-flex items-center gap-1.5">
-                          <Youtube className="w-3.5 h-3.5 text-rose-500" />
-                          <span>{t.teamPage.highlights}</span>
-                        </span>
-                        <ExternalLink className="w-3 h-3 text-zinc-400" />
-                      </a>
-                    )}
-                  </div>
+                  <p className="text-[8px] uppercase tracking-wider text-zinc-500 font-bold mt-0.5">
+                    {t.teamPage.statMatches}
+                  </p>
                 </div>
-              )}
+                <div>
+                  <p
+                    className={cn(
+                      "text-xs font-black tabular-nums leading-none",
+                      goals > 0 ? "text-emerald-400" : "text-zinc-400"
+                    )}
+                  >
+                    {goals}
+                  </p>
+                  <p className="text-[8px] uppercase tracking-wider text-zinc-500 font-bold mt-0.5">
+                    {t.teamPage.statGoals}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className={cn(
+                      "text-xs font-black tabular-nums leading-none",
+                      assists > 0 ? "text-sky-300" : "text-zinc-400"
+                    )}
+                  >
+                    {assists}
+                  </p>
+                  <p className="text-[8px] uppercase tracking-wider text-zinc-500 font-bold mt-0.5">
+                    {t.teamPage.statAssists}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className={cn(
+                      "text-xs font-black tabular-nums leading-none",
+                      mvps > 0 ? "text-amber-400" : "text-zinc-400"
+                    )}
+                  >
+                    {mvps}
+                  </p>
+                  <p className="text-[8px] uppercase tracking-wider text-zinc-500 font-bold mt-0.5">
+                    {t.teamPage.statMvp}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
+
+          {/* CARD ACTION FOOTER COM BOTÃO ELEGANTE E BORDA SUAVE */}
+          <div className="mt-auto border-t border-zinc-800 px-3.5 py-2.5 bg-zinc-950/50 flex items-center justify-between text-xs text-zinc-400 group-hover:text-white transition-colors duration-150">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">
+              {t.teamPage.playerProfile}
+            </span>
+            <div className="w-5 h-5 rounded-md bg-zinc-900 border border-zinc-800 group-hover:border-zinc-700 flex items-center justify-center transition-colors">
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-150 text-zinc-400 group-hover:text-white" />
+            </div>
+          </div>
         </div>
-      </div>
-    </article>
+      </article>
+
+      {/* Modal Interativo de Detalhes do Jogador */}
+      <PlayerModal
+        player={player}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        teamColor={teamColor}
+      />
+    </>
   )
 }
