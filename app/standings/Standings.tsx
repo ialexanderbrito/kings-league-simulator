@@ -13,7 +13,7 @@ import { ButtonTop } from "@/components/ui/button-top"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { useLeague } from "@/contexts/league-context"
 import { AppleFlag } from "@/components/ui/apple-flag"
-import { getLeagueQualification } from "@/lib/league-format"
+import { getLeagueQualification, formatRoundName } from "@/lib/league-format"
 import { useLocale } from "@/contexts/locale-context"
 import { GradientTitle } from "@/components/ui/gradient-title"
 
@@ -163,7 +163,7 @@ export default function StandingsPage() {
         if (m.scores.homeScore !== null && m.scores.awayScore !== null) {
           finishedMatches.push({
             match: m,
-            roundName: round.name || `${t.matches.roundPrefix} ${round.id}`,
+            roundName: formatRoundName(round.name, t.matches.roundPrefix, round.id),
             date: m.date ? new Date(m.date).getTime() : (round.id || 1) * 1000,
           })
         }

@@ -5,6 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Round } from "@/types/kings-league";
 import { useLocale } from "@/contexts/locale-context";
 import { isRoundComplete } from "@/lib/regular-season";
+import { formatRoundName } from "@/lib/league-format";
 
 interface RoundSelectorProps {
   rounds: Round[];
@@ -44,7 +45,7 @@ export const RoundSelector: FC<RoundSelectorProps> = ({
               onClick={() => onRoundSelect(selectionId)}
               role="tab"
               aria-selected={isSelected}
-              aria-label={`${label}${roundComplete ? ` - ${t.matches.ended}` : ''}`}
+              aria-label={`${formatRoundName(round.name, t.matches.roundPrefix, round.id)}${roundComplete ? ` - ${t.matches.ended}` : ''}`}
               className={cn(
                 "relative flex items-center justify-center min-w-[40px] sm:min-w-[46px] h-8 sm:h-9 px-2.5 sm:px-3",
                 "text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap btn-press",

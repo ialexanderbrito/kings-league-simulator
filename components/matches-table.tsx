@@ -12,7 +12,7 @@ import { generatePlayoffBracket } from "@/lib/generate-playoff-bracket"
 import { calculateStandings } from "@/lib/calculate-standings"
 import { getSimulatedPlayoffs, getSimulatedStandings, saveSimulatedPlayoffs } from "@/lib/simulated-data-manager"
 import { areAllRoundsComplete, getActiveRound } from "@/lib/regular-season"
-import { isPlayoffRoundName } from "@/lib/league-format"
+import { isPlayoffRoundName, formatRoundName } from "@/lib/league-format"
 import { useLocale } from "@/contexts/locale-context"
 
 interface MatchesTableProps {
@@ -331,7 +331,11 @@ export default function MatchesTable({
           </div>
           <div className="flex items-center gap-2 min-w-0">
             <h2 className="text-sm sm:text-base font-black text-white tracking-tight truncate">
-              {showPlayoffs ? t.matches.playoffsMatch : (selectedRound.startsWith("playin-") ? t.playoffs.playIn : (currentRound?.name || t.ui.matches))}
+              {showPlayoffs
+                ? t.matches.playoffsMatch
+                : selectedRound.startsWith("playin-")
+                  ? t.playoffs.playIn
+                  : formatRoundName(currentRound?.name, t.matches.roundPrefix, currentRound?.id) || t.ui.matches}
             </h2>
             <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-zinc-900/60 text-zinc-400 border border-zinc-800 flex-shrink-0">
               {showPlayoffs ? t.ui.playoff : `${currentRound?.matches?.length || 5} ${currentRound?.matches?.length === 1 ? t.matches.match : t.matches.matches}`}
