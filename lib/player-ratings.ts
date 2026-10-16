@@ -257,6 +257,46 @@ function calculateStatsBonus(stats?: PlayerStats | null): number {
 }
 
 /**
+ * Retorna se o jogador é da categoria Wildcard (Jogador 11, 12, 13 ou Wildcard oficial).
+ */
+export function isWildcardPlayer(player: Player): boolean {
+  if (player.category === "wildcard") return true
+  const meta = player.metaInformation as any
+  if (!meta) return false
+  if (meta.category === "president" || meta.category === "wildcard") return true
+  const status = String(meta.status || "").toLowerCase()
+  return (
+    status.includes("wildcard") ||
+    status.includes("jogador 11") ||
+    status.includes("jogador 12") ||
+    status.includes("jogador 13")
+  )
+}
+
+/**
+ * Retorna se o jogador está registrado no departamento médico (lesionado).
+ */
+export function isInjuredPlayer(player: Player): boolean {
+  return String(player?.metaInformation?.injury || "").toLowerCase() === "true"
+}
+
+export type PlayerRatingTier = "elite" | "rare" | "common" | "basic"
+
+/**
+ * Retorna o escalão numérico correspondente ao overall calibrado do atleta.
+ * - Elite: 78+
+ * - Raro: 74-77
+ * - Comum: 70-73
+ * - Básico: < 70
+ */
+export function getPlayerOvrTier(ovr: number): PlayerRatingTier {
+  if (ovr >= 78) return "elite"
+  if (ovr >= 74) return "rare"
+  if (ovr >= 70) return "common"
+  return "basic"
+}
+
+/**
  * Função principal exportada: calcula o Overall realista, balanceado
  * e fiel à realidade da Kings League.
  */
@@ -278,14 +318,7 @@ export function getCalibratedPlayerOverall(player: Player): number {
   }
 
   // 3. Verificação de status/categoria especial
-  const isWildcard =
-    player.category === "wildcard" ||
-    (player.metaInformation as any)?.category === "president" ||
-    (player.metaInformation as any)?.category === "wildcard" ||
-    player.metaInformation?.status?.toLowerCase().includes("wildcard") ||
-    player.metaInformation?.status?.toLowerCase().includes("jogador 11") ||
-    player.metaInformation?.status?.toLowerCase().includes("jogador 12") ||
-    player.metaInformation?.status?.toLowerCase().includes("jogador 13")
+  const isWildcard = isWildcardPlayer(player)
 
   // 4. Se tiver atributos detalhados, calcula média ponderada fiel
   const weightedStats = calculatePositionWeightedRating(player)
