@@ -3,7 +3,7 @@ import { default as TierListPage } from "./TierList"
 
 export const metadata: Metadata = {
   title: 'Tier List Kings League Brasil | Crie e Compartilhe Seu Ranking de Times',
-  description: '🏆 Crie sua TIER LIST personalizada dos times da Kings League Brasil! Arraste e solte os times, customize os nomes e cores das categorias, e compartilhe com seus amigos. Totalmente GRATUITO e interativo!',
+  description: 'Crie sua Tier List personalizada dos times da Kings League Brasil. Arraste e solte os times, customize os nomes e cores das categorias, e compartilhe com seus amigos. Totalmente gratuito e interativo.',
   keywords: [
     'tier list kings league', 'tier list kings league brasil', 'ranking kings league',
     'classificar times kings league', 'melhores times kings league',
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
     'avaliar times kings league', 'análise times kings league'
   ],
   openGraph: {
-    title: 'Tier List Kings League Brasil 🏆 | Crie e Compartilhe Seu Ranking',
-    description: '⚡ Crie sua tier list dos times da Kings League! Arraste, solte, customize e compartilhe com amigos. 100% GRÁTIS!',
+    title: 'Tier List Kings League Brasil | Crie e Compartilhe Seu Ranking',
+    description: 'Crie sua tier list dos times da Kings League. Arraste, solte, customize e compartilhe com amigos. 100% gratuito.',
     type: 'website',
     url: 'https://kings-league-simulator.vercel.app/tier-list',
     images: [
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Tier List Kings League Brasil 🏆',
-    description: '⚡ Crie sua tier list dos times da Kings League! Arraste, solte e compartilhe. 100% GRÁTIS!',
+    title: 'Tier List Kings League Brasil | Crie e Compartilhe Seu Ranking',
+    description: 'Crie sua tier list dos times da Kings League. Arraste, solte e compartilhe. 100% gratuito.',
     images: [
       {
         url: '/og-tier-list.png',
