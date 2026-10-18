@@ -1774,8 +1774,12 @@ function generate12a0Html() {
 
   /* Tactical Pitch Outline */
   .pitch-surface {
-    height: 185px;
-    background: rgba(255, 255, 255, 0.015);
+    height: 195px;
+    background: #08090E;
+    background-image: 
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 50%, transparent 50%),
+      radial-gradient(ellipse at center, rgba(244, 175, 35, 0.05) 0%, transparent 75%);
+    background-size: 100% 28px, 100% 100%;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 14px;
     position: relative;
@@ -1783,7 +1787,7 @@ function generate12a0Html() {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    padding: 10px 0;
+    padding: 8px 0;
   }
 
   .pitch-half-line {
@@ -1805,6 +1809,41 @@ function generate12a0Html() {
     border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
+  .pitch-center-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  .pitch-box-top {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+  }
+
+  .pitch-box-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+  }
+
   /* Formation Lines (1-2-3-1) */
   .formation-row {
     display: flex;
@@ -1821,10 +1860,10 @@ function generate12a0Html() {
   }
 
   .node-pill {
-    background: rgba(14, 14, 18, 0.9);
+    background: rgba(14, 14, 18, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-    padding: 3px 8px;
+    padding: 2.5px 8px;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -1832,8 +1871,24 @@ function generate12a0Html() {
   }
 
   .node-pill.star {
-    border-color: rgba(244, 175, 35, 0.5);
+    border-color: rgba(244, 175, 35, 0.55);
     background: rgba(244, 175, 35, 0.12);
+  }
+
+  .node-role {
+    font-size: 7.5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #A1A1AA;
+  }
+
+  .node-role.gold {
+    background: rgba(244, 175, 35, 0.18);
+    color: #F4AF23;
   }
 
   .node-name {
@@ -1847,6 +1902,53 @@ function generate12a0Html() {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 800;
     color: #F4AF23;
+  }
+
+  .tactical-banner {
+    display: flex;
+    align-items: center;
+    background: rgba(14, 14, 18, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 8px 14px;
+    gap: 14px;
+    margin-bottom: 16px;
+    width: fit-content;
+  }
+
+  .tactical-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .tactical-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #71717A;
+  }
+
+  .tactical-value {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+
+  .tactical-value.gold {
+    color: #F4AF23;
+  }
+
+  .tactical-value.green {
+    color: #10B981;
+  }
+
+  .tactical-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .pitch-footer-stats {
@@ -1905,7 +2007,7 @@ function generate12a0Html() {
     <div class="main-split">
       <div class="left-content">
         <div class="status-pill-subtle">
-          <span>Desafio Tático 7v7 • Modo Campanha Kings League</span>
+          <span>Desafio Tático 7v7 • Modo Campanha Kings League Brasil</span>
         </div>
 
         <h1 class="headline">
@@ -1914,8 +2016,30 @@ function generate12a0Html() {
         </h1>
 
         <p class="description">
-          Escale seu esquadrão no campo tático 7v7, role o dado para sortear os clubes, equilibre a química do elenco e vença a campanha contra os 10 adversários.
+          Escale seu esquadrão no campo tático 7v7, role o dado para sortear os clubes, equilibre a química do elenco e dispute a glória máxima rodada a rodada.
         </p>
+
+        <div class="tactical-banner">
+          <div class="tactical-item">
+            <span class="tactical-label">Modo de Jogo</span>
+            <span class="tactical-value gold">Clássico / Lendas</span>
+          </div>
+          <div class="tactical-divider"></div>
+          <div class="tactical-item">
+            <span class="tactical-label">Formação</span>
+            <span class="tactical-value">1-2-3-1</span>
+          </div>
+          <div class="tactical-divider"></div>
+          <div class="tactical-item">
+            <span class="tactical-label">Estilo</span>
+            <span class="tactical-value">Equilibrado</span>
+          </div>
+          <div class="tactical-divider"></div>
+          <div class="tactical-item">
+            <span class="tactical-label">Química</span>
+            <span class="tactical-value green">100% Sinergia</span>
+          </div>
+        </div>
 
         <div class="tools-grid">
           <div class="tool-card">
@@ -1939,7 +2063,7 @@ function generate12a0Html() {
               <span class="tool-name">Modo Campanha</span>
               <span class="tool-desc">Enfrente a liga rodada a rodada</span>
             </div>
-            <span class="tool-badge">Campanha</span>
+            <span class="tool-badge">10 Rodadas</span>
           </div>
 
           <div class="tool-card">
@@ -1981,11 +2105,15 @@ function generate12a0Html() {
           <div class="pitch-surface">
             <div class="pitch-half-line"></div>
             <div class="pitch-center-circle"></div>
+            <div class="pitch-center-dot"></div>
+            <div class="pitch-box-top"></div>
+            <div class="pitch-box-bottom"></div>
 
             <!-- FWD Row -->
             <div class="formation-row">
               <div class="player-node">
                 <div class="node-pill star">
+                  <span class="node-role gold">ATA</span>
                   <span class="node-name">Kelvin</span>
                   <span class="node-ovr">92</span>
                 </div>
@@ -1996,18 +2124,21 @@ function generate12a0Html() {
             <div class="formation-row">
               <div class="player-node">
                 <div class="node-pill star">
+                  <span class="node-role gold">MEI</span>
                   <span class="node-name">Falcão</span>
                   <span class="node-ovr">94</span>
                 </div>
               </div>
               <div class="player-node">
                 <div class="node-pill">
+                  <span class="node-role">MEI</span>
                   <span class="node-name">Lipão</span>
                   <span class="node-ovr">88</span>
                 </div>
               </div>
               <div class="player-node">
                 <div class="node-pill">
+                  <span class="node-role">MEI</span>
                   <span class="node-name">Leletti</span>
                   <span class="node-ovr">87</span>
                 </div>
@@ -2018,12 +2149,14 @@ function generate12a0Html() {
             <div class="formation-row">
               <div class="player-node">
                 <div class="node-pill">
+                  <span class="node-role">DEF</span>
                   <span class="node-name">Well</span>
                   <span class="node-ovr">86</span>
                 </div>
               </div>
               <div class="player-node">
                 <div class="node-pill">
+                  <span class="node-role">DEF</span>
                   <span class="node-name">Victor</span>
                   <span class="node-ovr">85</span>
                 </div>
@@ -2034,6 +2167,7 @@ function generate12a0Html() {
             <div class="formation-row">
               <div class="player-node">
                 <div class="node-pill">
+                  <span class="node-role">GOL</span>
                   <span class="node-name">Barata</span>
                   <span class="node-ovr">89</span>
                 </div>
@@ -2042,9 +2176,10 @@ function generate12a0Html() {
           </div>
 
           <div class="pitch-footer-stats">
-            <span>Dificuldade: <strong>Clássico</strong></span>
+            <span>Modo: <strong>Clássico</strong></span>
+            <span>Formação: <strong>1-2-3-1</strong></span>
             <span>Estilo: <strong>Equilibrado</strong></span>
-            <span>Campanha: <strong>Rodada 1 de 10</strong></span>
+            <span>Campanha: <strong>10 Rodadas</strong></span>
           </div>
         </div>
       </div>
