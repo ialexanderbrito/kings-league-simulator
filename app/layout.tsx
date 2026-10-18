@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     default: 'Kings League Brasil | Simulador Oficial, Tabela, Resultados e Estatísticas',
     template: '%s | Kings League Brasil Simulador'
   },
-  description: 'O simulador MAIS COMPLETO da Kings League Brasil! ⚽ Simule partidas em tempo real, acompanhe a tabela de classificação atualizada, estatísticas completas de jogadores e times, chaveamento dos playoffs e preveja quem será o campeão. Dados oficiais e atualizados automaticamente!',
+  description: 'O simulador mais completo da Kings League Brasil! Simule partidas em tempo real, acompanhe a tabela de classificação atualizada, estatísticas completas de jogadores e times, chaveamento dos playoffs e preveja quem será o campeão. Dados oficiais e atualizados automaticamente!',
   authors: [{ name: 'ialexanderbrito', url: 'https://ialexanderbrito.dev' }],
   creator: 'ialexanderbrito',
   publisher: 'Kings League Simulador',
@@ -60,8 +60,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Kings League Brasil | Simulador Oficial com Dados em Tempo Real ⚽',
-    description: '🏆 O MELHOR simulador da Kings League Brasil! Simule partidas, veja a tabela atualizada, estatísticas completas, playoffs e preveja o campeão. Totalmente GRÁTIS e com dados oficiais atualizados automaticamente!',
+    title: 'Kings League Brasil | Simulador Oficial com Dados em Tempo Real',
+    description: 'O melhor simulador da Kings League Brasil. Simule partidas, veja a tabela atualizada, estatísticas completas, playoffs e preveja o campeão. Totalmente gratuito e com dados oficiais.',
     siteName: 'Kings League Brasil Simulador',
     type: 'website',
     locale: 'pt_BR',
@@ -78,8 +78,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kings League Brasil ⚽ | Simulador Oficial + Tabela + Estatísticas',
-    description: '🏆 Simulador COMPLETO da Kings League Brasil! ⚡ Simule partidas, veja estatísticas, tabela atualizada e preveja o campeão. 100% GRÁTIS!',
+    title: 'Kings League Brasil | Simulador Oficial + Tabela + Estatísticas',
+    description: 'Simulador completo da Kings League Brasil. Simule partidas, veja estatísticas, tabela atualizada e preveja o campeão. 100% gratuito.',
     creator: '@ialexanderbrito',
     site: '@kingsleague',
     images: [
