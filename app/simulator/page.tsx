@@ -1,9 +1,9 @@
-﻿import { Metadata } from "next"
+import { Metadata } from "next"
 import { default as SimulatorPage } from "./Simulator"
 
 export const metadata: Metadata = {
   title: 'Simulador Kings League Brasil | Simule Partidas e Preveja o Campeão',
-  description: '⚽ SIMULE partidas da Kings League Brasil em tempo real! Altere placares, veja como fica a classificação, simule os playoffs e descubra quem será o CAMPEÃO! O simulador mais completo e interativo do Brasil com dados oficiais atualizados automaticamente.',
+  description: 'Simule partidas da Kings League Brasil em tempo real. Altere placares, veja a classificação, simule os playoffs e descubra quem será o campeão. O simulador mais completo e interativo do Brasil com dados oficiais.',
   keywords: [
     'simulador kings league', 'simulador kings league brasil', 'simular kings league',
     'simulador de partidas kings league', 'simulador jogos kings league',
@@ -15,15 +15,15 @@ export const metadata: Metadata = {
     'tabela simulada kings league', 'simulação completa kings league'
   ],
   openGraph: {
-    title: 'Simulador Kings League Brasil ⚽ | Simule e Preveja o Campeão',
-    description: '🏆 Simule partidas da Kings League Brasil, altere placares, veja a nova classificação e descubra quem será o campeão! Simulador completo e GRÁTIS!',
+    title: 'Simulador Kings League Brasil | Simule e Preveja o Campeão',
+    description: 'Simule partidas da Kings League Brasil, altere placares, veja a nova classificação e descubra quem será o campeão. Simulador completo e gratuito.',
     type: 'website',
     url: 'https://kings-league-simulator.vercel.app/simulator',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Simulador Kings League Brasil ⚽',
-    description: '🏆 Simule partidas e preveja o campeão da Kings League Brasil! 100% GRÁTIS!',
+    title: 'Simulador Kings League Brasil | Simule e Preveja o Campeão',
+    description: 'Simule partidas e preveja o campeão da Kings League Brasil. 100% gratuito.',
   },
   alternates: {
     canonical: 'https://kings-league-simulator.vercel.app/simulator',
