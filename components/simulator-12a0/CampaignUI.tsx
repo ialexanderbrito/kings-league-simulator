@@ -38,12 +38,17 @@ import {
   generateSchedule,
   createInitialStandings,
   updateStandingsWithMatch,
+  reverseStandingsWithMatch,
+  applyUserPresidentPenaltyResult,
   sortStandings,
   simulateDetailedMatch,
   DetailedMatchResult,
   ShootoutKick,
   MatchEvent
 } from "@/lib/match-simulator";
+import { PresidentPenaltyModal, PenaltyResolutionPayload } from "./PresidentPenaltyModal";
+import { ShootoutsModal } from "./ShootoutsModal";
+import { CampaignShareModal } from "./CampaignShareModal";
 
 export type SimMode = "manual" | "auto";
 export type SimSpeed = "normal" | "fast" | "ultra" | "slow";
@@ -52,6 +57,8 @@ interface CampaignUIProps {
   userTeam: SimulatedTeam;
   otherTeams: SimulatedTeam[];
   difficulty: string;
+  formationName?: string;
+  playStyle?: string;
   onResetToDraft?: () => void;
 }
 
@@ -73,7 +80,14 @@ const TeamLogo = ({ logo, className }: { logo?: string, className?: string }) =>
   return <img src={getProxyImageUrl(logo)} alt="" className={className} />;
 };
 
-export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }: CampaignUIProps) {
+export function CampaignUI({
+  userTeam,
+  otherTeams,
+  difficulty,
+  formationName,
+  playStyle,
+  onResetToDraft
+}: CampaignUIProps) {
   const { t } = useLocale();
   const [phase, setPhase] = useState<CampaignPhase>("overview");
   const [currentRound, setCurrentRound] = useState(1);
@@ -114,6 +128,93 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
   const handleSimSpeedChange = (speed: SimSpeed) => {
     setSimSpeed(speed);
     localStorage.setItem("simulator_sim_speed", speed);
+  };
+
+  const [manualPenalty, setManualPenalty] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem("simulator_manual_penalty");
+      if (saved !== null) return saved === "true";
+    }
+    return true;
+  });
+
+  const handleManualPenaltyChange = (val: boolean) => {
+    setManualPenalty(val);
+    localStorage.setItem("simulator_manual_penalty", String(val));
+  };
+
+  const [activePenaltyShootout, setActivePenaltyShootout] = useState<{
+    isOpen: boolean;
+    matchIndex: number;
+    event?: MatchEvent;
+    opponent: SimulatedTeam;
+    isHome: boolean;
+    minute: number;
+    currentHomeScore: number;
+    currentAwayScore: number;
+    isPractice?: boolean;
+  } | null>(null);
+
+  const [activeShootoutMatch, setActiveShootoutMatch] = useState<{
+    match: MatchResultDisplay;
+    isLive?: boolean;
+  } | null>(null);
+
+  const handleResolvePenalty = (payload: PenaltyResolutionPayload) => {
+    if (!activePenaltyShootout) return;
+
+    if (activePenaltyShootout.isPractice) {
+      setActivePenaltyShootout(null);
+      return;
+    }
+
+    const { matchIndex, isHome, opponent } = activePenaltyShootout;
+    const currentMatchDisplay = playedMatches[matchIndex];
+    if (!currentMatchDisplay) {
+      setActivePenaltyShootout(null);
+      return;
+    }
+
+    const oldResult = currentMatchDisplay.result;
+    const homeTeam = isHome ? userTeam : opponent;
+    const awayTeam = isHome ? opponent : userTeam;
+
+    const newResult = applyUserPresidentPenaltyResult(
+      oldResult,
+      homeTeam,
+      awayTeam,
+      userTeam.id,
+      payload
+    );
+
+    // Marcar evento como interagido
+    const targetEvents = isHome ? newResult.homeEvents : newResult.awayEvents;
+    const presEv = targetEvents.find(e => e.type === "penalti_presidente" && e.teamId === userTeam.id);
+    if (presEv) {
+      (presEv as any).userInteracted = true;
+    }
+
+    // Atualizar match na lista
+    setPlayedMatches(prev => {
+      const updated = [...prev];
+      updated[matchIndex] = {
+        ...updated[matchIndex],
+        result: newResult
+      };
+      return updated;
+    });
+
+    // Se estiver em fase de grupos (standings), atualizar standings
+    if (phase === "overview" || phase === "standings") {
+      setStandings(prev => {
+        const updated = { ...prev };
+        reverseStandingsWithMatch(updated, homeTeam.id, awayTeam.id, oldResult);
+        updateStandingsWithMatch(updated, homeTeam.id, awayTeam.id, newResult);
+        return updated;
+      });
+    }
+
+    setActivePenaltyShootout(null);
   };
 
   useEffect(() => {
@@ -429,6 +530,36 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               Lento
             </button>
           </div>
+
+          <div className="w-px h-4 bg-white/10 shrink-0" />
+
+          {/* Segmented: Pênalti do Presidente (Manual / Auto) */}
+          <div className="flex items-center bg-black/40 border border-white/[0.06] rounded-xl p-0.5 shrink-0" title="Quando o presidente tiver um pênalti, você escolhe onde bater com trave, bola e goleiro!">
+            <button
+              type="button"
+              onClick={() => handleManualPenaltyChange(true)}
+              className={cn(
+                "px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all select-none active:scale-95 flex items-center gap-1",
+                manualPenalty
+                  ? "bg-amber-400 text-black font-black shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200"
+              )}
+            >
+              <Crown className="w-3 h-3" /> Pênalti: Bater
+            </button>
+            <button
+              type="button"
+              onClick={() => handleManualPenaltyChange(false)}
+              className={cn(
+                "px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all select-none active:scale-95",
+                !manualPenalty
+                  ? "bg-white/[0.12] text-white border border-white/[0.14]"
+                  : "text-zinc-400 hover:text-zinc-200"
+              )}
+            >
+              Auto
+            </button>
+          </div>
         </div>
       </header>
 
@@ -439,30 +570,67 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               <MatchBox
                 key={idx}
                 match={m}
+                matchIndex={idx}
                 userTeam={userTeam}
                 isExpanded={expandedMatchIndex === idx}
                 onToggle={() => setExpandedMatchIndex(expandedMatchIndex === idx ? null : idx)}
                 simSpeed={simSpeed}
+                manualPenalty={manualPenalty}
+                isPenaltyModalOpen={activePenaltyShootout !== null && activePenaltyShootout.matchIndex === idx}
+                onTriggerPenalty={(event, currentHome, currentAway) => {
+                  setActivePenaltyShootout({
+                    isOpen: true,
+                    matchIndex: idx,
+                    event,
+                    opponent: m.opponent,
+                    isHome: m.isHome,
+                    minute: event.minute,
+                    currentHomeScore: currentHome,
+                    currentAwayScore: currentAway,
+                    isPractice: false
+                  });
+                }}
                 onPlaybackComplete={idx === playedMatches.length - 1 ? () => {
                   setIsPlayingBack(false);
-                  if (simMode === "auto" && phase !== "standings" && phase !== "champion" && phase !== "eliminated") {
+                  const lastMatch = playedMatches[playedMatches.length - 1];
+                  const hasShootout = lastMatch?.result?.shootoutKicks && lastMatch.result.shootoutKicks.length > 0;
+                  if (!hasShootout && simMode === "auto" && phase !== "standings" && phase !== "champion" && phase !== "eliminated") {
                     setTimeout(() => {
                       if (phase === "overview") simulateNextRound();
                       else if (phase === "playoffs_overview" || phase === "playoffs_match") handleNextPlayoff();
                     }, simSpeed === "ultra" ? 0 : 1000);
                   }
                 } : undefined}
+                onOpenShootoutModal={(match, isLive) => setActiveShootoutMatch({ match, isLive })}
               />
             ))}
           </div>
         )}
 
-        {phase === "overview" && (
-          <div className="flex justify-center pt-6">
+        {phase === "overview" && isPlayingBack && (
+          <div className="flex items-center justify-center gap-3 pt-6 animate-in fade-in duration-200">
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-white/10 text-xs text-zinc-300">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="font-semibold tracking-wide">
+                {t.page.campaign.broadcastingRound || `Transmitindo ${playedMatches[playedMatches.length - 1]?.roundLabel || "rodada"}...`}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPlayingBack(false)}
+              className="btn-press text-[11px] font-semibold text-zinc-400 hover:text-white h-8 px-3 rounded-lg border border-white/10 hover:bg-white/5 transition-colors"
+            >
+              <Zap className="w-3 h-3 mr-1 text-amber-400" /> {t.page.campaign.skip}
+            </Button>
+          </div>
+        )}
+
+        {phase === "overview" && !isPlayingBack && (
+          <div className="flex justify-center pt-6 animate-in fade-in duration-200">
             <Button
               variant="brand"
               onClick={() => {
-                setIsPlayingBack(false);
                 simulateNextRound();
               }}
               disabled={isSimulating}
@@ -470,10 +638,12 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
             >
               {isSimulating ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> SIMULANDO...
+                  <Loader2 className="w-4 h-4 animate-spin" /> {t.page.campaign.simulatingAction}
                 </>
               ) : (
-                currentRound <= schedule.length ? `REVELAR ${currentRound}º JOGO` : "VER TABELA FINAL"
+                currentRound <= schedule.length
+                  ? (t.page.campaign.revealNextMatch ? t.page.campaign.revealNextMatch.replace("{round}", currentRound.toString()) : `REVELAR ${currentRound}º JOGO`)
+                  : (t.page.campaign.viewFinalStandings || "VER TABELA FINAL")
               )}
             </Button>
           </div>
@@ -717,13 +887,13 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               <div className="liquid-glass-panel rounded-3xl p-6 sm:p-8 text-center border border-white/[0.08] relative overflow-hidden shadow-2xl">
                 <div className="relative z-10 flex flex-col items-center">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] text-zinc-400 border border-white/[0.08] text-xs font-black uppercase tracking-widest mb-3">
-                    {playoffStage === "final" ? "VICE-CAMPEÃO" : playoffStage === "semifinals" ? "SEMIFINALISTA" : playoffStage === "quarterfinals" ? "QUARTAS DE FINAL" : "FASE DE GRUPOS"}
+                    {playoffStage === "final" ? ((t.playoffs as any)?.viceChampion || t.playoffs?.finalAbbr || "VICE-CAMPEÃO") : playoffStage === "semifinals" ? (t.playoffs?.semiAbbr || "SEMIFINALISTA") : playoffStage === "quarterfinals" ? (t.playoffs?.quarterfinals || "QUARTAS DE FINAL") : (t.common?.regularPhase || "FASE DE GRUPOS")}
                   </div>
                   <h2 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight mb-2">
-                    FIM DA CAMPANHA NO 12 A 0
+                    {t.page.campaign.phaseEliminated || "FIM DA CAMPANHA NO 12 A 0"}
                   </h2>
                   <p className="text-xs sm:text-sm text-zinc-400 max-w-md">
-                    Confira abaixo o resumo completo do desempenho da sua equipe na competição.
+                    {t.page.campaign.shareSummarySub || "Confira abaixo o resumo completo do desempenho da sua equipe na competição."}
                   </p>
                 </div>
               </div>
@@ -743,7 +913,7 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
                   )}
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
-                  Resumo da Campanha
+                  {t.page.campaign.shareSummaryTitle || "Resumo da Campanha"}
                 </button>
                 <button
                   type="button"
@@ -756,7 +926,7 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
                   )}
                 >
                   <Trophy className="w-3.5 h-3.5" />
-                  Tabela da Fase de Grupos
+                  {t.standings?.officialTable || "Tabela da Fase de Grupos"}
                 </button>
               </div>
             </div>
@@ -766,6 +936,9 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
               <CampaignSummary
                 playedMatches={playedMatches}
                 userTeam={userTeam}
+                difficulty={difficulty}
+                formationName={formationName}
+                playStyle={playStyle}
                 isChampion={phase === "champion"}
                 playoffStage={playoffStage}
                 groupRank={userRank}
@@ -784,6 +957,48 @@ export function CampaignUI({ userTeam, otherTeams, difficulty, onResetToDraft }:
         )}
 
       </div>
+
+      {activePenaltyShootout && (
+        <PresidentPenaltyModal
+          isOpen={activePenaltyShootout.isOpen}
+          userTeam={userTeam}
+          opponent={activePenaltyShootout.opponent}
+          isHome={activePenaltyShootout.isHome}
+          currentHomeScore={activePenaltyShootout.currentHomeScore}
+          currentAwayScore={activePenaltyShootout.currentAwayScore}
+          minute={activePenaltyShootout.minute}
+          isPracticeMode={activePenaltyShootout.isPractice}
+          onResolve={handleResolvePenalty}
+          onClose={() => setActivePenaltyShootout(null)}
+          onSkip={() => setActivePenaltyShootout(null)}
+        />
+      )}
+
+      {activeShootoutMatch && (
+        <ShootoutsModal
+          isOpen={true}
+          homeTeam={activeShootoutMatch.match.isHome ? userTeam : activeShootoutMatch.match.opponent}
+          awayTeam={activeShootoutMatch.match.isHome ? activeShootoutMatch.match.opponent : userTeam}
+          userTeamId={userTeam.id}
+          isHome={activeShootoutMatch.match.isHome}
+          homeScore={activeShootoutMatch.match.result.homeScore}
+          awayScore={activeShootoutMatch.match.result.awayScore}
+          homeShootoutScore={activeShootoutMatch.match.result.homeShootoutScore ?? 0}
+          awayShootoutScore={activeShootoutMatch.match.result.awayShootoutScore ?? 0}
+          shootoutKicks={activeShootoutMatch.match.result.shootoutKicks || []}
+          isAutoMode={simMode === "auto" && activeShootoutMatch.isLive === true}
+          onClose={() => {
+            const wasLive = activeShootoutMatch.isLive;
+            setActiveShootoutMatch(null);
+            if (wasLive && simMode === "auto" && phase !== "standings" && phase !== "champion" && phase !== "eliminated") {
+              setTimeout(() => {
+                if (phase === "overview") simulateNextRound();
+                else if (phase === "playoffs_overview" || phase === "playoffs_match") handleNextPlayoff();
+              }, simSpeed === "ultra" ? 0 : 800);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -845,7 +1060,31 @@ function renderTimelineIcon(ev: MatchEvent) {
   return <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />;
 }
 
-function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackComplete }: { match: MatchResultDisplay; userTeam: SimulatedTeam; isExpanded: boolean; onToggle: () => void; simSpeed: SimSpeed; onPlaybackComplete?: () => void }) {
+function MatchBox({
+  match,
+  matchIndex,
+  userTeam,
+  isExpanded,
+  onToggle,
+  simSpeed,
+  manualPenalty,
+  isPenaltyModalOpen,
+  onTriggerPenalty,
+  onPlaybackComplete,
+  onOpenShootoutModal
+}: {
+  match: MatchResultDisplay;
+  matchIndex: number;
+  userTeam: SimulatedTeam;
+  isExpanded: boolean;
+  onToggle: () => void;
+  simSpeed: SimSpeed;
+  manualPenalty?: boolean;
+  isPenaltyModalOpen?: boolean;
+  onTriggerPenalty?: (event: MatchEvent, currentHomeScore: number, currentAwayScore: number) => void;
+  onPlaybackComplete?: () => void;
+  onOpenShootoutModal?: (match: MatchResultDisplay, isLive?: boolean) => void;
+}) {
   const { t } = useLocale();
   const { result, opponent, isHome, roundLabel } = match;
 
@@ -856,54 +1095,26 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
     return Math.max(40, ...allEvents.map(e => e.minute));
   }, [allEvents]);
 
+  const userPresPenalty = useMemo(() => {
+    return allEvents.find(ev => ev.type === "penalti_presidente" && ev.teamId === userTeam.id);
+  }, [allEvents, userTeam.id]);
+
   const [currentMinute, setCurrentMinute] = useState(simSpeed === "ultra" ? maxMinute + 1 : 0);
   const [isPlaybackComplete, setIsPlaybackComplete] = useState(simSpeed === "ultra");
+  const [hasInteractedPenalty, setHasInteractedPenalty] = useState(false);
+  const [isPausedForPenalty, setIsPausedForPenalty] = useState(false);
+  const [hasAutoOpenedShootout, setHasAutoOpenedShootout] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "goals" | "cards" | "presidents" | "shootout">("all");
   const eventsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Se o modal fechar, despausar
   useEffect(() => {
-    if (simSpeed === "ultra") {
-      setCurrentMinute(maxMinute + 1);
-      setIsPlaybackComplete(true);
-      if (onPlaybackComplete) onPlaybackComplete();
-      return;
+    if (!isPenaltyModalOpen && isPausedForPenalty) {
+      setIsPausedForPenalty(false);
     }
-
-    if (currentMinute <= maxMinute) {
-      let delay = 100;
-      if (simSpeed === "fast") delay = 35;
-      else if (simSpeed === "normal") delay = 100;
-      else if (simSpeed === "slow") delay = 350;
-
-      const timer = setTimeout(() => {
-        setCurrentMinute(prev => prev + 1);
-      }, delay);
-      return () => clearTimeout(timer);
-    } else if (!isPlaybackComplete) {
-      const finalDelay = simSpeed === "fast" ? 200 : 500;
-      const timer = setTimeout(() => {
-        setIsPlaybackComplete(true);
-        if (onPlaybackComplete) onPlaybackComplete();
-      }, finalDelay);
-      return () => clearTimeout(timer);
-    }
-  }, [currentMinute, maxMinute, simSpeed, isPlaybackComplete, onPlaybackComplete]);
-
-  useEffect(() => {
-    if ((!isExpanded || simSpeed === "ultra") && !isPlaybackComplete) {
-      setCurrentMinute(maxMinute + 1);
-      setIsPlaybackComplete(true);
-      if (onPlaybackComplete) onPlaybackComplete();
-    }
-  }, [isExpanded, isPlaybackComplete, maxMinute, simSpeed, onPlaybackComplete]);
+  }, [isPenaltyModalOpen, isPausedForPenalty]);
 
   const visibleEvents = allEvents.filter(ev => ev.minute <= currentMinute);
-
-  useEffect(() => {
-    if (isExpanded && eventsContainerRef.current) {
-      eventsContainerRef.current.scrollTop = eventsContainerRef.current.scrollHeight;
-    }
-  }, [visibleEvents.length, isExpanded]);
 
   let currentHomeScore = 0;
   let currentAwayScore = 0;
@@ -920,6 +1131,77 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
     }
   });
 
+  useEffect(() => {
+    if (simSpeed === "ultra") {
+      if (manualPenalty && userPresPenalty && !(userPresPenalty as any).userInteracted && !hasInteractedPenalty) {
+        setHasInteractedPenalty(true);
+        setIsPausedForPenalty(true);
+        setCurrentMinute(userPresPenalty.minute);
+        if (onTriggerPenalty) {
+          onTriggerPenalty(userPresPenalty, currentHomeScore, currentAwayScore);
+        }
+        return;
+      }
+      setCurrentMinute(maxMinute + 1);
+      setIsPlaybackComplete(true);
+      if (onPlaybackComplete) onPlaybackComplete();
+      return;
+    }
+
+    if (isPausedForPenalty) {
+      return;
+    }
+
+    if (currentMinute <= maxMinute) {
+      // Verificar se o minuto atual é o do pênalti do presidente do usuário
+      if (manualPenalty && userPresPenalty && currentMinute === userPresPenalty.minute && !(userPresPenalty as any).userInteracted && !hasInteractedPenalty) {
+        setHasInteractedPenalty(true);
+        setIsPausedForPenalty(true);
+        if (onTriggerPenalty) {
+          onTriggerPenalty(userPresPenalty, currentHomeScore, currentAwayScore);
+        }
+        return;
+      }
+
+      let delay = 100;
+      if (simSpeed === "fast") delay = 35;
+      else if (simSpeed === "normal") delay = 100;
+      else if (simSpeed === "slow") delay = 350;
+
+      const timer = setTimeout(() => {
+        setCurrentMinute(prev => prev + 1);
+      }, delay);
+      return () => clearTimeout(timer);
+    } else if (!isPlaybackComplete) {
+      const finalDelay = simSpeed === "fast" ? 200 : 500;
+      const timer = setTimeout(() => {
+        setIsPlaybackComplete(true);
+        const matchHasShootout = result.shootoutKicks && result.shootoutKicks.length > 0;
+        if (!matchHasShootout) {
+          if (onPlaybackComplete) onPlaybackComplete();
+        }
+      }, finalDelay);
+      return () => clearTimeout(timer);
+    }
+  }, [currentMinute, maxMinute, simSpeed, isPlaybackComplete, isPausedForPenalty, manualPenalty, userPresPenalty, hasInteractedPenalty, currentHomeScore, currentAwayScore, onTriggerPenalty, onPlaybackComplete, result.shootoutKicks]);
+
+  useEffect(() => {
+    if ((!isExpanded || simSpeed === "ultra") && !isPlaybackComplete) {
+      setCurrentMinute(maxMinute + 1);
+      setIsPlaybackComplete(true);
+      const matchHasShootout = result.shootoutKicks && result.shootoutKicks.length > 0;
+      if (!matchHasShootout || simSpeed === "ultra") {
+        if (onPlaybackComplete) onPlaybackComplete();
+      }
+    }
+  }, [isExpanded, isPlaybackComplete, maxMinute, simSpeed, onPlaybackComplete, result.shootoutKicks]);
+
+  useEffect(() => {
+    if (isExpanded && eventsContainerRef.current) {
+      eventsContainerRef.current.scrollTop = eventsContainerRef.current.scrollHeight;
+    }
+  }, [visibleEvents.length, isExpanded]);
+
   const finalMyScore = isHome ? result.homeScore : result.awayScore;
   const finalOpScore = isHome ? result.awayScore : result.homeScore;
 
@@ -935,6 +1217,15 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
   }
 
   const hasShootout = isPlaybackComplete && result.shootoutKicks && result.shootoutKicks.length > 0;
+
+  useEffect(() => {
+    if (isExpanded && hasShootout && isPlaybackComplete && !hasAutoOpenedShootout && simSpeed !== "ultra") {
+      setHasAutoOpenedShootout(true);
+      if (onOpenShootoutModal) {
+        onOpenShootoutModal(match, true);
+      }
+    }
+  }, [isExpanded, hasShootout, isPlaybackComplete, hasAutoOpenedShootout, simSpeed, onOpenShootoutModal, match]);
 
   let outcome: "win" | "loss" | "draw" | "playing" = "playing";
   if (isPlaybackComplete) {
@@ -1031,9 +1322,18 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                 <span className={`text-xl sm:text-2xl font-black tabular-nums ${outcomeColors[outcome]}`}>{displayOpScore}</span>
               </div>
               {myShootoutScore !== undefined && (
-                <div className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-300 font-bold tracking-wider uppercase">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenShootoutModal) onOpenShootoutModal(match, false);
+                  }}
+                  className="btn-press inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/25 text-[9px] text-amber-300 font-black tracking-wider uppercase hover:bg-amber-500/20 transition-all cursor-pointer shadow-sm"
+                  title={t.page.campaign.openShootouts}
+                >
+                  <Sparkles className="w-2.5 h-2.5" />
                   <span>SO: {myShootoutScore}-{opShootoutScore}</span>
-                </div>
+                </button>
               )}
             </div>
 
@@ -1109,14 +1409,18 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                 {hasShootout && (
                   <button
                     type="button"
-                    onClick={() => setActiveFilter("shootout")}
+                    onClick={() => {
+                      if (onOpenShootoutModal) onOpenShootoutModal(match);
+                      setActiveFilter("shootout");
+                    }}
                     className={cn(
-                      "px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all select-none active:scale-95",
+                      "px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all select-none active:scale-95 inline-flex items-center gap-1.5",
                       activeFilter === "shootout"
                         ? "bg-amber-400 text-black font-black shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-200"
+                        : "text-amber-300 hover:text-amber-200 bg-amber-400/10 border border-amber-400/30"
                     )}
                   >
+                    <Sparkles className="w-3 h-3" />
                     Shootouts ({result.homeShootoutScore}x{result.awayShootoutScore})
                   </button>
                 )}
@@ -1274,6 +1578,19 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                                           {playerName ? eventTitle : detailText}
                                         </span>
                                       )}
+                                      {ev.type === "penalti_presidente" && onTriggerPenalty && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onTriggerPenalty(ev, currentHomeScore, currentAwayScore);
+                                          }}
+                                          className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/35 text-[9px] font-mono font-bold text-amber-300 transition-colors shadow-sm"
+                                          title="Bater pênalti com a trave, bola e goleiro"
+                                        >
+                                          <Crown className="w-2.5 h-2.5" /> Bater Pênalti
+                                        </button>
+                                      )}
                                     </div>
 
                                     {/* Minuto */}
@@ -1366,18 +1683,28 @@ function MatchBox({ match, userTeam, isExpanded, onToggle, simSpeed, onPlaybackC
                 {/* DISPUTA DE SHOOTOUTS NA MESMA LINHA DO TEMPO */}
                 {hasShootout && (activeFilter === "all" || activeFilter === "shootout") && (currentMinute >= 40 || isPlaybackComplete) && (
                   <>
-                    {/* Divisor de Shootouts no Eixo Central */}
-                    <div className="relative z-10 flex items-center justify-center my-3.5 group">
+                    {/* Divisor de Shootouts no Eixo Central com Botão de Ação */}
+                    <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-2 my-3.5 group">
                       <div className="flex items-center gap-2">
                         <div className="h-px w-6 sm:w-14 bg-amber-400/30" />
                         <div className="px-3 py-1 rounded-full bg-[#0c0d12] border border-amber-400/40 text-[10px] font-mono font-black text-amber-300 tracking-wider flex items-center gap-1.5 shadow-sm">
                           <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                          <span>DECISÃO POR SHOOTOUTS (1v1)</span>
+                          <span>{t.page.campaign.shootoutFinal}</span>
                           <span className="text-white/20">•</span>
                           <span className="text-white font-bold">{isHome ? result.homeShootoutScore : result.awayShootoutScore}x{isHome ? result.awayShootoutScore : result.homeShootoutScore}</span>
                         </div>
                         <div className="h-px w-6 sm:w-14 bg-amber-400/30" />
                       </div>
+                      {onOpenShootoutModal && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenShootoutModal(match, false)}
+                          className="btn-press inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-amber-300 transition-all select-none active:scale-95 cursor-pointer"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          {t.page.campaign.openShootouts}
+                        </button>
+                      )}
                     </div>
 
                     {/* Cobranças de Shootouts no mesmo design da Timeline */}
@@ -1981,6 +2308,9 @@ function PlayoffPostMatchCard({
 export function CampaignSummary({
   playedMatches,
   userTeam,
+  difficulty,
+  formationName,
+  playStyle,
   isChampion = false,
   playoffStage = null,
   groupRank,
@@ -1990,6 +2320,9 @@ export function CampaignSummary({
 }: {
   playedMatches: MatchResultDisplay[];
   userTeam?: SimulatedTeam;
+  difficulty?: string;
+  formationName?: string;
+  playStyle?: string;
   isChampion?: boolean;
   playoffStage?: PlayoffStage;
   groupRank?: number;
@@ -2065,22 +2398,10 @@ export function CampaignSummary({
     PlacementIcon = Shield;
   }
 
-  const handleShare = () => {
-    const text = `👑 Kings League - 12a0:
-⚽ ${t.page.campaign.team}: ${userTeam?.name || t.page.campaign.yourTeam}
-🏆 ${t.standings.officialTable}: ${placementLabel}
-📊 ${t.teamPage.winRate}: ${wins} - ${losses} (${winRate}%)
-🎯 ${t.teamPage.goalsAndDiff}: ${goalsFor} / ${goalsAgainst} (${goalDiff > 0 ? `+${goalDiff}` : goalDiff})
-👑 ${t.page.campaign.presidentPenalty}: ${presGoals}/${presTotal} (${presRate}%)
-${t.page.campaign.quickSim}: https://kings-league-simulator.vercel.app/12a0`;
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      toast({
-        title: t.page.campaign.copied,
-        description: t.page.campaign.copiedDescription,
-      });
-    }
+  const handleShare = () => {
+    setIsShareModalOpen(true);
   };
 
   return (
@@ -2232,25 +2553,11 @@ ${t.page.campaign.quickSim}: https://kings-league-simulator.vercel.app/12a0`;
 
       {/* Action Dock */}
       <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-        {!isChampion && (
-          <Button
-            variant="brand"
-            onClick={onRestart ? onRestart : () => window.location.reload()}
-            className="btn-press px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl shadow-lg shadow-amber-400/25 h-12 w-full sm:w-auto"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            {t.page.campaign.drawAgain}
-          </Button>
-        )}
-
         {onResetToDraft && (
           <Button
-            variant={isChampion ? "brand" : "glass"}
+            variant="brand"
             onClick={onResetToDraft}
-            className={cn(
-              "btn-press px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl h-12 w-full sm:w-auto",
-              isChampion ? "shadow-lg shadow-amber-400/25" : "border border-white/10 hover:bg-white/[0.08]"
-            )}
+            className="btn-press px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl shadow-lg shadow-amber-400/25 h-12 w-full sm:w-auto"
           >
             <Shield className="w-4 h-4 mr-2" />
             {t.page.campaign.toastNewDraft}
@@ -2271,12 +2578,34 @@ ${t.page.campaign.quickSim}: https://kings-league-simulator.vercel.app/12a0`;
         <Button
           variant="glass"
           onClick={handleShare}
-          className="btn-press px-5 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl border border-white/10 hover:bg-white/[0.08] h-12 w-full sm:w-auto"
+          className="btn-press px-5 py-3 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl border border-white/10 hover:bg-white/[0.08] h-12 w-full sm:w-auto text-amber-300 hover:text-amber-200"
         >
-          <Share2 className="w-4 h-4 mr-2" />
-          {isChampion ? `${t.tier.share} 🏆` : t.tier.share}
+          <Share2 className="w-4 h-4 mr-2 text-amber-400" />
+          {t.tier.share}
         </Button>
       </div>
+
+      <CampaignShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        userTeam={userTeam}
+        difficulty={difficulty as any}
+        formationName={formationName}
+        playStyle={playStyle as any}
+        isChampion={isChampion}
+        playoffStage={playoffStage}
+        groupRank={groupRank}
+        wins={wins}
+        losses={losses}
+        winRate={winRate}
+        goalsFor={goalsFor}
+        goalsAgainst={goalsAgainst}
+        goalDiff={goalDiff}
+        presGoals={presGoals}
+        presTotal={presTotal}
+        presRate={presRate}
+        totalMatches={totalMatches}
+      />
     </div>
   );
 }
