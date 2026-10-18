@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Modo 12a0 | Draft Tático & Desafio de Campanha Kings League",
   description: "Monte sua escalação 7v7, role o dado para sortear os clubes, escale craques e lendas e vença a campanha no modo 12a0 da Kings League Brasil! 100% Grátis.",
   openGraph: {
-    title: "Modo 12a0 Kings League Brasil 🎲 | Draft Tático & Campanha",
+    title: "Modo 12a0 Kings League Brasil | Draft Tático & Campanha",
     description: "Monte sua seleção 7v7, enfrente os desafios da liga e conquiste a vitória perfeita na Kings League Brasil! 100% GRÁTIS.",
     type: "website",
     url: "https://kings-league-simulator.vercel.app/12a0",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Modo 12a0 Kings League Brasil 🎲",
+    title: "Modo 12a0 Kings League Brasil | Draft Tático & Campanha",
     description: "Monte sua seleção 7v7, enfrente os desafios da liga e vença a campanha! 100% GRÁTIS.",
     images: [
       {
