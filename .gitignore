@@ -9,6 +9,9 @@
 
 # production
 /build
+/docs
+public/api-docs.html
+public/auditoria-probabilidades-12a0.html
 
 # debug
 npm-debug.log*
