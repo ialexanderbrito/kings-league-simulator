@@ -26,18 +26,11 @@ import {
   Dices,
   CheckCircle2,
   ArrowRight,
-  Loader2
+  Loader2,
+  Crown
 } from "lucide-react"
 import KingsLeagueLogo from "@/components/kings-league-logo"
-
-const GENERIC_LOGOS = [
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgc3Ryb2tlPSd3aGl0ZScgc3Ryb2tlLXdpZHRoPScxLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCc+PHBhdGggZmlsbD0ncmdiYSgyNTUsMjU1LDI1NSwwLjE1KScgZD0nTTEyIDIyQzYgMjIgMyAxNiAzIDEwVjRsOS0yIDkgMnY2YzAgNi0zIDEyLTkgMTJ6Jy8+PHBhdGggZmlsbD0nbm9uZScgZD0nTTEyIDE5LjVjLTQgMC01LjUtNC01LjUtOFY1LjVsNS41LTEuNSA1LjUgMS41djZjMCA0LTEuNSA4LTUuNSA4eicgc3Ryb2tlLXdpZHRoPScxJy8+PC9zdmc+",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgc3Ryb2tlPSd3aGl0ZScgc3Ryb2tlLXdpZHRoPScxLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCc+PHBhdGggZmlsbD0ncmdiYSgyNTUsMjU1LDI1NSwwLjE1KScgZD0nTTQgMmgxNnYxMGMwIDYtOCAxMC04IDEwcy04LTQtOC0xMFYyeicvPjxwYXRoIGZpbGw9J25vbmUnIGQ9J002IDRoMTJ2OGMwIDQuNS02IDcuNS02IDcuNVM2IDE2LjUgNiAxMlY0eicgc3Ryb2tlLXdpZHRoPScxJy8+PC9zdmc+",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgc3Ryb2tlPSd3aGl0ZScgc3Ryb2tlLXdpZHRoPScxLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCc+PHBhdGggZmlsbD0ncmdiYSgyNTUsMjU1LDI1NSwwLjE1KScgZD0nTTEyIDJsMTAgNXY3bC0xMCA4LTEwLThWN2wxMC01eicvPjxwYXRoIGZpbGw9J25vbmUnIGQ9J00xMiA0LjVsNy41IDMuNXY1LjVsLTcuNSA2LTcuNS02VjhsNy41LTMuNXonIHN0cm9rZS13aWR0aD0nMScvPjwvc3ZnPg==",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgc3Ryb2tlPSd3aGl0ZScgc3Ryb2tlLXdpZHRoPScxLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCc+PGNpcmNsZSBmaWxsPSdyZ2JhKDI1NSwyNTUsMjU1LDAuMTUpJyBjeD0nMTInIGN5PScxMicgcj0nMTAnLz48Y2lyY2xlIGZpbGw9J25vbmUnIGN4PScxMicgY3k9JzEyJyByPSc3JyBzdHJva2Utd2lkdGg9JzEnLz48Y2lyY2xlIGZpbGw9J25vbmUnIGN4PScxMicgY3k9JzEyJyByPSc0JyBzdHJva2Utd2lkdGg9JzEnLz48L3N2Zz4=",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgc3Ryb2tlPSd3aGl0ZScgc3Ryb2tlLXdpZHRoPScxLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCc+PHBhdGggZmlsbD0ncmdiYSgyNTUsMjU1LDI1NSwwLjE1KScgZD0nTTEyIDJjNCAwIDggMyA4IDN2OGMwIDUtOCA5LTggOXMtOC00LTgtOVY1YzAgMCA0LTMgOC0zeicvPjxwYXRoIGZpbGw9J25vbmUnIGQ9J00xMiA0LjVjMyAwIDUuNSAyIDUuNSAydjYuNWMwIDMuNS01LjUgNi41LTUuNSA2LjVzLTUuNS0zLTUuNS02LjV2LTYuNWMwIDAgMi41LTIgNS41LTJ6JyBzdHJva2Utd2lkdGg9JzEnLz48L3N2Zz4=",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgc3Ryb2tlPSd3aGl0ZScgc3Ryb2tlLXdpZHRoPScxLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCc+PHBhdGggZmlsbD0ncmdiYSgyNTUsMjU1LDI1NSwwLjE1KScgZD0nTTQgMmgxNnYxMVEyMCAxOCAxMiAyMlE0IDE4IDQgMTFaJy8+PHBhdGggZmlsbD0nbm9uZScgZD0nTTYgNGgxMnY5UTE4IDE2IDEyIDE5LjVRNiAxNiA2IDlaJyBzdHJva2Utd2lkdGg9JzEnLz48L3N2Zz4="
-];
+import { GENERIC_LOGOS, TEAM_CRESTS } from "@/lib/team-crests";
 
 type PlayStyle = "Defensivo" | "Equilibrado" | "Ofensivo"
 type Difficulty = "Clássico" | "Lendas"
@@ -493,7 +486,78 @@ export default function DozeAZeroPage() {
 
       const randomStyles = ["Defensivo", "Equilibrado", "Ofensivo"] as const;
       const opponentStyle = randomStyles[Math.floor(Math.random() * randomStyles.length)];
-      const oppOverall = getAverage(players) === "?" ? 75 : getAverage(players) as number;
+
+      // Calibração realista da força da equipe com base nos 7 titulares (1 GK + 6 melhores de linha)
+      let oppOverall = 80;
+      let oppAttack = 80;
+      let oppDefense = 80;
+
+      if (players && players.length > 0) {
+        const goalkeepers = players.filter(p => p.role === "goalkeeper")
+          .sort((a, b) => getPlayerOverall(b) - getPlayerOverall(a));
+        const topGk = goalkeepers[0] || null;
+
+        const outfield = players.filter(p => p !== topGk)
+          .sort((a, b) => getPlayerOverall(b) - getPlayerOverall(a));
+
+        const starting7 = topGk ? [topGk, ...outfield.slice(0, 6)] : outfield.slice(0, 7);
+
+        if (starting7.length > 0) {
+          oppOverall = Math.round(starting7.reduce((sum, p) => sum + getPlayerOverall(p), 0) / starting7.length);
+
+          const attackers = starting7.filter(p => p.role === "forward" || p.role === "midfielder");
+          const topAttackers = attackers.length > 0 ? attackers : starting7.slice(0, 4);
+          oppAttack = Math.round(topAttackers.reduce((sum, p) => sum + getPlayerOverall(p), 0) / topAttackers.length);
+
+          const defenders = starting7.filter(p => p.role === "defender" || p.role === "goalkeeper");
+          const topDefenders = defenders.length > 0 ? defenders : starting7.slice(3);
+          oppDefense = Math.round(topDefenders.reduce((sum, p) => sum + getPlayerOverall(p), 0) / topDefenders.length);
+        }
+      }
+
+      // Presets históricos da Kings League para garantir competitividade de alto nível
+      const nameLower = challenge.teamName.toLowerCase();
+      if (nameLower.includes("g3x")) {
+        oppOverall = Math.max(oppOverall, 91);
+        oppAttack = Math.max(oppAttack, 94);
+        oppDefense = Math.max(oppDefense, 89);
+      } else if (nameLower.includes("furia")) {
+        oppOverall = Math.max(oppOverall, 90);
+        oppAttack = Math.max(oppAttack, 93);
+        oppDefense = Math.max(oppDefense, 88);
+      } else if (nameLower.includes("nyvelados")) {
+        oppOverall = Math.max(oppOverall, 89);
+        oppAttack = Math.max(oppAttack, 91);
+        oppDefense = Math.max(oppDefense, 87);
+      } else if (nameLower.includes("loud")) {
+        oppOverall = Math.max(oppOverall, 88);
+        oppAttack = Math.max(oppAttack, 90);
+        oppDefense = Math.max(oppDefense, 87);
+      } else if (nameLower.includes("podpah") || nameLower.includes("funkbol")) {
+        oppOverall = Math.max(oppOverall, 87);
+        oppAttack = Math.max(oppAttack, 89);
+        oppDefense = Math.max(oppDefense, 86);
+      } else if (nameLower.includes("dibrados") || nameLower.includes("elite")) {
+        oppOverall = Math.max(oppOverall, 87);
+        oppAttack = Math.max(oppAttack, 89);
+        oppDefense = Math.max(oppDefense, 85);
+      } else if (nameLower.includes("fluxo")) {
+        oppOverall = Math.max(oppOverall, 86);
+        oppAttack = Math.max(oppAttack, 88);
+        oppDefense = Math.max(oppDefense, 85);
+      } else if (nameLower.includes("capim")) {
+        oppOverall = Math.max(oppOverall, 86);
+        oppAttack = Math.max(oppAttack, 87);
+        oppDefense = Math.max(oppDefense, 86);
+      } else if (nameLower.includes("desimpain")) {
+        oppOverall = Math.max(oppOverall, 86);
+        oppAttack = Math.max(oppAttack, 88);
+        oppDefense = Math.max(oppDefense, 84);
+      } else if (nameLower.includes("dendele")) {
+        oppOverall = Math.max(oppOverall, 85);
+        oppAttack = Math.max(oppAttack, 86);
+        oppDefense = Math.max(oppDefense, 85);
+      }
 
       opponents.push({
         id: challenge.id,
@@ -503,8 +567,8 @@ export default function DozeAZeroPage() {
         overall: oppOverall,
         players: players,
         playStyle: opponentStyle,
-        attackScore: oppOverall,
-        defenseScore: oppOverall,
+        attackScore: oppAttack,
+        defenseScore: oppDefense,
         presidents: challenge.presidents
       })
     }
@@ -528,23 +592,25 @@ export default function DozeAZeroPage() {
 
       <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl flex-1 flex flex-col relative z-10">
         {/* Header da Página - Padrão Oficial Tier List */}
-        <div className="mb-4 sm:mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
-            <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
-            <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
-              {t.common.officialSimulator} • {t.page.campaign.challenge} 12a0
-            </span>
-          </div>
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass-pill mb-2">
+              <KingsLeagueLogo width={14} height={18} className="drop-shadow-[0_0_6px_rgba(244,175,35,0.4)]" />
+              <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-white">
+                {t.common.officialSimulator} • {t.page.campaign.challenge} 12a0
+              </span>
+            </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            {t.page.campaign.challenge}{" "}
-            <span className="bg-gradient-to-r from-[var(--team-primary)] via-amber-300 to-[var(--team-primary)] bg-clip-text text-transparent">
-              12a0
-            </span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            {t.page.campaign.allRounds}
-          </p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+              {t.page.campaign.challenge}{" "}
+              <span className="bg-gradient-to-r from-[var(--team-primary)] via-amber-300 to-[var(--team-primary)] bg-clip-text text-transparent">
+                12a0
+              </span>
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              {t.page.campaign.allRounds}
+            </p>
+          </div>
         </div>
 
         {gamePhase === "draft" && (
@@ -797,25 +863,33 @@ export default function DozeAZeroPage() {
 
                       {/* Escudo */}
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 block">
-                          Escudo
-                        </span>
-                        <div className="grid grid-cols-6 gap-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            {t.page.campaign.shield || "Escudo"}
+                          </span>
+                          <span className="text-[9px] font-mono text-amber-400/80 font-bold">
+                            {selectedLogoIndex + 1} / {GENERIC_LOGOS.length}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-6 gap-2 p-1">
                           {GENERIC_LOGOS.map((logo, index) => (
                             <button
                               key={index}
+                              type="button"
                               onClick={() => setSelectedLogoIndex(index)}
                               className={cn(
-                                "aspect-square rounded-xl flex items-center justify-center border transition-all p-2 select-none active:scale-[0.94]",
+                                "aspect-square w-full rounded-xl flex items-center justify-center border transition-all p-1.5 select-none active:scale-95 cursor-pointer relative",
                                 selectedLogoIndex === index
-                                  ? "bg-amber-400 border-amber-300 shadow-[0_2px_10px_rgba(245,158,11,0.4)]"
-                                  : "bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12]"
+                                  ? "ring-2 ring-amber-400 bg-amber-400/25 border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)] scale-105 z-10"
+                                  : "bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.08] hover:border-white/20 hover:scale-105 opacity-85 hover:opacity-100"
                               )}
+                              title={TEAM_CRESTS[index]?.name || `Escudo ${index + 1}`}
                             >
                               <img
                                 src={logo}
                                 alt={`Escudo ${index + 1}`}
-                                className={cn("w-full h-full object-contain", selectedLogoIndex === index ? "brightness-0" : "opacity-80")}
+                                className="w-full h-full object-contain drop-shadow pointer-events-none"
+                                loading="lazy"
                               />
                             </button>
                           ))}
@@ -1093,6 +1167,8 @@ export default function DozeAZeroPage() {
             userTeam={campaignData.userTeam}
             otherTeams={campaignData.otherTeams}
             difficulty={difficulty}
+            formationName={formation.name}
+            playStyle={playStyle}
             onResetToDraft={handleStartNewDraft}
           />
         )}
