@@ -471,6 +471,7 @@ export function simulateDetailedMatch(
             teamId: ev.teamId, 
             presidentName: presName,
             isSuccess: true,
+            pointsAdded: goalVal,
             metadata: `Pênalti do Presidente (GOL)${doubleMeta}`,
             description: `${presName} foi para a marca da cal, bateu firme no canto e fez a festa!`
           });
@@ -483,6 +484,7 @@ export function simulateDetailedMatch(
             teamId: ev.teamId, 
             presidentName: presName,
             isSuccess: false,
+            pointsAdded: 0,
             metadata: `Pênalti do Presidente (ERROU)`,
             description: `${presName} assumiu a cobrança de pênalti, mas ${defGkName} operou uma defesa espetacular!`
           });
@@ -600,6 +602,14 @@ export function simulateDetailedMatch(
           : `Shootout 1v1: ${hKicker?.shortName || "Cobrador"} tentou a finalização no mano a mano, mas ${awayGkInfo.player?.shortName || "o goleiro"} fechou o gol!`
       });
 
+      // Checar se a disputa já foi decidida matematicamente após cobrança do mandante
+      const awayRemainingAfterHome = 5 - (i - 1);
+      const homeRemainingAfterHome = 5 - i;
+      if (homeShootoutScore > awayShootoutScore + awayRemainingAfterHome ||
+          awayShootoutScore > homeShootoutScore + homeRemainingAfterHome) {
+        break;
+      }
+
       // Away kick vs Home GK
       const aKicker = awayTeam.players[(i - 1) % (awayTeam.players.length || 1)] || pickRandomScorer(awayTeam.players);
       const aKickerOvr = aKicker ? getPlayerOverall(aKicker) : 75;
@@ -620,6 +630,13 @@ export function simulateDetailedMatch(
           ? `Shootout 1v1: ${aKicker?.shortName || "Cobrador"} arrancou no 1v1 e superou ${homeGkInfo.player?.shortName || "o goleiro"}!`
           : `Shootout 1v1: ${aKicker?.shortName || "Cobrador"} tentou o drible, mas foi travado pela muralha de ${homeGkInfo.player?.shortName || "o goleiro"}!`
       });
+
+      // Checar se a disputa foi decidida matematicamente após cobrança do visitante
+      const remainingBoth = 5 - i;
+      if (homeShootoutScore > awayShootoutScore + remainingBoth ||
+          awayShootoutScore > homeShootoutScore + remainingBoth) {
+        break;
+      }
     }
 
     // Morte súbita se empatado após 5 rodadas
@@ -925,6 +942,53 @@ export function updateStandingsWithMatch(
   }
 }
 
+export function reverseStandingsWithMatch(
+  standings: Record<string, TeamStanding>,
+  homeTeamId: string,
+  awayTeamId: string,
+  result: DetailedMatchResult
+) {
+  const home = standings[homeTeamId];
+  const away = standings[awayTeamId];
+
+  if (!home || !away) return;
+
+  home.played = Math.max(0, home.played - 1);
+  away.played = Math.max(0, away.played - 1);
+
+  home.goalsFor -= result.homeScore;
+  home.goalsAgainst -= result.awayScore;
+  home.goalDifference = home.goalsFor - home.goalsAgainst;
+
+  away.goalsFor -= result.awayScore;
+  away.goalsAgainst -= result.homeScore;
+  away.goalDifference = away.goalsFor - away.goalsAgainst;
+
+  if (result.winner === "home") {
+    if (result.homeShootoutScore !== undefined) {
+      home.drawn = Math.max(0, home.drawn - 1);
+      away.drawn = Math.max(0, away.drawn - 1);
+      home.points -= 2;
+      away.points -= 1;
+    } else {
+      home.won = Math.max(0, home.won - 1);
+      home.points -= 3;
+      away.lost = Math.max(0, away.lost - 1);
+    }
+  } else if (result.winner === "away") {
+    if (result.awayShootoutScore !== undefined) {
+      away.drawn = Math.max(0, away.drawn - 1);
+      home.drawn = Math.max(0, home.drawn - 1);
+      away.points -= 2;
+      home.points -= 1;
+    } else {
+      away.won = Math.max(0, away.won - 1);
+      away.points -= 3;
+      home.lost = Math.max(0, home.lost - 1);
+    }
+  }
+}
+
 export function sortStandings(standings: Record<string, TeamStanding>): TeamStanding[] {
   return Object.values(standings).sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
@@ -1027,5 +1091,242 @@ export function predictMatchProbability(
     tacticalAdvantage,
     keyStrengths: keyStrengths.length > 0 ? keyStrengths : ["Equilíbrio Coletivo"]
   };
+}
+
+export interface PresidentPenaltyResolution {
+  isGoal: boolean;
+  outcomeType: "goal" | "saved" | "woodwork";
+  shotZone: string;
+  shotStyle: "colocada" | "bomba" | "cavadinha";
+  description: string;
+}
+
+export function runQuickShootouts(homeTeam: SimulatedTeam, awayTeam: SimulatedTeam): {
+  homeScore: number;
+  awayScore: number;
+  winner: "home" | "away";
+  kicks: ShootoutKick[];
+} {
+  const homeGkInfo = getTeamGoalkeeper(homeTeam);
+  const awayGkInfo = getTeamGoalkeeper(awayTeam);
+  const homeGkOvr = homeGkInfo.ovr;
+  const awayGkOvr = awayGkInfo.ovr;
+
+  let homeShootoutScore = 0;
+  let awayShootoutScore = 0;
+  const kicks: ShootoutKick[] = [];
+  const soRounds = 5;
+
+  for (let i = 1; i <= soRounds; i++) {
+    const hKicker = homeTeam.players[(i - 1) % (homeTeam.players.length || 1)] || pickRandomScorer(homeTeam.players);
+    const hKickerOvr = hKicker ? getPlayerOverall(hKicker) : 75;
+    const hShooterBonus = (hKickerOvr - 75) * 0.010;
+    const aGkPenalty = (awayGkOvr - 75) * 0.010;
+    const hSuccessProb = Math.max(0.18, Math.min(0.82, 0.48 + hShooterBonus - aGkPenalty));
+    const hSuccess = Math.random() < hSuccessProb;
+    if (hSuccess) homeShootoutScore++;
+    kicks.push({
+      id: `so-h-${i}`,
+      round: i,
+      teamId: homeTeam.id,
+      teamName: homeTeam.name,
+      player: hKicker,
+      isGoal: hSuccess,
+      scoreAfter: { home: homeShootoutScore, away: awayShootoutScore },
+      description: hSuccess
+        ? `Shootout 1v1: ${hKicker?.shortName || "Cobrador"} arrancou do meio-campo no 1v1 e superou ${awayGkInfo.player?.shortName || "o goleiro"}!`
+        : `Shootout 1v1: ${hKicker?.shortName || "Cobrador"} tentou a finalização no mano a mano, mas ${awayGkInfo.player?.shortName || "o goleiro"} fechou o gol!`
+    });
+
+    // Checar se a disputa já foi decidida matematicamente após cobrança do mandante
+    const awayRemainingAfterHome = 5 - (i - 1);
+    const homeRemainingAfterHome = 5 - i;
+    if (homeShootoutScore > awayShootoutScore + awayRemainingAfterHome ||
+        awayShootoutScore > homeShootoutScore + homeRemainingAfterHome) {
+      break;
+    }
+
+    const aKicker = awayTeam.players[(i - 1) % (awayTeam.players.length || 1)] || pickRandomScorer(awayTeam.players);
+    const aKickerOvr = aKicker ? getPlayerOverall(aKicker) : 75;
+    const aShooterBonus = (aKickerOvr - 75) * 0.010;
+    const hGkPenalty = (homeGkOvr - 75) * 0.010;
+    const aSuccessProb = Math.max(0.18, Math.min(0.82, 0.48 + aShooterBonus - hGkPenalty));
+    const aSuccess = Math.random() < aSuccessProb;
+    if (aSuccess) awayShootoutScore++;
+    kicks.push({
+      id: `so-a-${i}`,
+      round: i,
+      teamId: awayTeam.id,
+      teamName: awayTeam.name,
+      player: aKicker,
+      isGoal: aSuccess,
+      scoreAfter: { home: homeShootoutScore, away: awayShootoutScore },
+      description: aSuccess
+        ? `Shootout 1v1: ${aKicker?.shortName || "Cobrador"} arrancou no 1v1 e superou ${homeGkInfo.player?.shortName || "o goleiro"}!`
+        : `Shootout 1v1: ${aKicker?.shortName || "Cobrador"} tentou o drible, mas foi travado pela muralha de ${homeGkInfo.player?.shortName || "o goleiro"}!`
+    });
+
+    // Checar se a disputa foi decidida matematicamente após cobrança do visitante
+    const remainingBoth = 5 - i;
+    if (homeShootoutScore > awayShootoutScore + remainingBoth ||
+        awayShootoutScore > homeShootoutScore + remainingBoth) {
+      break;
+    }
+  }
+
+  let suddenRound = 6;
+  while (homeShootoutScore === awayShootoutScore && suddenRound <= 12) {
+    const hKicker = homeTeam.players[(suddenRound - 1) % (homeTeam.players.length || 1)] || pickRandomScorer(homeTeam.players);
+    const hKickerOvr = hKicker ? getPlayerOverall(hKicker) : 75;
+    const hSuccessProb = Math.max(0.18, Math.min(0.82, 0.50 + ((hKickerOvr - 75) * 0.008) - ((awayGkOvr - 75) * 0.008)));
+    const hSuccess = Math.random() < hSuccessProb;
+    if (hSuccess) homeShootoutScore++;
+    kicks.push({
+      id: `so-h-${suddenRound}`,
+      round: suddenRound,
+      teamId: homeTeam.id,
+      teamName: homeTeam.name,
+      player: hKicker,
+      isGoal: hSuccess,
+      scoreAfter: { home: homeShootoutScore, away: awayShootoutScore },
+      description: hSuccess
+        ? `Morte Súbita: ${hKicker?.shortName || "Cobrador"} converteu com autoridade!`
+        : `Morte Súbita: ${hKicker?.shortName || "Cobrador"} parou na muralha defensiva do goleiro!`
+    });
+
+    const aKicker = awayTeam.players[(suddenRound - 1) % (awayTeam.players.length || 1)] || pickRandomScorer(awayTeam.players);
+    const aKickerOvr = aKicker ? getPlayerOverall(aKicker) : 75;
+    const aSuccessProb = Math.max(0.18, Math.min(0.82, 0.50 + ((aKickerOvr - 75) * 0.008) - ((homeGkOvr - 75) * 0.008)));
+    const aSuccess = Math.random() < aSuccessProb;
+    if (aSuccess) awayShootoutScore++;
+    kicks.push({
+      id: `so-a-${suddenRound}`,
+      round: suddenRound,
+      teamId: awayTeam.id,
+      teamName: awayTeam.name,
+      player: aKicker,
+      isGoal: aSuccess,
+      scoreAfter: { home: homeShootoutScore, away: awayShootoutScore },
+      description: aSuccess
+        ? `Morte Súbita: ${aKicker?.shortName || "Cobrador"} marcou no mano a mano!`
+        : `Morte Súbita: ${aKicker?.shortName || "Cobrador"} desperdiçou a penalidade!`
+    });
+
+    suddenRound++;
+  }
+
+  if (homeShootoutScore === awayShootoutScore) {
+    if (Math.random() > 0.5) homeShootoutScore++; else awayShootoutScore++;
+  }
+
+  return {
+    homeScore: homeShootoutScore,
+    awayScore: awayShootoutScore,
+    winner: homeShootoutScore > awayShootoutScore ? "home" : "away",
+    kicks
+  };
+}
+
+export function applyUserPresidentPenaltyResult(
+  currentResult: DetailedMatchResult,
+  homeTeam: SimulatedTeam,
+  awayTeam: SimulatedTeam,
+  userTeamId: string,
+  resolution: PresidentPenaltyResolution
+): DetailedMatchResult {
+  const isHome = homeTeam.id === userTeamId;
+  const homeEvents = currentResult.homeEvents.map(e => ({ ...e }));
+  const awayEvents = currentResult.awayEvents.map(e => ({ ...e }));
+  const targetEvents = isHome ? homeEvents : awayEvents;
+
+  const presEvIndex = targetEvents.findIndex(e => e.type === "penalti_presidente" && e.teamId === userTeamId);
+  if (presEvIndex === -1) return currentResult;
+
+  const oldEv = targetEvents[presEvIndex];
+  const wasSuccess = oldEv.isSuccess ?? false;
+  const isNowSuccess = resolution.isGoal;
+
+  const points = oldEv.pointsAdded !== undefined && oldEv.pointsAdded > 0
+    ? oldEv.pointsAdded
+    : (oldEv.metadata?.includes("Gol Dobrado") ? 2 : 1);
+
+  targetEvents[presEvIndex] = {
+    ...oldEv,
+    isSuccess: isNowSuccess,
+    pointsAdded: isNowSuccess ? points : 0,
+    metadata: isNowSuccess
+      ? `Pênalti do Presidente (GOL)${points === 2 ? " (GOL DOBRADO)" : ""}`
+      : resolution.outcomeType === "woodwork"
+        ? `Pênalti do Presidente (NA TRAVE)`
+        : `Pênalti do Presidente (ERROU)`,
+    description: resolution.description
+  };
+
+  let newHomeScore = currentResult.homeScore;
+  let newAwayScore = currentResult.awayScore;
+
+  if (wasSuccess !== isNowSuccess) {
+    const delta = isNowSuccess ? points : -points;
+    if (isHome) {
+      newHomeScore = Math.max(0, newHomeScore + delta);
+    } else {
+      newAwayScore = Math.max(0, newAwayScore + delta);
+    }
+  }
+
+  let winner = currentResult.winner;
+  let homeShootoutScore = currentResult.homeShootoutScore;
+  let awayShootoutScore = currentResult.awayShootoutScore;
+  let shootoutKicks = currentResult.shootoutKicks;
+
+  // Se o jogo NÃO está mais empatado aos 38'
+  if (newHomeScore !== newAwayScore) {
+    winner = newHomeScore > newAwayScore ? "home" : "away";
+    homeShootoutScore = undefined;
+    awayShootoutScore = undefined;
+    shootoutKicks = undefined;
+    const cleanHomeEvents = homeEvents.filter(e => !e.id.startsWith("so-"));
+    const cleanAwayEvents = awayEvents.filter(e => !e.id.startsWith("so-"));
+    return {
+      ...currentResult,
+      homeScore: newHomeScore,
+      awayScore: newAwayScore,
+      winner,
+      homeEvents: cleanHomeEvents,
+      awayEvents: cleanAwayEvents,
+      homeShootoutScore,
+      awayShootoutScore,
+      shootoutKicks
+    };
+  } else {
+    // Se o jogo ficou EMPATADO aos 38'
+    if (!shootoutKicks || shootoutKicks.length === 0) {
+      const soResult = runQuickShootouts(homeTeam, awayTeam);
+      homeShootoutScore = soResult.homeScore;
+      awayShootoutScore = soResult.awayScore;
+      shootoutKicks = soResult.kicks;
+      winner = soResult.winner;
+      homeEvents.push({
+        id: `so-start-38`,
+        minute: 38,
+        player: null,
+        type: "info",
+        teamId: homeTeam.id,
+        metadata: `38' Empate (${newHomeScore}x${newAwayScore}) → Shootouts`,
+        description: `⏱️ Tempo regulamentar encerrado em empate (${newHomeScore}x${newAwayScore}) aos 38 minutos! A decisão vai para os Shootouts!`
+      });
+    }
+    return {
+      ...currentResult,
+      homeScore: newHomeScore,
+      awayScore: newAwayScore,
+      winner,
+      homeEvents,
+      awayEvents,
+      homeShootoutScore,
+      awayShootoutScore,
+      shootoutKicks
+    };
+  }
 }
 
