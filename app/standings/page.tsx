@@ -1,9 +1,9 @@
-﻿import { Metadata } from "next"
+import { Metadata } from "next"
 import { default as StandingsPage } from "./Standings"
 
 export const metadata: Metadata = {
   title: 'Classificação Kings League Brasil | Tabela Atualizada em Tempo Real',
-  description: '📊 Acompanhe a tabela de classificação COMPLETA e ATUALIZADA da Kings League Brasil! Veja pontos, jogos, vitórias, empates, derrotas, gols marcados, gols sofridos e saldo de gols de todos os times. Dados atualizados automaticamente após cada partida!',
+  description: 'Acompanhe a tabela de classificação completa e atualizada da Kings League Brasil. Veja pontos, jogos, vitórias, empates, derrotas, saldo de gols e estatísticas detalhadas de todos os clubes.',
   keywords: [
     'classificação kings league', 'tabela kings league', 'tabela kings league brasil',
     'pontos kings league', 'ranking kings league',
@@ -14,15 +14,15 @@ export const metadata: Metadata = {
     'quantos pontos tem kings league', 'quem está em primeiro kings league'
   ],
   openGraph: {
-    title: 'Tabela Kings League Brasil 📊 | Classificação Atualizada',
-    description: '🏆 Veja a classificação completa da Kings League Brasil! Pontos, jogos, vitórias e estatísticas detalhadas de todos os times. Atualização automática!',
+    title: 'Tabela Kings League Brasil | Classificação Atualizada',
+    description: 'Veja a classificação completa da Kings League Brasil. Pontos, jogos, vitórias e estatísticas detalhadas de todos os times. Atualização em tempo real.',
     type: 'website',
     url: 'https://kings-league-simulator.vercel.app/standings',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Tabela Kings League Brasil 📊',
-    description: '🏆 Classificação completa e atualizada! Veja pontos, jogos e estatísticas de todos os times.',
+    title: 'Tabela Kings League Brasil | Classificação Atualizada',
+    description: 'Classificação completa e atualizada. Veja pontos, jogos e estatísticas de todos os times.',
   },
   alternates: {
     canonical: 'https://kings-league-simulator.vercel.app/standings',
