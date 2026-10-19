@@ -109,9 +109,17 @@ export const MatchCard: FC<MatchCardProps> = ({
         isChallenger ? "border-[#34d399]/30 text-emerald-400" : "border-zinc-800/60 text-zinc-500"
       )}>
         {isChallenger ? (
-          <span className="px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider text-[#34d399] bg-[#34d399]/15 border border-[#34d399] text-[8px] sm:text-[9px] animate-pulse">
-            Challenger
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider text-[#34d399] bg-[#34d399]/15 border border-[#34d399] text-[8px] sm:text-[9px] animate-pulse"
+              title="Jogo Challenger: vitória para o grupo na disputa da vaga direta na semifinal (não pontua na tabela individual)"
+            >
+              Challenger
+            </span>
+            <span className="text-[8px] text-[#34d399]/75 font-mono hidden sm:inline">
+              (vaga direta semi)
+            </span>
+          </div>
         ) : (
           <span className="px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider text-zinc-400 bg-zinc-900/60 border border-zinc-800 text-[8px] sm:text-[9px]">
             {matchGroup === "Playoffs" ? t.matches.playoffsMatch : (matchGroup === "A" || matchGroup === "B") ? `${t.matches.group} ${matchGroup}` : t.matches.regularPhase}

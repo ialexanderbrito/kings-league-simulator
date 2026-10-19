@@ -100,17 +100,17 @@ export default function SimulatorPage() {
         setRounds(data.rounds);
       }
 
-      if (savedStandings && savedStandings.length > 0) {
-        setStandings(savedStandings)
-      } else {
-        let parsedStandings: any[] = []
-        if (Array.isArray(data.standings)) {
-          parsedStandings = data.standings
-        } else if (data.standings && typeof data.standings === 'object') {
-          parsedStandings = Object.values(data.standings).flat()
-        }
-        setStandings(parsedStandings as any[])
-      }
+      // Sempre calcula os standings a partir das rodadas efetivas (sejam elas simuladas salvas ou oficiais)
+      // para garantir que partidas Challenger não pontuem nem alterem V-D/saldo de gols
+      const computedStandingsObj = calculateStandings(effectiveRounds, teamsDict, data.standings || []);
+      let initialStandings = Object.values(computedStandingsObj).flat();
+      const seenIds = new Set<string>();
+      initialStandings = initialStandings.filter((s) => {
+        if (seenIds.has(s.id)) return false;
+        seenIds.add(s.id);
+        return true;
+      });
+      setStandings(initialStandings);
 
       // Se a liga/temporada estiver nos playoffs (fase regular completa ou playoffs oficiais), abre direto nos playoffs
       const isPlayoffsStage = (effectiveRounds.length > 0 && areAllRoundsComplete(effectiveRounds)) ||
@@ -402,13 +402,15 @@ export default function SimulatorPage() {
     clearSimulatedData()
     if (leagueData) {
       setRounds(leagueData.rounds)
-      let parsedStandings: any[] = []
-      if (Array.isArray(leagueData.standings)) {
-        parsedStandings = leagueData.standings
-      } else if (leagueData.standings && typeof leagueData.standings === 'object') {
-        parsedStandings = Object.values(leagueData.standings).flat()
-      }
-      setStandings(parsedStandings as any[])
+      const updatedStandingsObj = calculateStandings(leagueData.rounds, teams, leagueData.standings || [])
+      let parsedStandings = Object.values(updatedStandingsObj).flat()
+      const seenIds = new Set<string>()
+      parsedStandings = parsedStandings.filter((s) => {
+        if (seenIds.has(s.id)) return false
+        seenIds.add(s.id)
+        return true
+      })
+      setStandings(parsedStandings)
       setPreviousStandings([])
 
       const isPlayoffsStage = (leagueData.rounds.length > 0 && areAllRoundsComplete(leagueData.rounds)) ||
