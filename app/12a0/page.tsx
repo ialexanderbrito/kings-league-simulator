@@ -897,7 +897,7 @@ export default function DozeAZeroPage() {
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-white/[0.06]">
+                    <div className="pt-4 border-t border-white/[0.06] space-y-2">
                       <Button
                         variant="brand"
                         onClick={() => {
