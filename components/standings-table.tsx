@@ -96,8 +96,8 @@ export default function StandingsTable(props: StandingsTableProps) {
         }
         if (positionInGroup <= 4) {
           return {
-            badge: 'bg-sky-400/20 text-sky-300 border border-sky-400/40 font-black',
-            border: 'border-l-2 border-sky-400'
+            badge: 'bg-orange-500/20 text-orange-300 border border-orange-500/40 font-black',
+            border: 'border-l-2 border-orange-400'
           };
         }
         return {
@@ -185,7 +185,7 @@ export default function StandingsTable(props: StandingsTableProps) {
     <div className="space-y-2">
       {groupedStandings.map((group) => {
         const isChallenger = group.groupName === 'Challenger';
-        const isAdvantageGroup = hasTwoGroups && group.groupName === advantageGroup;
+        const isAdvantageGroup = hasTwoGroups && qualification.groupFormat !== 'lastChance' && group.groupName === advantageGroup;
 
         return (
           <div key={group.groupName} className="space-y-1">
@@ -199,7 +199,11 @@ export default function StandingsTable(props: StandingsTableProps) {
                     {t.matches.group} {group.groupName}
                   </span>
                   {hasTwoGroups && (
-                    isAdvantageGroup ? (
+                    qualification.groupFormat === "lastChance" ? (
+                      <span className="text-[9px] font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30 px-2 py-0.5 rounded-full select-none">
+                        {t.standings.fourPlayoffSpots || "4 vagas playoffs"}
+                      </span>
+                    ) : isAdvantageGroup ? (
                       <span className="text-[9px] font-black text-[#34d399] bg-[#34d399]/15 px-2 py-0.5 rounded-full border border-[#34d399] flex items-center gap-1 select-none shadow-sm shadow-[#34d399]/25">
                         <Crown className="w-2.5 h-2.5 text-[#34d399]" />
                         <span>{t.standings.scAdvantage}</span>
@@ -347,18 +351,25 @@ export default function StandingsTable(props: StandingsTableProps) {
           <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
           <span className="text-zinc-300 font-semibold">
             {hasTwoGroups
-              ? qualification.groupFormat === "lastChance" ? t.standings.quartersAndLastChance : t.standings.quarterfinals
+              ? qualification.groupFormat === "lastChance" ? (t.standings.quarterfinalsSecond || "2º Quartas de Final") : t.standings.quarterfinals
               : t.standings.singleTableQuarters.replace("{end}", String(qualification.playoffEnd))}
           </span>
         </div>
-        {qualification.playInStart !== undefined && !hasTwoGroups && (
+        {qualification.groupFormat === "lastChance" ? (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_6px_rgba(251,146,60,0.8)]" />
+            <span className="text-zinc-300 font-semibold">
+              {t.standings.lastChanceLegend || "3º e 4º Last Chance"}
+            </span>
+          </div>
+        ) : qualification.playInStart !== undefined && !hasTwoGroups ? (
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
             <span className="text-zinc-300 font-semibold">
               {t.standings.playIn.replace("{start}", String(qualification.playInStart)).replace("{end}", String(qualification.playInEnd))}
             </span>
           </div>
-        )}
+        ) : null}
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
           <span className="text-zinc-400 font-medium">{t.standings.eliminated}</span>

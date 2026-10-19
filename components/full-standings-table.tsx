@@ -108,84 +108,71 @@ export default function FullStandingsTable({
       if (positionInGroup === 1) {
         return {
           badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black",
-          bar: "bg-emerald-400",
+          bar: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]",
           border: "border-l-2 border-emerald-400",
         }
       }
       if (positionInGroup === 2) {
         return {
           badge: "bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black",
-          bar: "bg-amber-400",
+          bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
           border: "border-l-2 border-amber-400",
         }
       }
       if (positionInGroup <= 4) {
         return {
-          badge: "bg-sky-400/20 text-sky-300 border border-sky-400/40 font-black",
-          bar: "bg-sky-400",
-          border: "border-l-2 border-sky-400",
+          badge: "bg-orange-500/20 text-orange-300 border border-orange-500/40 font-black",
+          bar: "bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.6)]",
+          border: "border-l-2 border-orange-400",
         }
       }
       return {
         badge: "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
-        bar: "bg-rose-500/80",
-        border: "border-l-2 border-rose-500/40",
-      }
-    }
-
-    if (hasTwoGroups && qualification.groupFormat !== "lastChance") {
-      if (positionInGroup === 1) {
-        return {
-          badge:
-            "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20 font-black",
-          bar: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]",
-          border: "border-l-2 border-emerald-400",
-        }
-      }
-
-      if (positionInGroup === 2) {
-        return {
-          badge:
-            "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black",
-          bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
-          border: "border-l-2 border-amber-400",
-        }
-      }
-      if (positionInGroup >= 3 && positionInGroup <= 4) {
-        return {
-          badge:
-            "bg-sky-400/20 text-sky-300 border border-sky-400/40 shadow-sm shadow-sky-400/15 font-black",
-          bar: "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]",
-          border: "border-l-2 border-sky-400",
-        }
-      }
-      return {
-        badge:
-          "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
         bar: "bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]",
         border: "border-l-2 border-rose-500/40",
       }
     }
 
     if (hasTwoGroups && qualification.groupFormat === "brazil") {
-      if (positionInGroup === 1) {
-        return {
-          badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black",
-          bar: "bg-emerald-400",
-          border: "border-l-2 border-emerald-400",
+      const isAdv = groupName === advantageGroup
+      if (isAdv) {
+        if (positionInGroup === 1) {
+          return {
+            badge:
+              "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20 font-black",
+            bar: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]",
+            border: "border-l-2 border-emerald-400",
+          }
         }
-      }
-      if (positionInGroup <= 4) {
-        return {
-          badge: "bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black",
-          bar: "bg-amber-400",
-          border: "border-l-2 border-amber-400",
+        if (positionInGroup >= 2 && positionInGroup <= 4) {
+          return {
+            badge:
+              "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black",
+            bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
+            border: "border-l-2 border-amber-400",
+          }
         }
-      }
-      return {
-        badge: "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
-        bar: "bg-rose-500/80",
-        border: "border-l-2 border-rose-500/40",
+        return {
+          badge:
+            "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
+          bar: "bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]",
+          border: "border-l-2 border-rose-500/40",
+        }
+      } else {
+        if (positionInGroup >= 1 && positionInGroup <= 3) {
+          return {
+            badge:
+              "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm shadow-amber-400/15 font-black",
+            bar: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]",
+            border: "border-l-2 border-amber-400",
+          }
+        }
+        return {
+          badge:
+            "bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold",
+          bar: "bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]",
+          border: "border-l-2 border-rose-500/40",
+        }
       }
     }
 
@@ -267,7 +254,7 @@ export default function FullStandingsTable({
 
       {/* Renderização das Tabelas */}
       {displayedGroups.map((group) => {
-        const isAdvantageGroup = hasTwoGroups && group.groupName === advantageGroup
+        const isAdvantageGroup = hasTwoGroups && qualification.groupFormat !== "lastChance" && group.groupName === advantageGroup
 
         return (
           <div
@@ -297,7 +284,11 @@ export default function FullStandingsTable({
                         : `${t.matches.group} ${group.groupName}`}
                     </h2>
                     {hasTwoGroups && (
-                      isAdvantageGroup ? (
+                      qualification.groupFormat === "lastChance" ? (
+                        <span className="text-[10px] font-semibold text-orange-300 bg-orange-500/10 border border-orange-500/30 px-2.5 py-0.5 rounded-full select-none">
+                          {t.standings.fourPlayoffSpots || "4 vagas playoffs"}
+                        </span>
+                      ) : isAdvantageGroup ? (
                         <span className="text-[10px] font-black text-[#34d399] bg-[#34d399]/15 px-2.5 py-0.5 rounded-full border border-[#34d399]/40 flex items-center gap-1 select-none shadow-sm shadow-[#34d399]/25">
                           <Crown className="w-3 h-3 text-[#34d399]" />
                           <span>{t.standings.scAdvantage}</span>
@@ -619,19 +610,26 @@ export default function FullStandingsTable({
                   <span className="text-zinc-300 font-semibold">
                     {hasTwoGroups
                       ? qualification.groupFormat === "lastChance"
-                        ? t.standings.quartersAndLastChance
+                        ? (t.standings.quarterfinalsSecond || "2º Quartas de Final")
                         : t.standings.quarterfinals
                       : t.standings.singleTableQuarters.replace("{end}", String(qualification.playoffEnd))}
                   </span>
                 </div>
-                {qualification.playInStart !== undefined && !hasTwoGroups && (
+                {qualification.groupFormat === "lastChance" ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_6px_rgba(251,146,60,0.8)]" />
+                    <span className="text-zinc-300 font-semibold">
+                      {t.standings.lastChanceLegend || "3º e 4º Last Chance"}
+                    </span>
+                  </div>
+                ) : qualification.playInStart !== undefined && !hasTwoGroups ? (
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
                     <span className="text-zinc-300 font-semibold">
                       {t.standings.playIn.replace("{start}", String(qualification.playInStart)).replace("{end}", String(qualification.playInEnd))}
                     </span>
                   </div>
-                )}
+                ) : null}
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
                   <span className="text-zinc-400 font-medium">{t.standings.eliminated}</span>
