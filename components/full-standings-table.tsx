@@ -133,7 +133,7 @@ export default function FullStandingsTable({
       }
     }
 
-    if (hasTwoGroups && qualification.groupFormat === "brazil") {
+    if (hasTwoGroups && qualification.groupFormat !== "lastChance") {
       const isAdv = groupName === advantageGroup
       if (isAdv) {
         if (positionInGroup === 1) {
@@ -299,8 +299,13 @@ export default function FullStandingsTable({
                           )}
                         </span>
                       ) : (
-                        <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-800 px-2 py-0.5 rounded-full select-none">
-                          {t.standings.threePlayoffSpots}
+                        <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-800 px-2 py-0.5 rounded-full select-none flex items-center gap-1">
+                          <span>{t.standings.threePlayoffSpots}</span>
+                          {challengerInfo && (
+                            <span className="font-mono opacity-70">
+                              ({group.groupName === "A" ? challengerInfo.groupAWins : challengerInfo.groupBWins}V)
+                            </span>
+                          )}
                         </span>
                       )
                     )}

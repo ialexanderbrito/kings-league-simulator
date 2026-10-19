@@ -212,8 +212,11 @@ export default function StandingsTable(props: StandingsTableProps) {
                         )}
                       </span>
                     ) : (
-                      <span className="text-[9px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-800 px-1.5 py-0.5 rounded-full select-none">
-                        {t.standings.threePlayoffSpots}
+                      <span className="text-[9px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-800 px-1.5 py-0.5 rounded-full select-none flex items-center gap-1">
+                        <span>{t.standings.threePlayoffSpots}</span>
+                        {challengerInfo && (
+                          <span className="font-mono opacity-70">({group.groupName === 'A' ? challengerInfo.groupAWins : challengerInfo.groupBWins}V)</span>
+                        )}
                       </span>
                     )
                   )}

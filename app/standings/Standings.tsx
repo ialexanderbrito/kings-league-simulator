@@ -13,7 +13,8 @@ import { ButtonTop } from "@/components/ui/button-top"
 import KingsLeagueLogo from "@/components/kings-league-logo"
 import { useLeague } from "@/contexts/league-context"
 import { AppleFlag } from "@/components/ui/apple-flag"
-import { getLeagueQualification, formatRoundName } from "@/lib/league-format"
+import { getLeagueQualification, formatRoundName, isChallengerMatch } from "@/lib/league-format"
+import { calculateStandings } from "@/lib/calculate-standings"
 import { useLocale } from "@/contexts/locale-context"
 import { GradientTitle } from "@/components/ui/gradient-title"
 
@@ -52,82 +53,32 @@ export default function StandingsPage() {
 
         setRounds(loadedRounds || [])
         setTeams(teamsRecord)
-        setStandings(loadedStandings || [])
 
-        const hasTwoGroups = Boolean(
-          (loadedStandings || []).some((s: any) => s.groupName === "A") &&
-          (loadedStandings || []).some((s: any) => s.groupName === "B")
-        )
+        // Calcula a classificação oficial a partir das rodadas
+        // garantindo que jogos de Challenger não pontuem nem alterem V-D/saldo de gols dos times
+        const computedStandingsObj = calculateStandings(loadedRounds || [], teamsRecord, loadedStandings || [])
+        let computedStandings = Object.values(computedStandingsObj).flat()
+        const seenIds = new Set<string>()
+        computedStandings = computedStandings.filter((s) => {
+          if (seenIds.has(s.id)) return false
+          seenIds.add(s.id)
+          return true
+        })
+        setStandings(computedStandings)
 
-        let grouped: { groupName: string; standings: TeamStanding[] }[] = []
+        const orderedGroupNames = Object.keys(computedStandingsObj)
+        const sortedGroupNames = [...orderedGroupNames].sort((a, b) => {
+          if (a === "A") return -1
+          if (b === "A") return 1
+          if (a === "B") return 1
+          if (b === "B") return -1
+          return a.localeCompare(b)
+        })
 
-        if (!hasTwoGroups) {
-          const arr = [...(loadedStandings || [])]
-          arr.sort((a: any, b: any) => {
-            const rankA = Number(a.rank ?? 0)
-            const rankB = Number(b.rank ?? 0)
-            if (rankA > 0 && rankB > 0 && rankA !== rankB) return rankA - rankB
-
-            const wonA = Number(a.won ?? 0)
-            const wonB = Number(b.won ?? 0)
-            if (wonB !== wonA) return wonB - wonA
-
-            const gdA = a.goalDifference ?? (a.goalsFor || 0) - (a.goalsAgainst || 0)
-            const gdB = b.goalDifference ?? (b.goalsFor || 0) - (b.goalsAgainst || 0)
-            if (gdB !== gdA) return gdB - gdA
-
-            const gfA = Number(a.goalsFor ?? 0)
-            const gfB = Number(b.goalsFor ?? 0)
-            if (gfB !== gfA) return gfB - gfA
-
-            return String(a.name ?? "").localeCompare(String(b.name ?? ""))
-          })
-          grouped = [{ groupName: "Regular", standings: arr }]
-        } else {
-          // Agrupamento dos standings por grupo com validação defensiva
-          const groups: Record<string, TeamStanding[]> = {}
-          ;(loadedStandings || []).forEach((team) => {
-            if (!team || typeof team !== "object") return
-            const group = (team as any).groupName || (team as any).group || "A"
-            if (!groups[group]) groups[group] = []
-            groups[group].push(team)
-          })
-
-          // Ordenar chaves dos grupos de forma estável
-          const keys = Object.keys(groups)
-          const middle = keys.filter((k) => k !== "A" && k !== "B").sort((a, b) => a.localeCompare(b))
-          const orderedKeys: string[] = []
-          if (keys.includes("A")) orderedKeys.push("A")
-          orderedKeys.push(...middle)
-          if (keys.includes("B")) orderedKeys.push("B")
-
-          // Ordenar os clubes estritamente pelas regras da Kings League: Vitórias e Derrotas (V-D)
-          grouped = orderedKeys.map((k) => {
-            const arr = [...(groups[k] || [])]
-
-            arr.sort((a: any, b: any) => {
-              const rankA = Number(a.rank ?? 0)
-              const rankB = Number(b.rank ?? 0)
-              if (rankA > 0 && rankB > 0 && rankA !== rankB) return rankA - rankB
-
-              const wonA = Number(a.won ?? 0)
-              const wonB = Number(b.won ?? 0)
-              if (wonB !== wonA) return wonB - wonA
-
-              const gdA = a.goalDifference ?? (a.goalsFor || 0) - (a.goalsAgainst || 0)
-              const gdB = b.goalDifference ?? (b.goalsFor || 0) - (b.goalsAgainst || 0)
-              if (gdB !== gdA) return gdB - gdA
-
-              const gfA = Number(a.goalsFor ?? 0)
-              const gfB = Number(b.goalsFor ?? 0)
-              if (gfB !== gfA) return gfB - gfA
-
-              return String(a.name ?? "").localeCompare(String(b.name ?? ""))
-            })
-
-            return { groupName: k, standings: arr }
-          })
-        }
+        const grouped = sortedGroupNames.map((groupName) => ({
+          groupName,
+          standings: computedStandingsObj[groupName] || [],
+        }))
 
         setGroupedStandings(grouped)
       } catch (error) {
@@ -144,7 +95,33 @@ export default function StandingsPage() {
     }
   }, [selectedSeasonId, selectedLeague.competitionId])
 
-  // Calcular a Forma Recente (Últimos jogos: estritamente V ou D)
+  const teamGroupMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    standings.forEach((s) => {
+      const g = (s as any).groupName || (s as any).group
+      if (g && (g === "A" || g === "B")) {
+        map[s.id] = g
+      }
+    })
+    rounds.forEach((r) => {
+      r.matches?.forEach((m) => {
+        if (m.groupName === "A" || m.groupName === "B") {
+          if (!map[m.participants.homeTeamId]) map[m.participants.homeTeamId] = m.groupName
+          if (!map[m.participants.awayTeamId]) map[m.participants.awayTeamId] = m.groupName
+        }
+      })
+    })
+    return map
+  }, [standings, rounds])
+
+  const hasTwoGroups = useMemo(() => {
+    return (
+      groupedStandings.some((g) => g.groupName === "A") &&
+      groupedStandings.some((g) => g.groupName === "B")
+    )
+  }, [groupedStandings])
+
+  // Calcular a Forma Recente (Últimos jogos: estritamente V ou D, sem jogos Challenger)
   const teamFormMap = useMemo(() => {
     const map = new Map<string, MatchFormItem[]>()
     if (!rounds || rounds.length === 0) return map
@@ -160,6 +137,7 @@ export default function StandingsPage() {
       if (!round || !Array.isArray(round.matches)) return
       round.matches.forEach((m) => {
         if (!m || !m.scores || !m.participants) return
+        if (isChallengerMatch(m, round, teamGroupMap, hasTwoGroups)) return
         if (m.scores.homeScore !== null && m.scores.awayScore !== null) {
           finishedMatches.push({
             match: m,
@@ -232,9 +210,9 @@ export default function StandingsPage() {
     })
 
     return map
-  }, [rounds, teams])
+  }, [rounds, teams, teamGroupMap, hasTwoGroups, t])
 
-  // Calcular variação de posições com base nas vitórias da rodada anterior
+  // Calcular variação de posições com base nas vitórias da rodada anterior (sem jogos Challenger)
   const positionChangesMap = useMemo(() => {
     const map = new Map<string, PositionChange>()
     if (!rounds || rounds.length === 0 || standings.length === 0) return map
@@ -248,12 +226,13 @@ export default function StandingsPage() {
     const lastPlayedRound = playedRounds[playedRounds.length - 1]
     const lastRoundMatchIds = new Set((lastPlayedRound.matches || []).map((m) => m.id))
 
-    // Partidas anteriores (excluindo a rodada mais recente)
+    // Partidas anteriores (excluindo a rodada mais recente e jogos Challenger)
     const prevMatches: Match[] = []
     rounds.forEach((r) => {
       if (!r || !Array.isArray(r.matches)) return
       r.matches.forEach((m) => {
         if (!m || !m.scores || !m.participants) return
+        if (isChallengerMatch(m, r, teamGroupMap, hasTwoGroups)) return
         if (
           m.scores.homeScore !== null &&
           m.scores.awayScore !== null &&
