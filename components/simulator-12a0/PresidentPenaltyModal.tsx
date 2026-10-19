@@ -1,31 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { SimulatedTeam } from "@/lib/match-simulator";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { SimulatedTeam, getTeamGoalkeeper } from "@/lib/match-simulator";
 import { penaltySound } from "@/lib/sound-effects";
 import { Button } from "@/components/ui/button";
-import { getProxyImageUrl, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   Crown,
   Volume2,
   VolumeX,
-  Sparkles,
-  Zap,
   Target,
-  RotateCcw,
-  XCircle,
-  ShieldAlert,
-  Flame,
+  Crosshair,
   ArrowRight,
-  Crosshair
+  Zap
 } from "lucide-react";
 
 export type ShotZone =
   | "top-left"
-  | "top-center"
   | "top-right"
+  | "center"
   | "bottom-left"
-  | "bottom-center"
   | "bottom-right";
 
 export type ShotStyle = "colocada" | "bomba" | "cavadinha";
@@ -56,13 +51,13 @@ interface ZoneConfig {
   id: ShotZone;
   label: string;
   tag: string;
-  x: number; // percentage in goal box
-  y: number; // percentage in goal box
+  x: number; // percentage in goal
+  y: number; // percentage in goal
   description: string;
-  postRisk: number; // 0 to 1
+  postRisk: number;
 }
 
-const SHOT_ZONES: ZoneConfig[] = [
+export const SHOT_ZONES: ZoneConfig[] = [
   {
     id: "top-left",
     label: "Gaveta Esquerda",
@@ -71,15 +66,6 @@ const SHOT_ZONES: ZoneConfig[] = [
     y: 22,
     description: "Indefensável no ângulo superior esquerdo.",
     postRisk: 0.08
-  },
-  {
-    id: "top-center",
-    label: "Meio Alto",
-    tag: "Por Cima",
-    x: 50,
-    y: 24,
-    description: "Chute alto no centro da meta.",
-    postRisk: 0.04
   },
   {
     id: "top-right",
@@ -91,29 +77,29 @@ const SHOT_ZONES: ZoneConfig[] = [
     postRisk: 0.08
   },
   {
+    id: "center",
+    label: "Meio Alto",
+    tag: "Centro",
+    x: 50,
+    y: 38,
+    description: "Chute forte e alto no centro da meta.",
+    postRisk: 0.03
+  },
+  {
     id: "bottom-left",
     label: "Canto Esquerdo",
     tag: "Rasteiro Esq.",
     x: 18,
-    y: 72,
+    y: 74,
     description: "Rasteiro e firme no canto esquerdo.",
     postRisk: 0.05
-  },
-  {
-    id: "bottom-center",
-    label: "Meio Rasteiro",
-    tag: "Firme no Meio",
-    x: 50,
-    y: 72,
-    description: "Forte e centrado no meio do gol.",
-    postRisk: 0.02
   },
   {
     id: "bottom-right",
     label: "Canto Direito",
     tag: "Rasteiro Dir.",
     x: 82,
-    y: 72,
+    y: 74,
     description: "Rasteiro e firme no canto direito.",
     postRisk: 0.05
   }
@@ -121,65 +107,34 @@ const SHOT_ZONES: ZoneConfig[] = [
 
 /**
  * Ilustração Vetorial Profissional do Goleiro da Kings League.
- * Figura anatômica com uniforme oficial neon, luvas profissionais com dedos abertos,
- * calção acolchoado, chuteiras com travas e crachá de identificação.
+ * Figura com proporções anatômicas reais de atleta (alto, ombros largos e pernas compridas),
+ * luvas oficiais de alta aderência voltadas para a frente com dedos abertos em posição de prontidão,
+ * e uniforme oficial com o escudo do time adversário no peito.
  */
 function GoalkeeperAthlete({
   dive,
-  gkName,
-  gkOvr,
-  photo,
   teamLogo
 }: {
   dive: string;
-  gkName: string;
-  gkOvr: number;
-  photo?: string | null;
   teamLogo?: string | null;
 }) {
   return (
-    <div className="relative flex flex-col items-center">
-      {/* Crachá Flutuante de Identificação do Goleiro */}
-      <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/85 border border-white/20 shadow-xl backdrop-blur-md whitespace-nowrap z-30 ring-1 ring-black/40">
-        {photo ? (
-          <img
-            src={photo}
-            alt={gkName}
-            className="w-4 h-4 rounded-full object-cover border border-amber-400/50 shrink-0"
-            onError={e => { (e.target as HTMLElement).style.display = "none"; }}
-          />
-        ) : teamLogo ? (
-          <img
-            src={teamLogo}
-            alt="Time"
-            className="w-3.5 h-3.5 object-contain shrink-0"
-            onError={e => { (e.target as HTMLElement).style.display = "none"; }}
-          />
-        ) : (
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-        )}
-        <span className="text-[10px] font-bold text-white tracking-tight">{gkName}</span>
-        <span className="text-[9px] font-mono font-black text-amber-400 bg-amber-400/15 px-1 py-0.2 rounded border border-amber-400/30">
-          ★ {gkOvr}
-        </span>
-      </div>
-
-      {/* SVG do Goleiro com Postura Atlética Real */}
+    <div className="relative flex flex-col items-center select-none pointer-events-none">
       <svg
-        viewBox="0 0 160 170"
-        className="w-28 h-32 sm:w-32 sm:h-36 drop-shadow-[0_10px_20px_rgba(0,0,0,0.85)] select-none pointer-events-none"
+        viewBox="0 0 160 216"
+        className="w-36 h-48 sm:w-44 sm:h-56 drop-shadow-[0_16px_28px_rgba(0,0,0,0.9)]"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
           {/* Sombra no gramado */}
           <radialGradient id="turfShadow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(0,0,0,0.7)" />
+            <stop offset="0%" stopColor="rgba(0,0,0,0.75)" />
             <stop offset="70%" stopColor="rgba(0,0,0,0.25)" />
             <stop offset="100%" stopColor="rgba(0,0,0,0)" />
           </radialGradient>
 
-          {/* Gradiente da Camisa de Goleiro Kings League (Neon Volt & Esmeralda) */}
+          {/* Gradiente da Camisa de Goleiro Kings League (Volt & Esmeralda) */}
           <linearGradient id="gkKitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#a3e635" />
             <stop offset="40%" stopColor="#84cc16" />
@@ -194,14 +149,14 @@ function GoalkeeperAthlete({
             <stop offset="100%" stopColor="#ea580c" />
           </linearGradient>
 
-          {/* Luvas Profissionais (Látex Branco de Alta Aderência) */}
+          {/* Luvas Profissionais: Palma de Látex Branco */}
           <linearGradient id="gkPalmGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="70%" stopColor="#f1f5f9" />
+            <stop offset="70%" stopColor="#f8fafc" />
             <stop offset="100%" stopColor="#cbd5e1" />
           </linearGradient>
 
-          {/* Dorso da Luva (Laranja Neon & Carbono) */}
+          {/* Luvas Profissionais: Dorso Laranja Neon & Carbono */}
           <linearGradient id="gkBackhandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#fb923c" />
             <stop offset="50%" stopColor="#f97316" />
@@ -228,13 +183,84 @@ function GoalkeeperAthlete({
             <stop offset="50%" stopColor="#18181b" />
             <stop offset="100%" stopColor="#09090b" />
           </linearGradient>
+
+          {/* Recorte Circular do Escudo no Peito */}
+          <clipPath id="gkChestCrestClip">
+            <circle cx="80" cy="72" r="8.5" />
+          </clipPath>
+
+          {/* Molde Oficial da Luva de Goleiro (Proporção Real de Luva Profissional) */}
+          <g id="officialGkGlove">
+            {/* Dorso protetor externo em laranja neon */}
+            <path
+              d="M 15 62 Q 10 52 12 43 Q 16 38 23 40 Q 28 44 26 63 Z"
+              fill="url(#gkBackhandGrad)"
+              stroke="#0f172a"
+              strokeWidth="1.2"
+            />
+            {/* Palma principal em látex branco de alta aderência */}
+            <path
+              d="M 16 61 Q 13 52 14 45 Q 19 41 23 44 Q 26 50 25 61 Z"
+              fill="url(#gkPalmGrad)"
+              stroke="#0f172a"
+              strokeWidth="1"
+            />
+            {/* Sulcos ergonômicos da palma */}
+            <path d="M 16 53 Q 19 55 23 52" stroke="#cbd5e1" strokeWidth="0.8" fill="none" />
+            <path d="M 17 58 Q 20 59 23 57" stroke="#cbd5e1" strokeWidth="0.8" fill="none" />
+
+            {/* Dedo Polegar (interno, voltado para o corpo) */}
+            <path
+              d="M 24 53 Q 29 50 31 48 Q 30 45 27 46 Q 24 48 23 51 Z"
+              fill="url(#gkPalmGrad)"
+              stroke="#0f172a"
+              strokeWidth="1"
+            />
+            <path d="M 28 47 L 30 49" stroke="#f97316" strokeWidth="1.4" strokeLinecap="round" />
+
+            {/* Dedo Indicador */}
+            <path
+              d="M 22 45 L 23 35 Q 21 32 18 33 L 19 44 Z"
+              fill="url(#gkPalmGrad)"
+              stroke="#0f172a"
+              strokeWidth="1"
+            />
+            <circle cx="20.5" cy="34.5" r="1" fill="#a3e635" />
+
+            {/* Dedo Médio (o mais longo) */}
+            <path
+              d="M 19 44 L 18 31 Q 16 28 13 29 L 15 43 Z"
+              fill="url(#gkPalmGrad)"
+              stroke="#0f172a"
+              strokeWidth="1"
+            />
+            <circle cx="15.5" cy="30.5" r="1" fill="#a3e635" />
+
+            {/* Dedo Anelar */}
+            <path
+              d="M 15 44 L 13 34 Q 11 31 8 33 L 11 45 Z"
+              fill="url(#gkPalmGrad)"
+              stroke="#0f172a"
+              strokeWidth="1"
+            />
+            <circle cx="10.5" cy="33.5" r="1" fill="#a3e635" />
+
+            {/* Dedo Mínimo (externo) */}
+            <path
+              d="M 11 46 L 8 38 Q 6 36 4 38 L 7 48 Z"
+              fill="url(#gkPalmGrad)"
+              stroke="#0f172a"
+              strokeWidth="1"
+            />
+            <circle cx="6" cy="38" r="0.9" fill="#a3e635" />
+          </g>
         </defs>
 
-        {/* 1. Sombra projetada no gramado */}
+        {/* 1. Sombra no gramado */}
         <ellipse
           cx="80"
-          cy="162"
-          rx={dive !== "idle" ? "22" : "38"}
+          cy="204"
+          rx={dive !== "idle" ? "26" : "44"}
           ry={dive !== "idle" ? "3.5" : "6"}
           fill="url(#turfShadow)"
           className="transition-all duration-300"
@@ -244,86 +270,106 @@ function GoalkeeperAthlete({
         {/* Chuteira Esquerda */}
         <g id="leftBoot">
           <path
-            d="M 46 156 Q 42 161 50 164 L 68 163 Q 71 158 66 155 Z"
+            d="M 50 196 Q 46 201 54 204 L 72 203 Q 75 198 70 195 Z"
             fill="url(#gkBootsGrad)"
             stroke="#0284c7"
             strokeWidth="0.8"
           />
-          <circle cx="48" cy="164" r="1.3" fill="#a3e635" />
-          <circle cx="56" cy="164" r="1.3" fill="#a3e635" />
-          <circle cx="65" cy="163.5" r="1.3" fill="#a3e635" />
-          <path d="M 50 159 Q 58 157 66 161" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+          <circle cx="52" cy="204" r="1.3" fill="#a3e635" />
+          <circle cx="60" cy="204" r="1.3" fill="#a3e635" />
+          <circle cx="69" cy="203.5" r="1.3" fill="#a3e635" />
+          <path d="M 54 199 Q 62 197 70 201" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
         </g>
 
         {/* Chuteira Direita */}
         <g id="rightBoot">
           <path
-            d="M 114 156 Q 118 161 110 164 L 92 163 Q 89 158 94 155 Z"
+            d="M 110 196 Q 114 201 106 204 L 88 203 Q 85 198 90 195 Z"
             fill="url(#gkBootsGrad)"
             stroke="#0284c7"
             strokeWidth="0.8"
           />
-          <circle cx="112" cy="164" r="1.3" fill="#a3e635" />
-          <circle cx="104" cy="164" r="1.3" fill="#a3e635" />
-          <circle cx="95" cy="163.5" r="1.3" fill="#a3e635" />
-          <path d="M 110 159 Q 102 157 94 161" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+          <circle cx="108" cy="204" r="1.3" fill="#a3e635" />
+          <circle cx="100" cy="204" r="1.3" fill="#a3e635" />
+          <circle cx="91" cy="203.5" r="1.3" fill="#a3e635" />
+          <path d="M 106 199 Q 98 197 90 201" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
         </g>
 
-        {/* 3. Pernas / Meiões de Goleiro com Canelerias */}
+        {/* 3. Pernas e Meiões Longos e Fortes (Proporção Real de Atleta de 1,90m) */}
         {/* Meião Esquerdo */}
         <path
-          d="M 52 126 Q 47 140 48 156 L 66 155 Q 68 138 64 126 Z"
+          d="M 54 132 Q 52 162 54 196 L 72 195 Q 73 162 74 132 Z"
           fill="#0f172a"
           stroke="#1e293b"
           strokeWidth="1"
         />
-        <path d="M 48 136 L 66 136" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M 48.5 141 L 65.5 141" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M 53 154 L 73 154" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 53.5 160 L 72.5 160" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
 
         {/* Meião Direito */}
         <path
-          d="M 108 126 Q 113 140 112 156 L 94 155 Q 92 138 96 126 Z"
+          d="M 106 132 Q 108 162 106 196 L 88 195 Q 87 162 86 132 Z"
           fill="#0f172a"
           stroke="#1e293b"
           strokeWidth="1"
         />
-        <path d="M 112 136 L 94 136" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M 111.5 141 L 94.5 141" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M 107 154 L 87 154" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 106.5 160 L 87.5 160" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
 
-        {/* 4. Calção Acolchoado com Proteção Lateral de Quadril */}
+        {/* 4. Calção Acolchoado com Corte Anatômico Profissional */}
         <path
-          d="M 46 102 Q 80 106 114 102 L 118 128 L 94 128 Q 80 116 66 128 L 42 128 Z"
+          d="M 57 102 Q 80 105 103 102 L 108 134 L 86 134 Q 80 122 74 134 L 52 134 Z"
           fill="url(#gkShortsGrad)"
           stroke="#334155"
           strokeWidth="1"
         />
-        <path d="M 43 108 L 45 125" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M 117 108 L 115 125" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M 66 126 L 94 126" stroke="#020617" strokeWidth="2" />
+        <path d="M 53 108 L 54 131" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 107 108 L 106 131" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 74 132 L 86 132" stroke="#020617" strokeWidth="2" />
 
-        {/* 5. Tronco Atlético / Camisa Raglan com Recortes Ergonômicos */}
+        {/* 5. Tronco Atlético em V-Taper (Ombros Largos, Cintura Fina) */}
         <path
-          d="M 40 54 Q 80 58 120 54 L 114 105 Q 80 109 46 105 Z"
+          d="M 48 50 Q 80 54 112 50 L 104 104 Q 80 107 56 104 Z"
           fill="url(#gkKitGrad)"
           stroke="#0f172a"
           strokeWidth="1.5"
         />
 
-        {/* Recortes laterais respiráveis */}
-        <path d="M 40 54 Q 48 78 46 105" stroke="#090d16" strokeWidth="3.5" fill="none" opacity="0.8" />
-        <path d="M 120 54 Q 112 78 114 105" stroke="#090d16" strokeWidth="3.5" fill="none" opacity="0.8" />
+        {/* Recortes laterais ergonômicos respiráveis */}
+        <path d="M 48 50 Q 56 76 56 104" stroke="#090d16" strokeWidth="3" fill="none" opacity="0.8" />
+        <path d="M 112 50 Q 104 76 104 104" stroke="#090d16" strokeWidth="3" fill="none" opacity="0.8" />
 
         {/* Linha peitoral / sombreamento muscular */}
-        <path d="M 52 74 Q 80 82 108 74" stroke="rgba(0,0,0,0.25)" strokeWidth="2" fill="none" />
-        <path d="M 80 78 L 80 98" stroke="rgba(0,0,0,0.18)" strokeWidth="1.5" />
+        <path d="M 56 70 Q 80 77 104 70" stroke="rgba(0,0,0,0.25)" strokeWidth="2" fill="none" />
+        <path d="M 80 74 L 80 94" stroke="rgba(0,0,0,0.18)" strokeWidth="1.5" />
+
+        {/* Escudo Oficial do Time ou Coroa Kings League no Peito */}
+        {teamLogo ? (
+          <g>
+            <circle cx="80" cy="72" r="9.5" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.8" />
+            <image
+              href={teamLogo}
+              x="71"
+              y="63"
+              width="18"
+              height="18"
+              preserveAspectRatio="xMidYMid meet"
+              clipPath="url(#gkChestCrestClip)"
+            />
+          </g>
+        ) : (
+          <g transform="translate(80, 68) scale(0.65) translate(-12, -10)">
+            <polygon points="12,2 15,9 22,5 19,16 5,16 2,5 9,9" fill="#f59e0b" stroke="#b45309" strokeWidth="0.8" />
+          </g>
+        )}
 
         {/* Número 1 do Goleiro no Peito */}
         <text
           x="80"
-          y="95"
+          y="93"
           textAnchor="middle"
           fill="#ffffff"
-          fontSize="22"
+          fontSize="20"
           fontWeight="900"
           fontFamily="system-ui, -apple-system, sans-serif"
           letterSpacing="-0.5"
@@ -332,104 +378,99 @@ function GoalkeeperAthlete({
           1
         </text>
 
-        {/* Coroa Kings League Dourada no Peito */}
-        <g transform="translate(80, 66) scale(0.7) translate(-12, -10)">
-          <polygon points="12,2 15,9 22,5 19,16 5,16 2,5 9,9" fill="#f59e0b" stroke="#b45309" strokeWidth="0.8" />
-        </g>
-
         {/* Gola V Atlética */}
-        <path d="M 68 55 Q 80 64 92 55 L 89 49 Q 80 53 71 49 Z" fill="#0f172a" stroke="#1e293b" strokeWidth="0.8" />
+        <path d="M 70 51 Q 80 60 90 51 L 87 46 Q 80 49 73 46 Z" fill="#0f172a" stroke="#1e293b" strokeWidth="0.8" />
 
-        {/* 6. Pescoço e Cabeça com Corte Fade e Foco nos Olhos */}
-        <path d="M 72 52 L 72 40 Q 80 42 88 40 L 88 52 Z" fill="url(#gkSkinGrad)" />
-        <path d="M 75 42 L 75 51" stroke="#ea580c" strokeWidth="0.8" opacity="0.5" />
-        <path d="M 85 42 L 85 51" stroke="#ea580c" strokeWidth="0.8" opacity="0.5" />
+        {/* 6. Pescoço Forte e Cabeça com Corte Fade e Foco nos Olhos */}
+        <path d="M 73 48 L 73 38 Q 80 40 87 38 L 87 48 Z" fill="url(#gkSkinGrad)" />
+        <path d="M 76 40 L 76 47" stroke="#ea580c" strokeWidth="0.8" opacity="0.5" />
+        <path d="M 84 40 L 84 47" stroke="#ea580c" strokeWidth="0.8" opacity="0.5" />
 
         {/* Cabeça / Queixo / Mandíbula */}
         <path
-          d="M 69 31 Q 69 46 80 46 Q 91 46 91 31 Q 91 18 80 18 Q 69 18 69 31 Z"
+          d="M 70 29 Q 70 44 80 44 Q 90 44 90 29 Q 90 16 80 16 Q 70 16 70 29 Z"
           fill="url(#gkSkinGrad)"
           stroke="#7c2d12"
           strokeWidth="0.8"
         />
 
         {/* Orelhas */}
-        <ellipse cx="68.5" cy="31" rx="2.2" ry="4" fill="url(#gkSkinGrad)" stroke="#9a3412" strokeWidth="0.6" />
-        <ellipse cx="91.5" cy="31" rx="2.2" ry="4" fill="url(#gkSkinGrad)" stroke="#9a3412" strokeWidth="0.6" />
+        <ellipse cx="69.5" cy="29" rx="2.2" ry="3.8" fill="url(#gkSkinGrad)" stroke="#9a3412" strokeWidth="0.6" />
+        <ellipse cx="90.5" cy="29" rx="2.2" ry="3.8" fill="url(#gkSkinGrad)" stroke="#9a3412" strokeWidth="0.6" />
 
         {/* Cabelo Atlético com Fade Moderno */}
         <path
-          d="M 67 28 Q 68 14 80 13 Q 92 14 93 28 Q 88 23 80 23 Q 72 23 67 28 Z"
+          d="M 68 26 Q 69 13 80 12 Q 91 13 92 26 Q 87 21 80 21 Q 73 21 68 26 Z"
           fill="url(#gkHairGrad)"
         />
-        <path d="M 68 25 Q 70 19 74 17 L 74 21 Q 70 23 68 28 Z" fill="#27272a" />
-        <path d="M 92 25 Q 90 19 86 17 L 86 21 Q 90 23 92 28 Z" fill="#27272a" />
+        <path d="M 69 23 Q 71 18 75 16 L 75 20 Q 71 22 69 26 Z" fill="#27272a" />
+        <path d="M 91 23 Q 89 18 85 16 L 85 20 Q 89 22 91 26 Z" fill="#27272a" />
 
         {/* Olhar Focado e Determinado */}
-        <path d="M 72 28 L 78 29.5" stroke="#18181b" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M 88 28 L 82 29.5" stroke="#18181b" strokeWidth="1.6" strokeLinecap="round" />
-        <ellipse cx="75" cy="32" rx="1.8" ry="1.4" fill="#ffffff" />
-        <circle cx="75.2" cy="32" r="1.1" fill="#090d16" />
-        <ellipse cx="85" cy="32" rx="1.8" ry="1.4" fill="#ffffff" />
-        <circle cx="84.8" cy="32" r="1.1" fill="#090d16" />
-        <path d="M 80 30 L 79 36 L 81.5 36" stroke="#9a3412" strokeWidth="0.9" strokeLinecap="round" fill="none" />
-        <path d="M 76 40 Q 80 39 84 40" stroke="#7c2d12" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M 73 26 L 78 27.5" stroke="#18181b" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M 87 26 L 82 27.5" stroke="#18181b" strokeWidth="1.6" strokeLinecap="round" />
+        <ellipse cx="75.5" cy="30" rx="1.8" ry="1.4" fill="#ffffff" />
+        <circle cx="75.7" cy="30" r="1.1" fill="#090d16" />
+        <ellipse cx="84.5" cy="30" rx="1.8" ry="1.4" fill="#ffffff" />
+        <circle cx="84.3" cy="30" r="1.1" fill="#090d16" />
+        <path d="M 80 28 L 79 34 L 81.5 34" stroke="#9a3412" strokeWidth="0.9" strokeLinecap="round" fill="none" />
+        <path d="M 76 38 Q 80 37 84 38" stroke="#7c2d12" strokeWidth="1.4" strokeLinecap="round" />
 
-        {/* 7. Braços e LUVAS PROFISSIONAIS (O Destaque do Goleiro) */}
-        {/* BRAÇO ESQUERDO */}
+        {/* 7. Braços e LUVAS PROFISSIONAIS OFICIAIS (POSIÇÃO DE PRONTIDÃO DE GOLEIRO) */}
+        {/* BRAÇO E LUVA ESQUERDA (Palma para frente, na altura do peito, dedos naturais) */}
         <g id="leftArm">
-          <path d="M 42 56 Q 24 64 18 74 L 26 82 Q 34 72 48 66 Z" fill="url(#gkKitGrad)" stroke="#0f172a" strokeWidth="1" />
-          <path d="M 18 74 Q 12 66 8 58 L 16 54 Q 22 64 26 82 Z" fill="url(#gkSkinGrad)" stroke="#7c2d12" strokeWidth="0.8" />
-          <rect x="7" y="52" width="11" height="6" rx="2" fill="#090d16" stroke="#a3e635" strokeWidth="1" transform="rotate(-30 12 55)" />
+          {/* Manga da Camisa no Bíceps (do ombro ao cotovelo flexionado) */}
+          <path
+            d="M 46 50 Q 30 58 24 72 L 32 78 Q 40 64 48 60 Z"
+            fill="url(#gkKitGrad)"
+            stroke="#0f172a"
+            strokeWidth="1.2"
+          />
+          {/* Antebraço Atlético (do cotovelo ao punho) */}
+          <path
+            d="M 24 72 Q 16 64 18 56 L 25 58 Q 23 66 32 78 Z"
+            fill="url(#gkSkinGrad)"
+            stroke="#7c2d12"
+            strokeWidth="0.8"
+          />
+          {/* Munhequeira / Cinta de Fechamento da Luva com fecho volt */}
+          <path
+            d="M 16 57 L 26 59 L 25 64 L 15 62 Z"
+            fill="#090d16"
+            stroke="#a3e635"
+            strokeWidth="1"
+          />
 
-          {/* Luva Esquerda com Dedos Abertos */}
-          <g transform="translate(1, 30) rotate(-18)">
-            <path
-              d="M 10 18 Q 4 15 4 26 Q 4 36 14 36 Q 22 36 22 25 Q 22 18 10 18 Z"
-              fill="url(#gkPalmGrad)"
-              stroke="#0f172a"
-              strokeWidth="1.2"
-            />
-            <path d="M 5 24 Q 4 32 14 34 Q 18 34 20 28 Q 12 28 5 24 Z" fill="url(#gkBackhandGrad)" />
-            <path d="M 18 28 Q 28 26 27 20 Q 25 16 19 21 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <path d="M 23 20 L 25 24" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M 14 19 Q 15 8 10 7 Q 6 7 8 19 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="11" cy="11" r="1.2" fill="#a3e635" />
-            <path d="M 9 19 Q 8 5 4 5 Q 0 5 3 19 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="5" cy="9" r="1.2" fill="#a3e635" />
-            <path d="M 4 20 Q 2 8 -2 9 Q -5 12 -1 22 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="-1" cy="13" r="1.2" fill="#a3e635" />
-            <path d="M 1 24 Q -2 14 -7 17 Q -9 22 -3 28 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="-5" cy="19" r="1.2" fill="#a3e635" />
-          </g>
+          {/* Luva de Goleiro Oficial */}
+          <use href="#officialGkGlove" />
         </g>
 
-        {/* BRAÇO DIREITO */}
-        <g id="rightArm">
-          <path d="M 118 56 Q 136 64 142 74 L 134 82 Q 126 72 112 66 Z" fill="url(#gkKitGrad)" stroke="#0f172a" strokeWidth="1" />
-          <path d="M 142 74 Q 148 66 152 58 L 144 54 Q 138 64 134 82 Z" fill="url(#gkSkinGrad)" stroke="#7c2d12" strokeWidth="0.8" />
-          <rect x="142" y="52" width="11" height="6" rx="2" fill="#090d16" stroke="#a3e635" strokeWidth="1" transform="rotate(30 148 55)" />
+        {/* BRAÇO E LUVA DIREITA (Espelhamento Anatômico Perfeito) */}
+        <g id="rightArm" transform="translate(160, 0) scale(-1, 1)">
+          {/* Manga da Camisa no Bíceps */}
+          <path
+            d="M 46 50 Q 30 58 24 72 L 32 78 Q 40 64 48 60 Z"
+            fill="url(#gkKitGrad)"
+            stroke="#0f172a"
+            strokeWidth="1.2"
+          />
+          {/* Antebraço Atlético */}
+          <path
+            d="M 24 72 Q 16 64 18 56 L 25 58 Q 23 66 32 78 Z"
+            fill="url(#gkSkinGrad)"
+            stroke="#7c2d12"
+            strokeWidth="0.8"
+          />
+          {/* Munhequeira / Cinta de Fechamento da Luva */}
+          <path
+            d="M 16 57 L 26 59 L 25 64 L 15 62 Z"
+            fill="#090d16"
+            stroke="#a3e635"
+            strokeWidth="1"
+          />
 
-          {/* Luva Direita com Dedos Abertos */}
-          <g transform="translate(159, 30) scale(-1, 1) rotate(-18)">
-            <path
-              d="M 10 18 Q 4 15 4 26 Q 4 36 14 36 Q 22 36 22 25 Q 22 18 10 18 Z"
-              fill="url(#gkPalmGrad)"
-              stroke="#0f172a"
-              strokeWidth="1.2"
-            />
-            <path d="M 5 24 Q 4 32 14 34 Q 18 34 20 28 Q 12 28 5 24 Z" fill="url(#gkBackhandGrad)" />
-            <path d="M 18 28 Q 28 26 27 20 Q 25 16 19 21 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <path d="M 23 20 L 25 24" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M 14 19 Q 15 8 10 7 Q 6 7 8 19 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="11" cy="11" r="1.2" fill="#a3e635" />
-            <path d="M 9 19 Q 8 5 4 5 Q 0 5 3 19 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="5" cy="9" r="1.2" fill="#a3e635" />
-            <path d="M 4 20 Q 2 8 -2 9 Q -5 12 -1 22 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="-1" cy="13" r="1.2" fill="#a3e635" />
-            <path d="M 1 24 Q -2 14 -7 17 Q -9 22 -3 28 Z" fill="url(#gkPalmGrad)" stroke="#0f172a" strokeWidth="1" />
-            <circle cx="-5" cy="19" r="1.2" fill="#a3e635" />
-          </g>
+          {/* Luva de Goleiro Oficial */}
+          <use href="#officialGkGlove" />
         </g>
       </svg>
     </div>
@@ -443,57 +484,285 @@ export function PresidentPenaltyModal({
   isHome,
   currentHomeScore,
   currentAwayScore,
-  minute = 28,
+  minute = 25,
   isPracticeMode = false,
   onResolve,
   onClose,
   onSkip
 }: PresidentPenaltyModalProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const [selectedZone, setSelectedZone] = useState<ShotZone>("top-left");
-  const [selectedStyle, setSelectedStyle] = useState<ShotStyle>("colocada");
   const [isKicking, setIsKicking] = useState(false);
   const [outcome, setOutcome] = useState<PenaltyResolutionPayload | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
   const [gkDive, setGkDive] = useState<string>("idle");
-  const [isMuted, setIsMuted] = useState(() => penaltySound.getMuted());
   const [autoContinueSec, setAutoContinueSec] = useState<number | null>(null);
 
-  // Informações do Goleiro Adversário
+  // Identificação do Presidente e Goleiro
+  const presidentName = useMemo(() => {
+    return userTeam.presidents || "Presidente";
+  }, [userTeam]);
+
   const oppGk = useMemo(() => {
-    const gkPlayer = opponent.players?.find(p => p.role === "goalkeeper");
-    const gkOvr = opponent.defenseScore || opponent.overall || 76;
-    const rawPhoto = (gkPlayer as any)?.image?.url || (gkPlayer as any)?.photoUrl || null;
+    const { player, ovr } = getTeamGoalkeeper(opponent);
     return {
-      name: gkPlayer?.shortName || (gkPlayer as any)?.fullName || (gkPlayer as any)?.name || "Goleiro",
-      ovr: (gkPlayer as any)?.overall || (gkPlayer as any)?.rating || (gkPlayer as any)?.score || gkOvr,
-      photo: rawPhoto ? getProxyImageUrl(rawPhoto) : null,
-      teamName: opponent.name,
-      teamLogo: opponent.logo ? getProxyImageUrl(opponent.logo) : null
+      name: player?.shortName || "Goleiro",
+      ovr: ovr || 82,
+      photo: player?.image?.url || null,
+      teamLogo: opponent.logo || null
     };
   }, [opponent]);
 
-  // Nome do Presidente Cobrador
-  const presidentName = userTeam.presidents || "Presidente";
+  // Montagem segura no cliente
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  // Resetar quando abrir
+  // Resetar ao abrir
   useEffect(() => {
     if (isOpen) {
       setSelectedZone("top-left");
-      setSelectedStyle("colocada");
       setIsKicking(false);
       setOutcome(null);
       setGkDive("idle");
       setAutoContinueSec(null);
-      // Apito inicial
-      setTimeout(() => {
-        penaltySound.playWhistle();
-      }, 300);
     }
   }, [isOpen]);
 
-  // Timer de auto-continuação após o resultado
+  // Sons de apito ao abrir o modal
+  useEffect(() => {
+    if (isOpen && !outcome) {
+      penaltySound.playWhistle();
+    }
+  }, [isOpen, outcome]);
+
+  // Animação da Barra de Timing via requestAnimationFrame
+  const needlePosRef = useRef(50);
+  const needleDirectionRef = useRef(1); // 1 = direita, -1 = esquerda
+  const animFrameIdRef = useRef<number | null>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const [frozenPos, setFrozenPos] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || isKicking || outcome !== null) {
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+        animFrameIdRef.current = null;
+      }
+      return;
+    }
+
+    setFrozenPos(null);
+    let lastTimestamp = performance.now();
+    const speed = 0.088; // velocidade refinada para reflexo justo e emocionante
+
+    const step = (timestamp: number) => {
+      const delta = timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
+
+      needlePosRef.current += needleDirectionRef.current * speed * delta;
+
+      if (needlePosRef.current >= 100) {
+        needlePosRef.current = 100;
+        needleDirectionRef.current = -1;
+      } else if (needlePosRef.current <= 0) {
+        needlePosRef.current = 0;
+        needleDirectionRef.current = 1;
+      }
+
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${needlePosRef.current}%`;
+      }
+
+      animFrameIdRef.current = requestAnimationFrame(step);
+    };
+
+    animFrameIdRef.current = requestAnimationFrame(step);
+
+    return () => {
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+        animFrameIdRef.current = null;
+      }
+    };
+  }, [isOpen, isKicking, outcome]);
+
+  const stopBarAnimation = useCallback((): number => {
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
+    const finalPos = Math.max(0, Math.min(100, needlePosRef.current));
+    setFrozenPos(finalPos);
+    return finalPos;
+  }, []);
+
+  // Coordenadas das defesas do goleiro para a bola se conectar
+  const getSavedBallCoords = (dive: string) => {
+    switch (dive) {
+      case "top-left":
+        return { x: 24, y: 26 };
+      case "bottom-left":
+        return { x: 24, y: 70 };
+      case "top-right":
+        return { x: 76, y: 26 };
+      case "bottom-right":
+        return { x: 76, y: 70 };
+      case "center-high":
+        return { x: 50, y: 36 };
+      default:
+        return { x: 50, y: 52 };
+    }
+  };
+
+  // Disparo do Pênalti com Físicas Reais e Resolução Justa
+  const handleKick = useCallback(() => {
+    if (isKicking || outcome) return;
+    const timingPos = stopBarAnimation();
+    setIsKicking(true);
+
+    // Determinar precisão do chute com base na barra:
+    // Verde (Sweet Spot central): 42 a 58%
+    // Amarelo (Bom): 22 a 42% e 58 a 78%
+    // Vermelho (Erro): 0 a 22% e 78 a 100%
+    let quality: "green" | "yellow" | "red" = "red";
+    if (timingPos >= 42 && timingPos <= 58) {
+      quality = "green";
+    } else if ((timingPos >= 22 && timingPos < 42) || (timingPos > 58 && timingPos <= 78)) {
+      quality = "yellow";
+    } else {
+      quality = "red";
+    }
+
+    penaltySound.playKick(quality === "green" ? "bomba" : "normal");
+
+    const targetConfig = SHOT_ZONES.find(z => z.id === selectedZone)!;
+
+    // 1. Decisão do Goleiro Adversário
+    const gkPredictSkill = Math.min(0.58, 0.28 + (oppGk.ovr - 70) * 0.008);
+    const gkGuessesSide = Math.random() < gkPredictSkill;
+
+    let chosenDive: string;
+    if (gkGuessesSide) {
+      if (selectedZone === "top-left") chosenDive = Math.random() < 0.65 ? "top-left" : "bottom-left";
+      else if (selectedZone === "bottom-left") chosenDive = Math.random() < 0.65 ? "bottom-left" : "top-left";
+      else if (selectedZone === "top-right") chosenDive = Math.random() < 0.65 ? "top-right" : "bottom-right";
+      else if (selectedZone === "bottom-right") chosenDive = Math.random() < 0.65 ? "bottom-right" : "top-right";
+      else chosenDive = Math.random() < 0.5 ? "center-high" : "stay-center";
+    } else {
+      const wrongDives = ["top-left", "bottom-left", "top-right", "bottom-right"].filter(d => {
+        if (selectedZone.includes("left")) return d.includes("right");
+        if (selectedZone.includes("right")) return d.includes("left");
+        return true;
+      });
+      chosenDive = wrongDives[Math.floor(Math.random() * wrongDives.length)] || "bottom-right";
+    }
+
+    setGkDive(chosenDive);
+
+    // 2. Cálculo do Resultado
+    let outcomeType: "goal" | "saved" | "woodwork" = "goal";
+    let isGoal = true;
+    let desc = "";
+
+    const sameCorner = (
+      (selectedZone === "top-left" && chosenDive === "top-left") ||
+      (selectedZone === "bottom-left" && chosenDive === "bottom-left") ||
+      (selectedZone === "top-right" && chosenDive === "top-right") ||
+      (selectedZone === "bottom-right" && chosenDive === "bottom-right") ||
+      (selectedZone === "center" && (chosenDive === "center-high" || chosenDive === "stay-center"))
+    );
+
+    if (quality === "green") {
+      // Chute no verde (Precisão máxima)
+      if (sameCorner) {
+        if (Math.random() < 0.22) {
+          outcomeType = "saved";
+          isGoal = false;
+          desc = `MILAGRE! ${oppGk.name} voou no ângulo e tocou com a ponta dos dedos!`;
+        } else {
+          outcomeType = "goal";
+          isGoal = true;
+          desc = `GOLAÇO INDEFENSÁVEL! ${presidentName} acertou em cheio na ${targetConfig.label}! O goleiro até pulou certo, mas a força e precisão foram perfeitas!`;
+        }
+      } else {
+        outcomeType = "goal";
+        isGoal = true;
+        desc = `GOOOOOOOL! Cobrança perfeita no verde! ${presidentName} deslocou completamente ${oppGk.name}!`;
+      }
+    } else if (quality === "yellow") {
+      // Chute no amarelo (Bom)
+      if (sameCorner) {
+        if (Math.random() < 0.65) {
+          outcomeType = "saved";
+          isGoal = false;
+          desc = `DEFENDEU! ${oppGk.name} adivinhou o canto e espalmou a batida firme de ${presidentName}!`;
+        } else {
+          outcomeType = "goal";
+          isGoal = true;
+          desc = `GOOOOL! ${presidentName} mandou firme na ${targetConfig.label}, o goleiro tocou de raspão mas a bola estufou as redes!`;
+        }
+      } else {
+        outcomeType = "goal";
+        isGoal = true;
+        desc = `GOOOL! ${presidentName} bateu na ${targetConfig.label} com o goleiro caindo para o outro lado!`;
+      }
+    } else {
+      // Chute no vermelho (Erro no tempo)
+      const woodworkChance = targetConfig.postRisk * 2.2;
+      if (Math.random() < woodworkChance) {
+        outcomeType = "woodwork";
+        isGoal = false;
+        desc = `💥 NA TRAVE! ${presidentName} errou o tempo da batida e a bola explodiu no poste!`;
+      } else if (sameCorner || Math.random() < 0.62) {
+        outcomeType = "saved";
+        isGoal = false;
+        desc = `DEFESA TRANQUILA! Batida sem força no vermelho, ${oppGk.name} segurou firme nos braços!`;
+      } else {
+        outcomeType = "goal";
+        isGoal = true;
+        desc = `GOOOOL! Mesmo pegando mal na bola, ${presidentName} contou com a sorte e ela morreu no canto da meta!`;
+      }
+    }
+
+    // 3. Efeitos sonoros sincronizados (~650ms)
+    setTimeout(() => {
+      if (outcomeType === "goal") {
+        penaltySound.playNet();
+        penaltySound.playCheer();
+      } else if (outcomeType === "woodwork") {
+        penaltySound.playWoodwork();
+      } else {
+        penaltySound.playGloveSave();
+      }
+
+      setOutcome({
+        isGoal,
+        outcomeType,
+        shotZone: selectedZone,
+        shotStyle: quality === "green" ? "bomba" : "colocada",
+        description: desc
+      });
+      setIsKicking(false);
+    }, 650);
+  }, [isKicking, outcome, stopBarAnimation, selectedZone, oppGk, presidentName]);
+
+  // Atalho de Teclado: Espaço ou Enter para Bater
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        handleKick();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKick]);
+
+  // Temporizador de auto-avanço após cobrança
   useEffect(() => {
     if (outcome && !isPracticeMode) {
-      setAutoContinueSec(4);
+      setAutoContinueSec(6);
       const interval = setInterval(() => {
         setAutoContinueSec(prev => {
           if (prev === null || prev <= 1) {
@@ -508,161 +777,11 @@ export function PresidentPenaltyModal({
     }
   }, [outcome, isPracticeMode, onResolve]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isMounted) return null;
 
   const handleToggleMute = () => {
     const muted = penaltySound.toggleMute();
     setIsMuted(muted);
-  };
-
-  const executeShot = (zoneId: ShotZone, style: ShotStyle) => {
-    if (isKicking || outcome) return;
-    setIsKicking(true);
-
-    // Som do chute
-    penaltySound.playKick(style === "colocada" ? "normal" : style);
-
-    // 1. Decisão do Goleiro Adversário
-    const possibleDives = [
-      "top-left",
-      "bottom-left",
-      "top-right",
-      "bottom-right",
-      "center-high",
-      "stay-center"
-    ];
-
-    // OVR do goleiro influencia a chance de adivinhar o lado certo
-    const gkPredictSkill = Math.min(0.55, 0.28 + (oppGk.ovr - 70) * 0.008);
-    const gkGuessesSide = Math.random() < gkPredictSkill;
-
-    let chosenDive: string;
-    if (gkGuessesSide) {
-      if (zoneId === "top-left") chosenDive = Math.random() < 0.65 ? "top-left" : "bottom-left";
-      else if (zoneId === "bottom-left") chosenDive = Math.random() < 0.65 ? "bottom-left" : "top-left";
-      else if (zoneId === "top-right") chosenDive = Math.random() < 0.65 ? "top-right" : "bottom-right";
-      else if (zoneId === "bottom-right") chosenDive = Math.random() < 0.65 ? "bottom-right" : "top-right";
-      else if (zoneId === "top-center") chosenDive = Math.random() < 0.5 ? "center-high" : "stay-center";
-      else chosenDive = "stay-center";
-    } else {
-      const wrongDives = possibleDives.filter(d => {
-        if (zoneId.includes("left")) return d.includes("right") || d.includes("center");
-        if (zoneId.includes("right")) return d.includes("left") || d.includes("center");
-        return d.includes("left") || d.includes("right");
-      });
-      chosenDive = wrongDives[Math.floor(Math.random() * wrongDives.length)] || "bottom-right";
-    }
-
-    setGkDive(chosenDive);
-
-    // 2. Cálculo do Resultado
-    const targetConfig = SHOT_ZONES.find(z => z.id === zoneId)!;
-    let outcomeType: "goal" | "saved" | "woodwork" = "goal";
-    let isGoal = true;
-    let desc = "";
-
-    const woodworkChance = style === "bomba" ? targetConfig.postRisk * 1.5 : targetConfig.postRisk * 0.7;
-    const hitWoodwork = Math.random() < woodworkChance;
-
-    if (hitWoodwork) {
-      outcomeType = "woodwork";
-      isGoal = false;
-      desc = `💥 NA TRAVE! ${presidentName} bateu na ${targetConfig.label}, mas a bola explodiu no poste e saiu!`;
-    } else {
-      const sameCorner = (
-        (zoneId === "top-left" && chosenDive === "top-left") ||
-        (zoneId === "bottom-left" && chosenDive === "bottom-left") ||
-        (zoneId === "top-right" && chosenDive === "top-right") ||
-        (zoneId === "bottom-right" && chosenDive === "bottom-right") ||
-        (zoneId === "top-center" && chosenDive === "center-high") ||
-        (zoneId === "bottom-center" && chosenDive === "stay-center")
-      );
-
-      const sameSideDifferentHeight = (
-        (zoneId === "top-left" && chosenDive === "bottom-left") ||
-        (zoneId === "bottom-left" && chosenDive === "top-left") ||
-        (zoneId === "top-right" && chosenDive === "bottom-right") ||
-        (zoneId === "bottom-right" && chosenDive === "top-right")
-      );
-
-      if (sameCorner) {
-        if (style === "cavadinha") {
-          outcomeType = "saved";
-          isGoal = false;
-          desc = `DEFENDEU! ${oppGk.name} leu a cavadinha e segurou firme nos braços!`;
-        } else if (style === "bomba") {
-          const powerThrough = Math.random() < 0.42;
-          if (powerThrough) {
-            outcomeType = "goal";
-            isGoal = true;
-            desc = `GOOOOOL! Uma verdadeira BOMBA de ${presidentName}! O goleiro tocou mas a força do chute estufou as redes!`;
-          } else {
-            outcomeType = "saved";
-            isGoal = false;
-            desc = `GRANDE DEFESA! ${oppGk.name} espalmou a bomba na ${targetConfig.label}!`;
-          }
-        } else {
-          const saveChance = Math.min(0.72, 0.45 + (oppGk.ovr - 70) * 0.015);
-          if (Math.random() < saveChance) {
-            outcomeType = "saved";
-            isGoal = false;
-            desc = `ESPETACULAR! ${oppGk.name} voou no canto e buscou com a ponta dos dedos!`;
-          } else {
-            outcomeType = "goal";
-            isGoal = true;
-            desc = `GOLAÇO! Cobrança perfeita na bochecha da rede, sem chances para o goleiro!`;
-          }
-        }
-      } else if (sameSideDifferentHeight) {
-        if (zoneId.includes("top")) {
-          outcomeType = "goal";
-          isGoal = true;
-          desc = `GOOOOOOOL! ${presidentName} mandou na gaveta enquanto o goleiro caiu por baixo!`;
-        } else {
-          const luckyLegSave = Math.random() < 0.22;
-          if (luckyLegSave) {
-            outcomeType = "saved";
-            isGoal = false;
-            desc = `SALVOU COM O PÉ! O goleiro esticou a perna no reflexo e desviou!`;
-          } else {
-            outcomeType = "goal";
-            isGoal = true;
-            desc = `GOOOL! Chute rasteiro com precisão, tirando totalmente do alcance do goleiro!`;
-          }
-        }
-      } else {
-        if (style === "cavadinha") {
-          outcomeType = "goal";
-          isGoal = true;
-          desc = `QUE PINTURA! ${presidentName} cavou com frieza absurda com o goleiro no chão! Pura classe!`;
-        } else {
-          outcomeType = "goal";
-          isGoal = true;
-          desc = `GOOOOOL! Goleiro para um lado, bola para o outro com categoria!`;
-        }
-      }
-    }
-
-    // 3. Efeitos sonoros sincronizados (~700ms)
-    setTimeout(() => {
-      if (outcomeType === "goal") {
-        penaltySound.playNet();
-        penaltySound.playCheer();
-      } else if (outcomeType === "woodwork") {
-        penaltySound.playWoodwork();
-      } else {
-        penaltySound.playGloveSave();
-      }
-
-      setOutcome({
-        isGoal,
-        outcomeType,
-        shotZone: zoneId,
-        shotStyle: style,
-        description: desc
-      });
-      setIsKicking(false);
-    }, 700);
   };
 
   const handleConfirmAndClose = () => {
@@ -675,15 +794,15 @@ export function PresidentPenaltyModal({
 
   const currentZoneConfig = SHOT_ZONES.find(z => z.id === selectedZone)!;
 
-  // Animação e Física Explosiva do Goleiro
+  // Animação e Física Real do Goleiro
   const getKeeperTransform = () => {
     if (gkDive === "idle") return "translate(-50%, -50%) scale(1)";
-    if (gkDive === "top-left") return "translate(-122%, -108%) rotate(-45deg) scale(1.06)";
-    if (gkDive === "bottom-left") return "translate(-126%, -18%) rotate(-66deg) scale(1.02)";
-    if (gkDive === "top-right") return "translate(22%, -108%) rotate(45deg) scale(1.06)";
-    if (gkDive === "bottom-right") return "translate(26%, -18%) rotate(66deg) scale(1.02)";
-    if (gkDive === "center-high") return "translate(-50%, -116%) scale(1.08)";
-    if (gkDive === "stay-center") return "translate(-50%, -44%) scale(1.05)";
+    if (gkDive === "top-left") return "translate(-112%, -84%) rotate(-36deg) scale(1.04)";
+    if (gkDive === "bottom-left") return "translate(-116%, -12%) rotate(-54deg) scale(1.02)";
+    if (gkDive === "top-right") return "translate(12%, -84%) rotate(36deg) scale(1.04)";
+    if (gkDive === "bottom-right") return "translate(16%, -12%) rotate(54deg) scale(1.02)";
+    if (gkDive === "center-high") return "translate(-50%, -92%) scale(1.06)";
+    if (gkDive === "stay-center") return "translate(-50%, -46%) scale(1.03)";
     return "translate(-50%, -50%)";
   };
 
@@ -703,9 +822,19 @@ export function PresidentPenaltyModal({
     if (outcome && outcome.outcomeType === "woodwork") {
       return {
         left: `${target.x}%`,
-        top: `${Math.max(12, target.y - 4)}%`,
+        top: `${Math.max(10, target.y - 6)}%`,
         transform: "translate(-50%, -50%) scale(0.48) rotate(720deg)",
         transition: "all 0.65s cubic-bezier(0.12, 0.8, 0.32, 1)"
+      };
+    }
+
+    if (outcome && outcome.outcomeType === "saved") {
+      const savedCoords = getSavedBallCoords(gkDive);
+      return {
+        left: `${savedCoords.x}%`,
+        top: `${savedCoords.y}%`,
+        transform: "translate(-50%, -50%) scale(0.44) rotate(720deg)",
+        transition: "all 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
       };
     }
 
@@ -717,11 +846,11 @@ export function PresidentPenaltyModal({
     };
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md select-none overflow-y-auto animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl bg-[#090a0f] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col my-auto ring-1 ring-white/5">
+      <div className="relative w-full max-w-2xl bg-[#090a0f] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col my-auto ring-1 ring-white/5">
         
-        {/* HEADER: MINIMALISTA & DIRETO */}
+        {/* HEADER OFICIAL KINGS LEAGUE (EXATAMENTE COMO NA IMAGEM 2) */}
         <div className="px-4 sm:px-6 py-3 bg-white/[0.02] border-b border-white/[0.07] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
@@ -756,20 +885,12 @@ export function PresidentPenaltyModal({
               {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
             </button>
 
-            {/* Sair ou Pular */}
-            {isPracticeMode ? (
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-[11px] font-semibold text-zinc-400 hover:text-white px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors btn-press"
-              >
-                Sair
-              </button>
-            ) : onSkip && !outcome && (
+            {/* Pular Cobrança */}
+            {onSkip && !outcome && (
               <button
                 type="button"
                 onClick={onSkip}
-                className="text-[11px] font-medium text-zinc-400 hover:text-white px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                className="text-[11px] font-medium text-zinc-400 hover:text-white px-2.5 py-1 rounded-lg hover:bg-white/5 transition-colors border border-white/5"
                 title="Pular cobrança"
               >
                 Pular
@@ -778,13 +899,15 @@ export function PresidentPenaltyModal({
           </div>
         </div>
 
-        {/* ARENA: A TRAVE, A BOLA E O GOLEIRO */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* ARENA: A TRAVE DE VERDADE, A BOLA E O GOLEIRO (SEM NEON)       */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] max-h-[340px] bg-gradient-to-b from-[#06090e] via-[#07130f] to-[#041009] overflow-hidden select-none border-b border-white/[0.07]">
-          {/* Luzes ambiente sutis */}
+          {/* Luzes ambiente sutis de estádio */}
           <div className="absolute top-0 left-1/4 w-72 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute top-0 right-1/4 w-72 h-36 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Gramado / Perspectiva */}
+          {/* Gramado com profundidade e perspectiva */}
           <div
             className="absolute inset-0 pointer-events-none opacity-50"
             style={{
@@ -792,17 +915,17 @@ export function PresidentPenaltyModal({
             }}
           />
 
-          {/* Marca penal na cal */}
+          {/* Ponto penal na cal oficial */}
           <div className="absolute top-[86%] left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)] pointer-events-none" />
 
-          {/* ═══════════════════════════════════════════════ */}
-          {/* A TRAVE (GOALPOST & NET) */}
-          {/* ═══════════════════════════════════════════════ */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* A TRAVE DE VERDADE (TUBULAR METÁLICA COM REDE 3D)              */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           <div className="absolute top-7 sm:top-8 inset-x-6 sm:inset-x-12 bottom-12 z-10 pointer-events-none">
-            {/* Sombra da Trave no Chão */}
+            {/* Sombra da Trave no Gramado */}
             <div className="absolute bottom-0 inset-x-2 h-3 bg-black/60 blur-md rounded-full pointer-events-none" />
 
-            {/* Rede do Gol com Profundidade */}
+            {/* Rede do Gol com Profundidade 3D */}
             <svg
               className={cn(
                 "absolute inset-0 w-full h-full pointer-events-none transition-transform duration-300",
@@ -838,7 +961,7 @@ export function PresidentPenaltyModal({
               <line x1="20" y1="285" x2="580" y2="285" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" />
             </svg>
 
-            {/* Estrutura Tubular Branca da Trave */}
+            {/* Estrutura Tubular Branca da Trave Real (Travessão e Traves) */}
             <div className={cn(
               "absolute inset-0 pointer-events-none",
               outcome?.outcomeType === "woodwork" && "animate-bounce"
@@ -870,30 +993,27 @@ export function PresidentPenaltyModal({
             </div>
           </div>
 
-          {/* ═══════════════════════════════════════════════ */}
-          {/* O GOLEIRO ADVERSÁRIO (PROFESSIONAL ATHLETE FIGURE) */}
-          {/* ═══════════════════════════════════════════════ */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* O GOLEIRO ADVERSÁRIO (COM LUVAS E CORPO DE ATLETA REAL)        */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           <div
             className="absolute z-20 pointer-events-none transition-transform duration-500 ease-out"
             style={{
               left: "50%",
-              top: "54%",
+              top: "50%",
               transform: getKeeperTransform(),
-              transformOrigin: "center 85%"
+              transformOrigin: "center 88%"
             }}
           >
             <GoalkeeperAthlete
               dive={gkDive}
-              gkName={oppGk.name}
-              gkOvr={oppGk.ovr}
-              photo={oppGk.photo}
               teamLogo={oppGk.teamLogo}
             />
           </div>
 
-          {/* ═══════════════════════════════════════════════ */}
-          {/* ZONAS DE MIRA MINIMALISTAS NO GOL */}
-          {/* ═══════════════════════════════════════════════ */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* OS 5 ALVOS DE MIRA NO GOL (EXATAMENTE COMO NA IMAGEM 2)        */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           {!isKicking && !outcome && (
             <div className="absolute top-7 sm:top-8 inset-x-6 sm:inset-x-12 bottom-12 z-30 pointer-events-none">
               {SHOT_ZONES.map(zone => {
@@ -913,16 +1033,15 @@ export function PresidentPenaltyModal({
                         setSelectedZone(zone.id);
                         penaltySound.playKick("cavadinha");
                       }}
-                      onDoubleClick={() => executeShot(zone.id, selectedStyle)}
                       className={cn(
-                        "relative w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-200 focus:outline-none cursor-pointer group btn-press",
+                        "relative w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-200 focus:outline-none cursor-pointer group",
                         isSelected
-                          ? "bg-amber-400/20 border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)] scale-105"
+                          ? "bg-amber-400/20 border-2 border-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.6)] scale-105"
                           : "bg-black/30 hover:bg-white/15 border border-white/20 hover:border-white/50"
                       )}
                       title={`${zone.label} • Clique para mirar`}
                     >
-                      {/* Retícula Crosshair */}
+                      {/* Retícula Crosshair ou Ponto Ativo Dourado */}
                       <div className={cn(
                         "transition-all duration-150 flex items-center justify-center",
                         isSelected ? "text-amber-300 scale-110" : "text-white/40 group-hover:text-white/80"
@@ -935,9 +1054,9 @@ export function PresidentPenaltyModal({
                       </div>
                     </button>
 
-                    {/* Micro Tag de Indicação Apenas no Alvo Ativo */}
+                    {/* Badge Dourada Elegante Apenas no Alvo Ativo */}
                     {isSelected && (
-                      <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/90 border border-amber-400/40 text-[9px] font-mono font-bold text-amber-300 uppercase whitespace-nowrap shadow-md pointer-events-none animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-black/90 border border-amber-400/40 text-[9px] font-mono font-bold text-amber-300 uppercase whitespace-nowrap shadow-md pointer-events-none animate-in fade-in zoom-in-95 duration-150">
                         {zone.label}
                       </div>
                     )}
@@ -947,14 +1066,14 @@ export function PresidentPenaltyModal({
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════════ */}
-          {/* A BOLA NA CAL */}
-          {/* ═══════════════════════════════════════════════ */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* A BOLA OFICIAL KINGS LEAGUE NA MARCA DO PÊNALTI               */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           <div
-            className="absolute z-40 pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.9)]"
+            className="absolute z-40 pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.95)]"
             style={getBallStyle()}
           >
-            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-zinc-900 shadow-xl flex items-center justify-center overflow-hidden">
+            <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white border-2 border-zinc-900 shadow-2xl flex items-center justify-center overflow-hidden">
               <svg className="w-full h-full" viewBox="0 0 100 100">
                 <polygon points="50,30 68,43 61,65 39,65 32,43" fill="#18181b" stroke="#f59e0b" strokeWidth="2" />
                 <path d="M 50 30 L 50 0 M 68 43 L 100 35 M 61 65 L 85 100 M 39 65 L 15 100 M 32 43 L 0 35" stroke="#18181b" strokeWidth="3" />
@@ -962,165 +1081,200 @@ export function PresidentPenaltyModal({
               </svg>
             </div>
           </div>
+        </div>
 
-          {/* DIALOG DE RESULTADO */}
-          {outcome && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="max-w-sm w-full p-5 rounded-2xl bg-[#0c0d12] border border-white/15 text-center shadow-2xl space-y-3 transform transition-all duration-200 animate-in zoom-in-95">
-                {outcome.isGoal ? (
-                  <div className="space-y-1">
-                    <div className="w-12 h-12 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(251,191,36,0.5)]">
-                      <Sparkles className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-amber-300 uppercase tracking-tight">
-                      GOOOOOOL!
-                    </h3>
-                    <p className="text-[11px] font-semibold text-white/90 uppercase tracking-wider">
-                      {presidentName} converteu com perfeição!
-                    </p>
-                  </div>
-                ) : outcome.outcomeType === "woodwork" ? (
-                  <div className="space-y-1">
-                    <div className="w-12 h-12 rounded-xl bg-orange-500/20 border border-orange-400/40 text-orange-400 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(249,115,22,0.4)]">
-                      <ShieldAlert className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-orange-400 uppercase tracking-tight">
-                      NA TRAVE!
-                    </h3>
-                    <p className="text-[11px] font-semibold text-white/90 uppercase tracking-wider">
-                      A bola bateu no poste e saiu!
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-400 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(244,63,94,0.4)]">
-                      <XCircle className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-rose-400 uppercase tracking-tight">
-                      DEFENDEU O GOLEIRO!
-                    </h3>
-                    <p className="text-[11px] font-semibold text-white/90 uppercase tracking-wider">
-                      {oppGk.name} interceptou a cobrança!
-                    </p>
-                  </div>
-                )}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* SEÇÃO INFERIOR: BARRA DE TIMING + BATER OU RESULTADO           */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {outcome === null ? (
+          <div className="p-4 sm:p-5 bg-[#07080c] space-y-3.5">
+            {/* A BARRA DE TIMING PADRONIZADA COM AS CORES OFICIAIS DO PROJETO */}
+            <div className="w-[94%] sm:w-[86%] max-w-sm sm:max-w-md mx-auto">
+              <div
+                style={{
+                  height: "28px",
+                  borderRadius: "9999px",
+                  border: "1px solid rgba(255, 255, 255, 0.18)",
+                  backgroundColor: "rgba(10, 11, 16, 0.95)",
+                  boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.5)",
+                  display: "flex",
+                  alignItems: "stretch",
+                  position: "relative",
+                  overflow: "hidden",
+                  userSelect: "none"
+                }}
+              >
+                {/* Segmento Rose Oficial Esquerdo (0% a 22%) */}
+                <div
+                  style={{
+                    width: "22%",
+                    background: "linear-gradient(180deg, rgba(244, 63, 94, 0.85) 0%, rgba(190, 18, 60, 0.92) 100%)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)"
+                  }}
+                  className="h-full"
+                />
+                <div style={{ width: "1px", backgroundColor: "rgba(255, 255, 255, 0.3)" }} className="h-full z-10" />
 
-                <p className="text-[11px] text-zinc-300 leading-relaxed font-medium bg-white/[0.03] p-2.5 rounded-xl border border-white/[0.06]">
-                  {outcome.description}
-                </p>
+                {/* Segmento Dourado Oficial Kings League Esquerdo (22% a 42%) */}
+                <div
+                  style={{
+                    width: "20%",
+                    background: "linear-gradient(180deg, rgba(251, 191, 36, 0.9) 0%, rgba(244, 175, 35, 0.95) 100%)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.3)"
+                  }}
+                  className="h-full"
+                />
+                <div style={{ width: "1px", backgroundColor: "rgba(255, 255, 255, 0.3)" }} className="h-full z-10" />
 
-                <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
-                  {isPracticeMode ? (
-                    <>
-                      <Button
-                        variant="brand"
-                        onClick={() => {
-                          setOutcome(null);
-                          setIsKicking(false);
-                          setGkDive("idle");
-                        }}
-                        className="btn-press w-full sm:w-auto text-xs font-black uppercase tracking-wider rounded-xl h-9 px-4"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Bater Novamente
-                      </Button>
-                      <Button
-                        variant="glass"
-                        onClick={onClose}
-                        className="btn-press w-full sm:w-auto text-xs font-semibold uppercase tracking-wider rounded-xl h-9 px-4 border-white/10"
-                      >
-                        Concluir Treino
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="brand"
-                      onClick={handleConfirmAndClose}
-                      className="btn-press w-full text-xs font-black uppercase tracking-wider rounded-xl h-10 px-5 shadow-lg shadow-amber-400/25"
-                    >
-                      Continuar Partida {autoContinueSec !== null && `(${autoContinueSec}s)`}
-                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  )}
+                {/* Segmento Esmeralda Oficial Central (Sweet Spot: 42% a 58%) */}
+                <div
+                  style={{
+                    width: "16%",
+                    background: "linear-gradient(180deg, rgba(52, 211, 153, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(16, 185, 129, 0.5)",
+                    position: "relative"
+                  }}
+                  className="h-full"
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" />
+                </div>
+                <div style={{ width: "1px", backgroundColor: "rgba(255, 255, 255, 0.3)" }} className="h-full z-10" />
+
+                {/* Segmento Dourado Oficial Kings League Direito (58% a 78%) */}
+                <div
+                  style={{
+                    width: "20%",
+                    background: "linear-gradient(180deg, rgba(251, 191, 36, 0.9) 0%, rgba(244, 175, 35, 0.95) 100%)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.3)"
+                  }}
+                  className="h-full"
+                />
+                <div style={{ width: "1px", backgroundColor: "rgba(255, 255, 255, 0.3)" }} className="h-full z-10" />
+
+                {/* Segmento Rose Oficial Direito (78% a 100%) */}
+                <div
+                  style={{
+                    width: "22%",
+                    background: "linear-gradient(180deg, rgba(244, 63, 94, 0.85) 0%, rgba(190, 18, 60, 0.92) 100%)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)"
+                  }}
+                  className="h-full"
+                />
+
+                {/* Cursor Móvel de Precisão */}
+                <div
+                  ref={cursorRef}
+                  style={{
+                    position: "absolute",
+                    top: "-2px",
+                    bottom: "-2px",
+                    width: "3px",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 0 10px 2px rgba(255, 255, 255, 0.95), 0 0 6px 1px rgba(244, 175, 35, 0.8)",
+                    zIndex: 30,
+                    pointerEvents: "none",
+                    borderRadius: "9999px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    left: frozenPos !== null ? `${frozenPos}%` : "50%"
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "9px",
+                      height: "17px",
+                      borderRadius: "3px",
+                      backgroundColor: "#ffffff",
+                      boxShadow: "0 0 8px rgba(255, 255, 255, 0.9), 0 2px 4px rgba(0, 0, 0, 0.7)",
+                      border: "1px solid rgba(0, 0, 0, 0.25)"
+                    }}
+                  />
                 </div>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* CONTROLES: DOCK COMPACTO E UNIFICADO */}
-        <div className="p-3 sm:p-4 bg-[#07080c] flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Alvo Atual */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-amber-400 shrink-0">
-              <Target className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[9px] text-zinc-400 uppercase tracking-wider block font-semibold">
-                Alvo Selecionado
-              </span>
-              <span className="text-xs font-bold text-white uppercase tracking-tight block truncate">
-                {currentZoneConfig.label}
-              </span>
+            {/* DOCK DE CONTROLES: ALVO SELECIONADO E BOTÃO BATER PÊNALTI */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+              {/* Alvo Selecionado */}
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-amber-400 shrink-0">
+                  <Target className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[9px] text-zinc-400 uppercase tracking-wider block font-semibold">
+                    Alvo Selecionado
+                  </span>
+                  <span className="text-xs font-bold text-white uppercase tracking-tight block truncate">
+                    {currentZoneConfig.label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Botão de Cobrança Proeminente Dourado */}
+              <button
+                type="button"
+                onClick={handleKick}
+                disabled={isKicking}
+                className={cn(
+                  "w-full sm:w-56 h-11 bg-[#facc15] hover:bg-[#eab308] active:scale-[0.98] text-black font-black text-sm tracking-wider rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_4px_22px_rgba(250,204,21,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed uppercase"
+                )}
+              >
+                <Zap className="w-4 h-4 fill-black" />
+                {isKicking ? "CHUTANDO..." : "BATER PÊNALTI"}
+              </button>
             </div>
           </div>
+        ) : (
+          /* PAINEL DE RESULTADO: CAMPO CONTINUA 100% VISÍVEL */
+          <div className="p-4 sm:p-5 bg-[#07080c] border-t border-white/[0.07] animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Narração e Identificação da Jogada */}
+              <div className="text-center sm:text-left space-y-1">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <span
+                    className={cn(
+                      "text-[11px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border",
+                      outcome.isGoal
+                        ? "bg-emerald-500/15 border-emerald-400/30 text-emerald-400"
+                        : outcome.outcomeType === "woodwork"
+                        ? "bg-amber-500/15 border-amber-400/30 text-amber-400"
+                        : "bg-rose-500/15 border-rose-400/30 text-rose-400"
+                    )}
+                  >
+                    {outcome.isGoal ? "GOL!" : outcome.outcomeType === "woodwork" ? "NA TRAVE" : "DEFESA"}
+                  </span>
+                  <span className="text-xs font-semibold text-white/90">
+                    {outcome.isGoal
+                      ? `${presidentName} converteu com perfeição`
+                      : outcome.outcomeType === "woodwork"
+                      ? "A bola bateu no poste e saiu"
+                      : `${oppGk.name} interceptou a cobrança`}
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-300 leading-snug font-medium max-w-sm">
+                  {outcome.description}
+                </p>
+              </div>
 
-          {/* Segmented: Estilo do Chute */}
-          <div className="flex items-center gap-1 bg-black/50 border border-white/10 p-1 rounded-xl w-full sm:w-auto justify-between sm:justify-start">
-            <button
-              type="button"
-              disabled={isKicking || outcome !== null}
-              onClick={() => setSelectedStyle("colocada")}
-              className={cn(
-                "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 btn-press disabled:opacity-50",
-                selectedStyle === "colocada"
-                  ? "bg-white/15 text-white shadow-sm border border-white/20"
-                  : "text-zinc-400 hover:text-white"
-              )}
-            >
-              <Target className="w-3 h-3 text-emerald-400" /> Colocada
-            </button>
-
-            <button
-              type="button"
-              disabled={isKicking || outcome !== null}
-              onClick={() => setSelectedStyle("bomba")}
-              className={cn(
-                "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 btn-press disabled:opacity-50",
-                selectedStyle === "bomba"
-                  ? "bg-white/15 text-white shadow-sm border border-white/20"
-                  : "text-zinc-400 hover:text-white"
-              )}
-            >
-              <Flame className="w-3 h-3 text-orange-400" /> Bomba
-            </button>
-
-            <button
-              type="button"
-              disabled={isKicking || outcome !== null}
-              onClick={() => setSelectedStyle("cavadinha")}
-              className={cn(
-                "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 btn-press disabled:opacity-50",
-                selectedStyle === "cavadinha"
-                  ? "bg-amber-400 text-black font-black shadow-sm"
-                  : "text-zinc-400 hover:text-white"
-              )}
-            >
-              <Crown className="w-3 h-3 text-amber-300" /> Cavadinha
-            </button>
+              {/* Botão Oficial de Continuação */}
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-center">
+                <Button
+                  variant="brand"
+                  onClick={handleConfirmAndClose}
+                  className="btn-press w-full sm:w-auto text-xs font-bold uppercase tracking-wider rounded-xl h-10 px-6 shadow-lg shadow-amber-400/25"
+                >
+                  Continuar Partida {autoContinueSec !== null && autoContinueSec > 0 && `(${autoContinueSec}s)`}
+                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
+              </div>
+            </div>
           </div>
+        )}
 
-          {/* Botão de Chute */}
-          <Button
-            variant="brand"
-            disabled={isKicking || outcome !== null}
-            onClick={() => executeShot(selectedZone, selectedStyle)}
-            className="w-full sm:w-auto px-6 h-10 text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-amber-400/20 btn-press shrink-0 flex items-center justify-center gap-2"
-          >
-            <Zap className="w-3.5 h-3.5 fill-current" />
-            {isKicking ? "CHUTANDO..." : "BATER PÊNALTI"}
-          </Button>
-        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
