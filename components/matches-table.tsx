@@ -98,7 +98,7 @@ export default function MatchesTable({
     let bracket: any = null
     try {
       if (regularSeasonComplete && standings && standings.length >= 7 && teams && Object.keys(teams).length >= 7) {
-        bracket = generatePlayoffBracket(standings, teams, rounds, playoffs)
+        bracket = generatePlayoffBracket(standings, teams, rounds, playoffs, leagueId)
       } else if (regularSeasonComplete && rounds.length > 0 && teams && Object.keys(teams).length >= 7) {
         const standingsObj = calculateStandings(rounds, teams, [])
         let standingsArray = (Object.values(standingsObj).flat() as TeamStanding[])
@@ -109,7 +109,7 @@ export default function MatchesTable({
           return true
         })
         if (regularSeasonComplete && standingsArray.length >= 7) {
-          bracket = generatePlayoffBracket(standingsArray, teams, rounds, playoffs)
+          bracket = generatePlayoffBracket(standingsArray, teams, rounds, playoffs, leagueId)
         }
       }
     } catch (e) {
@@ -123,13 +123,13 @@ export default function MatchesTable({
 
         const simStandings = getSimulatedStandings()
         if (regularSeasonComplete && simStandings && Array.isArray(simStandings) && simStandings.length >= 7) {
-          bracket = generatePlayoffBracket(simStandings, teams, rounds, playoffs)
+          bracket = generatePlayoffBracket(simStandings, teams, rounds, playoffs, leagueId)
         }
       } catch {}
     }
 
     return bracket
-  }, [standings, rounds, teams, playoffs, customBracket, regularSeasonComplete])
+  }, [standings, rounds, teams, playoffs, customBracket, regularSeasonComplete, leagueId])
 
   // Mapeamento confiável de times para seus respectivos grupos (apenas quando houver grupos A e B)
   const teamGroupMap = useMemo(() => {

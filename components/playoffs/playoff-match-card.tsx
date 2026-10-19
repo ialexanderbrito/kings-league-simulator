@@ -46,6 +46,10 @@ export function PlayoffMatchCard({
         return { label: `${t.playoffs.quartersAbbr} 3` }
       case "qf4":
         return { label: `${t.playoffs.quartersAbbr} 4` }
+      case "lc1":
+        return { label: `${t.playoffs.lastChance} 1` }
+      case "lc2":
+        return { label: `${t.playoffs.lastChance} 2` }
       case "pi1":
       case "pi2":
         return { label: t.playoffs.playIn }
@@ -57,7 +61,7 @@ export function PlayoffMatchCard({
         return { label: t.playoffs.grandFinal }
       default:
         return {
-          label: stage === 'playin' ? t.playoffs.playIn : stage === 'quarterfinal' ? t.playoffs.quartersAbbr : stage === 'semifinal' ? t.playoffs.semiAbbr : t.playoffs.finalAbbr,
+          label: stage === 'playin' ? (match.id.startsWith('lc') ? t.playoffs.lastChance : t.playoffs.playIn) : stage === 'quarterfinal' ? t.playoffs.quartersAbbr : stage === 'semifinal' ? t.playoffs.semiAbbr : t.playoffs.finalAbbr,
         }
     }
   }
@@ -67,7 +71,13 @@ export function PlayoffMatchCard({
       return { title: t.playoffs.winnerQuarter1 }
     }
     if (match.id === "qf1" && side === "away") {
+      if (hasTwoGroups) {
+        return { title: t.playoffs.winnerLastChance2 }
+      }
       return { title: t.playoffs.winnerPlayIn1 }
+    }
+    if (match.id === "qf2" && side === "away" && hasTwoGroups) {
+      return { title: t.playoffs.winnerLastChance1 }
     }
     if (match.id === "qf4" && side === "home") {
       return { title: t.playoffs.winnerPlayIn2 }
@@ -76,7 +86,7 @@ export function PlayoffMatchCard({
       return { title: t.playoffs.winnerQuarter2 }
     }
     if (match.id === "sf2" && side === "away") {
-      return { title: t.playoffs.winnerQuarter3 }
+      return { title: hasTwoGroups ? t.playoffs.winnerQuarter2 : t.playoffs.winnerQuarter3 }
     }
     if (match.id === "final" && side === "home") {
       return { title: t.playoffs.winnerSemi1 }

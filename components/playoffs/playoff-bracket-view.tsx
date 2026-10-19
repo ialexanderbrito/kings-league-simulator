@@ -3,6 +3,7 @@ import { PlayoffBracket, PlayoffMatch, Team } from "@/types/kings-league";
 import { PlayoffMatchCard } from "./playoff-match-card";
 import { ChampionBanner } from "./champion-banner";
 import { isMexicoQuarterfinalsLocked, isPlayoffMatchFinished, updatePlayoffBracket } from "@/lib/generate-playoff-bracket";
+import { getLeagueQualification } from "@/lib/league-format";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/contexts/locale-context";
@@ -21,6 +22,11 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
   const [localBracket, setLocalBracket] = useState<PlayoffBracket | null>(bracket ?? null);
 
   useEffect(() => setLocalBracket(bracket ?? null), [bracket]);
+
+  const isLastChance =
+    leagueId === "italy" ||
+    (leagueId ? getLeagueQualification(leagueId).groupFormat === "lastChance" : false) ||
+    Boolean(bracket?.playIns?.some((m) => m.id.startsWith("lc")));
 
   // If there's no bracket, show a friendly placeholder to avoid runtime errors
   if (!localBracket) {
@@ -78,7 +84,7 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
   const champion = finalMatch && finalMatch.winnerId ? teams[finalMatch.winnerId] : null;
   const columns = [
     ...playInRounds.map((matches, roundIndex) => ({
-      title: t.playoffs.playIn,
+      title: isLastChance ? t.playoffs.lastChance : t.playoffs.playIn,
       matches,
       stage: "playin" as const,
       playInRound: roundIndex,
@@ -127,14 +133,18 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
                             ? ((column as { playInRound?: number }).playInRound === 0
                               ? (match.order === 1 ? "top-[48px]" : "top-[348px]")
                               : "top-[198px]")
-                            : (match.order === 1 ? "top-[48px]" : match.order === 2 ? "top-[248px]" : "top-[448px]")
+                            : (column.matches.length === 2
+                              ? (match.order === 1 ? "top-[48px]" : "top-[348px]")
+                              : match.order === 1 ? "top-[48px]" : match.order === 2 ? "top-[248px]" : "top-[448px]")
                         ),
                         column.stage === "quarterfinal" && (
-                          match.id === "qf1"
-                            ? "top-[48px]"
-                            : match.id === "qf2"
-                              ? "top-[248px]"
-                              : "top-[448px]"
+                          quarterfinals.length === 2
+                            ? (match.id === "qf1" ? "top-[48px]" : "top-[348px]")
+                            : (match.id === "qf1"
+                              ? "top-[48px]"
+                              : match.id === "qf2"
+                                ? "top-[248px]"
+                                : "top-[448px]")
                         ),
                         column.stage === "semifinal" && (match.id === "sf1" ? "top-[48px]" : "top-[348px]"),
                         column.stage === "final" && "top-[198px]"
@@ -190,7 +200,9 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
               qf1Winner={Boolean(quarterfinals[0]?.winnerId)}
               qf2Winner={Boolean(quarterfinals[1]?.winnerId)}
               qf3Winner={Boolean(quarterfinals[2]?.winnerId)}
+              sf1Ready={Boolean(semifinals[0]?.homeTeamId && semifinals[0]?.awayTeamId)}
               sf2Ready={Boolean(semifinals[1]?.homeTeamId && semifinals[1]?.awayTeamId)}
+              isTwoQuarterfinals={quarterfinals.length === 2}
             />
           </div>
           <div
@@ -212,7 +224,7 @@ export function PlayoffBracketView({ bracket, teams, onBracketUpdate, hasTwoGrou
         <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-[#09090d]/60 backdrop-blur-md px-4 py-3 text-xs text-zinc-400">
           <Info className="h-4 w-4 text-[var(--team-primary)] flex-shrink-0" />
           <span>
-            {t.playoffs.instructions} {hasTwoGroups ? t.playoffs.instructionsGroups : hasPlayIn ? t.playoffs.instructionsPlayIn : t.playoffs.instructionsStandard}
+            {t.playoffs.instructions} {isLastChance ? t.playoffs.instructionsLastChance : hasTwoGroups ? t.playoffs.instructionsGroups : hasPlayIn ? t.playoffs.instructionsPlayIn : t.playoffs.instructionsStandard}
           </span>
         </div>
       </div>
@@ -265,6 +277,63 @@ function PlayInToQuarterConnector({
   matches: PlayoffMatch[];
   quarterfinals: PlayoffMatch[];
 }) {
+  if (matches.length === 2 && quarterfinals.length === 2) {
+    const lc1Active = Boolean(matches[0]?.winnerId);
+    const lc2Active = Boolean(matches[1]?.winnerId);
+    const qf1Ready = Boolean(quarterfinals[0]?.homeTeamId && quarterfinals[0]?.awayTeamId);
+    const qf2Ready = Boolean(quarterfinals[1]?.homeTeamId && quarterfinals[1]?.awayTeamId);
+
+    return (
+      <svg
+        className="h-full w-full overflow-visible"
+        viewBox="0 0 40 600"
+        preserveAspectRatio="none"
+        fill="none"
+      >
+        <defs>
+          <filter id="gold-glow-lc" filterUnits="userSpaceOnUse" x="-10" y="0" width="60" height="600">
+            <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#F4AF23" floodOpacity="0.75" />
+          </filter>
+        </defs>
+
+        {/* LC1 (Y=100) cruza para QF2 (Y=400) */}
+        <path
+          d="M 0 100 H 14 Q 20 100 20 106 V 394 Q 20 400 26 400 H 38"
+          stroke={lc1Active ? "#F4AF23" : "rgba(255,255,255,0.18)"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          filter={lc1Active ? "url(#gold-glow-lc)" : undefined}
+        />
+
+        {/* LC2 (Y=400) cruza para QF1 (Y=100) */}
+        <path
+          d="M 0 400 H 14 Q 20 400 20 394 V 106 Q 20 100 26 100 H 38"
+          stroke={lc2Active ? "#F4AF23" : "rgba(255,255,255,0.18)"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          filter={lc2Active ? "url(#gold-glow-lc)" : undefined}
+        />
+
+        <circle
+          cx="38"
+          cy="100"
+          r="2.5"
+          fill={qf1Ready || lc2Active ? "#F4AF23" : "rgba(255,255,255,0.3)"}
+        />
+        <circle
+          cx="38"
+          cy="400"
+          r="2.5"
+          fill={qf2Ready || lc1Active ? "#F4AF23" : "rgba(255,255,255,0.3)"}
+        />
+      </svg>
+    );
+  }
+
   const sourcePositions = matches.length === 1
     ? [250]
     : matches.length === 2
@@ -322,10 +391,70 @@ interface QuarterToSemiConnectorProps {
   qf1Winner: boolean;
   qf2Winner: boolean;
   qf3Winner: boolean;
+  sf1Ready?: boolean;
   sf2Ready: boolean;
+  isTwoQuarterfinals?: boolean;
 }
 
-function QuarterToSemiConnector({ qf1Winner, qf2Winner, qf3Winner, sf2Ready }: QuarterToSemiConnectorProps) {
+function QuarterToSemiConnector({
+  qf1Winner,
+  qf2Winner,
+  qf3Winner,
+  sf1Ready,
+  sf2Ready,
+  isTwoQuarterfinals,
+}: QuarterToSemiConnectorProps) {
+  if (isTwoQuarterfinals) {
+    return (
+      <svg
+        className="w-full h-full overflow-visible pointer-events-none"
+        viewBox="0 0 40 600"
+        preserveAspectRatio="none"
+        fill="none"
+      >
+        <defs>
+          <filter id="gold-glow-q2" filterUnits="userSpaceOnUse" x="-10" y="0" width="60" height="600">
+            <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#F4AF23" floodOpacity="0.75" />
+          </filter>
+        </defs>
+
+        {/* QF1 direto para SF1 (Y = 100) */}
+        <path
+          d="M 0 100 H 38"
+          stroke={qf1Winner ? "#F4AF23" : "rgba(255,255,255,0.18)"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          filter={qf1Winner ? "url(#gold-glow-q2)" : undefined}
+        />
+        <circle
+          cx="38"
+          cy="100"
+          r="2.5"
+          fill={sf1Ready || qf1Winner ? "#F4AF23" : "rgba(255,255,255,0.3)"}
+        />
+
+        {/* QF2 direto para SF2 (Y = 400) */}
+        <path
+          d="M 0 400 H 38"
+          stroke={qf2Winner ? "#F4AF23" : "rgba(255,255,255,0.18)"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          filter={qf2Winner ? "url(#gold-glow-q2)" : undefined}
+        />
+        <circle
+          cx="38"
+          cy="400"
+          r="2.5"
+          fill={sf2Ready || qf2Winner ? "#F4AF23" : "rgba(255,255,255,0.3)"}
+        />
+      </svg>
+    );
+  }
+
   return (
     <svg
       className="w-full h-full overflow-visible pointer-events-none"
