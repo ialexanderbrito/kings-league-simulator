@@ -55,10 +55,10 @@ export const AVAILABLE_LEAGUES: AvailableLeague[] = [
     countryIso: "it",
     flag: "🇮🇹",
     competitionId: 10,
-    activeSeasonId: 58,
-    activeSeasonName: "Split 2 (2025/26)",
+    activeSeasonId: 68,
+    activeSeasonName: "Kings Cup (2026)",
     seasons: [
-      { id: 58, name: "Kings League Italy 2025/26 Split 2", displayName: "Split 2 (Em Andamento)", isCurrent: true },
+      { id: 68, name: "Kings Cup Italy 2026", displayName: "Kings Cup (2026)", isCurrent: true },
     ],
   },
   {
