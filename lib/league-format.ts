@@ -14,6 +14,45 @@ export function isPlayoffRoundName(value: unknown): boolean {
   return PLAYOFF_ROUND_PATTERN.test(String(value ?? "").trim())
 }
 
+/**
+ * Identifica se uma partida é do formato Challenger (inter-grupos na Kings Cup).
+ * Partidas Challenger NÃO pontuam na tabela dos times nem alteram V-D ou saldo de gols;
+ * servem apenas para definir a vantagem do grupo para vaga direta na semifinal.
+ */
+export function isChallengerMatch(
+  match: {
+    groupName?: string
+    participants?: { homeTeamId: string; awayTeamId: string }
+  },
+  round?: { name?: string },
+  teamGroupMap?: Record<string, string>,
+  hasTwoGroups = true
+): boolean {
+  if (!hasTwoGroups || !match) return false
+
+  const gName = (match.groupName || "").toLowerCase().trim()
+  if (gName === "challenger" || gName.includes("challenger")) return true
+
+  const rName = (round?.name || "").toLowerCase().trim()
+  if (rName.includes("challenger") || rName.includes("supercopa")) return true
+
+  if (teamGroupMap && match.participants) {
+    const homeGroup = teamGroupMap[match.participants.homeTeamId]
+    const awayGroup = teamGroupMap[match.participants.awayTeamId]
+    if (
+      homeGroup &&
+      awayGroup &&
+      homeGroup !== awayGroup &&
+      (homeGroup === "A" || homeGroup === "B") &&
+      (awayGroup === "A" || awayGroup === "B")
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export function getLeagueQualification(leagueId: string): LeagueQualification {
   if (leagueId === "italy" || LAST_CHANCE_GROUP_LEAGUES.has(leagueId)) {
     return { playoffEnd: 4, groupFormat: "lastChance" }

@@ -1,4 +1,6 @@
 import type { Round, Team, TeamStanding } from "@/types/kings-league"
+import { isChallengerMatch } from "./league-format"
+import { determineChallengerAdvantage } from "./generate-playoff-bracket"
 
 type HeadToHeadStats = {
   points: number
@@ -24,10 +26,27 @@ export function calculateStandings(
   );
   const hasTwoGroups = hasStandingGroups || hasRoundGroups;
 
+  // Mapeamento time -> grupo
+  const teamGroupMap: Record<string, string> = {}
+  initialStandings?.forEach((s) => {
+    const g = s.groupName || (s as any).group
+    if (g && (g === "A" || g === "B")) {
+      teamGroupMap[s.id] = g
+    }
+  })
+  rounds?.forEach((r) => {
+    r.matches?.forEach((m) => {
+      if (m.groupName === "A" || m.groupName === "B") {
+        if (!teamGroupMap[m.participants.homeTeamId]) teamGroupMap[m.participants.homeTeamId] = m.groupName
+        if (!teamGroupMap[m.participants.awayTeamId]) teamGroupMap[m.participants.awayTeamId] = m.groupName
+      }
+    })
+  })
+
   // Agrupar partidas por grupo (se for tabela única, todas vão para o grupo Regular)
   const groupMatches: Record<string, Round[]> = {}
   rounds.forEach((round) => {
-    round.matches.forEach((match) => {
+    round.matches?.forEach((match) => {
       const group = hasTwoGroups ? (match.groupName || "A") : "Regular"
       if (!groupMatches[group]) groupMatches[group] = []
       let lastRound = groupMatches[group][groupMatches[group].length - 1]
@@ -57,7 +76,9 @@ export function calculateStandings(
     })
 
     rounds.forEach((round) => {
-      round.matches.forEach((match) => {
+      round.matches?.forEach((match) => {
+        if (isChallengerMatch(match, round, teamGroupMap, hasTwoGroups)) return
+
         const homeId = match.participants.homeTeamId
         const awayId = match.participants.awayTeamId
 
@@ -65,6 +86,9 @@ export function calculateStandings(
 
         const { homeScore, awayScore, homeScoreP, awayScoreP } = match.scores
         if (homeScore === null || awayScore === null) return
+        const hScore = Number(homeScore)
+        const aScore = Number(awayScore)
+        if (isNaN(hScore) || isNaN(aScore)) return
 
         const home = h2hStats[homeId]
         const away = h2hStats[awayId]
@@ -72,22 +96,29 @@ export function calculateStandings(
         home.matches += 1
         away.matches += 1
 
-        home.goalsFor += homeScore
-        home.goalsAgainst += awayScore
-        away.goalsFor += awayScore
-        away.goalsAgainst += homeScore
+        home.goalsFor += hScore
+        home.goalsAgainst += aScore
+        away.goalsFor += aScore
+        away.goalsAgainst += hScore
 
-        if (homeScore > awayScore) {
+        if (hScore > aScore) {
           home.points += 1
-        } else if (homeScore < awayScore) {
+        } else if (aScore > hScore) {
           away.points += 1
         } else {
           // Empate -> checar Shootout
           if (homeScoreP !== null && awayScoreP !== null) {
-            if (homeScoreP > awayScoreP) {
-              home.points += 1
-            } else if (awayScoreP > homeScoreP) {
-              away.points += 1
+            const hP = Number(homeScoreP)
+            const aP = Number(awayScoreP)
+            if (!isNaN(hP) && !isNaN(aP)) {
+              if (hP > aP) {
+                home.points += 1
+              } else if (aP > hP) {
+                away.points += 1
+              } else {
+                home.points += 1
+                away.points += 1
+              }
             } else {
               home.points += 1
               away.points += 1
@@ -127,50 +158,70 @@ export function calculateStandings(
         goalDifference: 0,
         rank: 0,
         positionLegend: (base as any).positionLegend ?? null,
-        groupName: (base as any).groupName || (base as any).group || undefined,
+        groupName: teamGroupMap[id] || (base as any).groupName || (base as any).group || undefined,
       }
     }
   }
 
   // Iterar por todas as partidas e acumular nas estatísticas globais
   rounds.forEach((round) => {
-    round.matches.forEach((match) => {
+    round.matches?.forEach((match) => {
       const { homeTeamId, awayTeamId } = match.participants
-      const { homeScore, awayScore, homeScoreP, awayScoreP } = match.scores
-      if (homeScore === null || awayScore === null) return
 
       ensureTeam(homeTeamId)
       ensureTeam(awayTeamId)
+
+      // ATENÇÃO: Os jogos de Challenger NÃO pontuam e NÃO alteram as estatísticas individuais dos times.
+      // Os times continuam com V-D 0-0, sem saldo de gols e sem pontos.
+      // O jogo Challenger serve exclusivamente para definir qual grupo leva a vaga direta na semifinal.
+      if (isChallengerMatch(match, round, teamGroupMap, hasTwoGroups)) {
+        return
+      }
+
+      const { homeScore, awayScore, homeScoreP, awayScoreP } = match.scores
+      if (homeScore === null || awayScore === null) return
+      const hScore = Number(homeScore)
+      const aScore = Number(awayScore)
+      if (isNaN(hScore) || isNaN(aScore)) return
 
       const home = globalStats[homeTeamId]
       const away = globalStats[awayTeamId]
 
       home.played += 1
       away.played += 1
-      home.goalsFor += homeScore
-      home.goalsAgainst += awayScore
-      away.goalsFor += awayScore
-      away.goalsAgainst += homeScore
+      home.goalsFor += hScore
+      home.goalsAgainst += aScore
+      away.goalsFor += aScore
+      away.goalsAgainst += hScore
 
-      if (homeScore > awayScore) {
+      if (hScore > aScore) {
         home.won += 1
         home.points += 1
         away.lost += 1
-      } else if (homeScore < awayScore) {
+      } else if (aScore > hScore) {
         away.won += 1
         away.points += 1
         home.lost += 1
       } else {
         // Empate -> checar Shootout
         if (homeScoreP !== null && awayScoreP !== null) {
-          if (homeScoreP > awayScoreP) {
-            home.won += 1
-            home.points += 1
-            away.lost += 1
-          } else if (awayScoreP > homeScoreP) {
-            away.won += 1
-            away.points += 1
-            home.lost += 1
+          const hP = Number(homeScoreP)
+          const aP = Number(awayScoreP)
+          if (!isNaN(hP) && !isNaN(aP)) {
+            if (hP > aP) {
+              home.won += 1
+              home.points += 1
+              away.lost += 1
+            } else if (aP > hP) {
+              away.won += 1
+              away.points += 1
+              home.lost += 1
+            } else {
+              home.drawn += 1
+              home.points += 1
+              away.drawn += 1
+              away.points += 1
+            }
           } else {
             home.drawn += 1
             home.points += 1
@@ -342,10 +393,40 @@ export function calculateStandings(
       }
     }
 
+    const challengerInfo = hasTwoGroups ? determineChallengerAdvantage(rounds, initialStandings, teams) : null
+    const hasAdvantage = Boolean(challengerInfo && challengerInfo.advantageGroup)
+    const advantageGroup = challengerInfo?.advantageGroup || "A"
+
     standingsByGroup[group] = unique.map((team, index) => {
       let positionLegend = null
-      if (index === 0) positionLegend = { color: "green", placement: "playoff:semifinal" }
-      else if (index >= 1 && index <= 6) positionLegend = { color: "yellow", placement: "playoff:quarters" }
+      if (hasTwoGroups && hasAdvantage) {
+        const isAdvantageGroup = group === advantageGroup
+        if (isAdvantageGroup) {
+          // Grupo com vantagem Challenger:
+          // 1º lugar vai DIRETO para a Semifinal
+          // 2º ao 4º vão para as Quartas de Final
+          // 5º eliminado
+          if (index === 0) {
+            positionLegend = { color: "green", placement: "playoff:semifinal" }
+          } else if (index >= 1 && index <= 3) {
+            positionLegend = { color: "yellow", placement: "playoff:quarters" }
+          } else {
+            positionLegend = { color: "red", placement: "playoff:eliminated" }
+          }
+        } else {
+          // Outro grupo:
+          // 1º ao 3º vão para as Quartas de Final (1º NÃO vai direto para semi!)
+          // 4º e 5º eliminados
+          if (index >= 0 && index <= 2) {
+            positionLegend = { color: "yellow", placement: "playoff:quarters" }
+          } else {
+            positionLegend = { color: "red", placement: "playoff:eliminated" }
+          }
+        }
+      } else {
+        if (index === 0) positionLegend = { color: "green", placement: "playoff:semifinal" }
+        else if (index >= 1 && index <= 6) positionLegend = { color: "yellow", placement: "playoff:quarters" }
+      }
       return {
         ...team,
         positionLegend,

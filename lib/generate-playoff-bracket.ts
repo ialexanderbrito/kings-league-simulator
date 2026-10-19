@@ -1,5 +1,5 @@
 import { Team, TeamStanding, PlayoffBracket, PlayoffMatch, Round } from "@/types/kings-league";
-import { getLeagueQualification } from "./league-format";
+import { getLeagueQualification, isChallengerMatch } from "./league-format";
 
 /**
  * Determina qual grupo tem a vantagem do Challenger (SC) na Kings Cup.
@@ -79,27 +79,32 @@ export function determineChallengerAdvantage(
   let groupBWins = 0;
 
   rounds?.forEach((r) => {
-    r.matches.forEach((m) => {
+    r.matches?.forEach((m) => {
       const homeGroup = teamGroup[m.participants.homeTeamId];
       const awayGroup = teamGroup[m.participants.awayTeamId];
 
-      const isChallengerMatch =
-        m.groupName?.toLowerCase() === "challenger" ||
-        (homeGroup && awayGroup && homeGroup !== awayGroup && (homeGroup === "A" || homeGroup === "B") && (awayGroup === "A" || awayGroup === "B"));
-
-      if (!isChallengerMatch) return;
+      const isChallenger = isChallengerMatch(m, r, teamGroup, hasTwoGroups);
+      if (!isChallenger) return;
 
       const { homeScore, awayScore, homeScoreP, awayScoreP } = m.scores;
       if (homeScore === null || awayScore === null) return;
 
+      const hScore = Number(homeScore);
+      const aScore = Number(awayScore);
+      if (isNaN(hScore) || isNaN(aScore)) return;
+
       let winnerGroup: string | null = null;
-      if (homeScore > awayScore) {
+      if (hScore > aScore) {
         winnerGroup = homeGroup || null;
-      } else if (awayScore > homeScore) {
+      } else if (aScore > hScore) {
         winnerGroup = awayGroup || null;
       } else if (homeScoreP !== null && awayScoreP !== null) {
-        if (homeScoreP > awayScoreP) winnerGroup = homeGroup || null;
-        else if (awayScoreP > homeScoreP) winnerGroup = awayGroup || null;
+        const hP = Number(homeScoreP);
+        const aP = Number(awayScoreP);
+        if (!isNaN(hP) && !isNaN(aP)) {
+          if (hP > aP) winnerGroup = homeGroup || null;
+          else if (aP > hP) winnerGroup = awayGroup || null;
+        }
       }
 
       if (winnerGroup === "A") groupAWins += 1;
