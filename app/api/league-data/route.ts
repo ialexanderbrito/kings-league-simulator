@@ -19,6 +19,7 @@ import {
 } from "@/lib/api"
 import { AVAILABLE_LEAGUES } from "@/app/api/competitions/route"
 import { isPlayoffRoundName } from "@/lib/league-format"
+import { calculateStandings } from "@/lib/calculate-standings"
 // Tipos auxiliares para dados internos
 interface ApiStanding {
   team: {
@@ -489,12 +490,25 @@ export async function GET(request: Request) {
       }
     })
 
+    let finalStandings = Object.values(standingsMap)
+    if (rounds.length > 0) {
+      try {
+        const computedStandingsObj = calculateStandings(rounds, teamsMap, finalStandings)
+        const computedList = Object.values(computedStandingsObj).flat()
+        if (computedList.length > 0) {
+          finalStandings = computedList
+        }
+      } catch {
+        // Fallback para os standings originais caso o cálculo falhe
+      }
+    }
+
     const leagueData: LeagueData = {
       id: seasonData?.id ?? 0,
       name: configuredSeason?.name ?? seasonData?.name ?? "",
       displayName: configuredSeason?.displayName ?? seasonData?.displayName ?? "",
       teams: Object.values(teamsMap),
-      standings: Object.values(standingsMap),
+      standings: finalStandings,
       rounds,
       playInRounds: Array.from(playInRoundsByKey.values()),
     }
