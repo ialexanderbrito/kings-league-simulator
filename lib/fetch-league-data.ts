@@ -76,8 +76,18 @@ export async function fetchLeagueData(options: {
 
   const cached = leagueDataCacheMap.get(seasonKey)
 
+  const isLive = Boolean(
+    cached?.data?.rounds?.some((r) =>
+      r.matches?.some((m) => {
+        const s = String(m.status || "").toLowerCase()
+        return s.includes("inplay") || s.includes("live") || s.includes("in_progress")
+      })
+    )
+  )
+  const effectiveTTL = isLive ? 30 * 1000 : LEAGUE_DATA_CACHE_TTL
+
   // 1. Retorna do cache em memória se válido e não forçado
-  if (!options.forceRefresh && cached && (now - cached.timestamp) < LEAGUE_DATA_CACHE_TTL) {
+  if (!options.forceRefresh && cached && (now - cached.timestamp) < effectiveTTL) {
     return cached.data
   }
 

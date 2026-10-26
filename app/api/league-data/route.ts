@@ -116,7 +116,17 @@ function mergeRounds(existing: Round, incoming: Round): Round {
   const matchesById = new Map(existing.matches.map((match) => [match.id, match]))
   incoming.matches.forEach((match) => {
     const previous = matchesById.get(match.id)
-    matchesById.set(match.id, previous ? { ...previous, ...match, scores: { ...previous.scores, ...match.scores } } : match)
+    matchesById.set(
+      match.id,
+      previous
+        ? {
+            ...previous,
+            ...match,
+            groupName: match.groupName || previous.groupName,
+            scores: { ...previous.scores, ...match.scores },
+          }
+        : match
+    )
   })
   return {
     ...existing,
@@ -349,11 +359,20 @@ export async function GET(request: Request) {
 
     const regularTurns = (seasonData?.phases || [])
       .filter((phase) => !isPlayoffRoundName(`${phase.name || ""} ${phase.displayName || ""}`) && !/(knockout|mata-?mata|postseason)/i.test(`${phase.name || ""} ${phase.displayName || ""}`))
-      .flatMap((phase) => phase.groups || [])
-      .flatMap((group) => group.turns || [])
-      .filter((turn) => Array.isArray(turn.matches))
-      .filter((turn) => isRegularRoundName(turn.turnName || turn.name))
-      .map((turn) => transformRound(turn))
+      .flatMap((phase) => (phase.groups || []).map((group) => ({ groupName: group.name, turns: group.turns || [] })))
+      .flatMap(({ groupName, turns }) =>
+        turns
+          .filter((turn) => Array.isArray(turn.matches))
+          .filter((turn) => isRegularRoundName(turn.turnName || turn.name))
+          .map((turn) => {
+            const transformed = transformRound(turn)
+            transformed.matches = transformed.matches.map((m) => ({
+              ...m,
+              groupName: m.groupName || groupName,
+            }))
+            return transformed
+          })
+      )
 
     const playInRoundsByKey = new Map<string, Round>()
     const allCandidateRounds = [
@@ -543,9 +562,16 @@ export async function GET(request: Request) {
       // Falha ao buscar dados oficiais de jogos ao vivo não quebra o endpoint principal
     }
 
+    const hasLiveMatch = rounds.some((r) =>
+      r.matches?.some((m) => {
+        const s = String(m.status || "").toLowerCase()
+        return s.includes("inplay") || s.includes("live") || s.includes("in_progress")
+      })
+    )
+
     return createSuccessResponse(
       { ...leagueData, rounds, playoffs: playoffsTurns },
-      { cache: "SHORT", req: request }
+      { cache: hasLiveMatch ? "LIVE" : "SHORT", req: request }
     )
   } catch (error) {
     return createErrorResponse("Falha ao carregar dados da Kings League Brasil", error)

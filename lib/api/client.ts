@@ -97,6 +97,47 @@ function httpsGet<T>(url: string, headers: Record<string, string>, timeoutMs = 1
   })
 }
 
+async function curlGet<T>(url: string, timeoutMs = 15000): Promise<T> {
+  if (typeof window !== "undefined") {
+    throw new Error("curlGet is only available in server environment")
+  }
+  // Uso de eval require para evitar que o Turbopack/Webpack tente incluir child_process no bundle do cliente
+  const nodeRequire = eval("require")
+  const { execFile } = nodeRequire("child_process")
+  return new Promise((resolve, reject) => {
+    execFile(
+      "curl",
+      [
+        "-s",
+        "-L",
+        "--max-time",
+        String(Math.ceil(timeoutMs / 1000)),
+        url,
+        "-H",
+        "Accept: application/json, text/plain, */*",
+        "-H",
+        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "-H",
+        "Referer: https://kingsleague.pro/en/brazil/matches",
+      ],
+      { maxBuffer: 10 * 1024 * 1024 },
+      (err: any, stdout: string) => {
+        if (err) return reject(err)
+        try {
+          const json = JSON.parse(stdout) as T
+          resolve(json)
+        } catch (parseErr) {
+          reject(
+            new Error(
+              `Falha ao converter resposta do curl para JSON: ${(parseErr as Error).message}`
+            )
+          )
+        }
+      }
+    )
+  })
+}
+
 /**
  * Cliente HTTP para a API da Kings League
  * Centraliza todas as requisições com tratamento de erros, cache e desduplicação de chamadas em voo
@@ -136,7 +177,17 @@ export async function fetchFromKingsLeague<T>(
 
   const fetchPromise = (async () => {
     try {
-      const data = await httpsGet<T>(url, KINGS_LEAGUE_HEADERS)
+      let data: T
+      try {
+        data = await httpsGet<T>(url, KINGS_LEAGUE_HEADERS)
+      } catch (httpErr) {
+        // Fallback transparente usando curl se httpsGet falhar (e.g. bloqueio de TLS/Cloudflare Turnstile em alguns nós)
+        try {
+          data = await curlGet<T>(url)
+        } catch {
+          throw httpErr
+        }
+      }
 
       if (ttlSeconds > 0) {
         setMemoryCache(url, data, now + ttlSeconds * 1000)

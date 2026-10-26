@@ -80,22 +80,49 @@ export default function SimulatorPage() {
 
       let effectiveRounds = data.rounds
       if (savedRounds && savedRounds.length > 0) {
-        // Enriquecer savedRounds garantindo groupName oficial nas partidas
-        const enrichedRounds = savedRounds.map((sr) => {
-          const officialRound = data.rounds.find((r) => r.id === sr.id);
+        // Mescla as rodadas oficiais com as simulações salvas do usuário:
+        // 1. Partidas já encerradas ou ao vivo SEMPRE usam os dados e placares oficiais mais recentes
+        // 2. Partidas futuras ainda não jogadas mantêm os placares simulados pelo usuário (se houver)
+        const enrichedRounds = data.rounds.map((officialRound) => {
+          const savedRound = savedRounds.find((sr) => sr.id === officialRound.id);
           return {
-            ...sr,
-            matches: sr.matches.map((sm) => {
-              const officialMatch = officialRound?.matches.find((m) => m.id === sm.id);
-              return {
-                ...sm,
-                groupName: sm.groupName || officialMatch?.groupName,
-              };
+            ...officialRound,
+            matches: officialRound.matches.map((officialMatch) => {
+              const savedMatch = savedRound?.matches.find((sm) => sm.id === officialMatch.id);
+
+              const isOfficialEnded =
+                officialMatch.status === "ended" ||
+                officialMatch.status?.toLowerCase() === "ended" ||
+                officialMatch.status?.toLowerCase() === "finished" ||
+                (officialMatch.scores.homeScore !== null && officialMatch.scores.awayScore !== null);
+
+              const isOfficialLive =
+                String(officialMatch.status || "").toLowerCase().includes("inplay") ||
+                String(officialMatch.status || "").toLowerCase().includes("live");
+
+              if (isOfficialEnded || isOfficialLive || !savedMatch) {
+                return officialMatch;
+              }
+
+              // Se a partida ainda não aconteceu oficialmente, preserva a simulação do usuário se houver placar digitado
+              const hasUserScore =
+                savedMatch.scores.homeScore !== null && savedMatch.scores.awayScore !== null;
+
+              if (hasUserScore) {
+                return {
+                  ...officialMatch,
+                  scores: savedMatch.scores,
+                  groupName: officialMatch.groupName || savedMatch.groupName,
+                };
+              }
+
+              return officialMatch;
             }),
           };
         });
         effectiveRounds = enrichedRounds;
         setRounds(enrichedRounds);
+        saveSimulatedRounds(enrichedRounds, data.id);
       } else {
         setRounds(data.rounds);
       }
@@ -161,7 +188,9 @@ export default function SimulatorPage() {
       liveMatches.map(async (match) => {
         if (!match?.id) return null;
         try {
-          const res = await fetch(`/api/official-matches?matchId=${match.id}`);
+          const res = await fetch(
+            `/api/official-matches?matchId=${match.id}&competitionId=${currentLeagueData?.competitionId || selectedLeague.competitionId}`
+          );
           if (!res.ok) return null;
           const json = await res.json();
           if (!json || !json.id) return null;
